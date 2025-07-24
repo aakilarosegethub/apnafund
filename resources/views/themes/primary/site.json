@@ -1,0 +1,391 @@
+{
+    "login": {
+        "builder": true,
+        "no_selection": true,
+        "name": "Login",
+        "content": {
+            "images": {
+                "background_image": {
+                    "size": "1920x1080"
+                },
+                "image": {}
+            },
+            "form_heading": "text",
+            "submit_button_text": "text"
+        }
+    },
+    "register": {
+        "builder": true,
+        "no_selection": true,
+        "name": "Register",
+        "content": {
+            "images": {
+                "background_image": {
+                    "size": "1920x1080"
+                },
+                "image": {}
+            },
+            "form_heading": "text",
+            "submit_button_text": "text"
+        }
+    },
+    "email_confirm": {
+        "builder": true,
+        "no_selection": true,
+        "name": "Email Confirmation",
+        "content": {
+            "images": {
+                "background_image": {
+                    "size": "1920x1080"
+                },
+                "image": {}
+            },
+            "form_heading": "text",
+            "submit_button_text": "text"
+        }
+    },
+    "mobile_confirm": {
+        "builder": true,
+        "no_selection": true,
+        "name": "Mobile Confirmation",
+        "content": {
+            "images": {
+                "background_image": {
+                    "size": "1920x1080"
+                },
+                "image": {}
+            },
+            "form_heading": "text",
+            "submit_button_text": "text"
+        }
+    },
+    "user_ban": {
+        "builder": true,
+        "no_selection": true,
+        "name": "User Ban",
+        "content": {
+            "images": {
+                "background_image": {
+                    "size": "1920x1080"
+                },
+                "image": {}
+            },
+            "form_heading": "text"
+        }
+    },
+    "2fa_confirm": {
+        "builder": true,
+        "no_selection": true,
+        "name": "2FA Confirmation",
+        "content": {
+            "images": {
+                "background_image": {
+                    "size": "1920x1080"
+                },
+                "image": {}
+            },
+            "form_heading": "text",
+            "submit_button_text": "text"
+        }
+    },
+    "forgot_password": {
+        "builder": true,
+        "no_selection": true,
+        "name": "Forgot Password",
+        "content": {
+            "images": {
+                "background_image": {
+                    "size": "1920x1080"
+                },
+                "image": {}
+            },
+            "form_heading": "text",
+            "submit_button_text": "text"
+        }
+    },
+    "code_verification": {
+        "builder": true,
+        "no_selection": true,
+        "name": "Code Verification",
+        "content": {
+            "images": {
+                "background_image": {
+                    "size": "1920x1080"
+                },
+                "image": {}
+            },
+            "form_heading": "text",
+            "submit_button_text": "text"
+        }
+    },
+    "password_reset": {
+        "builder": true,
+        "no_selection": true,
+        "name": "Password Reset",
+        "content": {
+            "images": {
+                "background_image": {
+                    "size": "1920x1080"
+                },
+                "image": {}
+            },
+            "form_heading": "text",
+            "submit_button_text": "text"
+        }
+    },
+    "kyc": {
+        "builder": true,
+        "no_selection": true,
+        "name": "KYC Instruction",
+        "content": {
+            "verification_required_heading": "text",
+            "verification_required_details": "textarea",
+            "verification_pending_heading": "text",
+            "verification_pending_details": "textarea"
+        }
+    },
+    "banner": {
+        "builder": true,
+        "no_selection": true,
+        "name": "Banner Section",
+        "element": {
+            "images": {
+                "background_image": {
+                    "size": "1920x1080"
+                }
+            },
+            "title": "text",
+            "heading": "text",
+            "short_description": "textarea",
+            "first_button_text": "text",
+            "first_button_url": "text",
+            "second_button_text": "text",
+            "second_button_url": "text",
+            "modal": false
+        }
+    },
+    "breadcrumb": {
+        "builder": true,
+        "name": "Breadcrumb",
+        "content": {
+            "images": {
+                "background_image": {
+                    "size": "1920x700"
+                }
+            }
+        }
+    },
+    "about": {
+        "builder": true,
+        "name": "About Section",
+        "content": {
+            "images": {
+                "background_image": {
+                    "size": "1920x1080"
+                },
+                "image": {
+                    "size": "655x690"
+                }
+            },
+            "heading": "text",
+            "description": "textarea",
+            "button_text": "text",
+            "button_url": "text"
+        }
+    },
+    "client_review": {
+        "builder": true,
+        "name": "Client Review Section",
+        "content": {
+            "section_heading": "text",
+            "description": "textarea"
+        },
+        "element": {
+            "images": {
+                "client_image": {
+                    "size": "500x500"
+                }
+            },
+            "client_name": "text",
+            "client_designation": "text",
+            "client_review": "textarea",
+            "modal": true
+        }
+    },
+    "partner": {
+        "builder": true,
+        "name": "Partner Section",
+        "element": {
+            "images": {
+                "image": {}
+            },
+            "modal": true
+        }
+    },
+    "faq": {
+        "builder": true,
+        "name": "FAQ Section",
+        "content": {
+            "section_heading": "text",
+            "description": "textarea"
+        },
+        "element": {
+            "question": "text",
+            "answer": "textarea-editor",
+            "modal": false
+        }
+    },
+    "contact_us": {
+        "builder": true,
+        "no_selection": true,
+        "name": "Contact Section",
+        "content": {
+            "section_heading": "text",
+            "description": "textarea",
+            "form_heading": "text",
+            "form_button_name": "text",
+            "latitude": "text",
+            "longitude": "text"
+        },
+        "element": {
+            "icon": "icon",
+            "heading": "text",
+            "data": "text",
+            "modal": true
+        }
+    },
+    "featured_campaign": {
+        "builder": true,
+        "name": "Featured Campaign",
+        "content": {
+            "section_heading": "text",
+            "description": "textarea"
+        }
+    },
+    "campaign_category": {
+        "builder": true,
+        "name": "Campaign Category",
+        "content": {
+            "section_heading": "text",
+            "description": "textarea"
+        }
+    },
+    "recent_campaign": {
+        "builder": true,
+        "name": "Recent Campaign",
+        "content": {
+            "section_heading": "text",
+            "description": "textarea"
+        }
+    },
+    "volunteer": {
+        "builder": true,
+        "name": "Volunteer Section",
+        "content": {
+            "section_heading": "text",
+            "description": "textarea"
+        },
+        "element": {
+            "images": {
+                "volunteer_image": {
+                    "size": "305x350"
+                }
+            },
+            "name": "text",
+            "participated": "text",
+            "from": "text",
+            "facebook": "text",
+            "twitter": "text",
+            "instagram": "text",
+            "linkedin": "text",
+            "modal": false
+        }
+    },
+    "top_donor": {
+        "builder": true,
+        "name": "Top Donor Section",
+        "content": {
+            "images": {
+                "background_image": {
+                    "size": "1920x700"
+                }
+            },
+            "section_heading": "text",
+            "description": "textarea"
+        }
+    },
+    "counter": {
+        "builder": true,
+        "name": "Counter Section",
+        "element": {
+            "title": "text",
+            "counter_digit": "text",
+            "modal": true
+        }
+    },
+    "upcoming": {
+        "builder": true,
+        "name": "Upcoming Campaigns",
+        "content": {
+            "section_heading": "text",
+            "description": "textarea"
+        }
+    },
+    "success_story": {
+        "builder": true,
+        "name": "Success Story",
+        "content": {
+            "section_heading": "text",
+            "description": "textarea"
+        },
+        "element": {
+            "images": {
+                "image": {
+                    "size": "855x475",
+                    "thumb": "415x230"
+                }
+            },
+            "title": "text",
+            "details": "textarea-editor",
+            "modal": false
+        }
+    },
+    "policy_pages": {
+        "builder": true,
+        "no_selection": true,
+        "name": "Policy Pages",
+        "element": {
+            "title": "text",
+            "details": "textarea-editor",
+            "modal": false
+        }
+    },
+    "subscribe": {
+        "builder": true,
+        "name": "Subscribe Section",
+        "content": {
+            "images": {
+                "background_image": {
+                    "size": "1920x1280"
+                }
+            },
+            "section_heading": "text",
+            "description": "textarea",
+            "submit_button_text": "text"
+        }
+    },
+    "footer": {
+        "builder": true,
+        "no_selection": true,
+        "name": "Footer Section",
+        "content": {
+            "footer_text": "textarea",
+            "copyright_text": "text"
+        },
+        "element": {
+            "social_icon": "icon",
+            "url": "text",
+            "modal": true
+        }
+    }
+}
