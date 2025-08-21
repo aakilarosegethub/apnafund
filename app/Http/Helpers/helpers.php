@@ -532,7 +532,7 @@ function getDashboardNavigation(): array {
             'id' => 'overview',
             'title' => __('Overview'),
             'icon' => 'fas fa-tachometer-alt',
-            'route' => 'user.home'
+            'route' => 'user.dashboard'
         ],
         [
             'id' => 'create',
@@ -587,7 +587,7 @@ function getNotificationTypes(): array {
 function getUserMenuItems(): array {
     return [
         [
-            'route' => 'user.home',
+            'route' => 'user.dashboard',
             'icon' => 'fas fa-tachometer-alt',
             'title' => __('Dashboard')
         ],

@@ -130,4 +130,16 @@ return [
         'ManageStatus' => App\Constants\ManageStatus::class
     ])->toArray(),
 
+    /*
+    |--------------------------------------------------------------------------
+    | CKEditor Configuration
+    |--------------------------------------------------------------------------
+    |
+    | CKEditor license key for the latest LTS version (4.25.1-lts)
+    | Get your license key from: https://ckeditor.com/ckeditor-4-support/
+    |
+    */
+
+    'ckeditor_license_key' => env('CKEDITOR_LICENSE_KEY', ''),
+
 ];

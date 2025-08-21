@@ -27,6 +27,15 @@
     <div class="tab-pane fade show active" id="nav-desc" role="tabpanel" aria-labelledby="nav-desc-tab" tabindex="0">
         <div class="donation-details__txt">
             <h2 class="donation-details__title" data-aos="fade-up" data-aos-duration="1500">{{ __(@$campaignData->name) }}</h2>
+            
+            <!-- Donate Now Button -->
+            <div class="text-center mb-4" data-aos="fade-up" data-aos-duration="1500">
+                <a href="{{ route('campaign.donate', $campaignData->slug) }}" class="btn btn--base btn-lg px-5">
+                    <i class="ti ti-heart me-2"></i>@lang('Donate Now')
+                </a>
+                <p class="text-muted mt-2">@lang('Support this campaign and make a difference')</p>
+            </div>
+            
             <div class="donation-details__desc" data-aos="fade-up" data-aos-duration="1500">
                 @php echo @$campaignData->description @endphp
             </div>

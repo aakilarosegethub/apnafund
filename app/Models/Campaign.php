@@ -16,6 +16,27 @@ class Campaign extends Model
     use Searchable, UniversalStatus;
 
     /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'user_id',
+        'category_id',
+        'name',
+        'slug',
+        'description',
+        'image',
+        'gallery',
+        'preferred_amounts',
+        'goal_amount',
+        'start_date',
+        'end_date',
+        'status',
+        'featured'
+    ];
+
+    /**
      * The attributes that should be cast to native types.
      *
      * @var array
@@ -57,6 +78,14 @@ class Campaign extends Model
     public function deposits(): HasMany
     {
         return $this->hasMany(Deposit::class, 'campaign_id', 'id');
+    }
+
+    /**
+     * Get the rewards for the campaign.
+     */
+    public function rewards(): HasMany
+    {
+        return $this->hasMany(Reward::class);
     }
 
     /**
@@ -103,7 +132,7 @@ class Campaign extends Model
      */
     public function scopeFeatured($query): void
     {
-        $query->where('is_featured', ManageStatus::YES);
+        $query->where('featured', ManageStatus::YES);
     }
 
     public function scopeCommonQuery($query): void
@@ -176,7 +205,7 @@ class Campaign extends Model
     {
         return Attribute::make(
             get: function () {
-                if ($this->is_featured) {
+                if ($this->featured) {
                     $html = '<span class="badge badge--success">' . trans('Yes') . '</span>';
                 } else {
                     $html = '<span class="badge badge--warning">' . trans('No') . '</span>';

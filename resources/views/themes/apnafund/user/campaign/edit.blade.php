@@ -14,8 +14,8 @@
                     <form action="{{ route('user.campaign.update', $campaign->id) }}" method="POST" id="editGigForm" enctype="multipart/form-data">
                         @csrf
                         
-                        <!-- Previous Gallery Images -->
-                         
+                        <!-- Previous Gallery Images - COMMENTED OUT -->
+                        {{-- 
                         <div class="form-group mb-4">
                             
                             <label class="form-label">Previous Gallery Images</label>
@@ -24,8 +24,8 @@
                                     <div class="col-3 gallery-image mb-3">
                                         <div class="image-container">
                                             <div style="position: relative; display: inline-block;">
-                                                <button type="button" class="remove-button" data-image="{{ json_encode($image) }}" data-action="{{ route('user.campaign.image.remove', $campaign->id) }}" title="Delete Image" style="position: absolute !important; top: -10px !important; right: -10px !important; width: 30px !important; height: 30px !important; background: #ff0000 !important; border: 2px solid #ffffff !important; border-radius: 50% !important; color: white !important; font-size: 14px !important; font-weight: bold !important; cursor: pointer !important; display: flex !important; align-items: center !important; justify-content: center !important; z-index: 99999999999999999 !important; box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important; opacity: 1 !important; visibility: visible !important; pointer-events: auto !important;">
-                                                    <i class="fas fa-times" style="font-size: 12px !important;"></i>
+                                                <button type="button" class="remove-button" data-image="{{ json_encode($image) }}" data-action="{{ route('user.campaign.image.remove', $campaign->id) }}" title="Delete Image" style="position: absolute !important; top: -5px !important; right: -5px !important; width: 35px !important; height: 35px !important; background: #dc3545 !important; border: 3px solid #ffffff !important; border-radius: 50% !important; color: white !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; display: flex !important; align-items: center !important; justify-content: center !important; z-index: 99999999999999999 !important; box-shadow: 0 4px 12px rgba(220,53,69,0.4) !important; opacity: 1 !important; visibility: visible !important; pointer-events: auto !important; transition: all 0.3s ease !important;">
+                                                    <i class="fas fa-times" style="font-size: 14px !important;"></i>
                                                 </button>
                                                 <img src="{{ getImage(getFilePath('campaign') . '/' . $image, getFileSize('campaign')) }}" alt="Gallery Image" class="img-fluid rounded">
                                             </div>
@@ -42,7 +42,6 @@
                             <!-- Simple File Input (Primary) -->
                             <div id="simpleFileInput">
                                 <input type="file" class="form-control" name="gallery_images[]" accept="image/*" multiple>
-                                <small class="text-muted">Select multiple images for your campaign gallery (JPG, JPEG, PNG - Max 5MB each)</small>
                             </div>
                             
                             <!-- Dropzone (Fallback) -->
@@ -57,6 +56,7 @@
                             
                             <small class="text-muted">Supported files: JPG, JPEG, PNG. Image size: {{ getFileSize('campaign') }}px</small>
                         </div>
+                        --}}
 
                         <!-- Campaign Details -->
                         <div class="row">
@@ -115,8 +115,8 @@
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="form-group">
-                                    <label for="targetAmount" class="form-label">Target Amount ($) *</label>
-                                    <input type="number" name="goal_amount" class="form-control" id="targetAmount" value="{{ $campaign->goal_amount ?? '' }}" placeholder="5000" min="1" required>
+                                    <label for="targetAmount" class="form-label">Target Amount ({{ $setting->cur_sym }}) *</label>
+                                    <input type="number" name="goal_amount" class="form-control" id="targetAmount" value="{{ number_format($campaign->goal_amount ?? 0, $setting->fraction_digit ?? 2, '.', '') }}" placeholder="5000" min="1" step="0.01" required>
                                 </div>
                             </div>
                         </div>
@@ -156,11 +156,12 @@
                     <h5 class="mb-3">Campaign Preview</h5>
                     <div id="gigPreview">
                         <div class="preview-card">
-                            <div class="preview-image">
+                            <div class="preview-image" id="previewMainImage">
                                 @if($campaign->image)
-                                    <img src="{{ getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')) }}" alt="{{ $campaign->name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                    <img id="previewImage" src="{{ getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')) }}" alt="{{ $campaign->name }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px 10px 0 0;">
                                 @else
-                                    <i class="fas fa-image"></i>
+                                    <i class="fas fa-image" id="previewImageIcon"></i>
+                                    <img id="previewImage" src="" alt="Preview" style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 10px 10px 0 0;">
                                 @endif
                             </div>
                             <div class="preview-content">
@@ -178,7 +179,6 @@
                                     <div class="progress">
                                         <div class="progress-bar" style="width: {{ $percentage }}%"></div>
                                     </div>
-                                    <small class="text-muted">{{ number_format($percentage, 1) }}% of {{ bs('cur_sym') . showAmount($campaign->goal_amount) }} goal</small>
                                 </div>
                             </div>
                         </div>
@@ -193,15 +193,19 @@
 
 @push('page-style-lib')
     <link rel="stylesheet" href="{{ asset('assets/universal/css/datepicker.css') }}">
-    <link rel="stylesheet" href="{{ asset($activeThemeTrue . 'css/dropzone.min.css') }}">
+    <!-- Load Dropzone CSS from CDN for reliability -->
+    <link rel="stylesheet" href="https://unpkg.com/dropzone@6.0.0-beta.2/dist/dropzone.css">
     <link rel="stylesheet" href="{{ asset($activeThemeTrue . 'css/sweetalert2.min.css') }}">
 @endpush
 
 @push('page-script-lib')
-    <script src="{{ asset($activeThemeTrue . 'js/ckeditor.js') }}"></script>
+    <!-- CKEditor 4 CDN - Latest LTS Version -->
+    <script src="https://cdn.ckeditor.com/4.25.1-lts/standard/ckeditor.js"></script>
+
     <script src="{{ asset('assets/universal/js/datepicker.js') }}"></script>
     <script src="{{ asset('assets/universal/js/datepicker.en.js') }}"></script>
-    <script src="{{ asset($activeThemeTrue . 'js/dropzone.min.js') }}"></script>
+    <!-- Load Dropzone from CDN for reliability -->
+    <script src="https://unpkg.com/dropzone@6.0.0-beta.2/dist/dropzone-min.js"></script>
     <script src="{{ asset($activeThemeTrue . 'js/sweetalert2.min.js') }}"></script>
 @endpush
 
@@ -310,7 +314,8 @@
     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
-/* Image Container Styling */
+/* Image Container Styling - COMMENTED OUT */
+/*
 .image-container {
     position: relative !important;
     border-radius: 8px;
@@ -363,7 +368,7 @@
     right: 5px !important;
     width: 40px !important;
     height: 40px !important;
-    background: #ff0000 !important;
+    background: #dc3545 !important;
     border: 4px solid #ffffff !important;
     border-radius: 50% !important;
     color: white !important;
@@ -374,10 +379,29 @@
     align-items: center !important;
     justify-content: center !important;
     z-index: 99999999999999999 !important;
-    box-shadow: 0 6px 12px rgba(0,0,0,0.5) !important;
+    box-shadow: 0 6px 12px rgba(220,53,69,0.5) !important;
     opacity: 1 !important;
     visibility: visible !important;
     pointer-events: auto !important;
+    transition: all 0.3s ease !important;
+}
+
+/* Hover effects for delete button */
+.remove-button:hover {
+    background: #c82333 !important;
+    transform: scale(1.1) !important;
+    box-shadow: 0 8px 16px rgba(220,53,69,0.6) !important;
+}
+
+/* Ensure button is always on top */
+.image-container {
+    position: relative !important;
+    overflow: visible !important;
+}
+
+.image-container > div {
+    position: relative !important;
+    display: inline-block !important;
 }
 
 .remove-button:hover {
@@ -389,6 +413,7 @@
 .remove-button i {
     font-size: 10px;
 }
+*/
 
 /* Dropzone Styling */
 .dropzone {
@@ -451,6 +476,29 @@
     color: white;
 }
 
+/* CKEditor Styling */
+.cke_chrome {
+    border-radius: 6px !important;
+    border: 1px solid #ced4da !important;
+}
+
+.cke_top {
+    border-radius: 6px 6px 0 0 !important;
+    background: #f8f9fa !important;
+    border-bottom: 1px solid #ced4da !important;
+}
+
+.cke_bottom {
+    border-radius: 0 0 6px 6px !important;
+    background: #f8f9fa !important;
+    border-top: 1px solid #ced4da !important;
+}
+
+.cke_editable {
+    padding: 15px !important;
+    min-height: 200px !important;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .content-card {
@@ -468,37 +516,317 @@
 </style>
 @endpush
 
-@push('page-script')
+@section('page-script')
 <script type="text/javascript">
     (function($) {
         "use strict"
 
-        // CKEditor Initialization
+        console.log('Script starting...');
+        console.log('jQuery available:', typeof $ !== 'undefined');
+        console.log('CKEditor available:', typeof CKEDITOR !== 'undefined');
+        
+        // CKEditor License Configuration
         if (typeof CKEDITOR !== 'undefined') {
-            CKEDITOR.replace('gigDescription', {
-                height: 300,
-                removePlugins: 'elementspath,resize',
-                toolbarGroups: [
-                    { name: 'document', groups: [ 'mode', 'document', 'doctools' ] },
-                    { name: 'clipboard', groups: [ 'clipboard', 'undo' ] },
-                    { name: 'editing', groups: [ 'find', 'selection', 'spellchecker', 'editing' ] },
-                    { name: 'forms', groups: [ 'forms' ] },
-                    '/',
-                    { name: 'basicstyles', groups: [ 'basicstyles', 'cleanup' ] },
-                    { name: 'paragraph', groups: [ 'list', 'indent', 'blocks', 'align', 'bidi', 'paragraph' ] },
-                    { name: 'links', groups: [ 'links' ] },
-                    { name: 'insert', groups: [ 'insert' ] },
-                    '/',
-                    { name: 'styles', groups: [ 'styles' ] },
-                    { name: 'colors', groups: [ 'colors' ] },
-                    { name: 'tools', groups: [ 'tools' ] },
-                    { name: 'others', groups: [ 'others' ] }
-                ],
-                removeButtons: 'Save,NewPage,Preview,Print,Templates,Cut,Copy,Paste,PasteText,PasteFromWord,Find,Replace,SelectAll,Scayt,Form,Checkbox,Radio,TextField,Textarea,Select,Button,ImageButton,HiddenField,About'
-            });
+            // Set license key from environment variable (recommended for production)
+            // Add this to your .env file: CKEDITOR_LICENSE_KEY=your_license_key_here
+            CKEDITOR.licenseKey = '{{ config("app.ckeditor_license_key", "") }}';
+            
+            // If you want to hardcode the license key (not recommended for production):
+            // CKEDITOR.licenseKey = 'YOUR_LICENSE_KEY_HERE';
         }
+        
+        // Wait for document to be ready
+        $(document).ready(function() {
+            
+            // CKEditor Configuration - Initialize inside document ready
+            function initializeCKEditor() {
+                if (typeof CKEDITOR !== 'undefined') {
+                    try {
+                        // Check if element exists
+                        if ($('#gigDescription').length > 0) {
+                            CKEDITOR.replace('gigDescription', {
+                                height: 300,
+                                toolbar: [
+                                    { name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Strike'] },
+                                    { name: 'paragraph', items: ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'Blockquote', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'] },
+                                    { name: 'links', items: ['Link', 'Unlink'] },
+                                    { name: 'insert', items: ['Image', 'Table', 'HorizontalRule'] },
+                                    { name: 'styles', items: ['Format'] },
+                                    { name: 'tools', items: ['Maximize'] }
+                                ],
+                                removeButtons: '',
+                                removePlugins: 'elementspath,resize',
+                                removeDialogTabs: 'image:advanced;link:advanced',
+                                contentsCss: ['body { font-family: Arial, sans-serif; font-size: 14px; }'],
+                                on: {
+                                    instanceReady: function(evt) {
+                                        console.log('CKEditor instance ready!');
+                                        setupRealTimeDescriptionPreview();
+                                    }
+                                }
+                            });
+                            console.log('CKEditor initialized successfully');
+                        } else {
+                            console.error('gigDescription textarea not found!');
+                        }
+                    } catch (error) {
+                        console.error('Error initializing CKEditor:', error);
+                        // Fallback to regular textarea
+                        $('#gigDescription').show();
+                    }
+                } else {
+                    console.error('CKEditor is not loaded! Using fallback textarea');
+                    // Show the original textarea if CKEditor fails
+                    $('#gigDescription').show();
+                }
+            }
+            
+            // Initialize CKEditor
+            initializeCKEditor();
+            
+            // Fallback: If CKEditor doesn't load within 3 seconds, show regular textarea
+            setTimeout(function() {
+                if (typeof CKEDITOR === 'undefined' || !CKEDITOR.instances.gigDescription) {
+                    console.log('CKEditor failed to load, showing fallback textarea');
+                    $('#gigDescription').show().css({
+                        'display': 'block',
+                        'min-height': '300px',
+                        'width': '100%',
+                        'padding': '10px',
+                        'border': '1px solid #ced4da',
+                        'border-radius': '6px',
+                        'font-family': 'Arial, sans-serif',
+                        'font-size': '14px'
+                    });
+                    setupDescriptionPreview(); // Setup preview for regular textarea
+                }
+            }, 3000);
 
-        // Dropzone Configuration
+            // Initialize datepicker with error handling
+            if (typeof $.fn.datepicker !== 'undefined') {
+                $('.date-picker').datepicker({
+                    dateFormat: 'dd-mm-yyyy',
+                    minDate: new Date(),
+                });
+
+                $('.date-picker').on('input keyup keydown keypress', function() {
+                    return false;
+                });
+            } else {
+                console.error('Datepicker plugin not loaded!');
+                // Fallback to HTML5 date inputs
+                $('.date-picker').attr('type', 'date');
+            }
+            
+            // Real-time preview updates
+            $('#gigTitle').on('input', function() {
+                $('.preview-title').text($(this).val() || '{{ $campaign->name ?? "Campaign Title" }}');
+            });
+            
+            $('#targetAmount').on('input', function() {
+                var amount = $(this).val() || '{{ number_format($campaign->goal_amount ?? 0, $setting->fraction_digit ?? 2, ".", "") }}';
+                var currencySymbol = '{{ $setting->cur_sym }}';
+                
+                // Format amount for display
+                var formattedAmount = parseFloat(amount).toFixed({{ $setting->fraction_digit ?? 2 }});
+                $('.preview-amount').text(currencySymbol + formattedAmount);
+                
+                // Calculate progress based on raised amount vs goal amount
+                var raisedAmount = {{ $campaign->raised_amount ?? 0 }};
+                var percentage = amount > 0 ? (raisedAmount / amount) * 100 : 0;
+                percentage = Math.min(percentage, 100);
+                
+                $('.progress-bar').css('width', percentage + '%');
+                // $('.text-muted').text(percentage.toFixed(1) + '% of ' + currencySymbol + formattedAmount + ' goal');
+            });
+            
+            $('select[name="category_id"]').on('change', function() {
+                var categoryText = $(this).find('option:selected').text();
+                // $('.preview-category').text(categoryText || '{{ $campaign->category->name ?? "Category" }}');
+            });
+            
+            // Description preview update (for CKEditor and fallback textarea)
+            function setupDescriptionPreview() {
+                if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances && CKEDITOR.instances.gigDescription) {
+                    const editor = CKEDITOR.instances.gigDescription;
+                    if (editor && typeof editor.on === 'function') {
+                        // CKEditor is available
+                        editor.on('change', function() {
+                            updateDescriptionPreview();
+                        });
+                        
+                        editor.on('keyup', function() {
+                            updateDescriptionPreview();
+                        });
+                        
+                        editor.on('keydown', function() {
+                            updateDescriptionPreview();
+                        });
+                        
+                        editor.on('input', function() {
+                            updateDescriptionPreview();
+                        });
+                        
+                        // Also listen for paste events
+                        editor.on('paste', function() {
+                            setTimeout(function() {
+                                updateDescriptionPreview();
+                            }, 100);
+                        });
+                    }
+                } else {
+                    // Fallback to regular textarea
+                    $('#gigDescription').on('input keyup keydown change paste', function() {
+                        updateDescriptionPreview();
+                    });
+                }
+            }
+            
+            // Setup description preview
+            setupDescriptionPreview();
+            
+            // Description preview update function
+            function updateDescriptionPreview() {
+                let description = '';
+                if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances && CKEDITOR.instances.gigDescription) {
+                    const editor = CKEDITOR.instances.gigDescription;
+                    if (editor && typeof editor.getData === 'function') {
+                        description = editor.getData();
+                    } else {
+                        description = $('#gigDescription').val();
+                    }
+                } else {
+                    description = $('#gigDescription').val();
+                }
+                
+                // Remove HTML tags and get plain text
+                let plainText = description.replace(/<[^>]*>/g, '').trim();
+                
+                // Limit to 150 characters for preview
+                if (plainText.length > 150) {
+                    plainText = plainText.substring(0, 150) + '...';
+                }
+                
+                $('.preview-description').text(plainText || '{{ Str::limit(strip_tags($campaign->description ?? ""), 100) }}');
+            }
+            
+            // Add real-time typing preview with debouncing
+            let typingTimer;
+            function setupRealTimeDescriptionPreview() {
+                if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances && CKEDITOR.instances.gigDescription) {
+                    const editor = CKEDITOR.instances.gigDescription;
+                    
+                    if (editor && typeof editor.on === 'function') {
+                        // Listen to all possible input events
+                        editor.on('keyup', function() {
+                            clearTimeout(typingTimer);
+                            typingTimer = setTimeout(function() {
+                                updateDescriptionPreview();
+                            }, 50); // Update after 50ms of no typing
+                        });
+                        
+                        editor.on('keydown', function() {
+                            clearTimeout(typingTimer);
+                            updateDescriptionPreview(); // Immediate update on keydown
+                        });
+                        
+                        editor.on('input', function() {
+                            clearTimeout(typingTimer);
+                            typingTimer = setTimeout(function() {
+                                updateDescriptionPreview();
+                            }, 30); // Very fast update
+                        });
+                        
+                        editor.on('paste', function() {
+                            clearTimeout(typingTimer);
+                            typingTimer = setTimeout(function() {
+                                updateDescriptionPreview();
+                            }, 100);
+                        });
+                    }
+                }
+            }
+            
+            // Initialize real-time preview after CKEditor is ready
+            if (typeof CKEDITOR !== 'undefined') {
+                CKEDITOR.on('instanceReady', function(evt) {
+                    if (evt.editor && evt.editor.name === 'gigDescription') {
+                        setupRealTimeDescriptionPreview();
+                    }
+                });
+            }
+            
+            // Initialize preview with existing campaign data
+            function initializePreview() {
+                // Get existing campaign data from form fields
+                var title = $('#gigTitle').val() || '{{ $campaign->name ?? "Campaign Title" }}';
+                var category = $('#gigCategory option:selected').text() || '{{ $campaign->category->name ?? "Category" }}';
+                var amount = $('#targetAmount').val() || '{{ number_format($campaign->goal_amount ?? 0, $setting->fraction_digit ?? 2, ".", "") }}';
+                var currencySymbol = '{{ $setting->cur_sym }}';
+                
+                // Format amount for display
+                var formattedAmount = parseFloat(amount).toFixed({{ $setting->fraction_digit ?? 2 }});
+                
+                // Update preview with existing data
+                $('.preview-title').text(title);
+                $('.preview-category').text(category);
+                $('.preview-amount').text(currencySymbol + formattedAmount);
+                
+                // Update progress bar with existing data
+                var raisedAmount = {{ $campaign->raised_amount ?? 0 }};
+                var goalAmount = {{ $campaign->goal_amount ?? 0 }};
+                var percentage = goalAmount > 0 ? (raisedAmount / goalAmount) * 100 : 0;
+                percentage = Math.min(percentage, 100);
+                
+                $('.progress-bar').css('width', percentage + '%');
+                // $('.text-muted').text(percentage.toFixed(1) + '% of ' + currencySymbol + formattedAmount + ' goal');
+                
+                // Update description preview
+                updateDescriptionPreview();
+            }
+            
+            // Initialize preview when page loads
+            initializePreview();
+            
+            // Main Image Preview Functionality
+            $('#mainImage').on('change', function() {
+                const file = this.files[0];
+                const previewImage = $('#previewImage');
+                const previewImageIcon = $('#previewImageIcon');
+                
+                if (file) {
+                    // Check if file is an image
+                    if (!file.type.startsWith('image/')) {
+                        alert('Please select an image file');
+                        this.value = '';
+                        return;
+                    }
+                    
+                    // Check file size (5MB limit)
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('Image size must be less than 5MB');
+                        this.value = '';
+                        return;
+                    }
+                    
+                    // Create a FileReader to preview the image
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImage.attr('src', e.target.result);
+                        previewImage.show();
+                        previewImageIcon.hide();
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    // No file selected, show default icon
+                    previewImage.hide();
+                    previewImageIcon.show();
+                    previewImage.attr('src', '');
+                }
+            });
+
+        // Dropzone Configuration - COMMENTED OUT
+        /*
         if (typeof Dropzone !== 'undefined') {
             Dropzone.autoDiscover = false;
             
@@ -523,19 +851,27 @@
                 }
             });
         }
+        */
 
-        // Remove Gallery Image
+        // Remove Gallery Image - COMMENTED OUT
+        /*
         $(document).on('click', '.remove-button', function(e) {
             e.preventDefault();
+            e.stopPropagation();
             
-            let image = $(this).data('image')
-            let url = $(this).data('action')
+            let image = $(this).data('image');
+            let url = $(this).data('action');
             let data = {
-                image,
+                image: image,
                 _token: "{{ csrf_token() }}",
-            }
+            };
 
-            let _this = $(this)
+            let _this = $(this);
+
+            console.log('Delete button clicked');
+            console.log('Image data:', image);
+            console.log('URL:', url);
+            console.log('Button element:', _this);
 
             // Check if SweetAlert2 is available
             if (typeof Swal !== 'undefined') {
@@ -561,62 +897,326 @@
             }
         });
 
+        // Test button for debugging (remove this after testing)
+        $(document).on('click', '.test-delete', function() {
+            console.log('Test delete button clicked');
+            alert('Test delete button works!');
+        });
+
         // Function to handle image deletion
         function deleteImage(_this, url, data) {
+            console.log('Deleting image with data:', data);
+            
             // Show loading state
             _this.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
             
-            $.post(url, data, function(response) {
-                if (response.status === 'success') {
-                    // Remove the image container with animation
-                    _this.closest('.gallery-image').fadeOut(300, function() {
-                        $(this).remove();
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: data,
+                dataType: 'json',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    console.log('Response:', response);
+                    
+                    if (response.status === 'success') {
+                        // Remove the image container with animation
+                        _this.closest('.gallery-image').fadeOut(300, function() {
+                            $(this).remove();
+                            
+                            // If only one image left, remove delete button
+                            if ($('.gallery-image').length == 1) {
+                                $('.gallery-image').find('.remove-button').remove();
+                            }
+                            
+                            // Show success message
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    title: 'Success!',
+                                    text: response.message,
+                                    icon: 'success',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            } else {
+                                alert('Image deleted successfully!');
+                            }
+                        });
+                    } else {
+                        // Reset button state
+                        _this.prop('disabled', false).html('<i class="fas fa-times"></i>');
                         
-                        // If only one image left, remove delete button
-                        if ($('.gallery-image').length == 1) {
-                            $('.gallery-image').find('.remove-button').remove();
-                        }
-                        
-                        // Show success message
                         if (typeof Swal !== 'undefined') {
-                            Swal.fire({
-                                title: 'Success!',
-                                text: response.message,
-                                icon: 'success',
-                                timer: 2000,
-                                showConfirmButton: false
-                            });
+                            Swal.fire('Error!', response.message, 'error');
                         } else {
-                            alert('Image deleted successfully!');
+                            alert('Error: ' + response.message);
                         }
-                    });
-                } else {
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', xhr.responseText);
+                    
                     // Reset button state
                     _this.prop('disabled', false).html('<i class="fas fa-times"></i>');
                     
                     if (typeof Swal !== 'undefined') {
-                        Swal.fire('Error!', response.message, 'error');
+                        Swal.fire('Error!', 'Failed to delete image. Please try again.', 'error');
                     } else {
-                        alert('Error: ' + response.message);
+                        alert('Failed to delete image. Please try again.');
                     }
-                }
-            }).fail(function(xhr, status, error) {
-                // Reset button state
-                _this.prop('disabled', false).html('<i class="fas fa-times"></i>');
-                
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire('Error!', 'Failed to delete image. Please try again.', 'error');
-                } else {
-                    alert('Failed to delete image. Please try again.');
                 }
             });
         }
+        */
+
+        // Preview function
+        window.previewGig = function() {
+            var title = $('#gigTitle').val() || '{{ $campaign->name ?? "Campaign Title" }}';
+            var category = $('#gigCategory option:selected').text() || '{{ $campaign->category->name ?? "Category" }}';
+            var amount = $('#targetAmount').val() || '{{ number_format($campaign->goal_amount ?? 0, $setting->fraction_digit ?? 2, ".", "") }}';
+            var currencySymbol = '{{ $setting->cur_sym }}';
+            
+            // Format amount for display
+            var formattedAmount = parseFloat(amount).toFixed({{ $setting->fraction_digit ?? 2 }});
+            
+            $('.preview-title').text(title);
+            $('.preview-category').text(category);
+            $('.preview-amount').text(currencySymbol + formattedAmount);
+            
+            // Update description preview
+            updateDescriptionPreview();
+            
+            // Update progress bar with actual raised amount
+            var raisedAmount = {{ $campaign->raised_amount ?? 0 }};
+            var percentage = amount > 0 ? (raisedAmount / amount) * 100 : 0;
+            percentage = Math.min(percentage, 100);
+            
+            $('.progress-bar').css('width', percentage + '%');
+            // $('.text-muted').text(percentage.toFixed(1) + '% of ' + currencySymbol + formattedAmount + ' goal');
+            
+            // Check if main image is selected and show preview
+            const mainImageFile = $('#mainImage')[0].files[0];
+            if (mainImageFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#previewImage').attr('src', e.target.result).show();
+                    $('#previewImageIcon').hide();
+                };
+                reader.readAsDataURL(mainImageFile);
+            }
+        };
 
         // Form Submission
         $('#editGigForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            // Disable HTML5 validation
+            this.setAttribute('novalidate', true);
+            
+            // Validate form
+            const validation = validateForm();
+            
+            if (!validation.isValid) {
+                // Show first error in toast
+                if (validation.errors.length > 0) {
+                    showToast('error', validation.errors[0]);
+                }
+                return false;
+            }
+            
+            // Show loading state
             $('#submitBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Updating...');
+            
+            // Get form data
+            var formData = new FormData(this);
+            
+            // Add CKEditor content to form data
+            if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances && CKEDITOR.instances.gigDescription) {
+                const editor = CKEDITOR.instances.gigDescription;
+                if (editor && typeof editor.getData === 'function') {
+                    formData.set('description', editor.getData());
+                }
+            }
+            
+            // Submit form via AJAX
+            $.ajax({
+                url: $(this).attr('action'),
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    // Success toast
+                    showToast('success', '✅ Campaign updated successfully!');
+                    
+                    // Redirect to campaigns list or show success message
+                    if (response.redirect) {
+                        window.location.href = response.redirect;
+                    } else {
+                        window.location.href = '{{ route("user.campaign.index") }}';
+                    }
+                },
+                error: function(xhr, status, error) {
+                    // Error toast
+                    var errorMessage = '❌ Error occurred while updating campaign!';
+                    
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = '❌ ' + xhr.responseJSON.message;
+                    } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                        // Handle validation errors from server
+                        const errors = xhr.responseJSON.errors;
+                        const firstError = Object.values(errors)[0];
+                        if (Array.isArray(firstError)) {
+                            errorMessage = '❌ ' + firstError[0];
+                        } else {
+                            errorMessage = '❌ ' + firstError;
+                        }
+                    } else if (xhr.responseText) {
+                        errorMessage = '❌ ' + xhr.responseText;
+                    }
+                    
+                    showToast('error', errorMessage);
+                    
+                    // Reset button state
+                    $('#submitBtn').prop('disabled', false).html('<i class="fas fa-save me-2"></i>Update Campaign');
+                }
+            });
         });
+
+        // Form Validation Function
+        function validateForm() {
+            let isValid = true;
+            let errors = [];
+            
+            // Clear previous validation states
+            $('.form-control').removeClass('is-invalid is-valid');
+            $('.invalid-feedback').remove();
+            
+            // Validate Gig Title
+            const gigTitle = $('#gigTitle').val().trim();
+            if (!gigTitle) {
+                $('#gigTitle').addClass('is-invalid');
+                $('#gigTitle').after('<div class="invalid-feedback">Gig title is required</div>');
+                errors.push('Gig title is required');
+                isValid = false;
+            } else if (gigTitle.length < 10) {
+                $('#gigTitle').addClass('is-invalid');
+                $('#gigTitle').after('<div class="invalid-feedback">Gig title must be at least 10 characters long</div>');
+                errors.push('Gig title must be at least 10 characters long');
+                isValid = false;
+            } else {
+                $('#gigTitle').addClass('is-valid');
+            }
+            
+            // Validate Category
+            const category = $('select[name="category_id"]').val();
+            if (!category) {
+                $('select[name="category_id"]').addClass('is-invalid');
+                $('select[name="category_id"]').after('<div class="invalid-feedback">Please select a category</div>');
+                errors.push('Please select a category');
+                isValid = false;
+            } else {
+                $('select[name="category_id"]').addClass('is-valid');
+            }
+            
+            // Validate Description
+            let description = '';
+            if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances && CKEDITOR.instances.gigDescription) {
+                const editor = CKEDITOR.instances.gigDescription;
+                if (editor && typeof editor.getData === 'function') {
+                    description = editor.getData().replace(/<[^>]*>/g, '').trim();
+                } else {
+                    description = $('#gigDescription').val().trim();
+                }
+            } else {
+                description = $('#gigDescription').val().trim();
+            }
+            
+            if (!description) {
+                $('#gigDescription').addClass('is-invalid');
+                $('#gigDescription').after('<div class="invalid-feedback">Description is required</div>');
+                errors.push('Description is required');
+                isValid = false;
+            } else if (description.length < 50) {
+                $('#gigDescription').addClass('is-invalid');
+                $('#gigDescription').after('<div class="invalid-feedback">Description must be at least 50 characters long</div>');
+                errors.push('Description must be at least 50 characters long');
+                isValid = false;
+            } else {
+                $('#gigDescription').addClass('is-valid');
+            }
+            
+            // Validate Target Amount
+            const targetAmount = $('#targetAmount').val();
+            if (!targetAmount) {
+                $('#targetAmount').addClass('is-invalid');
+                $('#targetAmount').after('<div class="invalid-feedback">Target amount is required</div>');
+                errors.push('Target amount is required');
+                isValid = false;
+            } else if (targetAmount < 1) {
+                $('#targetAmount').addClass('is-invalid');
+                $('#targetAmount').after('<div class="invalid-feedback">Target amount must be at least $1</div>');
+                errors.push('Target amount must be at least $1');
+                isValid = false;
+            } else {
+                $('#targetAmount').addClass('is-valid');
+            }
+            
+            // Validate Start Date
+            const startDate = $('#startDate').val();
+            if (!startDate) {
+                $('#startDate').addClass('is-invalid');
+                $('#startDate').after('<div class="invalid-feedback">Start date is required</div>');
+                errors.push('Start date is required');
+                isValid = false;
+            } else {
+                $('#startDate').addClass('is-valid');
+            }
+            
+            // Validate End Date
+            const endDate = $('#endDate').val();
+            if (!endDate) {
+                $('#endDate').addClass('is-invalid');
+                $('#endDate').after('<div class="invalid-feedback">End date is required</div>');
+                errors.push('End date is required');
+                isValid = false;
+            } else {
+                const startDateObj = new Date(startDate);
+                const endDateObj = new Date(endDate);
+                if (endDateObj <= startDateObj) {
+                    $('#endDate').addClass('is-invalid');
+                    $('#endDate').after('<div class="invalid-feedback">End date must be after start date</div>');
+                    errors.push('End date must be after start date');
+                    isValid = false;
+                } else {
+                    $('#endDate').addClass('is-valid');
+                }
+            }
+            
+            return { isValid, errors };
+        }
+
+        // Show Toast Function
+        function showToast(type, message) {
+            if (typeof iziToast !== 'undefined') {
+                iziToast[type]({
+                    message: message,
+                    position: "topRight",
+                    timeout: 5000
+                });
+            } else {
+                // Fallback to alert if iziToast is not available
+                alert(message);
+            }
+        }
+
+        }); // End of document ready
 
     })(jQuery)
 </script>
-@endpush
+@endsection

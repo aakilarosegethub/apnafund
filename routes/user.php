@@ -53,6 +53,7 @@ Route::middleware('auth')->name('user.')->namespace('User')->group(function () {
             Route::get('rejected', 'rejected')->name('rejected');
             Route::get('new', 'new')->name('create');
             Route::post('store', 'store')->name('store');
+            Route::get('test', function() { return response()->json(['message' => 'Test route working']); })->name('test');
             Route::get('edit/{slug}', 'edit')->name('edit');
             Route::post('image-remove/{id}', 'removeImage')->name('image.remove');
             Route::post('update/{id}', 'update')->name('update');
@@ -65,10 +66,22 @@ Route::middleware('auth')->name('user.')->namespace('User')->group(function () {
             });
         });
 
+        // Rewards
+        Route::controller('RewardController')->prefix('campaign/{slug}/rewards')->name('rewards.')->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/create', 'create')->name('create');
+            Route::post('/store', 'store')->name('store');
+            Route::get('/{rewardId}/edit', 'edit')->name('edit');
+            Route::post('/{rewardId}/update', 'update')->name('update');
+            Route::delete('/{rewardId}', 'destroy')->name('destroy');
+            Route::post('/{rewardId}/toggle-status', 'toggleStatus')->name('toggle.status');
+        });
+
         // User Operation
         Route::controller('UserController')->group(function () {
             // KYC Dashboard
             Route::get('dashboard', 'home')->name('home');
+            Route::get('dashboard', 'home')->name('dashboard');
 
             // KYC Check
             Route::prefix('kyc')->name('kyc.')->group(function () {
@@ -120,7 +133,7 @@ Route::middleware('auth')->name('user.')->namespace('User')->group(function () {
 
 // Deposit
 Route::prefix('deposit')->name('user.deposit.')->controller('Gateway\PaymentController')->group(function () {
-    Route::post('insert/{slug}', 'depositInsert')->name('insert');
+    Route::post('insert/{slug}', 'depositInserts')->name('insert');
     Route::get('confirm', 'depositConfirm')->name('confirm');
     Route::prefix('manual')->name('manual.')->group(function () {
         Route::get('', 'manualDepositConfirm')->name('confirm');

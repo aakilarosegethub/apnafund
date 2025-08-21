@@ -78,6 +78,13 @@ class AppServiceProvider extends ServiceProvider
                 ]);
             });
 
+            // Footer composer for apnafund theme
+            view()->composer($activeTheme . 'partials.footer', function ($view) {
+                $view->with([
+                    'categories' => Category::active()->latest()->get(),
+                ]);
+            });
+
             // Dashboard layout composer
             view()->composer($activeTheme . 'layouts.dashboard', function ($view) {
                 $view->with([

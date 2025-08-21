@@ -14,9 +14,11 @@ use App\Http\Controllers\Controller;
 
 class PaymentController extends Controller
 {
-    function depositInsert($slug) {
+    function depositInserts($slug) {
+        
         $countryData = (array) json_decode(file_get_contents(resource_path('views/partials/country.json')));
-        $mobileCodes = implode(',', array_column($countryData, 'dial_code'));
+        
+        // $mobileCodes = implode(',', array_column($countryData, 'dial_code'));
         $countries   = implode(',', array_column($countryData, 'country'));
 
         $this->validate(request(), [
@@ -25,12 +27,13 @@ class PaymentController extends Controller
             'email'       => 'required|email|max:40',
             'phone'       => 'required|max:40|regex:/^([0-9]*)$/',
             'country'     => 'required|max:40|in:' . $countries,
-            'mobile_code' => 'required|in:' . $mobileCodes,
+            // 'mobile_code' => 'required|in:' . $mobileCodes,
             'gateway'     => 'required|exists:gateways,code',
             'currency'    => 'required',
         ]);
+        
 
-        $campaign = Campaign::where('slug', $slug)->campaignCheck()->approve()->firstOrFail();
+        $campaign = Campaign::where('slug', $slug)->approve()->firstOrFail();
 
         if (!$campaign) {
             $toast[] = ['error', 'Campaign not found'];
@@ -112,12 +115,14 @@ class PaymentController extends Controller
         $new     = __NAMESPACE__ . '\\' . $dirName . '\\ProcessController';
         $data    = $new::process($deposit);
         $data    = json_decode($data);
+        
 
         if (isset($data->error)) {
             $toast[] = ['error', $data->message];
 
             return to_route(gatewayRedirectUrl())->withToasts($toast);
         }
+        
 
         if (isset($data->redirect)) return redirect($data->redirect_url);
 
@@ -211,6 +216,12 @@ class PaymentController extends Controller
             $pageTitle       = 'Donation Confirmation';
             $gatewayCurrency = $deposit->gatewayCurrency();
             $gateway         = $gatewayCurrency->method;
+            
+            // Check if gateway and form exist
+            if (!$gateway || !$gateway->form) {
+                $toast[] = ['error', 'Invalid gateway configuration'];
+                return to_route(gatewayRedirectUrl())->withToasts($toast);
+            }
 
             return view($this->activeTheme . 'user.payment.manual', compact('deposit', 'pageTitle', 'gateway'));
         }
@@ -226,7 +237,14 @@ class PaymentController extends Controller
 
         $gatewayCurrency = $deposit->gatewayCurrency();
         $gateway         = $gatewayCurrency->method;
-        $formData        = $gateway->form->form_data;
+        
+        // Check if gateway and form exist
+        if (!$gateway || !$gateway->form) {
+            $toast[] = ['error', 'Invalid gateway configuration'];
+            return to_route(gatewayRedirectUrl())->withToasts($toast);
+        }
+        
+        $formData = $gateway->form->form_data;
 
         $formProcessor  = new FormProcessor();
         $validationRule = $formProcessor->valueValidation($formData);

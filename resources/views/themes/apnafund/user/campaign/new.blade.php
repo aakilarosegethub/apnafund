@@ -5,13 +5,30 @@
 @extends($activeTheme . 'layouts.dashboard')
 @section('frontend')
     <!-- Create Gig Tab -->
+     <style>
+        .input-group-text {
+    display: flex
+;
+    align-items: center;
+    padding: .375rem .75rem;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--bs-body-color);
+    text-align: center;
+    white-space: nowrap;
+    background-color: var(--bs-tertiary-bg);
+    border: var(--bs-border-width) solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+}
+    </style>
                 <div class="tab-pane fade active show" id="create" role="tabpanel">
                     <div class="row">
                         <div class="col-lg-8">
                             <div class="content-card">
                                 <h4 class="mb-4">Create New Donation Gig</h4>
                                 
-                                <form action="{{ route('user.campaign.store') }}" method="POST" id="createGigForm" enctype="multipart/form-data">
+                                <form action="{{ route('user.campaign.store') }}" method="POST" id="createGigForm" enctype="multipart/form-data" novalidate>
                                     @csrf
                                     <div class="row">
                                         <div class="col-md-8">
@@ -23,24 +40,21 @@
                                         <div class="col-md-4">
                                             <div class="form-group">
                                                 <label for="gigCategory" class="form-label">Category *</label>
-                                                <select class="form--control form-select" name="category_id" required>
-                                            <option value="" selected>@lang('Select Category')</option>
-
-                                            @foreach ($categories as $category)
-                                                <option value="{{ $category->id }}" @selected(old('category_id') == $category->id)>
-                                                    {{ __(@$category->name) }}
-                                                </option>
-                                            @endforeach
-                                        </select>
+                                                <select class="form--control form-select" name="category_id" id="gigCategory" required>
+                                                    <option value="" selected>@lang('Select Category')</option>
+                                                    @foreach ($categories as $category)
+                                                        <option value="{{ $category->id }}" @selected(old('category_id') == $category->id)>
+                                                            {{ __(@$category->name) }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
                                             </div>
                                         </div>
                                     </div>
 
                                     <div class="form-group">
                                         <label for="gigDescription" class="form-label">Description *</label>
-                                        <textarea class="form-control ck-editor" id="gigDescription" name="description" rows="10" placeholder="Describe your gig, its purpose, and how donations will be used" required>
-                                            @php echo old('description') @endphp
-                                        </textarea>
+                                        <textarea class="form-control ck-editor" id="gigDescription" name="description" rows="10" placeholder="Describe your gig, its purpose, and how donations will be used" required style="display: block; min-height: 300px;">@php echo old('description') @endphp</textarea>
                                     </div>
 
                                     <!-- Main Campaign Image -->
@@ -49,30 +63,19 @@
                                         <input type="file" class="form-control" id="mainImage" name="image" accept="image/*" required>
                                         <small class="text-muted">This will be the primary image displayed for your campaign</small>
                                     </div>
-                                    <div class="row">
-                                    <div class="col-12">
-                                    <label class="form--label required" for="preferred_amounts[]">@lang('Preferred Amounts')</label>
-                                    <div class="d-flex gap-2">
-                                        <div class="input--group w-100">
-                                            <span class="input-group-text">{{ @$setting->cur_sym }}</span>
-                                            <input type="number" step="any" min="0" class="form--control" name="preferred_amounts[]" value="" required>
-                                        </div>
-                                        <button type="button" class="btn btn-success rounded-circle" id="addMoreAmounts" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                                            <i class="fas fa-plus"></i>
-                                        </button>
-                                    </div>
-                                    <div class="add-more-amounts"></div>
-                                </div>
+
+
 
                                     <div class="row">
                                         <div class="col-md-12">
                                             <div class="form-group">
-                                                <label for="targetAmount" class="form-label">Target Amount ($) *</label>
-                                                <input type="number" name="goal_amount" class="form-control" id="targetAmount" placeholder="5000" min="1" required>
+                                                <label for="targetAmount" class="form-label">Target Amount ({{ $setting->cur_sym }}) *</label>
+                                                <input type="number" name="goal_amount" class="form-control" id="targetAmount" placeholder="5000" min="1" step="0.01" required>
                                             </div>
                                         </div>
                                     </div>
-                                                                        <div class="row">
+
+                                    <div class="row">
                                         <div class="col-md-12">
                                             <div class="form-group">
                                                 <label for="startDate" class="form-label">Start Date *</label>
@@ -87,18 +90,19 @@
                                         </div>
                                     </div>
 
-                                    <!-- Gallery Images Section -->
+                                    <!-- Gallery Images Section - COMMENTED OUT -->
+                                    {{-- 
                                     <div class="form-group gallery-section">
                                         <label class="form-label">Gallery Images *</label>
                                         
                                         <!-- Simple Multiple File Input (Primary) -->
                                         <div id="simpleFileInput">
-                                            <input type="file" class="form-control" name="gallery_images[]" accept="image/*" multiple required>
+                                            <input type="file" class="form-control" name="gallery_images[]" id="galleryImages" accept="image/*" multiple required>
                                             <small class="text-muted">Select multiple images for your campaign gallery (JPG, JPEG, PNG - Max 5MB each)</small>
                                         </div>
                                         
                                         <!-- Dropzone (Fallback) -->
-                                        <div class="dropzone" id="gigImagesDropzone" style="display: none;">
+                                        <div class="dropzone" id="" style="display: none;">
                                             <div class="dz-message">
                                                 <i class="fas fa-cloud-upload-alt"></i>
                                                 <h4>Drop images here or click to upload</h4>
@@ -114,10 +118,11 @@
                                         </div>
                                         <small class="text-muted">* Minimum one gallery image is required</small>
                                     </div>
+                                    --}}
 
                                     <div class="d-flex gap-3">
                                         <button type="submit" class="btn btn-primary" id="submitBtn">
-                                            <i class="fas fa-save me-2"></i>Save as Draft
+                                            <i class="fas fa-save me-2"></i>Submit 
                                         </button>
                                         <button type="button" class="btn btn-primary" onclick="previewGig()">
                                             <i class="fas fa-eye me-2"></i>Preview
@@ -130,13 +135,14 @@
                             </div>
                         </div>
 
-                        <div class="col-lg-4">
+                                                            <div class="col-lg-4">
                             <div class="content-card">
                                 <h5 class="mb-3">Preview</h5>
                                 <div id="gigPreview">
                                     <div class="preview-card">
-                                        <div class="preview-image">
-                                            <i class="fas fa-image"></i>
+                                        <div class="preview-image" id="previewMainImage">
+                                            <i class="fas fa-image" id="previewImageIcon"></i>
+                                            <img id="previewImage" src="" alt="Preview" style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 10px 10px 0 0;">
                                         </div>
                                         <div class="preview-content">
                                             <div class="preview-title">Your Gig Title</div>
@@ -169,9 +175,11 @@
 @endpush
 
 @push('page-script-lib')
-    <script src="{{ asset($activeThemeTrue . 'js/ckeditor.js') }}"></script>
-    <script src="{{ asset('assets/universal/js/datepicker.js') }}"></script>
-    <script src="{{ asset('assets/universal/js/datepicker.en.js') }}"></script>
+<!-- CKEditor 4 CDN - Latest LTS Version -->
+<script src="https://cdn.ckeditor.com/4.25.1-lts/standard/ckeditor.js"></script>
+
+<script src="{{ asset('assets/universal/js/datepicker.js') }}"></script>
+<script src="{{ asset('assets/universal/js/datepicker.en.js') }}"></script>
     <!-- Load Dropzone from CDN for reliability -->
     <script src="https://unpkg.com/dropzone@6.0.0-beta.2/dist/dropzone-min.js"></script>
 @endpush
@@ -352,7 +360,8 @@
     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
-/* Gallery Section Styling */
+/* Gallery Section Styling - COMMENTED OUT */
+/*
 .gallery-section {
     margin-bottom: 30px;
 }
@@ -362,63 +371,571 @@
     color: #495057;
     margin-bottom: 10px;
 }
+*/
+
+/* Form Group Spacing */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+}
+
+/* Button Styling */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: #007bff;
+    border-color: #007bff;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+    border-color: #0056b3;
+}
+
+/* Input Styling */
+.form-control {
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Preview Card Enhancements */
+.preview-card {
+    transition: all 0.3s ease;
+}
+
+.preview-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* CKEditor Specific Styling */
+.cke_chrome {
+    border: 1px solid #ced4da !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
+}
+
+.cke_top {
+    background: #f8f9fa !important;
+    border-bottom: 1px solid #ced4da !important;
+    border-radius: 6px 6px 0 0 !important;
+}
+
+.cke_bottom {
+    background: #f8f9fa !important;
+    border-top: 1px solid #ced4da !important;
+    border-radius: 0 0 6px 6px !important;
+}
+
+.cke_editor_gigDescription {
+    margin-bottom: 20px !important;
+}
+
+/* Ensure CKEditor is visible */
+.cke {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Validation Error Styling */
+.form-control.is-invalid {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.form-control.is-valid {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+.invalid-feedback {
+    display: block;
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: #dc3545;
+}
 </style>
 
 @section('page-script')
     <script type="text/javascript">
-        console.log('Script starting...');
-        console.log('jQuery available:', typeof $ !== 'undefined');
         
-        (function($) {
-
-            // Add More Preferred Amounts On Campaign Create Start
-            $('#addMoreAmounts').on('click', function () {
-                $('.add-more-amounts').append(`
-                    <div class="extra-amount d-flex gap-2 pt-2">
-                        <div class="input--group w-100">
-                            <span class="input-group-text">{{ $setting->cur_sym }}</span>
-                            <input type="number" step="any" min="0" class="form--control" name="preferred_amounts[]" required>
-                        </div>
-                        <button type="button" class="btn btn-danger rounded-circle close-extra-amount" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-minus"></i>
-                        </button>
-                    </div>
-                `)
-            })
-
-            $(document).on('click', '.close-extra-amount', function () {
-                $(this).closest('.extra-amount').remove()
-            })
-            // Add More Preferred Amounts On Campaign Create End
-
-            $('.date-picker').datepicker({
-                dateFormat: 'dd-mm-yyyy',
-                minDate: new Date(),
-            })
-
-            $('.date-picker').on('input keyup keydown keypress', function() {
-                return false
-            })
-        })(jQuery)
-
-        // Form Submission with Alerts
-        $('#createGigForm').on('submit', function(e) {
-            e.preventDefault();
+        // CKEditor License Configuration
+        if (typeof CKEDITOR !== 'undefined') {
+            // Set license key from environment variable (recommended for production)
+            // Add this to your .env file: CKEDITOR_LICENSE_KEY=your_license_key_here
+            CKEDITOR.licenseKey = '{{ config("app.ckeditor_license_key", "") }}';
             
-            // Check if gallery images are selected (for simple file input)
-            var fileInput = $('input[name="gallery_images[]"]');
-            if (fileInput.length > 0 && fileInput[0].files.length === 0) {
-                alert('❌ Please select at least one gallery image!');
-                return false;
+            // If you want to hardcode the license key (not recommended for production):
+            // CKEDITOR.licenseKey = 'YOUR_LICENSE_KEY_HERE';
+        }
+        
+        // Wait for document to be ready
+        $(document).ready(function() {
+            
+            // CKEditor Configuration - Initialize inside document ready
+            function initializeCKEditor() {
+                if (typeof CKEDITOR !== 'undefined') {
+                    try {
+                        // Check if element exists
+                        if ($('#gigDescription').length > 0) {
+                            CKEDITOR.replace('gigDescription', {
+                                height: 300,
+                                toolbar: [
+                                    { name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Strike'] },
+                                    { name: 'paragraph', items: ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'Blockquote', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'] },
+                                    { name: 'links', items: ['Link', 'Unlink'] },
+                                    { name: 'insert', items: ['Image', 'Table', 'HorizontalRule'] },
+                                    { name: 'styles', items: ['Format'] },
+                                    { name: 'tools', items: ['Maximize'] }
+                                ],
+                                removeButtons: '',
+                                removePlugins: 'elementspath,resize',
+                                removeDialogTabs: 'image:advanced;link:advanced',
+                                contentsCss: ['body { font-family: Arial, sans-serif; font-size: 14px; }'],
+                                on: {
+                                    instanceReady: function(evt) {
+                                        setupRealTimeDescriptionPreview();
+                                    }
+                                }
+                            });
+                        } else {
+                            console.error('gigDescription textarea not found!');
+                        }
+                    } catch (error) {
+                        console.error('Error initializing CKEditor:', error);
+                        // Fallback to regular textarea
+                        $('#gigDescription').show();
+                    }
+                } else {
+                    console.error('CKEditor is not loaded! Using fallback textarea');
+                    // Show the original textarea if CKEditor fails
+                    $('#gigDescription').show();
+                }
             }
             
-            // Check if gallery images are uploaded (only if Dropzone is available)
-            if (typeof gigImagesDropzone !== 'undefined') {
-                var uploadedFiles = gigImagesDropzone.getAcceptedFiles();
-                if (uploadedFiles.length === 0) {
-                    alert('❌ Please upload at least one gallery image!');
-                    return false;
+            // Initialize CKEditor
+            initializeCKEditor();
+            
+            // Fallback: If CKEditor doesn't load within 3 seconds, show regular textarea
+            setTimeout(function() {
+                if (typeof CKEDITOR === 'undefined' || !CKEDITOR.instances.gigDescription) {
+                    $('#gigDescription').show().css({
+                        'display': 'block',
+                        'min-height': '300px',
+                        'width': '100%',
+                        'padding': '10px',
+                        'border': '1px solid #ced4da',
+                        'border-radius': '6px',
+                        'font-family': 'Arial, sans-serif',
+                        'font-size': '14px'
+                    });
+                    setupDescriptionPreview(); // Setup preview for regular textarea
                 }
+            }, 3000);
+
+            // Initialize datepicker with error handling
+            if (typeof $.fn.datepicker !== 'undefined') {
+                $('.date-picker').datepicker({
+                    dateFormat: 'dd-mm-yyyy',
+                    minDate: new Date(),
+                });
+
+                $('.date-picker').on('input keyup keydown keypress', function() {
+                    return false;
+                });
+            } else {
+                console.error('Datepicker plugin not loaded!');
+                // Fallback to HTML5 date inputs
+                $('.date-picker').attr('type', 'date');
+            }
+            
+            // Real-time preview updates
+            $('#gigTitle').on('input', function() {
+                $('.preview-title').text($(this).val() || 'Your Gig Title');
+            });
+            
+            // Yeh code targetAmount input field ki value change hone par preview section ko update karta hai.
+            // Jab user targetAmount field mein koi value dalta hai, to yeh function chalta hai:
+            // 1. amount variable mein input ki value store hoti hai (agar khali ho to '0' set hota hai).
+            // 2. currencySymbol variable mein currency ka symbol aata hai (Laravel variable se).
+            // 3. '.preview-amount' element mein updated amount show hota hai (currency ke sath).
+            // 4. progress bar ki width update hoti hai (lekin abhi yahan 0/amount hai, to hamesha 0% hi rahegi).
+            // 5. '.text-muted' element mein goal ka text update hota hai (0% of $amount goal).
+            $('#targetAmount').on('input', function() {
+                var amount = $(this).val() || '0';
+                var currencySymbol = '{{ $setting->cur_sym }}';
+                $('.preview-amount').text(currencySymbol + amount);
+                var progress = amount > 0 ? Math.min((0 / amount) * 100, 100) : 0;
+                $('.progress-bar').css('width', progress + '%');
+                // $('.text-muted').text('0% of ' + currencySymbol + amount + ' goal');
+            });
+            
+            $('#gigCategory').on('change', function() {
+                var categoryText = $(this).find('option:selected').text();
+                $('.preview-category').text(categoryText || 'Category');
+            });
+            
+            // Description preview update (for CKEditor and fallback textarea)
+            function setupDescriptionPreview() {
+                if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances && CKEDITOR.instances.gigDescription) {
+                    const editor = CKEDITOR.instances.gigDescription;
+                    if (editor && typeof editor.on === 'function') {
+                        // CKEditor is available
+                        editor.on('change', function() {
+                            updateDescriptionPreview();
+                        });
+                        
+                        editor.on('keyup', function() {
+                            updateDescriptionPreview();
+                        });
+                        
+                        editor.on('keydown', function() {
+                            updateDescriptionPreview();
+                        });
+                        
+                        editor.on('input', function() {
+                            updateDescriptionPreview();
+                        });
+                        
+                        // Also listen for paste events
+                        editor.on('paste', function() {
+                            setTimeout(function() {
+                                updateDescriptionPreview();
+                            }, 100);
+                        });
+                    }
+                } else {
+                    // Fallback to regular textarea
+                    $('#gigDescription').on('input keyup keydown change paste', function() {
+                        updateDescriptionPreview();
+                    });
+                }
+            }
+            
+            // Setup description preview
+            setupDescriptionPreview();
+            
+            // Description preview update function
+            function updateDescriptionPreview() {
+                let description = '';
+                if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances && CKEDITOR.instances.gigDescription) {
+                    const editor = CKEDITOR.instances.gigDescription;
+                    if (editor && typeof editor.getData === 'function') {
+                        description = editor.getData();
+                    } else {
+                        description = $('#gigDescription').val();
+                    }
+                } else {
+                    description = $('#gigDescription').val();
+                }
+                
+                // Remove HTML tags and get plain text
+                let plainText = description.replace(/<[^>]*>/g, '').trim();
+                
+                // Limit to 150 characters for preview
+                if (plainText.length > 150) {
+                    plainText = plainText.substring(0, 150) + '...';
+                }
+                
+                $('.preview-description').text(plainText || 'Your gig description will appear here...');
+            }
+            
+            // Add real-time typing preview with debouncing
+            let typingTimer;
+            function setupRealTimeDescriptionPreview() {
+                if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances && CKEDITOR.instances.gigDescription) {
+                    const editor = CKEDITOR.instances.gigDescription;
+                    
+                    if (editor && typeof editor.on === 'function') {
+                        // Listen to all possible input events
+                        editor.on('keyup', function() {
+                            clearTimeout(typingTimer);
+                            typingTimer = setTimeout(function() {
+                                updateDescriptionPreview();
+                            }, 50); // Update after 50ms of no typing
+                        });
+                        
+                        editor.on('keydown', function() {
+                            clearTimeout(typingTimer);
+                            updateDescriptionPreview(); // Immediate update on keydown
+                        });
+                        
+                        editor.on('input', function() {
+                            clearTimeout(typingTimer);
+                            typingTimer = setTimeout(function() {
+                                updateDescriptionPreview();
+                            }, 30); // Very fast update
+                        });
+                        
+                        editor.on('paste', function() {
+                            clearTimeout(typingTimer);
+                            typingTimer = setTimeout(function() {
+                                updateDescriptionPreview();
+                            }, 100);
+                        });
+                    }
+                }
+            }
+            
+            // Initialize real-time preview after CKEditor is ready
+            if (typeof CKEDITOR !== 'undefined') {
+                CKEDITOR.on('instanceReady', function(evt) {
+                    if (evt.editor && evt.editor.name === 'gigDescription') {
+                        setupRealTimeDescriptionPreview();
+                    }
+                });
+            }
+            
+            // Main Image Preview Functionality
+            $('#mainImage').on('change', function() {
+                const file = this.files[0];
+                const previewImage = $('#previewImage');
+                const previewImageIcon = $('#previewImageIcon');
+                
+                if (file) {
+                    // Check if file is an image
+                    if (!file.type.startsWith('image/')) {
+                        alert('Please select an image file');
+                        this.value = '';
+                        return;
+                    }
+                    
+                    // Check file size (5MB limit)
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('Image size must be less than 5MB');
+                        this.value = '';
+                        return;
+                    }
+                    
+                    // Create a FileReader to preview the image
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImage.attr('src', e.target.result);
+                        previewImage.show();
+                        previewImageIcon.hide();
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    // No file selected, show default icon
+                    previewImage.hide();
+                    previewImageIcon.show();
+                    previewImage.attr('src', '');
+                }
+            });
+        });
+
+        // Form Validation Function
+        function validateForm() {
+            let isValid = true;
+            let errors = [];
+            
+            // Clear previous validation states
+            $('.form-control').removeClass('is-invalid is-valid');
+            $('.invalid-feedback').remove();
+            
+            // Validate Gig Title
+            const gigTitle = $('#gigTitle').val().trim();
+            if (!gigTitle) {
+                $('#gigTitle').addClass('is-invalid');
+                $('#gigTitle').after('<div class="invalid-feedback">Gig title is required</div>');
+                errors.push('Gig title is required');
+                isValid = false;
+            } else if (gigTitle.length < 10) {
+                $('#gigTitle').addClass('is-invalid');
+                $('#gigTitle').after('<div class="invalid-feedback">Gig title must be at least 10 characters long</div>');
+                errors.push('Gig title must be at least 10 characters long');
+                isValid = false;
+            } else {
+                $('#gigTitle').addClass('is-valid');
+            }
+            
+            // Validate Category
+            const category = $('#gigCategory').val();
+            if (!category) {
+                $('#gigCategory').addClass('is-invalid');
+                $('#gigCategory').after('<div class="invalid-feedback">Please select a category</div>');
+                errors.push('Please select a category');
+                isValid = false;
+            } else {
+                $('#gigCategory').addClass('is-valid');
+            }
+            
+            // Validate Description
+            let description = '';
+            if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances && CKEDITOR.instances.gigDescription) {
+                const editor = CKEDITOR.instances.gigDescription;
+                if (editor && typeof editor.getData === 'function') {
+                    description = editor.getData().replace(/<[^>]*>/g, '').trim();
+                } else {
+                    description = $('#gigDescription').val().trim();
+                }
+            } else {
+                description = $('#gigDescription').val().trim();
+            }
+            
+            if (!description) {
+                $('#gigDescription').addClass('is-invalid');
+                $('#gigDescription').after('<div class="invalid-feedback">Description is required</div>');
+                errors.push('Description is required');
+                isValid = false;
+            } else if (description.length < 50) {
+                $('#gigDescription').addClass('is-invalid');
+                $('#gigDescription').after('<div class="invalid-feedback">Description must be at least 50 characters long</div>');
+                errors.push('Description must be at least 50 characters long');
+                isValid = false;
+            } else {
+                $('#gigDescription').addClass('is-valid');
+            }
+            
+            // Validate Main Image
+            const mainImage = $('#mainImage')[0].files[0];
+            if (!mainImage) {
+                $('#mainImage').addClass('is-invalid');
+                $('#mainImage').after('<div class="invalid-feedback">Main campaign image is required</div>');
+                errors.push('Main campaign image is required');
+                isValid = false;
+            } else {
+                // Check file size (5MB limit)
+                if (mainImage.size > 5 * 1024 * 1024) {
+                    $('#mainImage').addClass('is-invalid');
+                    $('#mainImage').after('<div class="invalid-feedback">Main image size must be less than 5MB</div>');
+                    errors.push('Main image size must be less than 5MB');
+                    isValid = false;
+                } else {
+                    $('#mainImage').addClass('is-valid');
+                }
+            }
+            
+            // Validate Target Amount
+            const targetAmount = $('#targetAmount').val();
+            if (!targetAmount) {
+                $('#targetAmount').addClass('is-invalid');
+                $('#targetAmount').after('<div class="invalid-feedback">Target amount is required</div>');
+                errors.push('Target amount is required');
+                isValid = false;
+            } else if (targetAmount < 1) {
+                $('#targetAmount').addClass('is-invalid');
+                $('#targetAmount').after('<div class="invalid-feedback">Target amount must be at least $1</div>');
+                errors.push('Target amount must be at least $1');
+                isValid = false;
+            } else {
+                $('#targetAmount').addClass('is-valid');
+            }
+            
+            // Validate Start Date
+            const startDate = $('#startDate').val();
+            if (!startDate) {
+                $('#startDate').addClass('is-invalid');
+                $('#startDate').after('<div class="invalid-feedback">Start date is required</div>');
+                errors.push('Start date is required');
+                isValid = false;
+            } else {
+                const today = new Date();
+                const selectedDate = new Date(startDate);
+                if (selectedDate < today) {
+                    $('#startDate').addClass('is-invalid');
+                    $('#startDate').after('<div class="invalid-feedback">Start date cannot be in the past</div>');
+                    errors.push('Start date cannot be in the past');
+                    isValid = false;
+                } else {
+                    $('#startDate').addClass('is-valid');
+                }
+            }
+            
+            // Validate End Date
+            const endDate = $('#endDate').val();
+            if (!endDate) {
+                $('#endDate').addClass('is-invalid');
+                $('#endDate').after('<div class="invalid-feedback">End date is required</div>');
+                errors.push('End date is required');
+                isValid = false;
+            } else {
+                const startDateObj = new Date(startDate);
+                const endDateObj = new Date(endDate);
+                if (endDateObj <= startDateObj) {
+                    $('#endDate').addClass('is-invalid');
+                    $('#endDate').after('<div class="invalid-feedback">End date must be after start date</div>');
+                    errors.push('End date must be after start date');
+                    isValid = false;
+                } else {
+                    $('#endDate').addClass('is-valid');
+                }
+            }
+            
+            // Validate Gallery Images - COMMENTED OUT
+            /*
+            const galleryImages = $('#galleryImages')[0].files;
+            if (!galleryImages || galleryImages.length === 0) {
+                $('#galleryImages').addClass('is-invalid');
+                $('#galleryImages').after('<div class="invalid-feedback">At least one gallery image is required</div>');
+                errors.push('At least one gallery image is required');
+                isValid = false;
+            } else {
+                // Check each gallery image
+                for (let i = 0; i < galleryImages.length; i++) {
+                    if (galleryImages[i].size > 5 * 1024 * 1024) {
+                        $('#galleryImages').addClass('is-invalid');
+                        $('#galleryImages').after('<div class="invalid-feedback">Gallery image size must be less than 5MB each</div>');
+                        errors.push('Gallery image size must be less than 5MB each');
+                        isValid = false;
+                        break;
+                    }
+                }
+                if (isValid) {
+                    $('#galleryImages').addClass('is-valid');
+                }
+            }
+            */
+            
+            return { isValid, errors };
+        }
+
+        // Show Toast Function
+        function showToast(type, message) {
+            if (typeof iziToast !== 'undefined') {
+                iziToast[type]({
+                    message: message,
+                    position: "topRight",
+                    timeout: 5000
+                });
+            } else {
+                // Fallback to alert if iziToast is not available
+                alert(message);
+            }
+        }
+
+        // Form Submission with Validation
+        $(document).on('submit', '#createGigForm', function(e) {
+            e.preventDefault();
+            
+            // Disable HTML5 validation
+            this.setAttribute('novalidate', true);
+            
+            // Validate form
+            const validation = validateForm();
+            
+            if (!validation.isValid) {
+                // Show first error in toast
+                if (validation.errors.length > 0) {
+                    showToast('error', validation.errors[0]);
+                }
+                return false;
             }
             
             // Show loading state
@@ -426,6 +943,14 @@
             
             // Get form data
             var formData = new FormData(this);
+            
+            // Add CKEditor content to form data
+            if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances && CKEDITOR.instances.gigDescription) {
+                const editor = CKEDITOR.instances.gigDescription;
+                if (editor && typeof editor.getData === 'function') {
+                    formData.set('description', editor.getData());
+                }
+            }
             
             // Submit form via AJAX
             $.ajax({
@@ -438,8 +963,8 @@
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
                 success: function(response) {
-                    // Success alert
-                    alert('✅ Campaign created successfully!');
+                    // Success toast
+                    showToast('success', '✅ Campaign created successfully!');
                     
                     // Redirect to campaigns list or show success message
                     if (response.redirect) {
@@ -449,51 +974,65 @@
                     }
                 },
                 error: function(xhr, status, error) {
-                    // Error alert
+                    // Error toast
                     var errorMessage = '❌ Error occurred while creating campaign!';
                     
                     if (xhr.responseJSON && xhr.responseJSON.message) {
                         errorMessage = '❌ ' + xhr.responseJSON.message;
+                    } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                        // Handle validation errors from server
+                        const errors = xhr.responseJSON.errors;
+                        const firstError = Object.values(errors)[0];
+                        if (Array.isArray(firstError)) {
+                            errorMessage = '❌ ' + firstError[0];
+                        } else {
+                            errorMessage = '❌ ' + firstError;
+                        }
                     } else if (xhr.responseText) {
                         errorMessage = '❌ ' + xhr.responseText;
                     }
                     
-                    alert(errorMessage);
+                    showToast('error', errorMessage);
                     
                     // Reset button state
-                    $('#submitBtn').prop('disabled', false).html('<i class="fas fa-save me-2"></i>Save as Draft');
+                    $('#submitBtn').prop('disabled', false).html('<i class="fas fa-save me-2"></i>Submit');
                 }
             });
         });
 
-        // CKEditor Initialization
-        if (typeof CKEDITOR !== 'undefined') {
-            CKEDITOR.replace('gigDescription', {
-                height: 300,
-                removePlugins: 'elementspath,resize',
-                toolbarGroups: [
-                    { name: 'document', groups: [ 'mode', 'document', 'doctools' ] },
-                    { name: 'clipboard', groups: [ 'clipboard', 'undo' ] },
-                    { name: 'editing', groups: [ 'find', 'selection', 'spellchecker', 'editing' ] },
-                    { name: 'forms', groups: [ 'forms' ] },
-                    '/',
-                    { name: 'basicstyles', groups: [ 'basicstyles', 'cleanup' ] },
-                    { name: 'paragraph', groups: [ 'list', 'indent', 'blocks', 'align', 'bidi', 'paragraph' ] },
-                    { name: 'links', groups: [ 'links' ] },
-                    { name: 'insert', groups: [ 'insert' ] },
-                    '/',
-                    { name: 'styles', groups: [ 'styles' ] },
-                    { name: 'colors', groups: [ 'colors' ] },
-                    { name: 'tools', groups: [ 'tools' ] },
-                    { name: 'others', groups: [ 'others' ] }
-                ],
-                removeButtons: 'Save,NewPage,Preview,Print,Templates,Cut,Copy,Paste,PasteText,PasteFromWord,Find,Replace,SelectAll,Scayt,Form,Checkbox,Radio,TextField,Textarea,Select,Button,ImageButton,HiddenField,About'
-            });
-        } else {
-            console.error('CKEditor is not loaded!');
-        }
-
-        // Dropzone Configuration
+        // Preview function
+        window.previewGig = function() {
+            var title = $('#gigTitle').val() || 'Your Gig Title';
+            var category = $('#gigCategory option:selected').text() || 'Category';
+            var amount = $('#targetAmount').val() || '0';
+            var currencySymbol = '{{ $setting->cur_sym }}';
+            
+            $('.preview-title').text(title);
+            $('.preview-category').text(category);
+            $('.preview-amount').text(currencySymbol + amount);
+            
+            // Update description preview
+            updateDescriptionPreview();
+            
+            // Update progress bar
+            var progress = amount > 0 ? Math.min((0 / amount) * 100, 100) : 0;
+            $('.progress-bar').css('width', progress + '%');
+            $('.text-muted').text('0% of ' + currencySymbol + amount + ' goal');
+            
+            // Check if main image is selected and show preview
+            const mainImageFile = $('#mainImage')[0].files[0];
+            if (mainImageFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#previewImage').attr('src', e.target.result).show();
+                    $('#previewImageIcon').hide();
+                };
+                reader.readAsDataURL(mainImageFile);
+            }
+        };
+        
+        // Dropzone Configuration - COMMENTED OUT
+        /*
         console.log('Checking Dropzone availability...');
         console.log('Dropzone type:', typeof Dropzone);
         
@@ -502,7 +1041,6 @@
         $('#gigImagesDropzone').hide();
         
         // Optional: Try to initialize Dropzone if needed (commented out to avoid errors)
-        /*
         if (typeof Dropzone === 'undefined') {
             console.error('Dropzone is not loaded! Using simple file input.');
         } else {

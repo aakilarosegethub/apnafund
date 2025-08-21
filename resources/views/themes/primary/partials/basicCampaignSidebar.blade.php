@@ -1,4 +1,19 @@
 <div class="post-sidebar__card" data-aos="fade-up" data-aos-duration="1500">
+    <h3 class="post-sidebar__card__header">@lang('Support This Campaign')</h3>
+    <div class="post-sidebar__card__body">
+        <div class="text-center mb-3">
+            <p class="text-muted">@lang('Make a difference today')</p>
+        </div>
+        <a href="{{ route('campaign.donate', $campaignData->slug) }}" class="btn btn--base w-100 btn-lg">
+            <i class="ti ti-heart me-2"></i>@lang('Donate Now')
+        </a>
+        <div class="text-center mt-3">
+            <small class="text-muted">@lang('Secure payment via multiple gateways')</small>
+        </div>
+    </div>
+</div>
+
+<div class="post-sidebar__card" data-aos="fade-up" data-aos-duration="1500">
     <h3 class="post-sidebar__card__header">@lang('Time Left')</h3>
     <div class="post-sidebar__card__body">
         <div class="campaign__countdown" data-target-date="{{ showDateTime(@$campaignData->end_date, 'Y-m-d\TH:i:s') }}"></div>

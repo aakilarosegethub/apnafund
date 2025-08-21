@@ -27,9 +27,14 @@
                 <span><i class="ti ti-building-bank"></i> @lang('Raised'):</span> {{ $setting->cur_sym . showAmount(@$campaign->raised_amount) }}
             </li>
         </ul>
-        <a href="{{ route('campaign.show', $campaign->slug) }}" class="btn btn--sm btn--base">
-            @lang('Make A Donation')
-        </a>
+        <div class="d-flex gap-2">
+            <a href="{{ route('campaign.show', $campaign->slug) }}" class="btn btn--sm btn--base">
+                @lang('Make A Donation')
+            </a>
+            <a href="{{ route('campaign.rewards', $campaign->slug) }}" class="btn btn--sm btn--outline">
+                <i class="ti ti-gift me-1"></i>@lang('Rewards')
+            </a>
+        </div>
     </div>
 </div>
 

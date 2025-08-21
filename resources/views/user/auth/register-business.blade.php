@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="{{ asset('apnafund/assets/bootstrap/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="shortcut icon" href="{{ asset('apnafund/assets/images/fav-icon.png') }}" type="image/png">
+    <!-- Add iziToast CSS -->
+    <link rel="stylesheet" href="{{ asset('assets/universal/css/iziToast.min.css') }}">
     <style>
         body {
             background: #ffffff;
@@ -435,8 +437,13 @@
             <p class="step-subtitle">We'll use this to keep you updated</p>
             
             <div class="form-group">
-                <label class="form-label">Full Name</label>
-                <input type="text" class="form-control" id="fullName" placeholder="Enter your full name">
+                <label class="form-label">First Name</label>
+                <input type="text" class="form-control" id="firstName" placeholder="Enter your first name">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Last Name</label>
+                <input type="text" class="form-control" id="lastName" placeholder="Enter your last name">
             </div>
 
             <div class="form-group">
@@ -504,10 +511,16 @@
                 </div>
                 <h2 class="success-title">Account Created Successfully!</h2>
                 <p class="success-subtitle">Welcome to Apna Fund! Your account has been created and you can now start building your crowdfunding campaign.</p>
-                <button class="btn-theme" onclick="goToDashboard()">Go to Dashboard</button>
+                <button class="btn-theme" onclick="goToHome()">Go to Home</button>
             </div>
         </div>
     </div>
+
+    <!-- Include toasts partial -->
+    @include('partials.toasts')
+
+    <!-- Add iziToast JS -->
+    <script src="{{ asset('assets/universal/js/iziToast.min.js') }}"></script>
 
     <script>
         let currentStep = 1;
@@ -536,40 +549,134 @@
             document.getElementById('step' + step).classList.add('active');
         }
 
+        function showToast(type, message) {
+            if (typeof iziToast !== 'undefined') {
+                iziToast[type]({
+                    message: message,
+                    position: "topRight"
+                });
+            } else {
+                alert(message);
+            }
+        }
+
+        function refreshCsrfToken() {
+            // Fetch a new CSRF token from the server
+            return fetch('/csrf-token', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Update the meta tag with new token
+                document.querySelector('meta[name="csrf-token"]').setAttribute('content', data.token);
+                return data.token;
+            })
+            .catch(error => {
+                console.error('Error refreshing CSRF token:', error);
+                // Fallback: reload the page
+                window.location.reload();
+            });
+        }
+
+        function getCsrfToken() {
+            const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            if (!token) {
+                showToast('error', 'CSRF token not found. Please refresh the page.');
+                return null;
+            }
+            return token;
+        }
+
         function validateStep(step) {
+            const errors = [];
+            
             switch(step) {
                 case 1:
-                    return document.getElementById('businessType').value !== '';
+                    if (document.getElementById('businessType').value === '') {
+                        errors.push('Please select your business type');
+                    }
+                    break;
                 case 2:
-                    return document.getElementById('businessName').value !== '' && 
-                           document.getElementById('businessDescription').value !== '' && 
-                           document.getElementById('industry').value !== '';
+                    if (document.getElementById('businessName').value === '') {
+                        errors.push('Please enter your business name');
+                    }
+                    if (document.getElementById('businessDescription').value === '') {
+                        errors.push('Please enter your business description');
+                    }
+                    if (document.getElementById('industry').value === '') {
+                        errors.push('Please select your industry');
+                    }
+                    break;
                 case 3:
-                    return document.getElementById('fundingAmount').value !== '' && 
-                           document.getElementById('fundUsage').value !== '' && 
-                           document.getElementById('campaignDuration').value !== '';
+                    if (document.getElementById('fundingAmount').value === '') {
+                        errors.push('Please select funding amount');
+                    }
+                    if (document.getElementById('fundUsage').value === '') {
+                        errors.push('Please select how you will use the funds');
+                    }
+                    if (document.getElementById('campaignDuration').value === '') {
+                        errors.push('Please select campaign duration');
+                    }
+                    break;
                 case 4:
-                    return document.getElementById('fullName').value !== '' && 
-                           document.getElementById('phone').value !== '' && 
-                           document.getElementById('country').value !== '';
+                    if (document.getElementById('firstName').value === '') {
+                        errors.push('Please enter your first name');
+                    }
+                    if (document.getElementById('lastName').value === '') {
+                        errors.push('Please enter your last name');
+                    }
+                    if (document.getElementById('phone').value === '') {
+                        errors.push('Please enter your phone number');
+                    }
+                    if (document.getElementById('country').value === '') {
+                        errors.push('Please select your country');
+                    }
+                    break;
                 case 5:
                     const email = document.getElementById('signupEmail').value;
                     const password = document.getElementById('password').value;
                     const confirmPassword = document.getElementById('confirmPassword').value;
                     const termsAccepted = document.getElementById('termsCheckbox').checked;
                     
-                    return email !== '' && 
-                           password !== '' && 
-                           password === confirmPassword && 
-                           password.length >= 8 && 
-                           termsAccepted;
-                default:
-                    return true;
+                    if (email === '') {
+                        errors.push('Please enter your email address');
+                    } else if (!isValidEmail(email)) {
+                        errors.push('Please enter a valid email address');
+                    }
+                    
+                    if (password === '') {
+                        errors.push('Please enter a password');
+                    } else if (password.length < 8) {
+                        errors.push('Password must be at least 8 characters long');
+                    }
+                    
+                    if (confirmPassword === '') {
+                        errors.push('Please confirm your password');
+                    } else if (password !== confirmPassword) {
+                        errors.push('Passwords do not match');
+                    }
+                    
+                    if (!termsAccepted) {
+                        errors.push('Please accept the Terms of Service and Privacy Policy');
+                    }
+                    break;
             }
+            
+            return errors;
+        }
+
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
         }
 
         function nextStep() {
-            if (validateStep(currentStep)) {
+            const errors = validateStep(currentStep);
+            if (errors.length === 0) {
                 if (currentStep < totalSteps) {
                     currentStep++;
                     showStep(currentStep);
@@ -577,7 +684,8 @@
                     updateStepIndicator();
                 }
             } else {
-                alert('Please fill in all required fields before proceeding.');
+                // Show first error in toast
+                showToast('error', errors[0]);
             }
         }
 
@@ -591,7 +699,8 @@
         }
 
         function createAccount() {
-            if (validateStep(currentStep)) {
+            const errors = validateStep(currentStep);
+            if (errors.length === 0) {
                 // Collect all form data
                 const formData = {
                     businessType: document.getElementById('businessType').value,
@@ -601,39 +710,51 @@
                     fundingAmount: document.getElementById('fundingAmount').value,
                     fundUsage: document.getElementById('fundUsage').value,
                     campaignDuration: document.getElementById('campaignDuration').value,
-                    fullName: document.getElementById('fullName').value,
+                    firstName: document.getElementById('firstName').value,
+                    lastName: document.getElementById('lastName').value,
                     phone: document.getElementById('phone').value,
                     country: document.getElementById('country').value,
                     signupEmail: document.getElementById('signupEmail').value,
                     password: document.getElementById('password').value,
                     confirmPassword: document.getElementById('confirmPassword').value,
-                    termsCheckbox: document.getElementById('termsCheckbox').checked,
-                    _token: document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    termsCheckbox: document.getElementById('termsCheckbox').checked
                 };
+
+                // Show loading state
+                const createBtn = document.querySelector('#step5 .btn-theme');
+                const originalText = createBtn.textContent;
+                createBtn.textContent = 'Creating Account...';
+                createBtn.disabled = true;
 
                 // Send data to backend
                 fetch('{{ route("user.register.business") }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Accept': 'application/json'
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': getCsrfToken()
                     },
                     body: JSON.stringify(formData)
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(JSON.stringify(data));
+                        });
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.success) {
-                        // Show success step
-                        currentStep = 6;
-                        showStep('successStep');
+                        // Show success toast
+                        showToast('success', data.message || 'Account created successfully!');
+                        
+                        // Go to success step
+                        currentStep = 'successStep';
+                        showStep(currentStep);
                         updateProgress();
                         updateStepIndicator();
-                        
-                        // Redirect after a short delay
-                        setTimeout(() => {
-                            window.location.href = data.redirect;
-                        }, 2000);
                     } else {
                         // Show error message
                         let errorMessage = 'An error occurred while creating your account.';
@@ -643,15 +764,40 @@
                         } else if (data.message) {
                             errorMessage = data.message;
                         }
-                        alert(errorMessage);
+                        showToast('error', errorMessage);
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('An error occurred while creating your account. Please try again.');
+                    try {
+                        // Try to parse the error as JSON to get validation errors
+                        const errorData = JSON.parse(error.message);
+                        if (errorData.errors) {
+                            // Handle validation errors
+                            const errorMessages = [];
+                            Object.keys(errorData.errors).forEach(field => {
+                                errorData.errors[field].forEach(message => {
+                                    errorMessages.push(message);
+                                });
+                            });
+                            showToast('error', errorMessages.join('\n'));
+                        } else if (errorData.message) {
+                            showToast('error', errorData.message);
+                        } else {
+                            showToast('error', 'An error occurred while creating your account. Please try again.');
+                        }
+                    } catch (parseError) {
+                        showToast('error', 'An error occurred while creating your account. Please try again.');
+                    }
+                })
+                .finally(() => {
+                    // Reset button state
+                    createBtn.textContent = originalText;
+                    createBtn.disabled = false;
                 });
             } else {
-                alert('Please fill in all required fields and accept the terms before creating your account.');
+                // Show first error in toast
+                showToast('error', errors[0]);
             }
         }
 
@@ -659,8 +805,8 @@
             window.location.href = '{{ route("business.resources") }}';
         }
 
-        function goToDashboard() {
-            window.location.href = '{{ route("user.home") }}';
+        function goToHome() {
+            window.location.href = '{{ route("home") }}';
         }
 
         // Initialize

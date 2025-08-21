@@ -242,4 +242,35 @@ class AdminController extends Controller
 
         return response()->download($file);
     }
+
+    function uploadFile() {
+        if (request()->hasFile('upload')) {
+            $file = request()->file('upload');
+            
+            // Validate file
+            $this->validate(request(), [
+                'upload' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
+            ]);
+
+            // Generate unique filename
+            $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            
+            // Store file in public/uploads/ckeditor directory
+            $path = $file->storeAs('uploads/ckeditor', $fileName, 'public');
+            
+            // Return CKEditor response format
+            return response()->json([
+                'uploaded' => 1,
+                'fileName' => $fileName,
+                'url' => asset('storage/' . $path)
+            ]);
+        }
+        
+        return response()->json([
+            'uploaded' => 0,
+            'error' => [
+                'message' => 'No file uploaded or invalid file type.'
+            ]
+        ]);
+    }
 }

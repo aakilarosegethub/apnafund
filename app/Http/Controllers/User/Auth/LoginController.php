@@ -89,6 +89,6 @@ class LoginController extends Controller
         $user->tc = $user->ts == ManageStatus::VERIFIED ? ManageStatus::UNVERIFIED : ManageStatus::VERIFIED;
         $user->save();
 
-        return to_route('user.home');
+        return to_route('user.dashboard');
     }
 }

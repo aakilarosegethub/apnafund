@@ -47,6 +47,9 @@ Route::middleware(['admin'])->group(function () {
 
         // File Download
         Route::get('file-download', 'fileDownload')->name('file.download');
+        
+        // CKEditor File Upload
+        Route::post('upload/file', 'uploadFile')->name('admin.upload.file');
     });
 
     // Campaign category

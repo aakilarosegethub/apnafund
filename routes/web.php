@@ -5,6 +5,11 @@ use App\Models\SiteData;
 use App\Models\Campaign;
 use App\Models\Category;
 
+// CSRF Token refresh route
+Route::get('/csrf-token', function () {
+    return response()->json(['token' => csrf_token()]);
+})->name('csrf.token');
+
 Route::controller('WebsiteController')->group(function () {
     Route::get('/', 'home')->name('home');
     Route::get('home-new', 'homeNew')->name('home.new');
@@ -16,6 +21,8 @@ Route::controller('WebsiteController')->group(function () {
     // Campaign 
     Route::prefix('campaign/{slug}')->name('campaign.')->group(function () {
         Route::get('/', 'campaignShow')->name('show');
+        Route::get('/contribute', 'campaignDonate')->name('donate');
+        Route::get('/rewards', 'RewardController@show')->name('rewards');
         Route::post('comment', 'storeCampaignComment')->name('comment');
         Route::get('fetch-comment', 'fetchCampaignComment')->name('comment.fetch');
     });

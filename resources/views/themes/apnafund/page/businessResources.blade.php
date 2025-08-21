@@ -22,70 +22,16 @@
             </div>
         </div>
 
-        <div class="row mb-5">
-            @forelse ($successElements as $successElement)
-                <div class="col-md-3 mb-4">
-                    @include($activeTheme . 'partials.success-story-card', ['successElement' => $successElement])
-                </div>
-            @empty
-                <!-- Fallback Campaign Cards if no success elements -->
-                <div class="col-md-3 mb-4">
-                    <div class="campaign-card">
-                        <div class="campaign-card-img"
-                            style="background-image: url('assets/images/banner-1.jpg'); background-size: cover; background-position: center;">
-                        </div>
-                        <div class="campaign-card-body">
-                            <h3 class="campaign-card-title">Campaign Success</h3>
-                            <p class="campaign-card-text">Learn from successful campaigns and their strategies</p>
-                            <a href="10-ways-to-level-up-crowdfunding.html" class="campaign-card-link">Learn more <i
-                                    class="fas fa-arrow-right"></i></a>
-                        </div>
+        <div class="row mb-5" id="success-stories-container">
+            <!-- Loading spinner -->
+            <div class="col-12 text-center">
+                <div class="loading-spinner">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
                     </div>
+                    <p class="mt-2">Loading success stories...</p>
                 </div>
-
-                <div class="col-md-3 mb-4">
-                    <div class="campaign-card">
-                        <div class="campaign-card-img"
-                            style="background-image: url('assets/images/banner-2.jpg'); background-size: cover; background-position: center;">
-                        </div>
-                        <div class="campaign-card-body">
-                            <h3 class="campaign-card-title">Telling Your Story</h3>
-                            <p class="campaign-card-text">Craft a compelling narrative that resonates with potential backers
-                            </p>
-                            <a href="10-ways-to-level-up-crowdfunding.html" class="campaign-card-link">Learn more <i
-                                    class="fas fa-arrow-right"></i></a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-3 mb-4">
-                    <div class="campaign-card">
-                        <div class="campaign-card-img"
-                            style="background-image: url('assets/images/banner-3.jpeg'); background-size: cover; background-position: center;">
-                        </div>
-                        <div class="campaign-card-body">
-                            <h3 class="campaign-card-title">10 Ways To Level Up</h3>
-                            <p class="campaign-card-text">Expert advice to maximize your campaign's potential and reach</p>
-                            <a href="10-ways-to-level-up-crowdfunding.html" class="campaign-card-link">Learn more <i
-                                    class="fas fa-arrow-right"></i></a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-3 mb-4">
-                    <div class="campaign-card">
-                        <div class="campaign-card-img"
-                            style="background-image: url('assets/images/banner-4.jpg'); background-size: cover; background-position: center;">
-                        </div>
-                        <div class="campaign-card-body">
-                            <h3 class="campaign-card-title">Funding Strategies</h3>
-                            <p class="campaign-card-text">Effective approaches to reach your funding goals and beyond</p>
-                            <a href="10-ways-to-level-up-crowdfunding.html" class="campaign-card-link">Learn more <i
-                                    class="fas fa-arrow-right"></i></a>
-                        </div>
-                    </div>
-                </div>
-            @endforelse
+            </div>
         </div>
 
 
@@ -537,5 +483,228 @@
                 margin-bottom: 20px;
             }
         }
+
+        /* Loading Spinner Styles */
+        .loading-spinner {
+            padding: 40px 0;
+        }
+
+        .loading-spinner p {
+            color: #666;
+            margin-top: 15px;
+        }
     </style>
+
+    <script>
+        // Configuration variables
+        const API_BASE_URL = 'https://apnafund.com/blog/wp-json/custom/posts';
+        const POSTS_COUNT = 4; // Variable to easily change the number of posts
+
+        // Function to fetch success stories from API
+        async function fetchSuccessStories() {
+            try {
+                const response = await fetch(`${API_BASE_URL}?count=${POSTS_COUNT}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Error fetching success stories:', error);
+                return null;
+            }
+        }
+
+        // Function to create success story card HTML
+        function createSuccessStoryCard(post) {
+            // Default fallback values
+            const title = post.title?.rendered || post.title || 'Success Story';
+            const excerpt = post.excerpt?.rendered || post.excerpt || 'Learn from successful campaigns and their strategies';
+            const link = post.url || '#';
+            const imageUrl = post.image_url;
+            
+            // Clean excerpt by removing HTML tags
+            const cleanExcerpt = excerpt.replace(/<[^>]*>/g, '').substring(0, 100) + '...';
+
+            return `
+                <div class="col-md-3 mb-4">
+                    <div class="campaign-card">
+                        <div class="campaign-card-img" 
+                             style="background-image: url('${imageUrl}'); background-size: cover; background-position: center;">
+                        </div>
+                        <div class="campaign-card-body">
+                            <h3 class="campaign-card-title">${title}</h3>
+                            <p class="campaign-card-text">${cleanExcerpt}</p>
+                            <a href="${link}" class="campaign-card-link" target="_blank">Learn more <i class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Function to fetch fallback data from API
+        async function fetchFallbackData() {
+            try {
+                // Try multiple API endpoints for fallback data
+                const apiEndpoints = [
+                    
+                    'https://apnafund.com/blog/wp-json/custom/posts?count=4'
+                ];
+
+                for (const endpoint of apiEndpoints) {
+                    try {
+                        const response = await fetch(endpoint);
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data && data.length > 0) {
+                                return data;
+                            }
+                        }
+                    } catch (error) {
+                        console.warn(`Failed to fetch from ${endpoint}:`, error);
+                        continue;
+                    }
+                }
+                
+                return null;
+            } catch (error) {
+                console.error('Error fetching fallback data:', error);
+                return null;
+            }
+        }
+
+        // Function to fetch alternative data from different sources
+        async function fetchAlternativeData() {
+            try {
+                // Try alternative data sources
+                const alternativeEndpoints = [
+                    'https://apnafund.com/blog/wp-json/custom/posts?count=4',
+                ];
+
+                for (const endpoint of alternativeEndpoints) {
+                    try {
+                        const response = await fetch(endpoint);
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data && data.length > 0) {
+                                return data;
+                            }
+                        }
+                    } catch (error) {
+                        console.warn(`Failed to fetch from alternative endpoint ${endpoint}:`, error);
+                        continue;
+                    }
+                }
+                
+                return null;
+            } catch (error) {
+                console.error('Error fetching alternative data:', error);
+                return null;
+            }
+        }
+
+        // Function to render fallback cards if main API fails
+        async function renderFallbackCards() {
+            // yhn ajax ka code likho
+            // Example AJAX call using jQuery to fetch fallback data (if jQuery is available)
+            
+            $.ajax({
+                url: 'https://apnafund.com/blog/wp-json/custom/posts?count=4',
+                method: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    fallbackData = data.data;
+                    // Generate HTML for each fallback post and append to #success-stories-container
+                    var html = '';
+                    if (Array.isArray(fallbackData) && fallbackData.length > 0) {
+                        fallbackData.forEach(function(post) {
+                            // Fallback for missing fields
+                            var title = post.title && post.title.rendered ? post.title.rendered : (post.title || 'Success Story');
+                            var excerpt = post.excerpt && post.excerpt.rendered ? post.excerpt.rendered : (post.excerpt || 'Learn from successful campaigns and their strategies');
+                            var link = post.url || (post.link || '#');
+                            var imageUrl = post.image_url || (post.image_url || '{{ asset("apnafund/assets/images/banner-1.jpg") }}');
+                            // Clean excerpt from HTML tags and limit length
+                            var cleanExcerpt = $('<div>').html(excerpt).text().substring(0, 100) + '...';
+
+                            html += `
+                                <div class="col-md-3 mb-4">
+                                    <div class="campaign-card">
+                                        <div class="campaign-card-img" 
+                                             style="background-image: url('${imageUrl}'); background-size: cover; background-position: center;">
+                                        </div>
+                                        <div class="campaign-card-body">
+                                            <h3 class="campaign-card-title">${title}</h3>
+                                            <p class="campaign-card-text">${cleanExcerpt}</p>
+                                            <a href="${link}" class="campaign-card-link" target="_blank">Learn more <i class="fas fa-arrow-right"></i></a>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        // Add "View All" button below the posts
+                        html += `
+                            <div class="col-12 text-center mt-3">
+                                <a href="https://apnafund.com/blog/" class="btn btn-theme">
+                                    View All
+                                </a>
+                            </div>
+                        `;
+                    } else {
+                        html = '<div class="col-12 text-center"><p>No success stories found.</p></div>';
+                    }
+                    $('#success-stories-container').html(html);
+                    // You can process and render the data here if needed
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', status, error);
+                }
+            });
+        }
+
+        // Function to render success stories
+        async function renderSuccessStories(posts) {
+            const container = document.getElementById('success-stories-container');
+            
+            if (!container) {
+                console.error('Success stories container not found');
+                return;
+            }
+
+            // Clear loading spinner
+            container.innerHTML = '';
+
+            if (posts && posts.length > 0) {
+                // Render API data
+                const cardsHTML = posts.map(post => createSuccessStoryCard(post)).join('');
+                container.innerHTML = cardsHTML;
+            } else {
+                // Render fallback cards
+                const fallbackHTML = await renderFallbackCards();
+                container.innerHTML = fallbackHTML;
+            }
+        }
+
+        // Main function to initialize success stories
+        async function initializeSuccessStories() {
+            const posts = await fetchSuccessStories();
+            renderSuccessStories(posts);
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSuccessStories();
+        });
+
+        // Export functions for potential external use
+        window.SuccessStoriesAPI = {
+            fetchSuccessStories,
+            renderSuccessStories,
+            initializeSuccessStories,
+            POSTS_COUNT
+        };
+    </script>
 @endsection 

@@ -1334,7 +1334,7 @@
 
             <!-- Actions -->
             <div class="fundraiser-actions">
-                <a href="donation-payment.html" class="btn-donate">Donate</a>
+                <a href="{{ url('campaign/' . @$campaignData->slug . '/contribute') }}" class="btn-donate">Contribute</a>
                 <a href="#" class="btn-share">Share</a>
             </div>
 
@@ -1560,7 +1560,7 @@
 
                 <div class="action-buttons">
                     <a href="#" class="btn-share-card">Share</a>
-                    <a href="donation-payment.html" class="btn-donate-card">Donate now</a>
+                    <a href="{{ url('campaign/' . @$campaignData->slug . '/contribute') }}" class="btn-donate-card">Contribute now</a>
                 </div>
 
                 <div class="donation-stats">

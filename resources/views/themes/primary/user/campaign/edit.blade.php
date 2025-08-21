@@ -1,4 +1,4 @@
-@extends($activeTheme . 'layouts.frontend')
+@extends($activeTheme . 'layouts.dashboard')
 
 @section('frontend')
     <div class="create-campaign py-60">
@@ -143,8 +143,9 @@
     </style>
 @endpush
 
-@push('page-script')
+@section('page-script')
     <script type="text/javascript">
+        alert('OKK');
         (function($) {
             "use strict"
 
@@ -155,7 +156,7 @@
                 },
                 buttonsStyling: false
             })
-
+            
             $('.remove-button').on('click', function() {
                 let image = $(this).data('image')
                 let url   = $(this).data('action')
@@ -192,4 +193,4 @@
             })
         })(jQuery)
     </script>
-@endpush
+@endsection

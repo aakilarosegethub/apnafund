@@ -92,206 +92,33 @@
                 </div>
             </div>
 
-            <!-- First Row: One item in 6 columns -->
-            <div class="row mb-4">
-                <div class="col-12 col-lg-6">
-                    <a href="gig-showcase.html" class="project-card-link">
-                        <div class="project-card featured-project">
-                            <div class="project-image">
-                                <img src="{{ asset('apnafund/assets/images/banner-1.jpg') }}" alt="Featured Project" class="img-fluid">
-                                <div class="project-overlay">
-                                    <div class="project-category">Technology</div>
-                                    <div class="project-progress">
-                                        <div class="progress-bar">
-                                            <div class="progress-fill" style="width: 75%"></div>
-                                        </div>
-                                        <span class="progress-text">75% funded</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="project-content">
-                                <h3 class="project-title">Smart Home Automation System</h3>
-                                <p class="project-description">Revolutionary IoT system that transforms your home into a
-                                    smart, energy-efficient living space.</p>
-                                <div class="project-stats">
-                                    <div class="stat">
-                                        <span class="stat-value">$45,000</span>
-                                        <span class="stat-label">raised</span>
-                                    </div>
-                                    <div class="stat">
-                                        <span class="stat-value">15</span>
-                                        <span class="stat-label">days left</span>
-                                    </div>
-                                </div>
-                            </div>
+            <!-- Featured Campaigns Display -->
+            @forelse($featuredCampaigns->chunk(2) as $chunk)
+                <div class="row mb-4">
+                    @foreach($chunk as $index => $campaign)
+                        @php
+                            $colClass = $loop->first && $loop->parent->first ? 'col-12 col-lg-6' : 'col-12 col-md-4';
+                        @endphp
+                        <div class="{{ $colClass }}">
+                            <a href="{{ route('campaign.show', $campaign->slug) }}" class="project-card-link">
+                                @include('partials.campaign-item', ['campaignId' => $campaign->id, 'featured' => true])
+                            </a>
                         </div>
-                    </a>
+                    @endforeach
                 </div>
-                <div class="col-12 col-md-3">
-                    <a href="gig-showcase.html" class="project-card-link">
-                        <div class="project-card">
-                            <div class="project-image">
-                                <img src="{{ asset('apnafund/assets/images/banner-2.jpg') }}" alt="Project 1" class="img-fluid">
-                                <div class="project-overlay">
-                                    <div class="project-category">Art</div>
-                                    <div class="project-progress">
-                                        <div class="progress-bar">
-                                            <div class="progress-fill" style="width: 60%"></div>
-                                        </div>
-                                        <span class="progress-text">60% funded</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="project-content">
-                                <h3 class="project-title">Digital Art Collection</h3>
-                                <p class="project-description">Exclusive NFT collection featuring contemporary digital
-                                    artists.</p>
-                                <div class="project-stats">
-                                    <div class="stat">
-                                        <span class="stat-value">$12,500</span>
-                                        <span class="stat-label">raised</span>
-                                    </div>
-                                    <div class="stat">
-                                        <span class="stat-value">8</span>
-                                        <span class="stat-label">days left</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </a>
+            @empty
+                <div class="row">
+                    <div class="col-12 text-center">
+                        <p class="text-muted">No featured campaigns available at the moment.</p>
+                    </div>
                 </div>
-                <div class="col-12 col-md-3">
-                    <a href="gig-showcase.html" class="project-card-link">
-                        <div class="project-card">
-                            <div class="project-image">
-                                <img src="{{ asset('apnafund/assets/images/banner-3.jpeg') }}" alt="Project 2" class="img-fluid">
-                                <div class="project-overlay">
-                                    <div class="project-category">Food</div>
-                                    <div class="project-progress">
-                                        <div class="progress-bar">
-                                            <div class="progress-fill" style="width: 85%"></div>
-                                        </div>
-                                        <span class="progress-text">85% funded</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="project-content">
-                                <h3 class="project-title">Organic Farm Expansion</h3>
-                                <p class="project-description">Sustainable farming initiative to provide fresh organic
-                                    produce to local communities.</p>
-                                <div class="project-stats">
-                                    <div class="stat">
-                                        <span class="stat-value">$28,000</span>
-                                        <span class="stat-label">raised</span>
-                                    </div>
-                                    <div class="stat">
-                                        <span class="stat-value">22</span>
-                                        <span class="stat-label">days left</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </a>
-                </div>
-            </div>
-            <!-- Third Row: Three items in 3 columns each -->
-            <div class="row">
-                <div class="col-12 col-md-4">
-                    <a href="gig-showcase.html" class="project-card-link">
-                        <div class="project-card">
-                            <div class="project-image">
-                                <img src="{{ asset('apnafund/assets/images/banner-4.jpg') }}" alt="Project 3" class="img-fluid">
-                                <div class="project-overlay">
-                                    <div class="project-category">Music</div>
-                                    <div class="project-progress">
-                                        <div class="progress-bar">
-                                            <div class="progress-fill" style="width: 45%"></div>
-                                        </div>
-                                        <span class="progress-text">45% funded</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="project-content">
-                                <h3 class="project-title">Indie Album Production</h3>
-                                <p class="project-description">Supporting independent musicians to create their debut album.
-                                </p>
-                                <div class="project-stats">
-                                    <div class="stat">
-                                        <span class="stat-value">$8,500</span>
-                                        <span class="stat-label">raised</span>
-                                    </div>
-                                    <div class="stat">
-                                        <span class="stat-value">18</span>
-                                        <span class="stat-label">days left</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </a>
-                </div>
-                <div class="col-12 col-md-4">
-                    <a href="gig-showcase.html" class="project-card-link">
-                        <div class="project-card">
-                            <div class="project-image">
-                                <img src="{{ asset('apnafund/assets/images/banner-5.jpg') }}" alt="Project 4" class="img-fluid">
-                                <div class="project-overlay">
-                                    <div class="project-category">Education</div>
-                                    <div class="project-progress">
-                                        <div class="progress-bar">
-                                            <div class="progress-fill" style="width: 70%"></div>
-                                        </div>
-                                        <span class="progress-text">70% funded</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="project-content">
-                                <h3 class="project-title">Coding Bootcamp</h3>
-                                <p class="project-description">Free programming education for underprivileged youth.</p>
-                                <div class="project-stats">
-                                    <div class="stat">
-                                        <span class="stat-value">$15,200</span>
-                                        <span class="stat-label">raised</span>
-                                    </div>
-                                    <div class="stat">
-                                        <span class="stat-value">12</span>
-                                        <span class="stat-label">days left</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </a>
-                </div>
-                <div class="col-12 col-md-4">
-                    <a href="gig-showcase.html" class="project-card-link">
-                        <div class="project-card">
-                            <div class="project-image">
-                                <img src="{{ asset('apnafund/assets/images/banner-6.jpg') }}" alt="Project 5" class="img-fluid">
-                                <div class="project-overlay">
-                                    <div class="project-category">Health</div>
-                                    <div class="project-progress">
-                                        <div class="progress-bar">
-                                            <div class="progress-fill" style="width: 55%"></div>
-                                        </div>
-                                        <span class="progress-text">55% funded</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="project-content">
-                                <h3 class="project-title">Medical Equipment</h3>
-                                <p class="project-description">Providing essential medical devices to rural healthcare
-                                    centers.</p>
-                                <div class="project-stats">
-                                    <div class="stat">
-                                        <span class="stat-value">$32,000</span>
-                                        <span class="stat-label">raised</span>
-                                    </div>
-                                    <div class="stat">
-                                        <span class="stat-value">25</span>
-                                        <span class="stat-label">days left</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+            @endforelse
+            
+            <!-- View All Button -->
+            <div class="row mt-5">
+                <div class="col-12 text-center">
+                    <a href="{{ route('campaign') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-eye me-2"></i>View All Campaigns
                     </a>
                 </div>
             </div>

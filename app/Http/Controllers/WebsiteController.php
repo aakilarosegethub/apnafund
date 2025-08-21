@@ -32,7 +32,8 @@ class WebsiteController extends Controller
         $bannerElements          = getSiteData('banner.element', false, null, true);
         $basicCampaignQuery      = Campaign::campaignCheck()->approve();
         $featuredCampaignContent = getSiteData('featured_campaign.content', true);
-        $featuredCampaigns       = array();//(clone $basicCampaignQuery)->featured()->latest()->limit(6)->get();
+        // Get featured campaigns (approved and featured, regardless of date status)
+        $featuredCampaigns = Campaign::commonQuery()->approve()->featured()->latest()->limit(5)->get();
         $campaignCategoryContent = getSiteData('campaign_category.content', true);
         $campaignCategories      = Category::active()->get();
         $recentCampaignContent   = getSiteData('recent_campaign.content', true);
@@ -93,7 +94,15 @@ class WebsiteController extends Controller
 
     function campaigns() {
         $pageTitle  = 'Campaigns';
-        $categories = Category::active()->select('name', 'slug')->get();
+        
+        // Get categories with campaign counts
+        $categories = Category::active()
+            ->select('name', 'slug')
+            ->withCount(['campaigns' => function($query) {
+                $query->commonQuery()->approve();
+            }])
+            ->get();
+            
         $campaigns  = Campaign::when(request()->filled('category'), function ($query) {
                                     $categorySlug = request('category');
                                     $category     = Category::where('slug', $categorySlug)->active()->first();
@@ -107,7 +116,7 @@ class WebsiteController extends Controller
                                     $endDate   = Carbon::parse($dateArray[1])->format('Y-m-d');
 
                                     $query->where('start_date', '>=', $startDate)->where('end_date', '<=', $endDate);
-                                })->campaignCheck()
+                                })->commonQuery()
                                 ->approve()
                                 ->latest()
                                 ->paginate(getPaginate(10));
@@ -149,6 +158,34 @@ class WebsiteController extends Controller
                                     
 
         return view($this->activeTheme . 'page.campaignShow', compact('pageTitle', 'campaignData', 'relatedCampaigns', 'seoContents', 'authUser', 'comments', 'commentCount', 'countries', 'gatewayCurrencies', 'donations'));
+    }
+
+    function campaignDonate($slug) {
+        $pageTitle        = 'Make a Contribution';
+        $campaignData     = Campaign::where('slug', $slug)->approve()->firstOrFail();
+        $authUser         = auth()->user();
+
+        // Check if campaign is expired
+        if ($campaignData->isExpired()) {
+            $toast[] = ['error', 'This campaign has expired'];
+            return redirect()->route('campaign.show', $slug)->withToasts($toast);
+        }
+
+        $seoContents['keywords']           = $campaignData->meta_keywords ?? [];
+        $seoContents['social_title']       = $campaignData->name;
+        $seoContents['description']        = strLimit($campaignData->description, 150);
+        $seoContents['social_description'] = strLimit($campaignData->description, 150);
+        $imageSize                         = getFileSize('campaign');
+        $seoContents['image']              = getImage(getFilePath('campaign') . '/' . $campaignData->image, $imageSize);
+        $seoContents['image_size']         = $imageSize;
+
+        $countries         = json_decode(file_get_contents(resource_path('views/partials/country.json')));
+        $gatewayCurrencies = GatewayCurrency::whereHas('method', fn ($gateway) => $gateway->active())
+                                            ->with('method')
+                                            ->orderby('method_code')
+                                            ->get();
+
+        return view($this->activeTheme . 'page.campaignDonate', compact('pageTitle', 'campaignData', 'seoContents', 'authUser', 'countries', 'gatewayCurrencies'));
     }
 
     function storeCampaignComment($slug) {

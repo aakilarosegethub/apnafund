@@ -316,7 +316,7 @@
 </head>
 
 <body>
-    @include($activeTheme.'partials.dashboard-header')
+    @include($activeTheme.'partials.header')
 
     <!-- Dashboard Navigation -->
     <nav class="dashboard-nav">
@@ -332,8 +332,10 @@
             </ul>
         </div>
     </nav>
+    <div class="container dashboard-content">
 
     @yield('frontend')
+    </div>
 
     <!-- Bootstrap JS -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
@@ -469,7 +471,8 @@
         @include('partials.toasts')
 
         @stack('page-script-lib')
-        @stack('page-script')
+        Test here
+        @yield('page-script')
 </body>
 
 </html> 

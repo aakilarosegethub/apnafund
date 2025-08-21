@@ -27,10 +27,10 @@
     @endphp
 
     @if($isHomePage)
-        @include($activeTheme.'partials.home-header')
+        @include($activeTheme.'partials.header')
     @else
 
-        @include($activeTheme.'partials.simple-header')
+        @include($activeTheme.'partials.header')
     @endif
 
 
@@ -48,26 +48,6 @@
 
     @include($activeTheme.'partials.footer')
 
-    @php
-        $cookie = App\Models\SiteData::where('data_key', 'cookie.data')->first();
-    @endphp
-
-    @if ($cookie->data_info->status == ManageStatus::ACTIVE && !\Cookie::get('gdpr_cookie'))
-        <!-- cookies dark version start -->
-        <div class="cookies-card text-center hide">
-            <div class="cookies-card__icon">
-                <img src="{{ getImage('assets/images/cookie.png') }}" alt="cookies">
-            </div>
-
-            <p class="mt-4 cookies-card__content">{{ $cookie->data_info->short_details }}</p>
-
-            <div class="cookies-card__btn mt-4">
-                <button type="button" class="btn btn--base px-5 policy">@lang('Allow')</button>
-                <a href="{{ route('cookie.policy') }}" target="_blank" type="button" class="text--base px-5 pt-3">@lang('Learn More')</a>
-            </div>
-        </div>
-        <!-- cookies dark version end -->
-    @endif
 
 @endsection
 
@@ -91,6 +71,61 @@
             color: #1e1e1e;
             line-height: 1.6;
             scroll-behavior: smooth;
+        }
+
+        /* Dropdown Styles */
+        .dropdown-menu {
+            position: absolute !important;
+            z-index: 1000 !important;
+            display: none;
+            min-width: 10rem;
+            padding: 0.5rem 0;
+            margin: 0;
+            font-size: 1rem;
+            color: #212529;
+            text-align: left;
+            list-style: none;
+            background-color: #fff;
+            background-clip: padding-box;
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            border-radius: 0.375rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.175);
+        }
+
+        .dropdown-menu.show {
+            display: block !important;
+        }
+
+        .dropdown-menu-end {
+            right: 0;
+            left: auto;
+        }
+
+        .dropdown-item {
+            display: block;
+            width: 100%;
+            padding: 0.25rem 1rem;
+            clear: both;
+            font-weight: 400;
+            color: #212529;
+            text-align: inherit;
+            text-decoration: none;
+            white-space: nowrap;
+            background-color: transparent;
+            border: 0;
+        }
+
+        .dropdown-item:hover,
+        .dropdown-item:focus {
+            color: #1e2125;
+            background-color: #e9ecef;
+        }
+
+        .dropdown-divider {
+            height: 0;
+            margin: 0.5rem 0;
+            overflow: hidden;
+            border-top: 1px solid rgba(0, 0, 0, 0.175);
         }
 
         .search-input {
@@ -254,10 +289,27 @@
     </style>
 @endpush
 
-@push('page-script')
+@section('page-script')
     <script>
+        alert('assets/universal/js/bootstrap.js');
         (function($) {
             "use strict";
+
+            // Initialize Bootstrap dropdowns
+            document.addEventListener('DOMContentLoaded', function() {
+                // Initialize all dropdowns
+                var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
+                var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
+                    return new bootstrap.Dropdown(dropdownToggleEl);
+                });
+
+                // Add click event for debugging
+                document.querySelectorAll('.dropdown-toggle').forEach(function(element) {
+                    element.addEventListener('click', function(e) {
+                        console.log('Dropdown clicked');
+                    });
+                });
+            });
 
             $(".langSel").on("change", function() {
                 window.location.href = "{{ route('home') }}/change/" + $(this).val();
@@ -284,4 +336,4 @@
             });
         })(jQuery);
     </script>
-@endpush
+@endsection

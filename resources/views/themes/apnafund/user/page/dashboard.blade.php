@@ -17,14 +17,14 @@
                                     <div class="stat-icon">
                                         <i class="fas fa-fire"></i>
                                     </div>
-                                    <div class="stat-number">12</div>
+                                    <div class="stat-number">{{ @$widgetData['campaignCount'] }}</div>
                                     <div class="stat-label">Active Gigs</div>
                                 </div>
                                 <div class="stat-card">
                                     <div class="stat-icon">
                                         <i class="fas fa-coins"></i>
                                     </div>
-                                    <div class="stat-number">$45,230</div>
+                                    <div class="stat-number">{{ $setting->cur_sym . showAmount(@$user->balance) }}</div>
                                     <div class="stat-label">Total Raised</div>
                                 </div>
                                 <div class="stat-card">

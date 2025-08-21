@@ -83,6 +83,12 @@
                                                         </a>
                                                     </li>
                                                 @endif
+                                                
+                                                <li>
+                                                    <a href="{{ route('user.rewards.index', $campaign->id) }}" class="dropdown-item">
+                                                        <i class="ti ti-gift text--warning"></i> @lang('Rewards')
+                                                    </a>
+                                                </li>
                                             </ul>
                                         </div>
                                     </td>

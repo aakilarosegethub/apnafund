@@ -5,7 +5,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apna Fund</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{{ $setting->siteName(__($pageTitle)) }}</title>
+
+        @include('partials.seo')
     <link rel="stylesheet" href="{{ asset('apnafund/assets/css/app.css') }}">
     <link rel="stylesheet" href="{{ asset('apnafund/assets/bootstrap/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -326,6 +329,56 @@
                 grid-template-columns: 1fr;
             }
         }
+        /* Footer */
+        .footer {
+            background: #333;
+            color: #fff;
+            padding: 40px 0 20px;
+            margin-top: 50px;
+        }
+
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .footer-section h4 {
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .footer-section ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .footer-section ul li {
+            margin-bottom: 8px;
+        }
+
+        .footer-section ul li a {
+            color: #ccc;
+            text-decoration: none;
+        }
+
+        .footer-section ul li a:hover {
+            color: #05ce78;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #555;
+            color: #ccc;
+        }
     </style>
     @yield('style')
 </head>
@@ -335,15 +388,13 @@
 
     <script src="{{ asset('apnafund/assets/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ asset('assets/universal/js/iziToast.min.js') }}"></script>
-
-    @include('partials.toasts')
     <script src="{{ asset('assets/universal/js/jquery-3.7.1.min.js') }}"></script>
         <script src="{{ asset('assets/universal/js/bootstrap.js') }}"></script>
-        <script src="{{ asset($activeThemeTrue . 'js/slick.min.js') }}"></script>
-        <script src="{{ asset($activeThemeTrue . 'js/viewport.jquery.js') }}"></script>
-        <script src="{{ asset($activeThemeTrue . 'js/lightbox.min.js') }}"></script>
-        <script src="{{ asset($activeThemeTrue . 'js/aos.js') }}"></script>
-        <script src="{{ asset($activeThemeTrue . 'js/main.js') }}"></script>
+        <script src="{{ asset('assets/themes/'.bs('active_theme').'/js/slick.min.js') }}"></script>
+        <script src="{{ asset('assets/themes/'.bs('active_theme').'/js/viewport.jquery.js') }}"></script>
+        <script src="{{ asset('assets/themes/'.bs('active_theme').'/js/lightbox.min.js') }}"></script>
+        <script src="{{ asset('assets/themes/'.bs('active_theme').'/js/aos.js') }}"></script>
+        <script src="{{ asset('assets/themes/'.bs('active_theme').'/js/main.js') }}"></script>
 
         @include('partials.plugins')
         @include('partials.toasts')

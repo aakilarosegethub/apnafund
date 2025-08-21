@@ -73,6 +73,9 @@
                                         <a href="{{ route('user.campaign.show', $campaign->slug) }}" class="btn btn-sm btn-secondary">
                                             <i class="fas fa-eye me-1"></i>@lang('View')
                                         </a>
+                                        <a href="{{ route('user.rewards.index', $campaign->id) }}" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-gift me-1"></i>@lang('Rewards')
+                                        </a>
                                         <button class="btn btn-sm btn-outline-danger" onclick="deleteCampaign('{{ $campaign->id }}')">
                                             <i class="fas fa-trash me-1"></i>@lang('Delete')
                                         </button>

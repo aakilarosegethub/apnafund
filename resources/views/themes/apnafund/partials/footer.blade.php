@@ -1,26 +1,54 @@
 <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <div class="footer-logo">
-                        <img src="{{ getImage(getFilePath('logoFavicon') . '/logo_light.png') }}" alt="Apna Fund Logo" class="footer-logo-img">
+<footer class="footer">
+        <div class="footer-container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>ApnaFund</h4>
+                    <img src="{{ getImage(getFilePath('logoFavicon') . '/logo_light.png') }}" alt="Apna Fund Logo" class="footer-logo-img">
                         <p class="footer-tagline">{{ __(@$footerContent->data_info->footer_text) }}</p>
-                    </div>
+                    
                 </div>
-                <div class="col-md-6 text-end">
-                    <div class="footer-info">
-                        <p class="copyright">{{ __(@$footerContent->data_info->copyright_text) }}</p>
-                        @if($footerContactElements && count($footerContactElements) > 0)
-                            @foreach($footerContactElements as $contact)
-                                @if(str_contains(strtolower($contact->data_info->data), 'email'))
-                                    <p class="email">{{ $contact->data_info->data }}</p>
-                                    @break
-                                @endif
+
+                <div class="footer-section">
+                    <h4>About</h4>
+                    <ul>
+                        <li><a href="{{ route('home') }}">Home</a></li>
+                        <li><a href="{{ url('about') }}">About</a></li>
+                        <li><a href="{{ url('contact') }}">Contact</a></li>
+                        <li><a href="{{ url('blog') }}">Blog</a></li>
+                        <li><a href="{{ url('faq') }}">FAQ</a></li>
+                        
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Categories</h4>
+                    <ul>
+                        @if(isset($categories) && count($categories) > 0)
+                            @foreach($categories as $category)
+                                <li>
+                                    <a href="{{ url('campaigns?category=' . urlencode($category->slug)) }}">
+                                        {{ __($category->name) }}
+                                    </a>
+                                </li>
                             @endforeach
                         @endif
-                    </div>
+                    </ul>
                 </div>
+
+                <div class="footer-section">
+                    <h4>Resources</h4>
+                    <ul>
+                    <li><a href="{{ url('policy/terms-of-service/12') }}">Terms of Service</a></li>
+                        <li><a href="{{ url('policy/privacy-policy/11') }}">Privacy Policy</a></li>
+                        <li><a href="{{ url('policy/support-policy/82') }}">Support Policy
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2010-2025 Apna Fund. All rights reserved.</p>
             </div>
         </div>
     </footer>
