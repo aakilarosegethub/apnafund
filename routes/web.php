@@ -1,9 +1,13 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Models\SiteData;
+use App\Models\Campaign;
+use App\Models\Category;
 
 Route::controller('WebsiteController')->group(function () {
     Route::get('/', 'home')->name('home');
+    Route::get('home-new', 'homeNew')->name('home.new');
     Route::get('volunteers', 'volunteers')->name('volunteers');
     Route::get('about', 'aboutUs')->name('about.us');
     Route::get('faq', 'faq')->name('faq');
@@ -22,6 +26,9 @@ Route::controller('WebsiteController')->group(function () {
     // Success Stories
     Route::get('success-stories', 'stories')->name('stories');
     Route::get('success-story/{id}', 'storyShow')->name('stories.show');
+
+    // Business Resources
+    Route::get('business-resources', 'businessResources')->name('business.resources');
 
     // Subscriber
     Route::post('subscriber/store', 'subscriberStore')->name('subscriber.store');;

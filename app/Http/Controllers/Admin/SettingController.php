@@ -121,6 +121,78 @@ class SettingController extends Controller
         return back()->withToasts($toast);
     }
 
+    function cover() {
+        $pageTitle = 'Cover Settings';
+        $coverContent = SiteData::where('data_key', 'cover.content')->first();
+        return view('admin.setting.cover', compact('pageTitle', 'coverContent'));
+    }
+
+    function coverUpdate() {
+        $this->validate(request(), [
+            'cover_image' => ['nullable', 'image', File::types(['png', 'jpg', 'jpeg'])],
+            'heading' => 'required|string|max:255',
+            'subheading' => 'required|string|max:255',
+            'description' => 'required|string',
+            'first_button_text' => 'required|string|max:100',
+            'first_button_url' => 'required|string|max:255',
+            'second_button_text' => 'required|string|max:100',
+            'second_button_url' => 'required|string|max:255',
+        ]);
+
+        $coverContent = SiteData::where('data_key', 'cover.content')->first();
+        
+        if (!$coverContent) {
+            $coverContent = new SiteData();
+            $coverContent->data_key = 'cover.content';
+        }
+
+        // Handle image upload
+        if (request()->hasFile('cover_image')) {
+            try {
+                $path = getFilePath('site') . '/cover';
+                if (!file_exists($path)) {
+                    mkdir($path, 0755, true);
+                }
+                
+                $image = request('cover_image');
+                $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+                
+                Image::make($image)->resize(1920, 1080)->save($path . '/' . $imageName);
+                
+                $coverContent->data_info = [
+                    'cover_image' => $imageName,
+                    'heading' => request('heading'),
+                    'subheading' => request('subheading'),
+                    'description' => request('description'),
+                    'first_button_text' => request('first_button_text'),
+                    'first_button_url' => request('first_button_url'),
+                    'second_button_text' => request('second_button_text'),
+                    'second_button_url' => request('second_button_url'),
+                ];
+            } catch (\Exception $exp) {
+                $toast[] = ['error', 'Unable to upload cover image'];
+                return back()->withToasts($toast);
+            }
+        } else {
+            // Update text content only
+            $dataInfo = $coverContent->data_info ?? (object)[];
+            $dataInfo->heading = request('heading');
+            $dataInfo->subheading = request('subheading');
+            $dataInfo->description = request('description');
+            $dataInfo->first_button_text = request('first_button_text');
+            $dataInfo->first_button_url = request('first_button_url');
+            $dataInfo->second_button_text = request('second_button_text');
+            $dataInfo->second_button_url = request('second_button_url');
+            
+            $coverContent->data_info = $dataInfo;
+        }
+
+        $coverContent->save();
+
+        $toast[] = ['success', 'Cover image and content update success'];
+        return back()->withToasts($toast);
+    }
+
     function plugin() {
         $pageTitle = 'Plugin Settings';
         $plugins   = Plugin::orderBy('name')->get();

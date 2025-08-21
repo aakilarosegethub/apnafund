@@ -13,6 +13,6 @@ abstract class Controller
     public $activeTheme;
 
     function __construct() {
-        $this->activeTheme = activeTheme();
+        $this->activeTheme = 'themes.apnafund.';//activeTheme();
     }
 }

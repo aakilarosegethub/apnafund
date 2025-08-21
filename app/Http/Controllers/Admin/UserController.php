@@ -114,6 +114,29 @@ class UserController extends Controller
             'country' => @$country,
         ];
 
+        // Update business fields if provided
+        if (request()->has('business_type')) {
+            $user->business_type = request('business_type');
+        }
+        if (request()->has('business_name')) {
+            $user->business_name = request('business_name');
+        }
+        if (request()->has('business_description')) {
+            $user->business_description = request('business_description');
+        }
+        if (request()->has('industry')) {
+            $user->industry = request('industry');
+        }
+        if (request()->has('funding_amount')) {
+            $user->funding_amount = request('funding_amount');
+        }
+        if (request()->has('fund_usage')) {
+            $user->fund_usage = request('fund_usage');
+        }
+        if (request()->has('campaign_duration')) {
+            $user->campaign_duration = request('campaign_duration');
+        }
+
         if (!request('kc')) {
             $user->kc = ManageStatus::UNVERIFIED;
 

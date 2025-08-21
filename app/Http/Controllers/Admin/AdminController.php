@@ -238,7 +238,7 @@ class AdminController extends Controller
 
     function fileDownload() {
         $path = request('filePath');
-        $file = fileManager()->$path()->path.'/'.request('fileName');
+        $file = getFilePath($path).'/'.request('fileName');
 
         return response()->download($file);
     }

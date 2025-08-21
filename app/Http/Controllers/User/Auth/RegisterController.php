@@ -27,6 +27,11 @@ class RegisterController extends Controller
         return view($this->activeTheme . 'user.auth.register', compact('pageTitle', 'mobileCode', 'countries', 'registerContent', 'policyPages'));
     }
 
+    function registerBusinessForm() {
+        $pageTitle = 'Register Your Business';
+        return view('user.auth.register-business', compact('pageTitle'));
+    }
+
     protected function validator(array $data) {
         $setting = bs();
         $passwordValidation = Password::min(6);
@@ -152,5 +157,162 @@ class RegisterController extends Controller
     function registered()
     {
         return to_route('user.home');
+    }
+
+    function registerBusiness() {
+        $data = request()->all();
+        
+        // Get country data
+        $countryData = json_decode(file_get_contents(resource_path('views/partials/country.json')), true);
+        $countryCode = $data['country'] ?? 'US';
+        $countryInfo = $countryData[$countryCode] ?? $countryData['US'];
+        
+        // Map the multistep form data to the required fields
+        $mappedData = [
+            'firstname' => $data['fullName'] ?? '',
+            'lastname' => '', // We'll split the full name
+            'email' => $data['signupEmail'] ?? '',
+            'password' => $data['password'] ?? '',
+            'password_confirmation' => $data['confirmPassword'] ?? '',
+            'username' => $this->generateUsername($data['fullName'] ?? ''),
+            'mobile' => $data['phone'] ?? '',
+            'mobile_code' => $countryInfo['dial_code'] ?? '+1',
+            'country_code' => $countryCode,
+            'country' => $countryInfo['country'] ?? 'United States',
+            'agree' => isset($data['termsCheckbox']) ? 'on' : null,
+            // Additional business fields
+            'business_type' => $data['businessType'] ?? '',
+            'business_name' => $data['businessName'] ?? '',
+            'business_description' => $data['businessDescription'] ?? '',
+            'industry' => $data['industry'] ?? '',
+            'funding_amount' => $data['fundingAmount'] ?? '',
+            'fund_usage' => $data['fundUsage'] ?? '',
+            'campaign_duration' => $data['campaignDuration'] ?? ''
+        ];
+
+        // Split full name into first and last name
+        $nameParts = explode(' ', $mappedData['firstname'], 2);
+        $mappedData['firstname'] = $nameParts[0] ?? '';
+        $mappedData['lastname'] = $nameParts[1] ?? '';
+
+        // Validate the mapped data
+        $validator = $this->validator($mappedData);
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        request()->session()->regenerateToken();
+
+        if(!verifyCaptcha()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid captcha provided'
+            ], 422);
+        }
+
+        if(preg_match("/[^a-z0-9_]/", trim($mappedData['username']))) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Username must exclude special characters, spaces, and capital letters'
+            ], 422);
+        }
+
+        $exist = User::where('mobile', $mappedData['mobile_code'] . $mappedData['mobile'])->first();
+
+        if ($exist) {
+            return response()->json([
+                'success' => false,
+                'message' => 'That mobile number is already on our records'
+            ], 422);
+        }
+
+        try {
+            event(new Registered($user = $this->createBusinessUser($mappedData)));
+            $this->guard()->login($user);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Account created successfully!',
+                'redirect' => route('user.home')
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while creating your account'
+            ], 500);
+        }
+    }
+
+    protected function createBusinessUser(array $data)
+    {
+        $setting = bs();
+        $referBy = session()->get('reference');
+
+        if ($referBy) {
+            $referUser = User::where('username', $referBy)->first();
+        } else {
+            $referUser = null;
+        }
+  
+        // User Create
+        $user               = new User();
+        $user->firstname    = $data['firstname'];
+        $user->lastname     = $data['lastname'];
+        $user->email        = strtolower($data['email']);
+        $user->password     = Hash::make($data['password']);
+        $user->username     = $data['username'];
+        $user->ref_by       = $referUser ? $referUser->id : 0;
+        $user->country_code = $data['country_code'];
+        $user->country_name = isset($data['country']) ? $data['country'] : null;
+        $user->mobile       = $data['mobile_code'].$data['mobile'];
+        $user->kc           = $setting->kc ? ManageStatus::NO : ManageStatus::YES;
+        $user->ec           = $setting->ec ? ManageStatus::NO : ManageStatus::YES;
+        $user->sc           = $setting->sc ? ManageStatus::NO : ManageStatus::YES;
+        $user->ts           = ManageStatus::NO;
+        $user->tc           = ManageStatus::YES;
+        
+        // Store business information
+        $user->business_type = $data['business_type'];
+        $user->business_name = $data['business_name'];
+        $user->business_description = $data['business_description'];
+        $user->industry = $data['industry'];
+        $user->funding_amount = $data['funding_amount'];
+        $user->fund_usage = $data['fund_usage'];
+        $user->campaign_duration = $data['campaign_duration'];
+        $user->phone = $data['mobile'];
+        
+        // Store address information
+        $user->address = [
+            'city' => '',
+            'state' => '',
+            'zip' => '',
+            'country' => $data['country']
+        ];
+        
+        $user->save();
+
+        $adminNotification            = new AdminNotification();
+        $adminNotification->user_id   = $user->id;
+        $adminNotification->title     = 'New business member registered';
+        $adminNotification->click_url = urlPath('admin.user.index');
+        $adminNotification->save();
+
+        return $user;
+    }
+
+    protected function generateUsername($fullName) {
+        $base = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $fullName));
+        $username = $base;
+        $counter = 1;
+        
+        while (User::where('username', $username)->exists()) {
+            $username = $base . $counter;
+            $counter++;
+        }
+        
+        return $username;
     }
 }

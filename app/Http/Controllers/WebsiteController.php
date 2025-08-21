@@ -19,12 +19,41 @@ use Illuminate\Support\Facades\Validator;
 
 class WebsiteController extends Controller
 {
+    public function __construct()
+    {
+
+        parent::__construct();
+        $this->activeTheme = 'themes.apnafund.';
+        // You can add any initialization code here if needed
+    }
     function home() {
         $pageTitle               = 'Home';
+        $coverContent            = SiteData::where('data_key', 'cover.content')->first();
         $bannerElements          = getSiteData('banner.element', false, null, true);
         $basicCampaignQuery      = Campaign::campaignCheck()->approve();
         $featuredCampaignContent = getSiteData('featured_campaign.content', true);
-        $featuredCampaigns       = (clone $basicCampaignQuery)->featured()->latest()->limit(6)->get();
+        $featuredCampaigns       = array();//(clone $basicCampaignQuery)->featured()->latest()->limit(6)->get();
+        $campaignCategoryContent = getSiteData('campaign_category.content', true);
+        $campaignCategories      = Category::active()->get();
+        $recentCampaignContent   = getSiteData('recent_campaign.content', true);
+        $recentCampaigns         = array();//(clone $basicCampaignQuery)->latest()->limit(9)->get();
+        $counterElements         = getSiteData('counter.element', false, null, true);
+        $upcomingContent         = getSiteData('upcoming.content', true);
+        $upcomingCampaigns       = array();//Campaign::upcomingCheck()->approve()->orderby('start_date')->limit(6)->get();
+        $subscribeContent        = getSiteData('subscribe.content', true);
+        $successContent          = getSiteData('success_story.content', true);
+        $successElements         = getSiteData('success_story.element', false, 4, true);
+
+        return view($this->activeTheme .'page.home', compact('pageTitle', 'coverContent', 'bannerElements', 'featuredCampaignContent', 'counterElements', 'campaignCategoryContent', 'campaignCategories', 'recentCampaignContent', 'recentCampaigns', 'featuredCampaigns', 'upcomingContent', 'upcomingCampaigns', 'subscribeContent', 'successContent', 'successElements'));
+    }
+
+    function homeNew() {
+        $pageTitle               = 'Home';
+        $coverContent            = SiteData::where('data_key', 'cover.content')->first();
+        $bannerElements          = getSiteData('banner.element', false, null, true);
+        $basicCampaignQuery      = Campaign::campaignCheck()->approve();
+        $featuredCampaignContent = getSiteData('featured_campaign.content', true);
+        $featuredCampaigns       = array();
         $campaignCategoryContent = getSiteData('campaign_category.content', true);
         $campaignCategories      = Category::active()->get();
         $recentCampaignContent   = getSiteData('recent_campaign.content', true);
@@ -36,7 +65,7 @@ class WebsiteController extends Controller
         $successContent          = getSiteData('success_story.content', true);
         $successElements         = getSiteData('success_story.element', false, 3, true);
 
-        return view($this->activeTheme . 'page.home', compact('pageTitle', 'bannerElements', 'featuredCampaignContent', 'counterElements', 'campaignCategoryContent', 'campaignCategories', 'recentCampaignContent', 'recentCampaigns', 'featuredCampaigns', 'upcomingContent', 'upcomingCampaigns', 'subscribeContent', 'successContent', 'successElements'));
+        return view('themes.primary.page.apnafund-new', compact('pageTitle', 'coverContent', 'bannerElements', 'featuredCampaignContent', 'counterElements', 'campaignCategoryContent', 'campaignCategories', 'recentCampaignContent', 'recentCampaigns', 'featuredCampaigns', 'upcomingContent', 'upcomingCampaigns', 'subscribeContent', 'successContent', 'successElements'));
     }
 
     function volunteers() {
@@ -87,9 +116,11 @@ class WebsiteController extends Controller
     }
 
     function campaignShow($slug) {
+
         $pageTitle        = 'Campaign Details';
-        $campaignData     = Campaign::where('slug', $slug)->campaignCheck()->approve()->firstOrFail();
+        $campaignData     = Campaign::where('slug', $slug)->approve()->firstOrFail();
         $comments         = Comment::with('user')->where('campaign_id', $campaignData->id)->approve()->latest()->limit(6)->get();
+
         $commentCount     = Comment::where('campaign_id', $campaignData->id)->approve()->count();
         $authUser         = auth()->user();
         $relatedCampaigns = Campaign::where('category_id', $campaignData->category_id)->whereNot('slug', $campaignData->slug)->approve()->latest()->limit(4)->get();
@@ -101,6 +132,7 @@ class WebsiteController extends Controller
         $imageSize                         = getFileSize('campaign');
         $seoContents['image']              = getImage(getFilePath('campaign') . '/' . $campaignData->image, $imageSize);
         $seoContents['image_size']         = $imageSize;
+
 
         $countries         = json_decode(file_get_contents(resource_path('views/partials/country.json')));
         $gatewayCurrencies = GatewayCurrency::whereHas('method', fn ($gateway) => $gateway->active())
@@ -114,6 +146,7 @@ class WebsiteController extends Controller
                                     ->latest()
                                     ->limit(5)
                                     ->get();
+                                    
 
         return view($this->activeTheme . 'page.campaignShow', compact('pageTitle', 'campaignData', 'relatedCampaigns', 'seoContents', 'authUser', 'comments', 'commentCount', 'countries', 'gatewayCurrencies', 'donations'));
     }
@@ -301,8 +334,8 @@ class WebsiteController extends Controller
 
         $seoContents['keywords']           = $storyData->data_info->meta_keywords ?? [];
         $seoContents['social_title']       = $storyData->data_info->title;
-        $seoContents['description']        = strLimit($storyData->data_info->details, 150);
         $seoContents['social_description'] = strLimit($storyData->data_info->details, 150);
+        $seoContents['description']        = strLimit($storyData->data_info->details, 150);
         $imageSize                         = '855x475';
         $seoContents['image']              = getImage('assets/images/site/success_story/' . $storyData->data_info->image, $imageSize);
         $seoContents['image_size']         = $imageSize;
@@ -310,6 +343,14 @@ class WebsiteController extends Controller
         $moreStories = SiteData::where('data_key', 'success_story.element')->whereNot('id', $id)->limit(3)->get();
 
         return view($this->activeTheme . 'page.storyShow', compact('pageTitle', 'storyData', 'seoContents', 'moreStories'));
+    }
+
+    function businessResources() {
+        $pageTitle = 'Business Resources';
+        $successContent = getSiteData('success_story.content', true);
+        $successElements = getSiteData('success_story.element', false, 4, true);
+        
+        return view($this->activeTheme . 'page.businessResources', compact('pageTitle', 'successContent', 'successElements'));
     }
 
     function contact() {

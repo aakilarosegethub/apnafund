@@ -12,8 +12,10 @@ Route::namespace('User\Auth')->name('user.')->group(function () {
 
     // User Registration Process
     Route::controller('RegisterController')->group(function () {
-        Route::get('register', 'registerForm')->name('register');
+        Route::get('register', 'registerBusinessForm')->name('register');
+        Route::get('register-business', 'registerBusinessForm')->name('register.business');
         Route::post('register', 'register')->middleware('register.status');
+        Route::post('register-business', 'registerBusiness')->middleware('register.status');
         Route::post('check-user', 'checkUser')->name('check.user');
     });
 
@@ -55,6 +57,7 @@ Route::middleware('auth')->name('user.')->namespace('User')->group(function () {
             Route::post('image-remove/{id}', 'removeImage')->name('image.remove');
             Route::post('update/{id}', 'update')->name('update');
             Route::get('details/{slug}', 'show')->name('show');
+            Route::delete('{id}', 'destroy')->name('destroy');
 
             Route::name('gallery.')->group(function () {
                 Route::post('gallery-upload', 'galleryUpload')->name('upload');

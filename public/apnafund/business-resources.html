@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Resource Hub - Apna Fund</title>
+    <link rel="stylesheet" href="assets/css/app.css">
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="shortcut icon" href="assets/images/fav-icon.png" type="image/png">
+    <style>
+        body {
+            background: #ffffff;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        /* Header */
+        .main-header {
+            background: #05ce78;
+            padding: 25px 0;
+            margin: 0;
+            border: none;
+        }
+
+        .theme-color-style {
+            color: #05ce78 !important;
+        }
+
+        .main-header .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .main-header .logo {
+            text-align: center;
+            margin: 0;
+        }
+
+        .main-header .logo-img {
+            height: 40px;
+            width: auto;
+        }
+
+        /* Resource Hub Styles */
+        .resource-hub-container {
+            max-width: 1200px;
+            margin: 0px auto;
+            padding: 20px;
+        }
+
+        .resource-hub-sections {
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .resource-hub-header {
+            text-align: center;
+        }
+
+        .resource-hub-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .resource-hub-subtitle {
+            font-size: 1.2rem;
+            color: #666;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Campaign Card Styles */
+        .campaign-card {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .campaign-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .campaign-card-img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            background-color: #f5f5f5;
+        }
+
+        .campaign-card-body {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .campaign-card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .campaign-card-text {
+            color: #666;
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+
+        .campaign-card-link {
+            color: #05ce78;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .campaign-card-link:hover {
+            text-decoration: underline;
+        }
+
+        .campaign-card-link i {
+            margin-left: 5px;
+        }
+
+        /* Category Section */
+        .category-section {
+            margin-top: 60px;
+        }
+
+        .category-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .category-card {
+            text-align: center;
+            padding: 25px 15px;
+            border-radius: 12px;
+            background: #f9f9f9;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
+        }
+
+        .category-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .category-icon {
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 2rem;
+        }
+
+        .category-icon-basics {
+            background-color: #ffebda;
+            color: #ff8a3d;
+        }
+
+        .category-icon-guide {
+            background-color: #e0e8ff;
+            color: #4a6cf7;
+        }
+
+        .category-icon-education {
+            background-color: #d1f5ea;
+            color: #0cbc87;
+        }
+
+        .category-icon-faq {
+            background-color: #ffe0e0;
+            color: #d6293e;
+        }
+
+        .category-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .category-description {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        /* Community Section */
+        .community-section {
+            background-color: #f0faf5;
+            padding: 50px 0;
+            margin-top: 60px;
+            text-align: center;
+            border-radius: 12px;
+        }
+
+        .community-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .community-description {
+            max-width: 700px;
+            margin: 0 auto 25px;
+            color: #666;
+        }
+
+        /* Get Started Section */
+        .get-started-section {
+            margin-top: 60px;
+            text-align: center;
+        }
+
+        .get-started-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .get-started-description {
+            max-width: 700px;
+            margin: 0 auto 25px;
+            color: #666;
+        }
+
+        /* Featured Section */
+        .featured-section {
+            margin-top: 60px;
+        }
+
+        .featured-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .featured-card {
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            height: 250px;
+        }
+
+        .featured-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .featured-card-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+            color: #fff;
+        }
+
+        .featured-card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .featured-card-text {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        /* Button Styles */
+        .btn-theme {
+            background: linear-gradient(135deg, #05ce78 0%, #04a85f 100%);
+            color: #fff;
+            border: none;
+            padding: 12px 25px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            box-shadow: 0 4px 15px rgba(5, 206, 120, 0.3);
+        }
+
+        .btn-theme:hover {
+            background: linear-gradient(135deg, #04a85f 0%, #038c4f 100%);
+            color: #fff;
+            text-decoration: none;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(5, 206, 120, 0.4);
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .resource-hub-title {
+                font-size: 2rem;
+            }
+
+            .campaign-card-img {
+                height: 150px;
+            }
+
+            .featured-card {
+                height: 200px;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="main-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-12">
+                    <div class="logo text-center">
+                        <a href="/">
+                            <img src="assets/images/White Logo.png" alt="Apna Fund Logo" class="logo-img">
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- Header Section -->
+
+    <div class="resource-hub-sections">
+        <div class="resource-hub-header">
+            <h1 class="resource-hub-title">Learn Crowd Funding</h1>
+            <p class="resource-hub-subtitle">This is a comprehensive guidelines for your crowdfunding campaign
+                success</p>
+        </div>
+    </div>
+    <!-- Resource Hub Main Content -->
+    <div class="resource-hub-container">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2>Build a winning campaign</h2>
+            </div>
+        </div>
+
+        <div class="row mb-5">
+            <!-- Campaign Card 1 -->
+            <div class="col-md-3 mb-4">
+                <div class="campaign-card">
+                    <div class="campaign-card-img"
+                        style="background-image: url('assets/images/banner-1.jpg'); background-size: cover; background-position: center;">
+                    </div>
+                    <div class="campaign-card-body">
+                        <h3 class="campaign-card-title">Campaign Basics</h3>
+                        <p class="campaign-card-text">Learn the fundamentals of creating a successful crowdfunding
+                            campaign</p>
+                        <a href="10-ways-to-level-up-crowdfunding.html" class="campaign-card-link">Learn more <i
+                                class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Campaign Card 2 -->
+            <div class="col-md-3 mb-4">
+                <div class="campaign-card">
+                    <div class="campaign-card-img"
+                        style="background-image: url('assets/images/banner-2.jpg'); background-size: cover; background-position: center;">
+                    </div>
+                    <div class="campaign-card-body">
+                        <h3 class="campaign-card-title">Telling Your Story</h3>
+                        <p class="campaign-card-text">Craft a compelling narrative that resonates with potential backers
+                        </p>
+                        <a href="10-ways-to-level-up-crowdfunding.html" class="campaign-card-link">Learn more <i
+                                class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Campaign Card 3 -->
+            <div class="col-md-3 mb-4">
+                <div class="campaign-card">
+                    <div class="campaign-card-img"
+                        style="background-image: url('assets/images/banner-3.jpeg'); background-size: cover; background-position: center;">
+                    </div>
+                    <div class="campaign-card-body">
+                        <h3 class="campaign-card-title">10 Ways To Level Up</h3>
+                        <p class="campaign-card-text">Expert advice to maximize your campaign's potential and reach</p>
+                        <a href="10-ways-to-level-up-crowdfunding.html" class="campaign-card-link">Learn more <i
+                                class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Campaign Card 4 -->
+            <div class="col-md-3 mb-4">
+                <div class="campaign-card">
+                    <div class="campaign-card-img"
+                        style="background-image: url('assets/images/banner-4.jpg'); background-size: cover; background-position: center;">
+                    </div>
+                    <div class="campaign-card-body">
+                        <h3 class="campaign-card-title">Funding Strategies</h3>
+                        <p class="campaign-card-text">Effective approaches to reach your funding goals and beyond</p>
+                        <a href="10-ways-to-level-up-crowdfunding.html" class="campaign-card-link">Learn more <i
+                                class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ready to Get Started Section -->
+        <div class="row mb-5">
+            <div class="col-md-8">
+                <h2>Ready to get started?</h2>
+                <p>Take the first step toward launching your campaign and bringing your idea to life</p>
+                <a href="register-business.html" class="btn-theme">Start a project</a>
+            </div>
+            <div class="col-md-4 text-center">
+                <img src="assets/images/light.avif" alt="Light bulb illustration" style="max-width: 25%;">
+            </div>
+        </div>
+
+        <!-- Category Section -->
+        <div class="category-section">
+            <h2 class="category-title">Creator tips by category</h2>
+            <div class="row">
+                <!-- Category 1 -->
+                <div class="col-md-3 mb-4">
+                    <div class="category-card">
+                        <div class="category-icon category-icon-basics">
+                            <i class="fas fa-rocket"></i>
+                        </div>
+                        <h3 class="category-name">Basics</h3>
+                        <p class="category-description">Essential knowledge for all creators</p>
+                    </div>
+                </div>
+
+                <!-- Category 2 -->
+                <div class="col-md-3 mb-4">
+                    <div class="category-card">
+                        <div class="category-icon category-icon-guide">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <h3 class="category-name">Guides & Resources</h3>
+                        <p class="category-description">Detailed instructions and helpful tools</p>
+                    </div>
+                </div>
+
+                <!-- Category 3 -->
+                <div class="col-md-3 mb-4">
+                    <div class="category-card">
+                        <div class="category-icon category-icon-education">
+                            <i class="fas fa-laptop"></i>
+                        </div>
+                        <h3 class="category-name">Education & Demo</h3>
+                        <p class="category-description">Learn through examples and tutorials</p>
+                    </div>
+                </div>
+
+                <!-- Category 4 -->
+                <div class="col-md-3 mb-4">
+                    <div class="category-card">
+                        <div class="category-icon category-icon-faq">
+                            <i class="fas fa-question"></i>
+                        </div>
+                        <h3 class="category-name">FAQ</h3>
+                        <p class="category-description">Answers to common questions</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Community Section -->
+        <div class="community-section">
+            <div class="container">
+                <h2 class="community-title">Join the Creator Community</h2>
+                <p class="community-description">Connect with fellow entrepreneurs, share insights, and learn from each
+                    other's experiences</p>
+                <a href="#" class="btn-theme">Join Now</a>
+            </div>
+        </div>
+
+        <!-- Featured Section -->
+        <div class="featured-section">
+            <h2 class="featured-title">Get inspired</h2>
+            <div class="row">
+                <!-- Featured Item 1 -->
+                <div class="col-md-6 mb-4">
+                    <div class="featured-card">
+                        <img src="assets/images/banner-1.jpg" alt="Success Story">
+                        <div class="featured-card-overlay">
+                            <h3 class="featured-card-title">Success Stories</h3>
+                            <p class="featured-card-text text-white">Learn from campaigns that exceeded their goals</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Featured Item 2 -->
+                <div class="col-md-6 mb-4">
+                    <div class="featured-card">
+                        <img src="assets/images/banner-2.jpg" alt="Creative Independence">
+                        <div class="featured-card-overlay">
+                            <h3 class="featured-card-title">The Creative Independence</h3>
+                            <p class="featured-card-text text-white">Insights on building sustainable creative
+                                businesses</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Platform Journey Section -->
+        <div class="row mt-5 mb-5">
+            <div class="col-md-8 offset-md-2 text-center">
+                <h2>A new platform for every stage of your crowdfunding journey</h2>
+                <p>From concept to fulfillment, we provide the tools and resources you need to succeed</p>
+                <a href="#" class="btn-theme mt-3">Discover all resources</a>
+            </div>
+        </div>
+
+        <!-- What's Happening Section -->
+        <div class="featured-section">
+            <h2 class="featured-title">What's happening around Apnafund</h2>
+            <div class="row">
+                <!-- News Item 1 -->
+                <div class="col-md-4 mb-4">
+                    <div class="campaign-card">
+                        <img src="assets/images/banner-3.jpeg" alt="Creator Interview" class="campaign-card-img">
+                        <div class="campaign-card-body">
+                            <h3 class="campaign-card-title">Creator Interviews</h3>
+                            <p class="campaign-card-text">Insights from successful entrepreneurs</p>
+                            <a href="#" class="campaign-card-link">Read more <i class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- News Item 2 -->
+                <div class="col-md-4 mb-4">
+                    <div class="campaign-card">
+                        <img src="assets/images/banner-4.jpg" alt="Funding News" class="campaign-card-img">
+                        <div class="campaign-card-body">
+                            <h3 class="campaign-card-title">Funding News</h3>
+                            <p class="campaign-card-text">Latest updates on campaign successes</p>
+                            <a href="#" class="campaign-card-link">Read more <i class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- News Item 3 -->
+                <div class="col-md-4 mb-4">
+                    <div class="campaign-card">
+                        <img src="assets/images/banner-5.jpg" alt="Campaign of the Month" class="campaign-card-img">
+                        <div class="campaign-card-body">
+                            <h3 class="campaign-card-title">Campaign of the Month</h3>
+                            <p class="campaign-card-text">Highlighting exceptional projects</p>
+                            <a href="#" class="campaign-card-link">Read more <i class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Questions Section -->
+        <div class="community-section mt-5">
+            <div class="container">
+                <h2 class="community-title">Got questions?</h2>
+                <p class="community-description">Our team is here to help you navigate every step of your crowdfunding
+                    journey</p>
+                <a href="#" class="btn-theme">Contact Support</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-0 mt-5">
+        <div class="container">
+            <div class="row justify-content-center mb-4">
+                <div class="col-md-6 text-center">
+                    <!-- Email Icon -->
+                    <div class="mb-3">
+                        <i class="fas fa-envelope fa-2x text-white-50"></i>
+                        <p class="mt-2 text-white-50">contact@apnafund.com</p>
+                    </div>
+
+                    <!-- Social Media Icons -->
+                    <div class="social-icons">
+                        <a href="#" class="text-white-50 mx-2"><i class="fab fa-facebook-f fa-lg"></i></a>
+                        <a href="#" class="text-white-50 mx-2"><i class="fab fa-twitter fa-lg"></i></a>
+                        <a href="#" class="text-white-50 mx-2"><i class="fab fa-instagram fa-lg"></i></a>
+                        <a href="#" class="text-white-50 mx-2"><i class="fab fa-linkedin-in fa-lg"></i></a>
+                        <a href="#" class="text-white-50 mx-2"><i class="fab fa-youtube fa-lg"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-12 text-center">
+                    <p class="text-white-50 mb-0">© 2023 Apna Fund. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

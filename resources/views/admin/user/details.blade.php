@@ -270,6 +270,146 @@
         </div>
     </div>
 
+    <!-- Business Information Section -->
+    @if($user->business_type || $user->business_name || $user->industry)
+    <div class="col-12">
+        <div class="custom--card">
+            <div class="card-header">
+                <h3 class="title">@lang('Business Information')</h3>
+            </div>
+            <form action="{{ route('admin.user.update', $user->id) }}" method="POST">
+                @csrf
+                <div class="card-body">
+                    <div class="row gy-3">
+                        <div class="col-md-6">
+                            <div class="row g-2 align-items-center">
+                                <div class="col-lg-4">
+                                    <label class="col-form--label">@lang('Business Type')</label>
+                                </div>
+                                <div class="col-lg-8">
+                                    <select class="form--control" name="business_type">
+                                        <option value="">Select business type</option>
+                                        <option value="startup" {{ $user->business_type == 'startup' ? 'selected' : '' }}>Startup</option>
+                                        <option value="small-business" {{ $user->business_type == 'small-business' ? 'selected' : '' }}>Small Business</option>
+                                        <option value="nonprofit" {{ $user->business_type == 'nonprofit' ? 'selected' : '' }}>Non-Profit Organization</option>
+                                        <option value="creative-project" {{ $user->business_type == 'creative-project' ? 'selected' : '' }}>Creative Project</option>
+                                        <option value="tech-company" {{ $user->business_type == 'tech-company' ? 'selected' : '' }}>Technology Company</option>
+                                        <option value="manufacturing" {{ $user->business_type == 'manufacturing' ? 'selected' : '' }}>Manufacturing</option>
+                                        <option value="retail" {{ $user->business_type == 'retail' ? 'selected' : '' }}>Retail Business</option>
+                                        <option value="service" {{ $user->business_type == 'service' ? 'selected' : '' }}>Service Business</option>
+                                        <option value="other" {{ $user->business_type == 'other' ? 'selected' : '' }}>Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="row g-2 align-items-center">
+                                <div class="col-lg-4">
+                                    <label class="col-form--label">@lang('Business Name')</label>
+                                </div>
+                                <div class="col-lg-8">
+                                    <input type="text" class="form--control" name="business_name" value="{{ $user->business_name }}">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="row g-2 align-items-center">
+                                <div class="col-lg-4">
+                                    <label class="col-form--label">@lang('Industry')</label>
+                                </div>
+                                <div class="col-lg-8">
+                                    <select class="form--control" name="industry">
+                                        <option value="">Select industry</option>
+                                        <option value="technology" {{ $user->industry == 'technology' ? 'selected' : '' }}>Technology</option>
+                                        <option value="healthcare" {{ $user->industry == 'healthcare' ? 'selected' : '' }}>Healthcare</option>
+                                        <option value="education" {{ $user->industry == 'education' ? 'selected' : '' }}>Education</option>
+                                        <option value="finance" {{ $user->industry == 'finance' ? 'selected' : '' }}>Finance</option>
+                                        <option value="retail" {{ $user->industry == 'retail' ? 'selected' : '' }}>Retail</option>
+                                        <option value="manufacturing" {{ $user->industry == 'manufacturing' ? 'selected' : '' }}>Manufacturing</option>
+                                        <option value="food-beverage" {{ $user->industry == 'food-beverage' ? 'selected' : '' }}>Food & Beverage</option>
+                                        <option value="creative-arts" {{ $user->industry == 'creative-arts' ? 'selected' : '' }}>Creative Arts</option>
+                                        <option value="environmental" {{ $user->industry == 'environmental' ? 'selected' : '' }}>Environmental</option>
+                                        <option value="other" {{ $user->industry == 'other' ? 'selected' : '' }}>Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="row g-2 align-items-center">
+                                <div class="col-lg-4">
+                                    <label class="col-form--label">@lang('Funding Amount')</label>
+                                </div>
+                                <div class="col-lg-8">
+                                    <select class="form--control" name="funding_amount">
+                                        <option value="">Select funding amount</option>
+                                        <option value="under-10k" {{ $user->funding_amount == 'under-10k' ? 'selected' : '' }}>Under $10,000</option>
+                                        <option value="10k-50k" {{ $user->funding_amount == '10k-50k' ? 'selected' : '' }}>$10,000 - $50,000</option>
+                                        <option value="50k-100k" {{ $user->funding_amount == '50k-100k' ? 'selected' : '' }}>$50,000 - $100,000</option>
+                                        <option value="100k-500k" {{ $user->funding_amount == '100k-500k' ? 'selected' : '' }}>$100,000 - $500,000</option>
+                                        <option value="500k-1m" {{ $user->funding_amount == '500k-1m' ? 'selected' : '' }}>$500,000 - $1,000,000</option>
+                                        <option value="over-1m" {{ $user->funding_amount == 'over-1m' ? 'selected' : '' }}>Over $1,000,000</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="row g-2 align-items-center">
+                                <div class="col-lg-4">
+                                    <label class="col-form--label">@lang('Fund Usage')</label>
+                                </div>
+                                <div class="col-lg-8">
+                                    <select class="form--control" name="fund_usage">
+                                        <option value="">Select primary use</option>
+                                        <option value="product-development" {{ $user->fund_usage == 'product-development' ? 'selected' : '' }}>Product Development</option>
+                                        <option value="marketing" {{ $user->fund_usage == 'marketing' ? 'selected' : '' }}>Marketing & Advertising</option>
+                                        <option value="equipment" {{ $user->fund_usage == 'equipment' ? 'selected' : '' }}>Equipment & Infrastructure</option>
+                                        <option value="inventory" {{ $user->fund_usage == 'inventory' ? 'selected' : '' }}>Inventory & Supplies</option>
+                                        <option value="expansion" {{ $user->fund_usage == 'expansion' ? 'selected' : '' }}>Business Expansion</option>
+                                        <option value="research" {{ $user->fund_usage == 'research' ? 'selected' : '' }}>Research & Development</option>
+                                        <option value="operating-costs" {{ $user->fund_usage == 'operating-costs' ? 'selected' : '' }}>Operating Costs</option>
+                                        <option value="other" {{ $user->fund_usage == 'other' ? 'selected' : '' }}>Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="row g-2 align-items-center">
+                                <div class="col-lg-4">
+                                    <label class="col-form--label">@lang('Campaign Duration')</label>
+                                </div>
+                                <div class="col-lg-8">
+                                    <select class="form--control" name="campaign_duration">
+                                        <option value="">Select campaign length</option>
+                                        <option value="30-days" {{ $user->campaign_duration == '30-days' ? 'selected' : '' }}>30 days</option>
+                                        <option value="60-days" {{ $user->campaign_duration == '60-days' ? 'selected' : '' }}>60 days</option>
+                                        <option value="90-days" {{ $user->campaign_duration == '90-days' ? 'selected' : '' }}>90 days</option>
+                                        <option value="120-days" {{ $user->campaign_duration == '120-days' ? 'selected' : '' }}>120 days</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="row g-2 align-items-center">
+                                <div class="col-lg-2">
+                                    <label class="col-form--label">@lang('Business Description')</label>
+                                </div>
+                                <div class="col-lg-10">
+                                    <textarea class="form--control" name="business_description" rows="4">{{ $user->business_description }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body border-top">
+                    <div class="d-flex justify-content-center">
+                        <button class="btn btn--base px-4" type="submit">@lang('Update Business Info')</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    @endif
+
     <div class="col-12">
         <div class="custom--modal modal fade" id="balanceUpdateModal" tabindex="-1" aria-labelledby="balanceUpdateModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">

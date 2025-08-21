@@ -3440,8 +3440,10 @@ body .select2-container--default.select2-container--disabled .select2-selection-
 }
 
 .navbar-brand.logo img {
-    max-width: 150px;
-    max-height: 60px;
+    max-width: 1050px;
+    height: auto;
+    width: 328px;
+    margin-left: 27px;
 }
 
 @media screen and (max-width: 991px) {

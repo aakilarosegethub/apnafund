@@ -48,6 +48,9 @@ function navigationActive($routeName, $type = null, $param = null) {
 }
 
 function bs($fieldName = null) {
+    cache()->forget('setting');
+    // Cache clear karne ke liye aap command line se yeh command chalaen:
+    // php artisan cache:clear
     $setting = cache()->get('setting');
 
     if (!$setting) {
@@ -76,15 +79,36 @@ function fileManager(): FileManager {
 }
 
 function getFilePath($key) {
-    return fileManager()->$key()->path;
+    $fileInfo = new \App\Constants\FileDetails;
+    $filePaths = $fileInfo->fileDetails();
+    
+    if (array_key_exists($key, $filePaths)) {
+        return $filePaths[$key]['path'];
+    }
+    
+    return '';
 }
 
 function getFileSize($key) {
-    return fileManager()->$key()->size;
+    $fileInfo = new \App\Constants\FileDetails;
+    $filePaths = $fileInfo->fileDetails();
+    
+    if (array_key_exists($key, $filePaths) && isset($filePaths[$key]['size'])) {
+        return $filePaths[$key]['size'];
+    }
+    
+    return null;
 }
 
 function getThumbSize($key) {
-    return fileManager()->$key()->thumb;
+    $fileInfo = new \App\Constants\FileDetails;
+    $filePaths = $fileInfo->fileDetails();
+    
+    if (array_key_exists($key, $filePaths) && isset($filePaths[$key]['thumb'])) {
+        return $filePaths[$key]['thumb'];
+    }
+    
+    return null;
 }
 
 function getImage($image, $size = null, $avatar = false): string {
@@ -366,4 +390,241 @@ function ordinal($number): string {
 
 function donationPercentage($goalAmount, $raisedAmount): int {
     return (int) (($raisedAmount / $goalAmount) * 100);
+}
+
+// New helper functions for replacing hardcoded values
+
+function getSiteLogo($type = 'light'): string {
+    $setting = bs();
+    $logoPath = getFilePath('logoFavicon');
+    
+    if ($type === 'dark') {
+        return getImage($logoPath . '/logo_dark.png');
+    }
+    
+    return getImage($logoPath . '/logo_light.png');
+}
+
+function getSiteFavicon(): string {
+    $faviconPath = getFilePath('logoFavicon');
+    return getImage($faviconPath . '/favicon.png');
+}
+
+function getDashboardTitle(): string {
+    return __('Dashboard');
+}
+
+function getBusinessDashboardTitle(): string {
+    return __('Business Dashboard');
+}
+
+function getDefaultCurrency(): string {
+    $setting = bs();
+    return $setting->cur_sym ?? '$';
+}
+
+function getDefaultCurrencyCode(): string {
+    $setting = bs();
+    return $setting->site_cur ?? 'USD';
+}
+
+function getNotificationCount(): int {
+    // This can be customized based on actual notification logic
+    return auth()->check() ? 3 : 0;
+}
+
+function getDefaultUserAvatar(): string {
+    return asset('assets/universal/images/avatar.png');
+}
+
+function getDefaultCampaignImage(): string {
+    return asset('assets/universal/images/default.png');
+}
+
+function getThemeColors(): array {
+    $setting = bs();
+    return [
+        'primary' => $setting->first_color ?? '#05ce78',
+        'secondary' => $setting->second_color ?? '#04b367',
+        'gradient' => 'linear-gradient(135deg, ' . ($setting->first_color ?? '#05ce78') . ' 0%, ' . ($setting->second_color ?? '#04b367') . ' 100%)'
+    ];
+}
+
+function getDashboardStats(): array {
+    // This can be customized based on actual data
+    return [
+        'active_gigs' => 12,
+        'total_raised' => 45230,
+        'total_donors' => 1247,
+        'success_rate' => 89
+    ];
+}
+
+function getRecentActivities(): array {
+    // This can be customized based on actual data
+    return [
+        [
+            'type' => 'donation',
+            'icon' => 'fas fa-sparkles',
+            'title' => __('New donation received'),
+            'description' => '$50 for "Local Food Bank Support"',
+            'color' => 'text-success'
+        ],
+        [
+            'type' => 'campaign',
+            'icon' => 'fas fa-rocket',
+            'title' => __('Gig published'),
+            'description' => '"Community Garden Project" is now live',
+            'color' => 'text-primary'
+        ]
+    ];
+}
+
+function getGigCategories(): array {
+    return [
+        'education' => __('Education'),
+        'healthcare' => __('Healthcare'),
+        'environment' => __('Environment'),
+        'community' => __('Community'),
+        'arts' => __('Arts & Culture'),
+        'technology' => __('Technology'),
+        'other' => __('Other')
+    ];
+}
+
+function getRewardTypes(): array {
+    return [
+        'digital' => __('Digital Reward'),
+        'physical' => __('Physical Reward'),
+        'experience' => __('Experience'),
+        'recognition' => __('Recognition')
+    ];
+}
+
+function getRewardColorThemes(): array {
+    return [
+        'gradient-red' => __('Red Gradient'),
+        'gradient-blue' => __('Blue Gradient'),
+        'gradient-green' => __('Green Gradient'),
+        'gradient-purple' => __('Purple Gradient'),
+        'gradient-orange' => __('Orange Gradient')
+    ];
+}
+
+function getFileUploadLimits(): array {
+    return [
+        'image' => [
+            'max_size' => 5 * 1024 * 1024, // 5MB
+            'allowed_types' => ['jpg', 'jpeg', 'png', 'gif'],
+            'max_files' => 5
+        ],
+        'reward_image' => [
+            'max_size' => 2 * 1024 * 1024, // 2MB
+            'allowed_types' => ['jpg', 'jpeg', 'png', 'gif'],
+            'max_files' => 1
+        ]
+    ];
+}
+
+function getDashboardNavigation(): array {
+    return [
+        [
+            'id' => 'overview',
+            'title' => __('Overview'),
+            'icon' => 'fas fa-tachometer-alt',
+            'route' => 'user.home'
+        ],
+        [
+            'id' => 'create',
+            'title' => __('Create Campaign'),
+            'icon' => 'fas fa-rocket',
+            'route' => 'user.campaign.create'
+        ],
+        [
+            'id' => 'manage',
+            'title' => __('Manage Campaigns'),
+            'icon' => 'fas fa-briefcase',
+            'route' => 'user.campaign.index'
+        ],
+        [
+            'id' => 'analytics',
+            'title' => __('Analytics'),
+            'icon' => 'fas fa-chart-pie',
+            'route' => 'user.transactions'
+        ],
+        [
+            'id' => 'rewards',
+            'title' => __('Donations'),
+            'icon' => 'fas fa-heart',
+            'route' => 'user.donation.history'
+        ],
+        [
+            'id' => 'settings',
+            'title' => __('Settings'),
+            'icon' => 'fas fa-sliders-h',
+            'route' => 'user.profile'
+        ]
+    ];
+}
+
+function getNotificationTypes(): array {
+    return [
+        'campaign_created' => [
+            'icon' => 'fas fa-info-circle',
+            'title' => __('New campaign created')
+        ],
+        'donation_received' => [
+            'icon' => 'fas fa-donation',
+            'title' => __('Donation received')
+        ],
+        'new_follower' => [
+            'icon' => 'fas fa-user-plus',
+            'title' => __('New follower')
+        ]
+    ];
+}
+
+function getUserMenuItems(): array {
+    return [
+        [
+            'route' => 'user.home',
+            'icon' => 'fas fa-tachometer-alt',
+            'title' => __('Dashboard')
+        ],
+        [
+            'route' => 'user.profile',
+            'icon' => 'fas fa-user',
+            'title' => __('Profile Settings')
+        ],
+        [
+            'route' => 'user.campaign.index',
+            'icon' => 'fas fa-campaign',
+            'title' => __('My Campaigns')
+        ],
+        [
+            'route' => 'user.donation.history',
+            'icon' => 'fas fa-heart',
+            'title' => __('My Donations')
+        ],
+        [
+            'route' => 'user.change.password',
+            'icon' => 'fas fa-key',
+            'title' => __('Change Password')
+        ],
+        [
+            'route' => 'user.twofactor.form',
+            'icon' => 'fas fa-shield-alt',
+            'title' => __('2FA Settings')
+        ]
+    ];
+}
+
+function formatBytes($bytes, $precision = 2): string {
+    $units = array('B', 'KB', 'MB', 'GB', 'TB');
+    
+    for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
+        $bytes /= 1024;
+    }
+    
+    return round($bytes, $precision) . ' ' . $units[$i];
 }

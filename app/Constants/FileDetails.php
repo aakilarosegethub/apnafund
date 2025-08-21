@@ -52,6 +52,11 @@ class FileDetails
             'path' => 'assets/universal/documents/campaign',
         ];
 
+        $data['cover'] = [
+            'path' => 'assets/images/site/cover',
+            'size' => '1920x1080',
+        ];
+
         return $data;
     }
 }

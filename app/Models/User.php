@@ -7,10 +7,11 @@ use App\Traits\Searchable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class User extends Authenticatable
 {
-    use Notifiable, Searchable;
+    use Notifiable, Searchable, HasFactory;
 
     /**
      * The attributes that are mass assignable.
@@ -18,7 +19,7 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
-        'name', 'email', 'password',
+        'name', 'email', 'password', 'firstname', 'lastname', 'username', 'mobile', 'country_code', 'country_name', 'address', 'business_type', 'business_name', 'business_description', 'industry', 'funding_amount', 'fund_usage', 'campaign_duration', 'phone'
     ];
 
     /**

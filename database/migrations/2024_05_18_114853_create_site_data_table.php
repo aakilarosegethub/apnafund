@@ -13,6 +13,8 @@ return new class extends Migration
     {
         Schema::create('site_data', function (Blueprint $table) {
             $table->id();
+            $table->string('data_key')->unique();
+            $table->json('data_info')->nullable();
             $table->timestamps();
         });
     }

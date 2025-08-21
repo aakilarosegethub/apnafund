@@ -192,7 +192,7 @@ class SiteController extends Controller
         } else {
             $path  = getFilePath($key);
             $size  = getFileSize($key);
-            $thumb = @fileManager()->$key()->thumb;
+            $thumb = @getThumbSize($key);
         }
 
         return fileUploader($image, $path, $size, $oldImage, $thumb);

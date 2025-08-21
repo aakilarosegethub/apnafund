@@ -103,7 +103,7 @@ class Campaign extends Model
      */
     public function scopeFeatured($query): void
     {
-        $query->where('featured', ManageStatus::YES);
+        $query->where('is_featured', ManageStatus::YES);
     }
 
     public function scopeCommonQuery($query): void
@@ -176,7 +176,7 @@ class Campaign extends Model
     {
         return Attribute::make(
             get: function () {
-                if ($this->featured) {
+                if ($this->is_featured) {
                     $html = '<span class="badge badge--success">' . trans('Yes') . '</span>';
                 } else {
                     $html = '<span class="badge badge--warning">' . trans('No') . '</span>';

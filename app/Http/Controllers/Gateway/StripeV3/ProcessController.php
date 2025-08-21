@@ -22,18 +22,30 @@ class ProcessController extends Controller
         $alias     = $deposit->gateway->alias;
 
         Stripe::setApiKey("$stripeAcc->secret_key");
+        Stripe::setApiVersion("2020-03-02");
+
+        // Hard code to 5 USD
+        $unitAmount = $deposit->amount * 100; // 5 USD in cents
+        $currency = 'USD';
+        dd(route(gatewayRedirectUrl(true)));
+        
 
         try {
             $session = Session::create([
                 'payment_method_types' => ['card'],
+                'mode'                 => 'payment',
                 'line_items'           => [
                     [
-                        'name'        => bs('site_name'),
-                        'description' => 'Donation with Stripe',
-                        'images'      => [asset('assets/universal/images/logoFavicon/logo_dark.png')],
-                        'amount'      => round($deposit->final_amount, 2) * 100,
-                        'currency'    => "$deposit->method_currency",
-                        'quantity'    => 1,
+                        'price_data' => [
+                            'currency'     => $currency,
+                            'product_data' => [
+                                'name'        => bs('site_name'),
+                                'description' => 'Donation with Stripe',
+                                'images'      => [asset('assets/universal/images/logoFavicon/logo_dark.png')],
+                            ],
+                            'unit_amount'  => $unitAmount,
+                        ],
+                        'quantity'   => 1,
                     ]
                 ],
                 'cancel_url'           => route(gatewayRedirectUrl()),
@@ -61,6 +73,7 @@ class ProcessController extends Controller
         $gateway_parameter = json_decode($stripeAcc->gateway_parameter);
 
         Stripe::setApiKey($gateway_parameter->secret_key);
+        Stripe::setApiVersion("2020-03-02");
 
         // You can find your endpoint's secret in your webhook settings
         $endpoint_secret = $gateway_parameter->end_point; // main

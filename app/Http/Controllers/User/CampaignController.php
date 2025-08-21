@@ -118,8 +118,10 @@ class CampaignController extends Controller
             'goal_amount'         => 'required|numeric|gt:0',
             'preferred_amounts'   => 'required|array|min:1',
             'preferred_amounts.*' => 'required|numeric|gt:0',
-            'start_date'          => 'required|date_format:d-m-Y|after:today',
-            'end_date'            => 'required|date_format:d-m-Y|after:start_date',
+            'start_date'          => 'required|date_format:Y-m-d|after:today',
+            'end_date'            => 'required|date_format:Y-m-d|after:start_date',
+            'gallery_images'      => ['nullable', 'array'],
+            'gallery_images.*'    => ['nullable', File::types(['png', 'jpg', 'jpeg'])],
         ], [
             'category_id.required' => 'The category field is required.',
             'category_id.integer'  => 'The category must be an integer.',
@@ -129,22 +131,39 @@ class CampaignController extends Controller
 
         if (!$category) {
             $toast[] = ['error', 'Selected category not found or inactive'];
-
             return back()->withToasts($toast);
         }
 
-        $images = Gallery::where('user_id', auth()->id())->get();
-
-        if (!count($images)) {
-            $toast[] = ['error', 'Minimum one gallery image is required'];
-
-            return back()->withToasts($toast);
-        }
-
-        // Gallery images
+        // Handle gallery images - check both approaches
         $gallery = [];
+        
+        // Approach 1: Check if images were uploaded via Dropzone (stored in Gallery table)
+        $dropzoneImages = Gallery::where('user_id', auth()->id())->get();
+        if (count($dropzoneImages) > 0) {
+            foreach ($dropzoneImages as $image) {
+                array_push($gallery, $image->image);
+            }
+        }
+        
+        // Approach 2: Check if images were uploaded directly via file input
+        if (request()->hasFile('gallery_images')) {
+            $uploadedImages = request()->file('gallery_images');
+            foreach ($uploadedImages as $image) {
+                try {
+                    $uploadedImage = fileUploader($image, getFilePath('campaign'), getFileSize('campaign'));
+                    array_push($gallery, $uploadedImage);
+                } catch (Exception $e) {
+                    $toast[] = ['error', 'Gallery image uploading process has failed'];
+                    return back()->withToasts($toast);
+                }
+            }
+        }
 
-        foreach ($images as $image) array_push($gallery, $image->image);
+        // Check if we have at least one gallery image
+        if (empty($gallery)) {
+            $toast[] = ['error', 'Minimum one gallery image is required'];
+            return back()->withToasts($toast);
+        }
 
         // Store campaign data
         $campaign              = new Campaign();
@@ -156,7 +175,6 @@ class CampaignController extends Controller
             $campaign->image = fileUploader(request('image'), getFilePath('campaign'), getFileSize('campaign'), null, getThumbSize('campaign'));
         } catch (Exception) {
             $toast[] = ['error', 'Image uploading process has failed'];
-
             return back()->withToasts($toast);
         }
 
@@ -172,7 +190,6 @@ class CampaignController extends Controller
                 $campaign->document = fileUploader(request('document'), getFilePath('document'));
             } catch (Exception) {
                 $toast[] = ['error', 'Document uploading process has failed'];
-
                 return back()->withToasts($toast);
             }
         }
@@ -183,8 +200,12 @@ class CampaignController extends Controller
         $campaign->end_date          = Carbon::parse(request('end_date'));
         $campaign->save();
 
-        // Delete gallery images
-        foreach ($images as $image) $image->delete();
+        // Delete gallery images from Gallery table (if they were uploaded via Dropzone)
+        if (count($dropzoneImages) > 0) {
+            foreach ($dropzoneImages as $image) {
+                $image->delete();
+            }
+        }
 
         // Create admin notification
         $adminNotification            = new AdminNotification();
@@ -199,35 +220,41 @@ class CampaignController extends Controller
     }
 
     function edit($slug) {
-        // Delete previously unused gallery images if exist
-        $this->removePreviousGallery();
 
-        $pageTitle  = 'Edit Campaign';
-        $categories = Category::get();
-        $campaign   = Campaign::where('slug', $slug)
-                                ->where('user_id', auth()->id())
-                                ->approve()
-                                ->select('id', 'image', 'gallery', 'end_date')
-                                ->first();
+        try {
+            
+            // Delete previously unused gallery images if exist
+            $this->removePreviousGallery();
 
-        if (!$campaign) {
-            $toast[] = ['error', 'Campaign not found'];
+            $pageTitle  = 'Edit Campaign';
+            $categories = Category::active()->get();
+            $campaign   = Campaign::where('slug', $slug)
+                                    ->where('user_id', auth()->id())
+                                    // ->approve()
+                                    ->first();
+
+            if (!$campaign) {
+                $toast[] = ['error', 'Campaign not found'];
+                return back()->withToasts($toast);
+            }
+
+            if ($campaign->isExpired()) {
+                $toast[] = ['error', 'This campaign has expired'];
+                return back()->withToasts($toast);
+            }
+
+            return view('themes.apnafund.user.campaign.edit', compact('pageTitle', 'categories', 'campaign'));
+        } catch (\Exception $e) {
+            $toast[] = ['error', 'Error loading campaign: ' . $e->getMessage()];
             return back()->withToasts($toast);
         }
-
-        if ($campaign->isExpired()) {
-            $toast[] = ['error', 'This campaign has expired'];
-            return back()->withToasts($toast);
-        }
-
-        return view($this->activeTheme . 'user.campaign.edit', compact('pageTitle', 'categories', 'campaign'));
     }
 
     /**
      * Remove image while editing a campaign
      */
     function removeImage($id) {
-        $campaign = Campaign::where('id', $id)->where('user_id', auth()->id())->approve()->first();
+        $campaign = Campaign::where('id', $id)->where('user_id', auth()->id())->first();
 
         if (!$campaign) {
             return response()->json([
@@ -284,7 +311,7 @@ class CampaignController extends Controller
             'document' => ['nullable', File::types('pdf')],
         ]);
 
-        $campaign = Campaign::where('id', $id)->where('user_id', auth()->id())->approve()->first();
+        $campaign = Campaign::where('id', $id)->where('user_id', auth()->id())->first();
         
 
         if (!$campaign) {
@@ -327,14 +354,35 @@ class CampaignController extends Controller
 
         // Update gallery images
         $images = Gallery::where('user_id', auth()->id())->get();
+        $newGallery = [];
 
-        if (count($images)) {
-            $gallery = [];
-
-            foreach ($images as $image) array_push($gallery, $image->image);
-
-            $campaign->gallery = array_merge($campaign->gallery, $gallery);
+        // Add existing gallery images
+        if ($campaign->gallery) {
+            $newGallery = $campaign->gallery;
         }
+
+        // Add images from Gallery table (dropzone uploads)
+        if (count($images)) {
+            foreach ($images as $image) {
+                array_push($newGallery, $image->image);
+            }
+        }
+
+        // Handle direct file uploads
+        if (request()->hasFile('gallery_images')) {
+            $uploadedImages = request()->file('gallery_images');
+            foreach ($uploadedImages as $image) {
+                try {
+                    $uploadedImage = fileUploader($image, getFilePath('campaign'), getFileSize('campaign'));
+                    array_push($newGallery, $uploadedImage);
+                } catch (Exception $e) {
+                    $toast[] = ['error', 'Gallery image uploading process has failed'];
+                    return back()->withToasts($toast);
+                }
+            }
+        }
+
+        $campaign->gallery = $newGallery;
 
         $campaign->save();
 
@@ -368,6 +416,46 @@ class CampaignController extends Controller
         $seoContents['image_size']         = $imageSize;
 
         return view($this->activeTheme . 'user.campaign.show', compact('pageTitle', 'campaignData', 'comments', 'commentCount', 'seoContents'));
+    }
+
+    function destroy($id) {
+        $campaign = Campaign::where('id', $id)->where('user_id', auth()->id())->first();
+
+        if (!$campaign) {
+            $toast[] = ['error', 'Campaign not found'];
+            return back()->withToasts($toast);
+        }
+
+        // Check if campaign has any donations
+        $hasDonations = $campaign->deposits()->where('status', 1)->exists();
+        
+        if ($hasDonations) {
+            $toast[] = ['error', 'Cannot delete campaign that has received donations'];
+            return back()->withToasts($toast);
+        }
+
+        // Delete campaign image
+        if ($campaign->image) {
+            fileManager()->removeFile(getFilePath('campaign') . '/' . $campaign->image);
+        }
+
+        // Delete campaign document
+        if ($campaign->document) {
+            fileManager()->removeFile(getFilePath('document') . '/' . $campaign->document);
+        }
+
+        // Delete gallery images
+        if ($campaign->gallery && is_array($campaign->gallery)) {
+            foreach ($campaign->gallery as $image) {
+                fileManager()->removeFile(getFilePath('campaign') . '/' . $image);
+            }
+        }
+
+        // Delete campaign
+        $campaign->delete();
+
+        $toast[] = ['success', 'Campaign successfully deleted'];
+        return back()->withToasts($toast);
     }
 
     protected function removePreviousGallery() {

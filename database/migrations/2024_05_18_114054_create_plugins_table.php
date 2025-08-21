@@ -13,6 +13,10 @@ return new class extends Migration
     {
         Schema::create('plugins', function (Blueprint $table) {
             $table->id();
+            $table->string('act')->unique();
+            $table->string('name');
+            $table->string('status')->default('1');
+            $table->json('shortcode')->nullable();
             $table->timestamps();
         });
     }

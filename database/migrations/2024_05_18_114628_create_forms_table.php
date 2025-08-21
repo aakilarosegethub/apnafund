@@ -13,6 +13,8 @@ return new class extends Migration
     {
         Schema::create('forms', function (Blueprint $table) {
             $table->id();
+            $table->string('act')->unique();
+            $table->json('form_data')->nullable();
             $table->timestamps();
         });
     }

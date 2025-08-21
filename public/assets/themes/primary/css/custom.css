@@ -1,4 +1,11 @@
 /* Copy Animation */
+
+
+@media screen and (max-width: 991px) {
+    .header {
+            padding-bottom: 0px !important;
+    }
+}
 .base-color{
   color: hsl(var(--main)) !important;
 }
@@ -158,3 +165,7 @@ label.required:after{
   color: #FB4D4D !important;
   margin-left: 2px;
 }
+.navbar-brand.logo img{
+  margin-left: 0 !important;
+}
+

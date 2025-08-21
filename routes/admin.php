@@ -175,6 +175,8 @@ Route::middleware(['admin'])->group(function () {
             Route::post('basic', 'basicUpdate');
             Route::post('system', 'systemUpdate')->name('basic.system.setting');
             Route::post('logo-favicon', 'logoFaviconUpdate')->name('basic.logo.favicon.setting');
+            Route::get('cover', 'cover')->name('basic.cover.setting');
+            Route::post('cover', 'coverUpdate')->name('basic.cover.setting.update');
 
             // Plugins Setting
             Route::get('plugin', 'plugin')->name('plugin.setting');
