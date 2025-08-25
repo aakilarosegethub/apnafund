@@ -100,6 +100,159 @@ function getFileSize($key) {
     return null;
 }
 
+function getPageSEO($pageKey) {
+    $seoData = SiteData::where('data_key', $pageKey . '.seo')->first();
+    
+    if ($seoData && $seoData->data_info) {
+        return [
+            'meta_title' => @$seoData->data_info->meta_title,
+            'meta_description' => @$seoData->data_info->meta_description,
+            'meta_keywords' => @$seoData->data_info->meta_keywords,
+        ];
+    }
+    
+    return [
+        'meta_title' => '',
+        'meta_description' => '',
+        'meta_keywords' => '',
+    ];
+}
+
+/**
+ * Validate phone number based on country
+ */
+function validatePhoneByCountry($phone, $country) {
+    // Clean the phone number (remove all non-digits)
+    $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
+    
+    // Get country data
+    $countryData = json_decode(file_get_contents(resource_path('views/partials/country.json')), true);
+    
+    // Find country code by country name
+    $countryCode = null;
+    foreach ($countryData as $code => $data) {
+        if ($data['country'] === $country) {
+            $countryCode = $code;
+            break;
+        }
+    }
+    
+    if (!$countryCode) {
+        return false; // Invalid country
+    }
+    
+    // Get dial code for the country
+    $dialCode = $countryData[$countryCode]['dial_code'];
+    
+    // Remove country code if it's at the beginning
+    if (strpos($cleanPhone, $dialCode) === 0) {
+        $cleanPhone = substr($cleanPhone, strlen($dialCode));
+    }
+    
+    // Also handle +92 format (remove the + and 92)
+    if (strpos($cleanPhone, '92') === 0 && strlen($cleanPhone) > 10) {
+        $cleanPhone = substr($cleanPhone, 2);
+    }
+    
+    // Country-specific validation rules
+    switch ($countryCode) {
+        case 'PK': // Pakistan
+            // Pakistani mobile numbers: 03XXXXXXXXX (11 digits) or 3XXXXXXXXX (10 digits)
+            if (strlen($cleanPhone) === 11 && substr($cleanPhone, 0, 2) === '03') {
+                return true;
+            }
+            if (strlen($cleanPhone) === 10 && substr($cleanPhone, 0, 1) === '3') {
+                return true;
+            }
+            // Also accept numbers starting with 92 (country code)
+            if (strlen($cleanPhone) === 12 && substr($cleanPhone, 0, 2) === '92') {
+                return true;
+            }
+            // Accept any 10-11 digit number for Pakistan (more flexible)
+            if (strlen($cleanPhone) >= 10 && strlen($cleanPhone) <= 11) {
+                return true;
+            }
+            break;
+            
+        case 'US': // United States
+            // US numbers: 10 digits (area code + number)
+            if (strlen($cleanPhone) === 10) {
+                return true;
+            }
+            // Also accept 11 digits starting with 1
+            if (strlen($cleanPhone) === 11 && substr($cleanPhone, 0, 1) === '1') {
+                return true;
+            }
+            break;
+            
+        case 'GB': // United Kingdom
+            // UK numbers: 10-11 digits (excluding country code)
+            if (strlen($cleanPhone) >= 10 && strlen($cleanPhone) <= 11) {
+                return true;
+            }
+            // Also accept numbers starting with 44 (country code)
+            if (strlen($cleanPhone) === 12 && substr($cleanPhone, 0, 2) === '44') {
+                return true;
+            }
+            break;
+            
+        case 'IN': // India
+            // Indian mobile numbers: 10 digits
+            if (strlen($cleanPhone) === 10) {
+                return true;
+            }
+            // Also accept numbers starting with 91 (country code)
+            if (strlen($cleanPhone) === 12 && substr($cleanPhone, 0, 2) === '91') {
+                return true;
+            }
+            break;
+            
+        default:
+            // General validation: 7-15 digits
+            if (strlen($cleanPhone) >= 7 && strlen($cleanPhone) <= 15) {
+                return true;
+            }
+            break;
+    }
+    
+    return false;
+}
+
+/**
+ * Format phone number for storage
+ */
+function formatPhoneForStorage($phone, $country) {
+    // Clean the phone number
+    $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
+    
+    // Get country data
+    $countryData = json_decode(file_get_contents(resource_path('views/partials/country.json')), true);
+    
+    // Find country code by country name
+    $countryCode = null;
+    foreach ($countryData as $code => $data) {
+        if ($data['country'] === $country) {
+            $countryCode = $code;
+            break;
+        }
+    }
+    
+    if (!$countryCode) {
+        return $phone; // Return original if country not found
+    }
+    
+    // Get dial code for the country
+    $dialCode = $countryData[$countryCode]['dial_code'];
+    
+    // Remove country code if it's at the beginning
+    if (strpos($cleanPhone, $dialCode) === 0) {
+        $cleanPhone = substr($cleanPhone, strlen($dialCode));
+    }
+    
+    // Return formatted number with country code
+    return '+' . $dialCode . $cleanPhone;
+}
+
 function getThumbSize($key) {
     $fileInfo = new \App\Constants\FileDetails;
     $filePaths = $fileInfo->fileDetails();
@@ -339,7 +492,7 @@ function getTrx($length = 12): string {
 }
 
 function gatewayRedirectUrl($type = false): string {
-    if (auth()->check() && $type) return 'user.donation.history';
+    if (auth()->check() && $type) return 'user.deposit.success';
 
     return 'campaign';
 }
@@ -435,6 +588,14 @@ function getNotificationCount(): int {
 
 function getDefaultUserAvatar(): string {
     return asset('assets/universal/images/avatar.png');
+}
+
+function getCustomCode($type) {
+    $codeData = SiteData::where('data_key', 'custom_code.' . $type)->first();
+    if ($codeData && $codeData->data_info && isset($codeData->data_info->code)) {
+        return $codeData->data_info->code;
+    }
+    return '';
 }
 
 function getDefaultCampaignImage(): string {
@@ -627,4 +788,309 @@ function formatBytes($bytes, $precision = 2): string {
     }
     
     return round($bytes, $precision) . ' ' . $units[$i];
+}
+
+/**
+ * Get user's country based on IP address
+ */
+function getUserCountryByIP() {
+    try {
+        $ip = request()->ip();
+        
+        // For localhost/development, try to get real IP from headers
+        if (in_array($ip, ['127.0.0.1', '::1', 'localhost'])) {
+            // Try to get real IP from various headers
+            $headers = [
+                'HTTP_CF_CONNECTING_IP', // Cloudflare
+                'HTTP_X_FORWARDED_FOR', // Proxy
+                'HTTP_X_REAL_IP',       // Nginx
+                'HTTP_CLIENT_IP',       // Client IP
+                'REMOTE_ADDR'           // Direct connection
+            ];
+            
+            foreach ($headers as $header) {
+                if (!empty($_SERVER[$header])) {
+                    $ip = $_SERVER[$header];
+                    // Get first IP if multiple (X-Forwarded-For can have multiple)
+                    $ip = explode(',', $ip)[0];
+                    $ip = trim($ip);
+                    
+                    if (!in_array($ip, ['127.0.0.1', '::1', 'localhost'])) {
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // If still localhost, try external service to get public IP
+        if (in_array($ip, ['127.0.0.1', '::1', 'localhost'])) {
+            try {
+                $publicIP = file_get_contents('https://api.ipify.org');
+                if ($publicIP && filter_var($publicIP, FILTER_VALIDATE_IP)) {
+                    $ip = $publicIP;
+                }
+            } catch (Exception $e) {
+                // Continue with local IP
+            }
+        }
+        
+        // Skip if still localhost
+        if (in_array($ip, ['127.0.0.1', '::1', 'localhost'])) {
+            return null;
+        }
+        
+        // Try multiple IP geolocation services for better reliability
+        
+        // Service 1: ip-api.com (free, no API key needed)
+        try {
+            $context = stream_context_create([
+                'http' => [
+                    'timeout' => 5,
+                    'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                ]
+            ]);
+            
+            $response = file_get_contents("http://ip-api.com/json/{$ip}", false, $context);
+            $data = json_decode($response, true);
+            
+            if ($data && $data['status'] === 'success' && !empty($data['country'])) {
+                \Log::info('IP Detection Success - ip-api.com', ['ip' => $ip, 'country' => $data['country']]);
+                return $data['country'];
+            }
+        } catch (Exception $e) {
+            \Log::warning('IP Detection Failed - ip-api.com', ['ip' => $ip, 'error' => $e->getMessage()]);
+        }
+        
+        // Service 2: ipapi.co (fallback)
+        try {
+            $context = stream_context_create([
+                'http' => [
+                    'timeout' => 5,
+                    'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                ]
+            ]);
+            
+            $response = file_get_contents("https://ipapi.co/{$ip}/json/", false, $context);
+            $data = json_decode($response, true);
+            
+            if ($data && isset($data['country_name']) && !empty($data['country_name'])) {
+                \Log::info('IP Detection Success - ipapi.co', ['ip' => $ip, 'country' => $data['country_name']]);
+                return $data['country_name'];
+            }
+        } catch (Exception $e) {
+            \Log::warning('IP Detection Failed - ipapi.co', ['ip' => $ip, 'error' => $e->getMessage()]);
+        }
+        
+        // Service 3: ipinfo.io (fallback)
+        try {
+            $context = stream_context_create([
+                'http' => [
+                    'timeout' => 5,
+                    'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                ]
+            ]);
+            
+            $response = file_get_contents("https://ipinfo.io/{$ip}/json", false, $context);
+            $data = json_decode($response, true);
+            
+            if ($data && isset($data['country']) && !empty($data['country'])) {
+                \Log::info('IP Detection Success - ipinfo.io', ['ip' => $ip, 'country' => $data['country']]);
+                return $data['country'];
+            }
+        } catch (Exception $e) {
+            \Log::warning('IP Detection Failed - ipinfo.io', ['ip' => $ip, 'error' => $e->getMessage()]);
+        }
+        
+        \Log::warning('IP Detection Failed - All services', ['ip' => $ip]);
+        return null;
+    } catch (Exception $e) {
+        \Log::error('IP Detection Exception', ['error' => $e->getMessage()]);
+        return null;
+    }
+}
+
+/**
+ * Get user's country with fallback options
+ */
+function detectUserCountry() {
+    // 1. Check if user is logged in and has country set
+    if (auth()->check() && auth()->user()->country_name) {
+        return auth()->user()->country_name;
+    }
+    
+    // 2. Check if country is in session
+    if (session()->has('user_country')) {
+        return session()->get('user_country');
+    }
+    
+    // 3. Check if country is in request
+    if (request()->has('country')) {
+        $country = request('country');
+        session()->put('user_country', $country);
+        return $country;
+    }
+    
+    // 4. Try to detect by IP
+    $ipCountry = getUserCountryByIP();
+    if ($ipCountry) {
+        session()->put('user_country', $ipCountry);
+        return $ipCountry;
+    }
+    
+    return null;
+}
+
+/**
+ * Get country code from country name
+ */
+function getCountryCode($countryName) {
+    $countryMap = [
+        'Pakistan' => 'PK',
+        'United States' => 'US',
+        'United Kingdom' => 'GB',
+        'India' => 'IN',
+        'Canada' => 'CA',
+        'Australia' => 'AU',
+        'Germany' => 'DE',
+        'France' => 'FR',
+        'China' => 'CN',
+        'Japan' => 'JP',
+        'Brazil' => 'BR',
+        'Mexico' => 'MX',
+        'Spain' => 'ES',
+        'Italy' => 'IT',
+        'Netherlands' => 'NL',
+        'Sweden' => 'SE',
+        'Norway' => 'NO',
+        'Denmark' => 'DK',
+        'Finland' => 'FI',
+        'Switzerland' => 'CH',
+        'Austria' => 'AT',
+        'Belgium' => 'BE',
+        'Ireland' => 'IE',
+        'New Zealand' => 'NZ',
+        'South Africa' => 'ZA',
+        'Egypt' => 'EG',
+        'Nigeria' => 'NG',
+        'Kenya' => 'KE',
+        'Ghana' => 'GH',
+        'Morocco' => 'MA',
+        'Tunisia' => 'TN',
+        'Algeria' => 'DZ',
+        'Libya' => 'LY',
+        'Sudan' => 'SD',
+        'Ethiopia' => 'ET',
+        'Uganda' => 'UG',
+        'Tanzania' => 'TZ',
+        'Zambia' => 'ZM',
+        'Zimbabwe' => 'ZW',
+        'Botswana' => 'BW',
+        'Namibia' => 'NA',
+        'Mozambique' => 'MZ',
+        'Angola' => 'AO',
+        'Congo' => 'CG',
+        'Cameroon' => 'CM',
+        'Ivory Coast' => 'CI',
+        'Senegal' => 'SN',
+        'Mali' => 'ML',
+        'Burkina Faso' => 'BF',
+        'Niger' => 'NE',
+        'Chad' => 'TD',
+        'Central African Republic' => 'CF',
+        'Gabon' => 'GA',
+        'Equatorial Guinea' => 'GQ',
+        'Sao Tome and Principe' => 'ST',
+        'Cape Verde' => 'CV',
+        'Guinea-Bissau' => 'GW',
+        'Guinea' => 'GN',
+        'Sierra Leone' => 'SL',
+        'Liberia' => 'LR',
+        'Togo' => 'TG',
+        'Benin' => 'BJ',
+        'Mauritania' => 'MR',
+        'Western Sahara' => 'EH',
+        'Djibouti' => 'DJ',
+        'Somalia' => 'SO',
+        'Eritrea' => 'ER',
+        'Comoros' => 'KM',
+        'Madagascar' => 'MG',
+        'Mauritius' => 'MU',
+        'Seychelles' => 'SC',
+        'Malawi' => 'MW',
+        'Lesotho' => 'LS',
+        'Eswatini' => 'SZ'
+    ];
+    
+    return $countryMap[$countryName] ?? null;
+}
+
+/**
+ * Format phone number based on country
+ */
+function formatPhoneNumber($phone, $countryCode) {
+    // Remove all non-digit characters
+    $cleanPhone = preg_replace('/\D/', '', $phone);
+    
+    // Country-wise formatting
+    switch($countryCode) {
+        case 'PK': // Pakistan
+            if (strlen($cleanPhone) === 11 && substr($cleanPhone, 0, 2) === '03') {
+                return '+92 ' . substr($cleanPhone, 1, 3) . ' ' . substr($cleanPhone, 4, 3) . ' ' . substr($cleanPhone, 7);
+            } elseif (strlen($cleanPhone) === 10 && substr($cleanPhone, 0, 1) === '3') {
+                return '+92 ' . substr($cleanPhone, 0, 3) . ' ' . substr($cleanPhone, 3, 3) . ' ' . substr($cleanPhone, 6);
+            } elseif (strlen($cleanPhone) === 12 && substr($cleanPhone, 0, 2) === '92') {
+                return '+' . substr($cleanPhone, 0, 2) . ' ' . substr($cleanPhone, 2, 3) . ' ' . substr($cleanPhone, 5, 3) . ' ' . substr($cleanPhone, 8);
+            }
+            break;
+            
+        case 'US': // United States
+            if (strlen($cleanPhone) === 10) {
+                return '(' . substr($cleanPhone, 0, 3) . ') ' . substr($cleanPhone, 3, 3) . '-' . substr($cleanPhone, 6);
+            } elseif (strlen($cleanPhone) === 11 && substr($cleanPhone, 0, 1) === '1') {
+                return '+1 (' . substr($cleanPhone, 1, 3) . ') ' . substr($cleanPhone, 4, 3) . '-' . substr($cleanPhone, 7);
+            }
+            break;
+            
+        case 'GB': // United Kingdom
+            if (strlen($cleanPhone) === 11 && substr($cleanPhone, 0, 1) === '0') {
+                return '+44 ' . substr($cleanPhone, 1, 4) . ' ' . substr($cleanPhone, 5, 3) . ' ' . substr($cleanPhone, 8);
+            } elseif (strlen($cleanPhone) === 12 && substr($cleanPhone, 0, 2) === '44') {
+                return '+' . substr($cleanPhone, 0, 2) . ' ' . substr($cleanPhone, 2, 4) . ' ' . substr($cleanPhone, 6, 3) . ' ' . substr($cleanPhone, 9);
+            }
+            break;
+            
+        case 'IN': // India
+            if (strlen($cleanPhone) === 10) {
+                return '+91 ' . substr($cleanPhone, 0, 5) . ' ' . substr($cleanPhone, 5);
+            } elseif (strlen($cleanPhone) === 12 && substr($cleanPhone, 0, 2) === '91') {
+                return '+' . substr($cleanPhone, 0, 2) . ' ' . substr($cleanPhone, 2, 5) . ' ' . substr($cleanPhone, 7);
+            }
+            break;
+            
+        default:
+            // Generic international format
+            if (strlen($cleanPhone) >= 10 && strlen($cleanPhone) <= 15) {
+                return '+' . $cleanPhone;
+            }
+    }
+    
+    return $phone;
+}
+
+/**
+ * Get phone placeholder based on country
+ */
+function getPhonePlaceholder($countryCode) {
+    $placeholders = [
+        'PK' => 'e.g., 0300 1234567 or 300 1234567',
+        'US' => 'e.g., (555) 123-4567',
+        'GB' => 'e.g., 07700 900000',
+        'IN' => 'e.g., 98765 43210',
+        'CA' => 'e.g., (555) 123-4567',
+        'AU' => 'e.g., 0412 345 678',
+        'DE' => 'e.g., 0171 1234567',
+        'FR' => 'e.g., 06 12 34 56 78'
+    ];
+    
+    return $placeholders[$countryCode] ?? 'e.g., +1234567890';
 }

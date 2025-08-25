@@ -25,12 +25,16 @@ class PaymentController extends Controller
             'amount'      => 'required|numeric|gt:0',
             'full_name'   => 'required|string|max:255',
             'email'       => 'required|email|max:40',
-            'phone'       => 'required|max:40|regex:/^([0-9]*)$/',
+            // 'phone'       => 'required|max:40',
             'country'     => 'required|max:40|in:' . $countries,
             // 'mobile_code' => 'required|in:' . $mobileCodes,
             'gateway'     => 'required|exists:gateways,code',
             'currency'    => 'required',
         ]);
+
+        // Phone validation disabled - accept any phone format
+        $phone = request('phone');
+        $country = request('country');
         
 
         $campaign = Campaign::where('slug', $slug)->approve()->firstOrFail();
@@ -45,14 +49,19 @@ class PaymentController extends Controller
             return back()->withToasts($toast);
         }
 
-        $gatewayData = GatewayCurrency::whereHas('method', function ($gateway) {
+        $userCountry = auth()->check() ? auth()->user()->country_name : request('country');
+        
+        $gatewayData = GatewayCurrency::whereHas('method', function ($gateway) use ($userCountry) {
                         $gateway->active();
+                        if ($userCountry) {
+                            $gateway->forCountry($userCountry);
+                        }
                     })->where('method_code', request('gateway'))
                     ->where('currency', request('currency'))
                     ->first();
 
         if (!$gatewayData) {
-            $toast[] = ['error', 'Invalid gateway'];
+            $toast[] = ['error', 'Invalid gateway or gateway not available in your country'];
             return back()->withToasts($toast);
         }
 
@@ -75,7 +84,7 @@ class PaymentController extends Controller
         } else {
             $userFullName = request('full_name');
             $userEmail    = request('email');
-            $userPhone    = request('mobile_code') . request('phone');
+            $userPhone    = formatPhoneForStorage(request('phone'), request('country'));
             $userCountry  = request('country');
         }
 
@@ -296,5 +305,21 @@ class PaymentController extends Controller
         $routeName = auth()->check() ? 'user.donation.history' : 'campaign';
 
         return to_route($routeName)->withToasts($toast);
+    }
+
+    function success() {
+        $track   = session()->get('Track');
+        $deposit = Deposit::with('gateway')->where('trx', $track)->done()->first();
+
+        if (!$deposit) return to_route(gatewayRedirectUrl());
+
+        $toast[] = ['success', 'Payment completed successfully'];
+        
+        if (auth()->check()) {
+            return to_route('user.donation.history')->withToasts($toast);
+        } else {
+            // For guest users, redirect to campaign with success message
+            return to_route('campaign')->withToasts($toast);
+        }
     }
 }

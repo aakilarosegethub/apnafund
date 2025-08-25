@@ -142,6 +142,45 @@
             min-height: 100px;
         }
 
+        /* Password Input Group */
+        .password-input-group {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .password-input-group .form-control {
+            padding-right: 50px;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #6c757d;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .password-toggle:hover {
+            color: #05ce78;
+            background: rgba(5, 206, 120, 0.1);
+        }
+
+        .password-toggle:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(5, 206, 120, 0.2);
+        }
+
+        .password-toggle i {
+            font-size: 16px;
+        }
+
         /* Button Styles */
         .btn-theme {
             background: linear-gradient(135deg, #05ce78 0%, #04a85f 100%);
@@ -446,10 +485,11 @@
                 <input type="text" class="form-control" id="lastName" placeholder="Enter your last name">
             </div>
 
-            <div class="form-group">
-                <label class="form-label">Phone Number</label>
-                <input type="tel" class="form-control" id="phone" placeholder="Enter your phone number">
-            </div>
+                                <div class="form-group">
+                        <label class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control" id="phone" placeholder="Enter your phone number" data-original-placeholder="Enter your phone number">
+                        <small class="form-text text-muted" id="phoneHelp">Format will be applied based on your country selection</small>
+                    </div>
 
             <div class="form-group">
                 <label class="form-label">Country</label>
@@ -482,12 +522,22 @@
 
             <div class="form-group">
                 <label class="form-label">Password</label>
-                <input type="password" class="form-control" id="password" placeholder="Create a strong password">
+                <div class="password-input-group">
+                    <input type="password" class="form-control" id="password" placeholder="Create a strong password">
+                    <button type="button" class="password-toggle" onclick="togglePassword('password')" onkeydown="if(event.key==='Enter'||event.key===' ') togglePassword('password')" aria-label="Toggle password visibility">
+                        <i class="fas fa-eye" id="password-eye" title="Show password"></i>
+                    </button>
+                </div>
             </div>
 
             <div class="form-group">
                 <label class="form-label">Confirm Password</label>
-                <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm your password">
+                <div class="password-input-group">
+                    <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm your password">
+                    <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')" onkeydown="if(event.key==='Enter'||event.key===' ') togglePassword('confirmPassword')" aria-label="Toggle confirm password visibility">
+                        <i class="fas fa-eye" id="confirmPassword-eye" title="Show password"></i>
+                    </button>
+                </div>
             </div>
 
             <div class="form-group">
@@ -504,7 +554,7 @@
         </div>
 
         <!-- Success Step -->
-        <div class="step-content" id="successStep">
+        <div class="step-content" id="step6">
             <div class="success-message">
                 <div class="success-icon">
                     <i class="fas fa-check-circle"></i>
@@ -623,21 +673,39 @@
                     }
                     break;
                 case 4:
-                    if (document.getElementById('firstName').value === '') {
+                    const firstName = document.getElementById('firstName').value.trim();
+                    const lastName = document.getElementById('lastName').value.trim();
+                    const phone = document.getElementById('phone').value.trim();
+                    const country = document.getElementById('country').value;
+                    
+                    if (firstName === '') {
                         errors.push('Please enter your first name');
+                    } else if (firstName.length < 2) {
+                        errors.push('First name must be at least 2 characters long');
+                    } else if (!/^[a-zA-Z\s]+$/.test(firstName)) {
+                        errors.push('First name can only contain letters and spaces');
                     }
-                    if (document.getElementById('lastName').value === '') {
+                    
+                    if (lastName === '') {
                         errors.push('Please enter your last name');
+                    } else if (lastName.length < 2) {
+                        errors.push('Last name must be at least 2 characters long');
+                    } else if (!/^[a-zA-Z\s]+$/.test(lastName)) {
+                        errors.push('Last name can only contain letters and spaces');
                     }
-                    if (document.getElementById('phone').value === '') {
+                    
+                    if (phone === '') {
                         errors.push('Please enter your phone number');
+                    } else if (!isValidPhone(phone)) {
+                        errors.push('Please enter a valid phone number (minimum 10 digits)');
                     }
-                    if (document.getElementById('country').value === '') {
+                    
+                    if (country === '') {
                         errors.push('Please select your country');
                     }
                     break;
                 case 5:
-                    const email = document.getElementById('signupEmail').value;
+                    const email = document.getElementById('signupEmail').value.trim();
                     const password = document.getElementById('password').value;
                     const confirmPassword = document.getElementById('confirmPassword').value;
                     const termsAccepted = document.getElementById('termsCheckbox').checked;
@@ -645,13 +713,19 @@
                     if (email === '') {
                         errors.push('Please enter your email address');
                     } else if (!isValidEmail(email)) {
-                        errors.push('Please enter a valid email address');
+                        errors.push('Please enter a valid email address (e.g., user@example.com)');
+                    } else if (email.length > 100) {
+                        errors.push('Email address is too long (maximum 100 characters)');
                     }
                     
                     if (password === '') {
                         errors.push('Please enter a password');
                     } else if (password.length < 8) {
                         errors.push('Password must be at least 8 characters long');
+                    } else if (password.length > 50) {
+                        errors.push('Password is too long (maximum 50 characters)');
+                    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+                        errors.push('Password must contain at least one uppercase letter, one lowercase letter, and one number');
                     }
                     
                     if (confirmPassword === '') {
@@ -672,6 +746,187 @@
         function isValidEmail(email) {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             return emailRegex.test(email);
+        }
+
+        function isValidPhone(phone) {
+            // Remove all non-digit characters
+            const cleanPhone = phone.replace(/\D/g, '');
+            
+            // Check if phone has at least 10 digits (international standard)
+            if (cleanPhone.length < 10) {
+                return false;
+            }
+            
+            // Check if phone has reasonable length (not too long)
+            if (cleanPhone.length > 15) {
+                return false;
+            }
+            
+            // Basic format check - should contain only digits, spaces, dashes, plus, parentheses
+            const phoneRegex = /^[\+]?[0-9\s\-\(\)]{10,15}$/;
+            return phoneRegex.test(phone);
+        }
+
+        function formatPhoneNumber(phone, countryCode) {
+            // Remove all non-digit characters
+            const cleanPhone = phone.replace(/\D/g, '');
+            
+            // Country-wise formatting
+            switch(countryCode) {
+                case 'PK': // Pakistan
+                    if (cleanPhone.length === 11 && cleanPhone.startsWith('03')) {
+                        return `+92 ${cleanPhone.slice(1,4)} ${cleanPhone.slice(4,7)} ${cleanPhone.slice(7)}`;
+                    } else if (cleanPhone.length === 10 && cleanPhone.startsWith('3')) {
+                        return `+92 ${cleanPhone.slice(0,3)} ${cleanPhone.slice(3,6)} ${cleanPhone.slice(6)}`;
+                    } else if (cleanPhone.length === 12 && cleanPhone.startsWith('92')) {
+                        return `+${cleanPhone.slice(0,2)} ${cleanPhone.slice(2,5)} ${cleanPhone.slice(5,8)} ${cleanPhone.slice(8)}`;
+                    }
+                    break;
+                    
+                case 'US': // United States
+                    if (cleanPhone.length === 10) {
+                        return `(${cleanPhone.slice(0,3)}) ${cleanPhone.slice(3,6)}-${cleanPhone.slice(6)}`;
+                    } else if (cleanPhone.length === 11 && cleanPhone.startsWith('1')) {
+                        return `+1 (${cleanPhone.slice(1,4)}) ${cleanPhone.slice(4,7)}-${cleanPhone.slice(7)}`;
+                    }
+                    break;
+                    
+                case 'GB': // United Kingdom
+                    if (cleanPhone.length === 11 && cleanPhone.startsWith('0')) {
+                        return `+44 ${cleanPhone.slice(1,5)} ${cleanPhone.slice(5,8)} ${cleanPhone.slice(8)}`;
+                    } else if (cleanPhone.length === 12 && cleanPhone.startsWith('44')) {
+                        return `+${cleanPhone.slice(0,2)} ${cleanPhone.slice(2,6)} ${cleanPhone.slice(6,9)} ${cleanPhone.slice(9)}`;
+                    }
+                    break;
+                    
+                case 'IN': // India
+                    if (cleanPhone.length === 10) {
+                        return `+91 ${cleanPhone.slice(0,5)} ${cleanPhone.slice(5)}`;
+                    } else if (cleanPhone.length === 12 && cleanPhone.startsWith('91')) {
+                        return `+${cleanPhone.slice(0,2)} ${cleanPhone.slice(2,7)} ${cleanPhone.slice(7)}`;
+                    }
+                    break;
+                    
+                case 'CA': // Canada
+                    if (cleanPhone.length === 10) {
+                        return `(${cleanPhone.slice(0,3)}) ${cleanPhone.slice(3,6)}-${cleanPhone.slice(6)}`;
+                    } else if (cleanPhone.length === 11 && cleanPhone.startsWith('1')) {
+                        return `+1 (${cleanPhone.slice(1,4)}) ${cleanPhone.slice(4,7)}-${cleanPhone.slice(7)}`;
+                    }
+                    break;
+                    
+                case 'AU': // Australia
+                    if (cleanPhone.length === 9) {
+                        return `+61 ${cleanPhone.slice(0,2)} ${cleanPhone.slice(2,6)} ${cleanPhone.slice(6)}`;
+                    } else if (cleanPhone.length === 11 && cleanPhone.startsWith('61')) {
+                        return `+${cleanPhone.slice(0,2)} ${cleanPhone.slice(2,4)} ${cleanPhone.slice(4,8)} ${cleanPhone.slice(8)}`;
+                    }
+                    break;
+                    
+                case 'DE': // Germany
+                    if (cleanPhone.length === 11 && cleanPhone.startsWith('0')) {
+                        return `+49 ${cleanPhone.slice(1,4)} ${cleanPhone.slice(4,7)} ${cleanPhone.slice(7)}`;
+                    } else if (cleanPhone.length === 12 && cleanPhone.startsWith('49')) {
+                        return `+${cleanPhone.slice(0,2)} ${cleanPhone.slice(2,5)} ${cleanPhone.slice(5,8)} ${cleanPhone.slice(8)}`;
+                    }
+                    break;
+                    
+                case 'FR': // France
+                    if (cleanPhone.length === 10 && cleanPhone.startsWith('0')) {
+                        return `+33 ${cleanPhone.slice(1,3)} ${cleanPhone.slice(3,6)} ${cleanPhone.slice(6,8)} ${cleanPhone.slice(8)}`;
+                    } else if (cleanPhone.length === 12 && cleanPhone.startsWith('33')) {
+                        return `+${cleanPhone.slice(0,2)} ${cleanPhone.slice(2,4)} ${cleanPhone.slice(4,7)} ${cleanPhone.slice(7,9)} ${cleanPhone.slice(9)}`;
+                    }
+                    break;
+                    
+                default:
+                    // Generic international format
+                    if (cleanPhone.length >= 10 && cleanPhone.length <= 15) {
+                        return `+${cleanPhone}`;
+                    }
+            }
+            
+            return phone;
+        }
+
+        function getCountryCode(countryName) {
+            const countryMap = {
+                'Pakistan': 'PK',
+                'United States': 'US',
+                'United Kingdom': 'GB',
+                'India': 'IN',
+                'Canada': 'CA',
+                'Australia': 'AU',
+                'Germany': 'DE',
+                'France': 'FR',
+                'China': 'CN',
+                'Japan': 'JP',
+                'Brazil': 'BR',
+                'Mexico': 'MX',
+                'Spain': 'ES',
+                'Italy': 'IT',
+                'Netherlands': 'NL',
+                'Sweden': 'SE',
+                'Norway': 'NO',
+                'Denmark': 'DK',
+                'Finland': 'FI',
+                'Switzerland': 'CH',
+                'Austria': 'AT',
+                'Belgium': 'BE',
+                'Ireland': 'IE',
+                'New Zealand': 'NZ',
+                'South Africa': 'ZA',
+                'Egypt': 'EG',
+                'Nigeria': 'NG',
+                'Kenya': 'KE',
+                'Ghana': 'GH',
+                'Morocco': 'MA',
+                'Tunisia': 'TN',
+                'Algeria': 'DZ',
+                'Libya': 'LY',
+                'Sudan': 'SD',
+                'Ethiopia': 'ET',
+                'Uganda': 'UG',
+                'Tanzania': 'TZ',
+                'Zambia': 'ZM',
+                'Zimbabwe': 'ZW',
+                'Botswana': 'BW',
+                'Namibia': 'NA',
+                'Mozambique': 'MZ',
+                'Angola': 'AO',
+                'Congo': 'CG',
+                'Cameroon': 'CM',
+                'Ivory Coast': 'CI',
+                'Senegal': 'SN',
+                'Mali': 'ML',
+                'Burkina Faso': 'BF',
+                'Niger': 'NE',
+                'Chad': 'TD',
+                'Central African Republic': 'CF',
+                'Gabon': 'GA',
+                'Equatorial Guinea': 'GQ',
+                'Sao Tome and Principe': 'ST',
+                'Cape Verde': 'CV',
+                'Guinea-Bissau': 'GW',
+                'Guinea': 'GN',
+                'Sierra Leone': 'SL',
+                'Liberia': 'LR',
+                'Togo': 'TG',
+                'Benin': 'BJ',
+                'Mauritania': 'MR',
+                'Western Sahara': 'EH',
+                'Djibouti': 'DJ',
+                'Somalia': 'SO',
+                'Eritrea': 'ER',
+                'Comoros': 'KM',
+                'Madagascar': 'MG',
+                'Mauritius': 'MU',
+                'Seychelles': 'SC',
+                'Malawi': 'MW',
+                'Lesotho': 'LS',
+                'Eswatini': 'SZ'
+            };
+            return countryMap[countryName] || null;
         }
 
         function nextStep() {
@@ -751,7 +1006,7 @@
                         showToast('success', data.message || 'Account created successfully!');
                         
                         // Go to success step
-                        currentStep = 'successStep';
+                        currentStep = '6';
                         showStep(currentStep);
                         updateProgress();
                         updateStepIndicator();
@@ -808,6 +1063,154 @@
         function goToHome() {
             window.location.href = '{{ route("home") }}';
         }
+
+        function togglePassword(fieldId) {
+            const passwordField = document.getElementById(fieldId);
+            const eyeIcon = document.getElementById(fieldId + '-eye');
+            
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
+                eyeIcon.title = 'Hide password';
+            } else {
+                passwordField.type = 'password';
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
+                eyeIcon.title = 'Show password';
+            }
+        }
+
+        // Real-time validation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Phone number formatting with country-specific formatting
+            const phoneInput = document.getElementById('phone');
+            const countrySelect = document.getElementById('country');
+            
+            if (phoneInput) {
+                phoneInput.addEventListener('input', function(e) {
+                    let value = e.target.value;
+                    // Allow only digits, spaces, dashes, plus, parentheses
+                    value = value.replace(/[^\d\s\-\(\)\+]/g, '');
+                    e.target.value = value;
+                });
+                
+                phoneInput.addEventListener('blur', function(e) {
+                    if (e.target.value && isValidPhone(e.target.value)) {
+                        e.target.style.borderColor = '#05ce78';
+                        
+                        // Auto-format based on selected country
+                        if (countrySelect && countrySelect.value) {
+                            const countryCode = getCountryCode(countrySelect.value);
+                            if (countryCode) {
+                                const formattedPhone = formatPhoneNumber(e.target.value, countryCode);
+                                if (formattedPhone !== e.target.value) {
+                                    e.target.value = formattedPhone;
+                                }
+                            }
+                        }
+                    } else if (e.target.value) {
+                        e.target.style.borderColor = '#dc3545';
+                    }
+                });
+            }
+            
+            // Country change handler for phone formatting
+            if (countrySelect) {
+                countrySelect.addEventListener('change', function(e) {
+                    const phoneInput = document.getElementById('phone');
+                    const phoneHelp = document.getElementById('phoneHelp');
+                    
+                    // Update placeholder based on country
+                    const countryCode = getCountryCode(e.target.value);
+                    if (countryCode) {
+                        const placeholders = {
+                            'PK': 'e.g., 0300 1234567 or 300 1234567',
+                            'US': 'e.g., (555) 123-4567',
+                            'GB': 'e.g., 07700 900000',
+                            'IN': 'e.g., 98765 43210',
+                            'CA': 'e.g., (555) 123-4567',
+                            'AU': 'e.g., 0412 345 678',
+                            'DE': 'e.g., 0171 1234567',
+                            'FR': 'e.g., 06 12 34 56 78'
+                        };
+                        
+                        if (placeholders[countryCode]) {
+                            phoneInput.placeholder = placeholders[countryCode];
+                            phoneHelp.textContent = `Format: ${placeholders[countryCode]}`;
+                        } else {
+                            phoneInput.placeholder = 'e.g., +1234567890';
+                            phoneHelp.textContent = 'International format will be applied';
+                        }
+                    } else {
+                        phoneInput.placeholder = phoneInput.getAttribute('data-original-placeholder');
+                        phoneHelp.textContent = 'Format will be applied based on your country selection';
+                    }
+                    
+                    // Format existing phone number
+                    if (phoneInput && phoneInput.value) {
+                        const countryCode = getCountryCode(e.target.value);
+                        if (countryCode) {
+                            const formattedPhone = formatPhoneNumber(phoneInput.value, countryCode);
+                            if (formattedPhone !== phoneInput.value) {
+                                phoneInput.value = formattedPhone;
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Email validation
+            const emailInput = document.getElementById('signupEmail');
+            if (emailInput) {
+                emailInput.addEventListener('blur', function(e) {
+                    if (e.target.value && isValidEmail(e.target.value)) {
+                        e.target.style.borderColor = '#05ce78';
+                    } else if (e.target.value) {
+                        e.target.style.borderColor = '#dc3545';
+                    }
+                });
+            }
+            
+            // Password strength indicator
+            const passwordInput = document.getElementById('password');
+            if (passwordInput) {
+                passwordInput.addEventListener('input', function(e) {
+                    const password = e.target.value;
+                    let strength = 0;
+                    
+                    if (password.length >= 8) strength++;
+                    if (/[a-z]/.test(password)) strength++;
+                    if (/[A-Z]/.test(password)) strength++;
+                    if (/\d/.test(password)) strength++;
+                    if (/[^A-Za-z0-9]/.test(password)) strength++;
+                    
+                    // Update border color based on strength
+                    const colors = ['#dc3545', '#ffc107', '#17a2b8', '#28a745', '#28a745'];
+                    e.target.style.borderColor = colors[Math.min(strength, 4)];
+                });
+            }
+            
+            // Name validation
+            const nameInputs = ['firstName', 'lastName'];
+            nameInputs.forEach(function(inputId) {
+                const input = document.getElementById(inputId);
+                if (input) {
+                    input.addEventListener('input', function(e) {
+                        // Allow only letters and spaces
+                        e.target.value = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+                    });
+                    
+                    input.addEventListener('blur', function(e) {
+                        if (e.target.value && e.target.value.length >= 2) {
+                            e.target.style.borderColor = '#05ce78';
+                        } else if (e.target.value) {
+                            e.target.style.borderColor = '#dc3545';
+                        }
+                    });
+                }
+            });
+        });
 
         // Initialize
         updateProgress();

@@ -11,31 +11,25 @@
     @endphp
 
 
-    <section class="hero-section">
+    <section class="hero-section" @if(@$heroContent->data_info->hero_background_image) style="background-image: url('{{ asset('assets/images/site/home/' . @$heroContent->data_info->hero_background_image) }}');" @endif>
         <div class="container d-flex align-items-center justify-content-left">
             <div class="row justify-content-center">
                 <div class="col-12">
                     <div class="row">
                         <div class="col-lg-12">
                             <div class="text-dark">
-                                <h1 class="display-4 hero-heading fw-bold"><span class="theme-color-text">Crowd
-                                    </span>Funding</h1>
+                                <h1 class="display-4 hero-heading fw-bold"><span class="theme-color-text">{{ @$heroContent->data_info->hero_heading_1 ?? 'Crowd' }}</span>{{ @$heroContent->data_info->hero_heading_1 ? '' : 'Funding' }}</h1>
                                 <h1 class="display-4 hero-heading text-white fw-bold"><span
-                                        class="theme-color-text font-italic">By</span> The People,</h1>
+                                        class="theme-color-text font-italic">{{ @$heroContent->data_info->hero_heading_2 ?? 'By' }}</span> {{ @$heroContent->data_info->hero_heading_2 ? '' : 'The People,' }}</h1>
                                 <h1 class="display-4 hero-heading text-white fw-bold"><span
-                                        class="theme-color-text font-italic">For</span> The People,</h1>
+                                        class="theme-color-text font-italic">{{ @$heroContent->data_info->hero_heading_3 ?? 'For' }}</span> {{ @$heroContent->data_info->hero_heading_3 ? '' : 'The People,' }}</h1>
                             </div>
                             <div class="mt-2">
-                                <p class="text-white font-bold mb-0 me-4"><span class="quotes">Together, we empower
-                                        small businesses—
-                                        From young dreamers, bold visionaries and those who want to improve their
-                                        societies.
-                                    </span>
-                                </p>
+                                <p class="text-white font-bold mb-0 me-4"><span class="quotes">{{ @$heroContent->data_info->hero_description ?? 'Together, we empower small businesses— From young dreamers, bold visionaries and those who want to improve their societies.' }}</span></p>
                             </div>
                             <div class="button-container d-block me-0 pe-0">
-                                <a href="{{ route('business.resources') }}" class="m-0 button-theme">
-                                    <i class="fas fa-rocket me-2"></i>Get Started Now!
+                                <a href="{{ @$heroContent->data_info->button_url ?? route('business.resources') }}" class="m-0 button-theme">
+                                    <i class="fas fa-rocket me-2"></i>{{ @$heroContent->data_info->button_text ?? 'Get Started Now!' }}
                                 </a>
                             </div>
                         </div>
@@ -53,28 +47,28 @@
                     <div class="info-banner">
                         <div class="info-item">
                             <div class="info-icon">
-                                <i class="fas fa-bolt"></i>
+                                <i class="{{ @$infoBannerContent->data_info->info_item_1_icon ?? 'fas fa-bolt' }}"></i>
                             </div>
                             <div class="info-text">
-                                <span>No fee to start fundraising</span>
+                                <span>{{ @$infoBannerContent->data_info->info_item_1_text ?? 'No fee to start fundraising' }}</span>
                             </div>
                         </div>
                         <div class="info-divider"></div>
                         <div class="info-item">
                             <div class="info-icon">
-                                <i class="fas fa-heart-circle"></i>
+                                <i class="{{ @$infoBannerContent->data_info->info_item_2_icon ?? 'fas fa-heart-circle' }}"></i>
                             </div>
                             <div class="info-text">
-                                <span>1 Fund made every second</span>
+                                <span>{{ @$infoBannerContent->data_info->info_item_2_text ?? '1 Fund made every second' }}</span>
                             </div>
                         </div>
                         <div class="info-divider"></div>
                         <div class="info-item">
                             <div class="info-icon">
-                                <i class="fas fa-layer-group"></i>
+                                <i class="{{ @$infoBannerContent->data_info->info_item_3_icon ?? 'fas fa-layer-group' }}"></i>
                             </div>
                             <div class="info-text">
-                                <span>8K+ fundraisers started daily</span>
+                                <span>{{ @$infoBannerContent->data_info->info_item_3_text ?? '8K+ fundraisers started daily' }}</span>
                             </div>
                         </div>
                     </div>
@@ -88,7 +82,7 @@
         <div class="container">
             <div class="row">
                 <div class="col-12">
-                    <h2 class="section-title-sm text-left mb-4">Featured Projects</h2>
+                    <h2 class="section-title-sm text-left mb-4">{{ @$featuredProjectsContent->data_info->section_title ?? 'Featured Projects' }}</h2>
                 </div>
             </div>
 
@@ -117,8 +111,8 @@
             <!-- View All Button -->
             <div class="row mt-5">
                 <div class="col-12 text-center">
-                    <a href="{{ route('campaign') }}" class="btn btn-primary btn-lg">
-                        <i class="fas fa-eye me-2"></i>View All Campaigns
+                    <a href="{{ @$featuredProjectsContent->data_info->view_all_button_url ?? route('campaign') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-eye me-2"></i>{{ @$featuredProjectsContent->data_info->view_all_button_text ?? 'View All Campaigns' }}
                     </a>
                 </div>
             </div>

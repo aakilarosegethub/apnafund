@@ -27,7 +27,7 @@
                                     <div class="stat-number">{{ $setting->cur_sym . showAmount(@$user->balance) }}</div>
                                     <div class="stat-label">Total Raised</div>
                                 </div>
-                                <div class="stat-card">
+                                <!-- <div class="stat-card">
                                     <div class="stat-icon">
                                         <i class="fas fa-heart"></i>
                                     </div>
@@ -40,7 +40,7 @@
                                     </div>
                                     <div class="stat-number">89%</div>
                                     <div class="stat-label">Success Rate</div>
-                                </div>
+                                </div> -->
                             </div>
 
                             <!-- Recent Activity -->

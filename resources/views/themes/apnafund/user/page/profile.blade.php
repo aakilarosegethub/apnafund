@@ -120,9 +120,6 @@
                             </form>
                             
                             <br>
-                            <a href="{{ route('user.twofactor.form') }}" class="btn btn-outline-secondary">
-                                <i class="fas fa-shield-alt me-2"></i>Two-Factor Authentication
-                            </a>
                         </div>
                     </div>
                 </div>

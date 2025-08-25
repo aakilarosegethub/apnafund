@@ -64,10 +64,16 @@
                                             @if ($authUser)
                                                 <input type="text" class="form--control" name="phone" value="{{ old('phone', @$authUser->mobile) }}" placeholder="@lang('+0123 456 789')" @readonly(@$authUser) required>
                                             @else
+                                                @php
+                                                    $detectedCountry = detectUserCountry();
+                                                    $countryCode = $detectedCountry ? getCountryCode($detectedCountry) : null;
+                                                    $phonePlaceholder = $countryCode ? getPhonePlaceholder($countryCode) : '@lang("Enter your phone number")';
+                                                @endphp
                                                 <div class="input--group">
                                                     <span class="input-group-text input-group-text-light mobile-code"></span>
-                                                    <input type="number" class="form--control checkUser" name="phone" value="{{ old('phone') }}" required>
+                                                    <input type="tel" class="form--control checkUser phone-input" name="phone" value="{{ old('phone') }}" placeholder="{{ $phonePlaceholder }}" data-country-code="{{ $countryCode }}" required>
                                                 </div>
+                                                <small class="form-text text-muted phone-help">@lang('Format will be applied based on your country')</small>
                                             @endif
                                         </div>
                                         <div class="col-md-6">
@@ -411,6 +417,87 @@
                     return false;
                 }
             });
+
+            // Phone validation functions
+            function isValidPhone(phone) {
+                const cleanPhone = phone.replace(/\D/g, '');
+                if (cleanPhone.length < 10) return false;
+                if (cleanPhone.length > 15) return false;
+                const phoneRegex = /^[\+]?[0-9\s\-\(\)]{10,15}$/;
+                return phoneRegex.test(phone);
+            }
+
+            function formatPhoneNumber(phone, countryCode) {
+                const cleanPhone = phone.replace(/\D/g, '');
+                
+                switch(countryCode) {
+                    case 'PK': // Pakistan
+                        if (cleanPhone.length === 11 && cleanPhone.startsWith('03')) {
+                            return `+92 ${cleanPhone.slice(1,4)} ${cleanPhone.slice(4,7)} ${cleanPhone.slice(7)}`;
+                        } else if (cleanPhone.length === 10 && cleanPhone.startsWith('3')) {
+                            return `+92 ${cleanPhone.slice(0,3)} ${cleanPhone.slice(3,6)} ${cleanPhone.slice(6)}`;
+                        } else if (cleanPhone.length === 12 && cleanPhone.startsWith('92')) {
+                            return `+${cleanPhone.slice(0,2)} ${cleanPhone.slice(2,5)} ${cleanPhone.slice(5,8)} ${cleanPhone.slice(8)}`;
+                        }
+                        break;
+                        
+                    case 'US': // United States
+                        if (cleanPhone.length === 10) {
+                            return `(${cleanPhone.slice(0,3)}) ${cleanPhone.slice(3,6)}-${cleanPhone.slice(6)}`;
+                        } else if (cleanPhone.length === 11 && cleanPhone.startsWith('1')) {
+                            return `+1 (${cleanPhone.slice(1,4)}) ${cleanPhone.slice(4,7)}-${cleanPhone.slice(7)}`;
+                        }
+                        break;
+                        
+                    case 'GB': // United Kingdom
+                        if (cleanPhone.length === 11 && cleanPhone.startsWith('0')) {
+                            return `+44 ${cleanPhone.slice(1,5)} ${cleanPhone.slice(5,8)} ${cleanPhone.slice(8)}`;
+                        } else if (cleanPhone.length === 12 && cleanPhone.startsWith('44')) {
+                            return `+${cleanPhone.slice(0,2)} ${cleanPhone.slice(2,6)} ${cleanPhone.slice(6,9)} ${cleanPhone.slice(9)}`;
+                        }
+                        break;
+                        
+                    case 'IN': // India
+                        if (cleanPhone.length === 10) {
+                            return `+91 ${cleanPhone.slice(0,5)} ${cleanPhone.slice(5)}`;
+                        } else if (cleanPhone.length === 12 && cleanPhone.startsWith('91')) {
+                            return `+${cleanPhone.slice(0,2)} ${cleanPhone.slice(2,7)} ${cleanPhone.slice(7)}`;
+                        }
+                        break;
+                        
+                    default:
+                        if (cleanPhone.length >= 10 && cleanPhone.length <= 15) {
+                            return `+${cleanPhone}`;
+                        }
+                }
+                return phone;
+            }
+
+            // Phone input validation
+            const phoneInput = document.querySelector('.phone-input');
+            if (phoneInput) {
+                phoneInput.addEventListener('input', function(e) {
+                    let value = e.target.value;
+                    value = value.replace(/[^\d\s\-\(\)\+]/g, '');
+                    e.target.value = value;
+                });
+                
+                phoneInput.addEventListener('blur', function(e) {
+                    const countryCode = e.target.getAttribute('data-country-code');
+                    if (e.target.value && isValidPhone(e.target.value)) {
+                        e.target.style.borderColor = '#05ce78';
+                        
+                        if (countryCode) {
+                            const formattedPhone = formatPhoneNumber(e.target.value, countryCode);
+                            if (formattedPhone !== e.target.value) {
+                                e.target.value = formattedPhone;
+                            }
+                        }
+                    } else if (e.target.value) {
+                        e.target.style.borderColor = '#dc3545';
+                    }
+                });
+            }
         });
     </script>
 @endpush 

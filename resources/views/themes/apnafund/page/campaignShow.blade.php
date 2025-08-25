@@ -176,7 +176,6 @@
             width: 50px;
             height: 50px;
             border-radius: 50%;
-            background: #05ce78;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -338,25 +337,17 @@
             margin-left: 20px;
         }
 
-        .progress-circle svg {
+        .progress-ring {
             width: 100%;
             height: 100%;
             transform: rotate(-90deg);
         }
 
-        .progress-circle-bg {
-            fill: none;
-            stroke: #e8e8e8;
-            stroke-width: 8;
+        .progress-ring-bg {
+            transition: all 0.3s ease;
         }
 
-        .progress-circle-fill {
-            fill: none;
-            stroke: #05ce78;
-            stroke-width: 8;
-            stroke-linecap: round;
-            stroke-dasharray: 226;
-            stroke-dashoffset: 160;
+        .progress-ring-fill {
             transition: stroke-dashoffset 0.5s ease;
         }
 
@@ -368,6 +359,7 @@
             font-size: 1.2rem;
             font-weight: 700;
             color: #333;
+            z-index: 2;
         }
 
         .action-buttons {
@@ -1274,12 +1266,201 @@
                 gap: 5px;
             }
         }
+
+        /* Toast Notifications */
+        .toast-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: 600;
+            z-index: 9999;
+            max-width: 300px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .toast-notification.success {
+            background-color: #05ce78;
+        }
+
+        .toast-notification.error {
+            background-color: #dc3545;
+        }
+
+        .toast-notification.info {
+            background-color: #333;
+        }
+
+        /* Load More Button */
+        .btn-load-more {
+            width: 100%;
+            padding: 15px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            margin-top: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+
+        .btn-load-more:hover {
+            background: #e9ecef;
+            border-color: #05ce78;
+            color: #05ce78;
+        }
+
+        /* Form Improvements */
+        .form-group input[type="email"] {
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+            width: 100%;
+        }
+
+        .form-group input[type="email"]:focus {
+            outline: none;
+            border-color: #05ce78;
+            box-shadow: 0 0 0 3px rgba(5, 206, 120, 0.1);
+        }
+
+        /* Donations Modal */
+        .donations-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .donations-modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .donations-modal-content {
+            background: #fff;
+            border-radius: 16px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        .donations-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px 30px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .donations-modal-header h3 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+        }
+
+        .donations-modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #666;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .donations-modal-close:hover {
+            background: #f8f9fa;
+            color: #333;
+        }
+
+        .donations-modal-body {
+            padding: 30px;
+        }
+
+        .modal-donation-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .modal-donation-item:last-child {
+            border-bottom: none;
+        }
+
+        .modal-donation-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .modal-donation-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #05ce78;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .modal-donation-details {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .modal-donation-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .modal-donation-date {
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        .modal-donation-amount {
+            font-weight: 700;
+            color: #05ce78;
+            font-size: 1.1rem;
+        }
     </style>
 @endsection
 
 @section('frontend')
 @php
-            $percentage = donationPercentage($campaignData->goal_amount, $campaignData->raised_amount);
+            $percentage = donationPercentage(@$campaignData->goal_amount, @$campaignData->raised_amount);
         @endphp
 <!-- Main Fundraiser Section -->
     <div class="fundraiser-container mt-4">
@@ -1300,9 +1481,15 @@
             <!-- Organizer Section -->
             <div class="organizer-section">
                 <div class="organizer-info">
-                    <div class="organizer-avatar">JL</div>
+                    <div class="organizer-avatar">
+                        @if($campaignData->user->image)
+                            <img src="{{ getImage(getFilePath('userProfile') . '/' . $campaignData->user->image) }}" alt="{{ $campaignData->user->fullname }}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                        @else
+                            {{ strtoupper(substr($campaignData->user->fullname, 0, 2)) }}
+                        @endif
+                    </div>
                     <div class="organizer-details">
-                        <h4>Jenny Langer</h4>
+                        <h4>{{ $campaignData->user->fullname }}</h4>
                         <p>is organizing this fundraiser</p>
                     </div>
                 </div>
@@ -1320,62 +1507,43 @@
             </div>
             </div>
 
-            <!-- Engagement -->
-            <div class="engagement-section">
-                <div class="engagement-item">
-                    <i class="fas fa-heart"></i>
-                    <span>1</span>
-                </div>
-                <div class="engagement-item">
-                    <img src="assets/images/banner-1.jpg" alt="Banner"
-                        style="width: 30px; height: 30px; border-radius: 4px; object-fit: cover;">
-                </div>
-            </div>
 
             <!-- Actions -->
             <div class="fundraiser-actions">
                 <a href="{{ url('campaign/' . @$campaignData->slug . '/contribute') }}" class="btn-donate">Contribute</a>
-                <a href="#" class="btn-share">Share</a>
+                <a href="#" class="btn-share" onclick="openShareModal()">Share</a>
             </div>
 
             <!-- Organizer Details -->
             <div class="organizer-section">
                 <h3>Organizer</h3>
                 <div class="organizer-info">
-                    <div class="organizer-avatar">JL</div>
+                    <div class="organizer-avatar">
+                        @if($campaignData->user->image)
+                            <img src="{{ getImage(getFilePath('userProfile') . '/' . $campaignData->user->image) }}" alt="{{ $campaignData->user->fullname }}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                        @else
+                            {{ strtoupper(substr($campaignData->user->fullname, 0, 2)) }}
+                        @endif
+                    </div>
                     <div class="organizer-details">
-                        <h4>Jenny Langer</h4>
+                        <h4>{{ $campaignData->user->fullname }}</h4>
                         <p>Organizer</p>
-                        <p>Philadelphia, PA</p>
+                        <p>{{ $campaignData->user->country_name ?? 'Location not specified' }}</p>
                     </div>
                 </div>
                 <a href="#" class="btn-share">Contact</a>
             </div>
 
-            <!-- Words of Support -->
-            <div class="support-section">
-                <h3>Words of support</h3>
-                <p class="support-prompt">Please donate to share words of support.</p>
-                <div class="support-placeholder">
-                    <p>No words of support yet</p>
-                </div>
-                <div class="support-placeholder">
-                    <p>No words of support yet</p>
-                </div>
-                <div class="support-placeholder">
-                    <p>No words of support yet</p>
-                </div>
-            </div>
-
             <!-- Reviews and Comments Section -->
             <div class="reviews-section">
-                <h3>Reviews & Comments</h3>
-                <p class="reviews-prompt">Share your thoughts and experiences about this fundraiser.</p>
+                <h3>Comments & Reviews</h3>
+                <p class="reviews-prompt">Share your thoughts and experiences about this campaign.</p>
 
                 <!-- Review Form -->
                 <div class="review-form-container">
-                    <h4>Write a Review</h4>
-                    <form class="review-form" id="reviewForm">
+                    <h4>Write a Comment</h4>
+                    <form class="review-form" id="reviewForm" method="POST" action="{{ route('campaign.comment', $campaignData->slug) }}">
+                        @csrf
                         <div class="rating-container">
                             <label>Your Rating:</label>
                             <div class="star-rating">
@@ -1393,15 +1561,14 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="reviewTitle">Review Title:</label>
-                            <input type="text" id="reviewTitle" name="title" placeholder="Give your review a title"
-                                required>
+                            <label for="reviewTitle">Comment Title:</label>
+                            <input type="text" id="reviewTitle" name="title" placeholder="Give your comment a title">
                         </div>
 
                         <div class="form-group">
-                            <label for="reviewContent">Your Review:</label>
-                            <textarea id="reviewContent" name="content" rows="4"
-                                placeholder="Share your experience with this fundraiser..." required></textarea>
+                            <label for="reviewContent">Your Comment:</label>
+                            <textarea id="reviewContent" name="comment" rows="4"
+                                placeholder="Share your thoughts about this campaign..." required></textarea>
                         </div>
 
                         <div class="form-group">
@@ -1409,14 +1576,32 @@
                             <input type="text" id="reviewerName" name="name" placeholder="Enter your name" required>
                         </div>
 
-                        <button type="submit" class="btn-submit-review">Submit Review</button>
+                        <div class="form-group">
+                            <label for="reviewerEmail">Your Email:</label>
+                            <input type="email" id="reviewerEmail" name="email" placeholder="Enter your email" required>
+                        </div>
+
+                        <button type="submit" class="btn-submit-review">Submit Comment</button>
                     </form>
                 </div>
 
                 <!-- Reviews Display -->
                 <div class="reviews-display">
                     <div class="reviews-header">
-                        <h4>Recent Reviews</h4>
+                        <div>
+                            <h4>Recent Comments</h4>
+                            @php
+                                $avgRating = $comments->where('rating', '!=', null)->avg('rating');
+                                $totalReviews = $comments->where('rating', '!=', null)->count();
+                            @endphp
+                            @if($avgRating)
+                                <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9rem;">
+                                    <span style="color: #ffd700;">★★★★★</span> 
+                                    {{ number_format($avgRating, 1) }} average rating 
+                                    ({{ $totalReviews }} {{ $totalReviews == 1 ? 'review' : 'reviews' }})
+                                </p>
+                            @endif
+                        </div>
                         <div class="reviews-filter">
                             <select id="filterReviews">
                                 <option value="all">All Reviews</option>
@@ -1430,96 +1615,61 @@
                     </div>
 
                     <div class="reviews-list" id="reviewsList">
-                        <!-- Sample Reviews -->
-                        <div class="review-item" data-rating="5">
-                            <div class="review-header">
-                                <div class="reviewer-info">
-                                    <div class="reviewer-avatar">SM</div>
-                                    <div class="reviewer-details">
-                                        <h5 class="reviewer-name">Sarah Mitchell</h5>
-                                        <div class="review-rating">
-                                            <span class="stars">★★★★★</span>
-                                            <span class="rating-text">5.0</span>
+                        @forelse ($comments as $comment)
+                            <div class="review-item" data-rating="{{ $comment->rating ?? 0 }}">
+                                <div class="review-header">
+                                    <div class="reviewer-info">
+                                        <div class="reviewer-avatar">
+                                            @if($comment->user && $comment->user->image)
+                                                <img src="{{ getImage(getFilePath('userProfile') . '/' . $comment->user->image) }}" alt="{{ $comment->user->fullname }}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                                            @else
+                                                {{ strtoupper(substr($comment->user ? $comment->user->fullname : $comment->name, 0, 2)) }}
+                                            @endif
+                                        </div>
+                                        <div class="reviewer-details">
+                                            <h5 class="reviewer-name">{{ $comment->user ? $comment->user->fullname : $comment->name }}</h5>
+                                            <div class="review-rating">
+                                                @if($comment->rating)
+                                                    <span class="stars">
+                                                        @for($i = 1; $i <= 5; $i++)
+                                                            @if($i <= $comment->rating)
+                                                                ★
+                                                            @else
+                                                                ☆
+                                                            @endif
+                                                        @endfor
+                                                    </span>
+                                                    <span class="rating-text">{{ $comment->rating }}.0</span>
+                                                @endif
+                                            </div>
                                         </div>
                                     </div>
+                                    <div class="review-date">{{ showDateTime($comment->created_at, 'd M, Y') }}</div>
                                 </div>
-                                <div class="review-date">2 days ago</div>
-                            </div>
-                            <h6 class="review-title">Amazing cause, well organized!</h6>
-                            <p class="review-content">This fundraiser is incredibly well-organized and the cause is
-                                truly worthy. Ron Holloway has been such an important part of the music community. I'm
-                                glad to be able to support his medical expenses.</p>
-                            <div class="review-actions">
-                                <button class="btn-like-review">
-                                    <i class="fas fa-thumbs-up"></i>
-                                    <span>12</span>
-                                </button>
-                                <button class="btn-reply-review">
-                                    <i class="fas fa-reply"></i>
-                                    Reply
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="review-item" data-rating="4">
-                            <div class="review-header">
-                                <div class="reviewer-info">
-                                    <div class="reviewer-avatar">MJ</div>
-                                    <div class="reviewer-details">
-                                        <h5 class="reviewer-name">Mike Johnson</h5>
-                                        <div class="review-rating">
-                                            <span class="stars">★★★★☆</span>
-                                            <span class="rating-text">4.0</span>
-                                        </div>
-                                    </div>
+                                @if($comment->title)
+                                    <h6 class="review-title">{{ $comment->title }}</h6>
+                                @endif
+                                <p class="review-content">{{ $comment->comment }}</p>
+                                <div class="review-actions">
+                                    <button class="btn-like-review">
+                                        <i class="fas fa-thumbs-up"></i>
+                                        <span>0</span>
+                                    </button>
+                                    <button class="btn-reply-review">
+                                        <i class="fas fa-reply"></i>
+                                        Reply
+                                    </button>
                                 </div>
-                                <div class="review-date">1 week ago</div>
                             </div>
-                            <h6 class="review-title">Great initiative for a local legend</h6>
-                            <p class="review-content">Ron has been a fixture in the DC music scene for decades. This
-                                fundraiser is a great way to give back to someone who has given so much to our community
-                                through music.</p>
-                            <div class="review-actions">
-                                <button class="btn-like-review">
-                                    <i class="fas fa-thumbs-up"></i>
-                                    <span>8</span>
-                                </button>
-                                <button class="btn-reply-review">
-                                    <i class="fas fa-reply"></i>
-                                    Reply
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="review-item" data-rating="5">
-                            <div class="review-header">
-                                <div class="reviewer-info">
-                                    <div class="reviewer-avatar">AL</div>
-                                    <div class="reviewer-details">
-                                        <h5 class="reviewer-name">Amy Lewis</h5>
-                                        <div class="review-rating">
-                                            <span class="stars">★★★★★</span>
-                                            <span class="rating-text">5.0</span>
-                                        </div>
-                                    </div>
+                        @empty
+                            <div class="review-item">
+                                <div class="review-content text-center" style="color: #666; font-style: italic; padding: 40px 20px;">
+                                    <i class="fas fa-star" style="font-size: 2rem; color: #ddd; margin-bottom: 15px; display: block;"></i>
+                                    <h5 style="margin-bottom: 10px; color: #333;">No reviews yet</h5>
+                                    <p>Be the first to leave a review and share your experience with this campaign!</p>
                                 </div>
-                                <div class="review-date">2 weeks ago</div>
                             </div>
-                            <h6 class="review-title">Supporting a true artist</h6>
-                            <p class="review-content">I've been following Ron's music for years. His talent and
-                                dedication to the craft are unmatched. This fundraiser is helping a true artist in need,
-                                and I'm proud to be part of it.</p>
-                            <div class="review-actions">
-                                <button class="btn-like-review">
-                                    <i class="fas fa-thumbs-up"></i>
-                                    <span>15</span>
-                                </button>
-                                <button class="btn-reply-review">
-                                    <i class="fas fa-reply"></i>
-                                    Reply
-                                </button>
-                            </div>
-                        </div>
+                        @endforelse
                     </div>
                 </div>
             </div>
@@ -1550,52 +1700,66 @@
                         </div>
                     </div>
                     <div class="progress-circle">
-                        <svg viewBox="0 0 100 100">
-                            <circle class="progress-circle-bg" cx="50" cy="50" r="45"></circle>
-                            <circle class="progress-circle-fill" cx="50" cy="50" r="45"></circle>
+                        <svg viewBox="0 0 100 100" class="progress-ring">
+                            <circle class="progress-ring-bg" cx="50" cy="50" r="40" stroke-width="8" fill="none" stroke="#e8e8e8"/>
+                            <circle class="progress-ring-fill" cx="50" cy="50" r="40" stroke-width="8" fill="none" stroke="#05ce78" stroke-linecap="round" stroke-dasharray="251.2" stroke-dashoffset="calc(251.2 - (251.2 * {{ $percentage }}) / 100)"/>
                         </svg>
                         <span class="progress-percentage">{{ $percentage . '%' }}</span>
                     </div>
                 </div>
 
                 <div class="action-buttons">
-                    <a href="#" class="btn-share-card">Share</a>
+                    <a href="#" class="btn-share-card" onclick="openShareModal()">Share</a>
                     <a href="{{ url('campaign/' . @$campaignData->slug . '/contribute') }}" class="btn-donate-card">Contribute now</a>
                 </div>
 
                 <div class="donation-stats">
                     <i class="fas fa-chart-line"></i>
-                    <span>807 people just donated</span>
+                    <span>{{ $donations->count() }} people just donated</span>
                 </div>
 
                 <div class="recent-donations">
-                    <div class="donation-item">
-                        <div class="donation-info">
-                            <i class="fas fa-heart" style="color: #666; font-size: 0.9rem;"></i>
-                            <div class="donation-details">
-                                <span class="donation-name">Lisa Glassman</span>
-                                <span class="donation-amount">$36</span>
+                    @forelse ($donations as $donation)
+                        <div class="donation-item">
+                            <div class="donation-info">
+                                <i class="fas fa-heart" style="color: #666; font-size: 0.9rem;"></i>
+                                <div class="donation-details">
+                                    <span class="donation-name">{{ __($donation->donorName) }}</span>
+                                    <span class="donation-amount">{{ $setting->cur_sym . showAmount($donation->amount) }}</span>
+                                </div>
                             </div>
+                            <span class="donation-type">
+                                @if($loop->first)
+                                    Recent donation
+                                @elseif($donation->amount == $donations->max('amount'))
+                                    Top donation
+                                @else
+                                    {{ diffForHumans($donation->created_at) }}
+                                @endif
+                            </span>
                         </div>
-                        <span class="donation-type">Recent donation</span>
-                    </div>
-                    <div class="donation-item">
-                        <div class="donation-info">
-                            <i class="fas fa-heart" style="color: #666; font-size: 0.9rem;"></i>
-                            <div class="donation-details">
-                                <span class="donation-name">David Earl</span>
-                                <span class="donation-amount">$1,000</span>
+                    @empty
+                        <div class="donation-item">
+                            <div class="donation-info">
+                                <i class="fas fa-heart" style="color: #666; font-size: 0.9rem;"></i>
+                                <div class="donation-details">
+                                    <span class="donation-name">No donations yet</span>
+                                    <span class="donation-amount">Be the first!</span>
+                                </div>
                             </div>
+                            <span class="donation-type">Start donating</span>
                         </div>
-                        <span class="donation-type">Top donation</span>
-                    </div>
-                    <div class="donation-actions">
-                        <a href="#" class="donation-action-btn">See all</a>
-                        <a href="#" class="donation-action-btn">
-                            <i class="fas fa-star"></i>
-                            See top
-                        </a>
-                    </div>
+                    @endforelse
+                    
+                    @if($donations->count() > 0)
+                        <div class="donation-actions">
+                            <button class="donation-action-btn" id="showAllDonations">See all</button>
+                            <button class="donation-action-btn" id="showTopDonations">
+                                <i class="fas fa-star"></i>
+                                See top
+                            </button>
+                        </div>
+                    @endif
                 </div>
             </div>
             
@@ -1606,6 +1770,74 @@
                     <span>Latest News & Updates</span>
                     <i class="fas fa-chevron-right"></i>
                 </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Donations Modal -->
+    <div class="donations-modal" id="donationsModal">
+        <div class="donations-modal-content">
+            <div class="donations-modal-header">
+                <h3 id="donationsModalTitle">All Donations</h3>
+                <button class="donations-modal-close" id="closeDonationsModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="donations-modal-body">
+                <div id="donationsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Modal -->
+    <div class="share-modal" id="shareModal">
+        <div class="share-modal-content">
+            <div class="share-modal-header">
+                <h3>Share This Campaign</h3>
+                <button class="share-modal-close" onclick="closeShareModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="share-modal-body">
+                <div class="share-options">
+                    <!-- Copy Link -->
+                    <div class="share-option">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="shareUrl" value="{{ url()->current() }}" readonly>
+                            <button class="btn btn-primary" onclick="copyShareUrl()">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Social Media Buttons -->
+                    <div class="social-share-buttons">
+                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode(url()->current()) }}" target="_blank" class="social-share-btn facebook">
+                            <i class="fab fa-facebook-f"></i>
+                            <span>Facebook</span>
+                        </a>
+                        
+                        <a href="https://twitter.com/intent/tweet?text={{ urlencode($campaignData->name) }}&url={{ urlencode(url()->current()) }}" target="_blank" class="social-share-btn twitter">
+                            <i class="fab fa-twitter"></i>
+                            <span>Twitter</span>
+                        </a>
+                        
+                        <a href="https://wa.me/?text={{ urlencode($campaignData->name . ' - ' . url()->current()) }}" target="_blank" class="social-share-btn whatsapp">
+                            <i class="fab fa-whatsapp"></i>
+                            <span>WhatsApp</span>
+                        </a>
+                        
+                        <a href="https://t.me/share/url?url={{ urlencode(url()->current()) }}&text={{ urlencode($campaignData->name) }}" target="_blank" class="social-share-btn telegram">
+                            <i class="fab fa-telegram-plane"></i>
+                            <span>Telegram</span>
+                        </a>
+                        
+                        <a href="mailto:?subject={{ urlencode($campaignData->name) }}&body={{ urlencode('Check out this campaign: ' . url()->current()) }}" class="social-share-btn email">
+                            <i class="fas fa-envelope"></i>
+                            <span>Email</span>
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1623,6 +1855,200 @@
 
         .select2-results__option {
             padding-left: 16px;
+        }
+
+        /* Share Modal Styles */
+        .share-modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .share-modal-content {
+            background-color: #fff;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .share-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 25px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .share-modal-header h3 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .share-modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #666;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .share-modal-close:hover {
+            background: #f8f9fa;
+            color: #333;
+        }
+
+        .share-modal-body {
+            padding: 25px;
+        }
+
+        .share-option {
+            margin-bottom: 25px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .input-group button {
+            padding: 12px 20px;
+            background: #05ce78;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .input-group button:hover {
+            background: #04a85f;
+        }
+
+        .social-share-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+        }
+
+        .social-share-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: white;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .social-share-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            color: white;
+            text-decoration: none;
+        }
+
+        .social-share-btn.facebook { background: #1877f2; }
+        .social-share-btn.twitter { background: #1da1f2; }
+        .social-share-btn.whatsapp { background: #25d366; }
+        .social-share-btn.telegram { background: #0088cc; }
+        .social-share-btn.email { background: #ea4335; }
+
+        .social-share-btn i {
+            font-size: 1.1rem;
+        }
+
+        @media (max-width: 768px) {
+            .share-modal-content {
+                margin: 10% auto;
+                width: 95%;
+            }
+            
+            .social-share-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 15px 20px;
+            z-index: 10000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            max-width: 300px;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toast-success {
+            border-left: 4px solid #05ce78;
+        }
+
+        .toast-error {
+            border-left: 4px solid #dc3545;
+        }
+
+        .toast i {
+            font-size: 1.2rem;
+        }
+
+        .toast-success i {
+            color: #05ce78;
+        }
+
+        .toast-error i {
+            color: #dc3545;
         }
     </style>
 @endpush
@@ -1719,6 +2145,299 @@
             $(document).on('change', '[name=donationAmount]', function () {
                 $('[name=gateway]').change()
             })
+
+            // Pre-fill form with user data if logged in
+            @if(auth()->check())
+                $(document).ready(function() {
+                    $('#reviewerName').val('{{ auth()->user()->fullname }}');
+                    $('#reviewerEmail').val('{{ auth()->user()->email }}');
+                    $('#reviewerName, #reviewerEmail').prop('readonly', true);
+                });
+            @endif
+
+            // Review Form Submission
+            $('#reviewForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                // Validate rating
+                var rating = $('input[name="rating"]:checked').val();
+                if (!rating) {
+                    showToast('error', 'Please select a rating.');
+                    return;
+                }
+                
+                var formData = new FormData(this);
+                var submitBtn = $(this).find('.btn-submit-review');
+                var originalText = submitBtn.text();
+                
+                // Disable submit button
+                submitBtn.prop('disabled', true).text('Submitting...');
+                
+                $.ajax({
+                    url: $(this).attr('action'),
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        // Show success toast
+                        showToast('success', 'Comment submitted successfully! Please wait for admin approval.');
+                        
+                        // Reset form
+                        $('#reviewForm')[0].reset();
+                        
+                        // Reload page after a short delay to show new comment
+                        setTimeout(function() {
+                            location.reload();
+                        }, 2000);
+                    },
+                    error: function(xhr) {
+                        var message = 'An error occurred while submitting your comment.';
+                        if (xhr.responseJSON && xhr.responseJSON.errors) {
+                            var errors = xhr.responseJSON.errors;
+                            var errorMessages = [];
+                            for (var field in errors) {
+                                errorMessages.push(errors[field][0]);
+                            }
+                            message = errorMessages.join(', ');
+                        } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                            message = xhr.responseJSON.message;
+                        }
+                        showToast('error', message);
+                    },
+                    complete: function() {
+                        // Re-enable submit button
+                        submitBtn.prop('disabled', false).text(originalText);
+                    }
+                });
+            });
+
+            // Review Filtering
+            $('#filterReviews').on('change', function() {
+                var selectedRating = $(this).val();
+                var reviewItems = $('.review-item');
+                
+                if (selectedRating === 'all') {
+                    reviewItems.show();
+                } else {
+                    reviewItems.hide();
+                    reviewItems.filter('[data-rating="' + selectedRating + '"]').show();
+                }
+            });
+
+            // Toast Notification Function
+            function showToast(type, message) {
+                // Create toast element
+                var toast = $('<div class="toast-notification ' + type + '">' + message + '</div>');
+                
+                // Add to page
+                $('body').append(toast);
+                
+                // Animate in
+                setTimeout(function() {
+                    toast.css('transform', 'translateX(0)');
+                }, 100);
+                
+                // Remove after 5 seconds
+                setTimeout(function() {
+                    toast.css('transform', 'translateX(100%)');
+                    setTimeout(function() {
+                        toast.remove();
+                    }, 300);
+                }, 5000);
+            }
+
+            // Load more reviews functionality
+            var skip = {{ $comments->count() }};
+            var loading = false;
+            
+            function loadMoreReviews() {
+                if (loading) return;
+                
+                loading = true;
+                var loadMoreBtn = $('<button class="btn-load-more">Loading more reviews...</button>');
+                
+                if ($('.btn-load-more').length === 0) {
+                    $('#reviewsList').after(loadMoreBtn);
+                }
+                
+                $.ajax({
+                    url: '{{ route("campaign.comment.fetch", $campaignData->slug) }}',
+                    type: 'GET',
+                    data: { skip: skip },
+                    success: function(response) {
+                        if (response.html) {
+                            $('#reviewsList').append(response.html);
+                            skip += 5;
+                            
+                            if (response.remaining_comments <= 0) {
+                                $('.btn-load-more').remove();
+                            }
+                        }
+                    },
+                    error: function() {
+                        showToast('error', 'Failed to load more reviews.');
+                    },
+                    complete: function() {
+                        loading = false;
+                        $('.btn-load-more').remove();
+                    }
+                });
+            }
+            
+            // Add load more button if there are more reviews
+            @if($commentCount > $comments->count())
+                var loadMoreBtn = $('<button class="btn-load-more">Load More Reviews</button>');
+                $('#reviewsList').after(loadMoreBtn);
+                
+                $(document).on('click', '.btn-load-more', function() {
+                    loadMoreReviews();
+                });
+            @endif
+
+            // Donations Modal Functionality
+            var donationsData = @json($donations);
+            
+            // Show all donations
+            $('#showAllDonations').on('click', function() {
+                showDonationsModal('All Donations', donationsData);
+            });
+            
+            // Show top donations
+            $('#showTopDonations').on('click', function() {
+                var topDonations = [...donationsData].sort((a, b) => parseFloat(b.amount) - parseFloat(a.amount));
+                showDonationsModal('Top Donations', topDonations);
+            });
+            
+            // Close modal
+            $('#closeDonationsModal').on('click', function() {
+                $('#donationsModal').removeClass('show');
+            });
+            
+            // Close modal when clicking outside
+            $('#donationsModal').on('click', function(e) {
+                if (e.target === this) {
+                    $(this).removeClass('show');
+                }
+            });
+            
+            function showDonationsModal(title, donations) {
+                $('#donationsModalTitle').text(title);
+                var html = '';
+                
+                if (donations.length > 0) {
+                    donations.forEach(function(donation) {
+                        var donorName = donation.donorName || 'Anonymous';
+                        var donorInitials = donorName.split(' ').map(n => n[0]).join('').toUpperCase();
+                        var donationDate = new Date(donation.created_at).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                        });
+                        
+                        html += `
+                            <div class="modal-donation-item">
+                                <div class="modal-donation-info">
+                                    <div class="modal-donation-avatar">
+                                        ${donorInitials}
+                                    </div>
+                                    <div class="modal-donation-details">
+                                        <div class="modal-donation-name">${donorName}</div>
+                                        <div class="modal-donation-date">${donationDate}</div>
+                                    </div>
+                                </div>
+                                <div class="modal-donation-amount">
+                                    {{ $setting->cur_sym }}${parseFloat(donation.amount).toLocaleString()}
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    html = `
+                        <div class="modal-donation-item">
+                            <div style="text-align: center; width: 100%; color: #666; font-style: italic; padding: 20px;">
+                                No donations found
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                $('#donationsList').html(html);
+                $('#donationsModal').addClass('show');
+            }
+
+            // Share Modal Functions
+            function openShareModal() {
+                document.getElementById('shareModal').style.display = 'block';
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeShareModal() {
+                document.getElementById('shareModal').style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+
+            function copyShareUrl() {
+                const shareUrl = document.getElementById('shareUrl');
+                shareUrl.select();
+                shareUrl.setSelectionRange(0, 99999);
+                
+                try {
+                    document.execCommand('copy');
+                    showToast('success', 'Link copied to clipboard!');
+                } catch (err) {
+                    // Fallback for modern browsers
+                    navigator.clipboard.writeText(shareUrl.value).then(function() {
+                        showToast('success', 'Link copied to clipboard!');
+                    }).catch(function() {
+                        showToast('error', 'Failed to copy link');
+                    });
+                }
+            }
+
+            // Close modal when clicking outside
+            window.onclick = function(event) {
+                const modal = document.getElementById('shareModal');
+                if (event.target === modal) {
+                    closeShareModal();
+                }
+            }
+
+            // Close modal with Escape key
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    closeShareModal();
+                }
+            });
+
+            // Toast notification function
+            function showToast(type, message) {
+                const toast = document.createElement('div');
+                toast.className = `toast toast-${type}`;
+                toast.innerHTML = `
+                    <div class="toast-content">
+                        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                        <span>${message}</span>
+                    </div>
+                `;
+                
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.classList.add('show');
+                }, 100);
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => {
+                        document.body.removeChild(toast);
+                    }, 300);
+                }, 3000);
+            }
+
         })(jQuery)
     </script>
 @endpush

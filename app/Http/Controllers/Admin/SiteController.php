@@ -42,9 +42,10 @@ class SiteController extends Controller
 
         $content   = SiteData::where('data_key', $key . '.content')->orderBy('id','desc')->first();
         $elements  = SiteData::where('data_key', $key . '.element')->orderBy('id','desc')->get();
+        $seoContent = SiteData::where('data_key', $key . '.seo')->first();
         $pageTitle = $section->name ;
 
-        return view('admin.site.index', compact('section', 'content', 'elements', 'key', 'pageTitle'));
+        return view('admin.site.index', compact('section', 'content', 'elements', 'seoContent', 'key', 'pageTitle'));
     }
 
     function content($key) {
@@ -133,6 +134,25 @@ class SiteController extends Controller
 
         $content->data_info = $inputContentValue;
         $content->save();
+
+        // Handle SEO data if provided
+        if (request('seo_meta_title') || request('seo_meta_description') || request('seo_meta_keywords')) {
+            $seoContent = SiteData::where('data_key', $key . '.seo')->first();
+            
+            if (!$seoContent) {
+                $seoContent = new SiteData();
+                $seoContent->data_key = $key . '.seo';
+            }
+
+            $seoData = [
+                'meta_title' => request('seo_meta_title'),
+                'meta_description' => request('seo_meta_description'),
+                'meta_keywords' => request('seo_meta_keywords'),
+            ];
+
+            $seoContent->data_info = $seoData;
+            $seoContent->save();
+        }
 
         $toast[] = ['success', 'Content update success'];
         return back()->withToasts($toast);

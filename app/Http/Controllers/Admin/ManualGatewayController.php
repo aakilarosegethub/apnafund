@@ -62,6 +62,15 @@ class ManualGatewayController extends Controller
         $method->supported_currencies = [];
         $method->crypto               = ManageStatus::INACTIVE;
         $method->guideline            = request('guideline');
+        
+        // Handle countries field
+        $countries = request('countries');
+        if (is_array($countries) && !empty($countries)) {
+            $method->countries = $countries;
+        } else {
+            $method->countries = null; // Available in all countries
+        }
+        
         $method->save();
 
         $gatewayCurrency->name           = request('name');

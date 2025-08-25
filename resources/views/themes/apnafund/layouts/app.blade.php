@@ -14,6 +14,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ asset('assets/universal/css/iziToast.min.css') }}">
     <link rel="shortcut icon" href="{{ asset('assets/images/fav-icon.png') }}" type="image/png">
+    
+    <!-- Custom Header Code -->
+    {!! getCustomCode('header') !!}
     <style>
         /* Dashboard Specific Styles */
         .dashboard-container {
@@ -401,6 +404,9 @@
 
         @stack('page-script-lib')
         @stack('page-script')
+        
+        <!-- Custom Footer Code -->
+        {!! getCustomCode('footer') !!}
 
 </body>
 

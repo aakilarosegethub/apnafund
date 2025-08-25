@@ -28,24 +28,16 @@ class WebsiteController extends Controller
     }
     function home() {
         $pageTitle               = 'Home';
-        $coverContent            = SiteData::where('data_key', 'cover.content')->first();
-        $bannerElements          = getSiteData('banner.element', false, null, true);
-        $basicCampaignQuery      = Campaign::campaignCheck()->approve();
-        $featuredCampaignContent = getSiteData('featured_campaign.content', true);
+        
+        // Get dynamic home page content
+        $heroContent = SiteData::where('data_key', 'home.hero')->first();
+        $infoBannerContent = SiteData::where('data_key', 'home.info_banner')->first();
+        $featuredProjectsContent = SiteData::where('data_key', 'home.featured_projects')->first();
+        
         // Get featured campaigns (approved and featured, regardless of date status)
         $featuredCampaigns = Campaign::commonQuery()->approve()->featured()->latest()->limit(5)->get();
-        $campaignCategoryContent = getSiteData('campaign_category.content', true);
-        $campaignCategories      = Category::active()->get();
-        $recentCampaignContent   = getSiteData('recent_campaign.content', true);
-        $recentCampaigns         = array();//(clone $basicCampaignQuery)->latest()->limit(9)->get();
-        $counterElements         = getSiteData('counter.element', false, null, true);
-        $upcomingContent         = getSiteData('upcoming.content', true);
-        $upcomingCampaigns       = array();//Campaign::upcomingCheck()->approve()->orderby('start_date')->limit(6)->get();
-        $subscribeContent        = getSiteData('subscribe.content', true);
-        $successContent          = getSiteData('success_story.content', true);
-        $successElements         = getSiteData('success_story.element', false, 4, true);
 
-        return view($this->activeTheme .'page.home', compact('pageTitle', 'coverContent', 'bannerElements', 'featuredCampaignContent', 'counterElements', 'campaignCategoryContent', 'campaignCategories', 'recentCampaignContent', 'recentCampaigns', 'featuredCampaigns', 'upcomingContent', 'upcomingCampaigns', 'subscribeContent', 'successContent', 'successElements'));
+        return view($this->activeTheme .'page.home', compact('pageTitle', 'heroContent', 'infoBannerContent', 'featuredProjectsContent', 'featuredCampaigns'));
     }
 
     function homeNew() {
@@ -72,24 +64,27 @@ class WebsiteController extends Controller
     function volunteers() {
         $pageTitle         = 'Volunteers';
         $volunteerElements = SiteData::where('data_key', 'volunteer.element')->paginate(getPaginate());
+        $pageSEO           = getPageSEO('volunteer');
 
-        return view($this->activeTheme . 'page.volunteer', compact('pageTitle', 'volunteerElements'));
+        return view($this->activeTheme . 'page.volunteer', compact('pageTitle', 'volunteerElements', 'pageSEO'));
     }
 
     function aboutUs() {
         $pageTitle          = 'About Us';
         $clientContent      = getSiteData('client_review.content', true);
         $clientElements     = getSiteData('client_review.element', false, null, true);
+        $pageSEO            = getPageSEO('about_us');
 
-        return view($this->activeTheme . 'page.about', compact('pageTitle', 'clientContent', 'clientElements'));
+        return view($this->activeTheme . 'page.about', compact('pageTitle', 'clientContent', 'clientElements', 'pageSEO'));
     }
 
     function faq() {
         $pageTitle   = 'FAQ';
         $faqContent  = getSiteData('faq.content', true);
         $faqElements = getSiteData('faq.element', false, null, true);
+        $pageSEO     = getPageSEO('faq');
 
-        return view($this->activeTheme . 'page.faq', compact('pageTitle', 'faqContent', 'faqElements'));
+        return view($this->activeTheme . 'page.faq', compact('pageTitle', 'faqContent', 'faqElements', 'pageSEO'));
     }
 
     function campaigns() {
@@ -180,10 +175,58 @@ class WebsiteController extends Controller
         $seoContents['image_size']         = $imageSize;
 
         $countries         = json_decode(file_get_contents(resource_path('views/partials/country.json')));
-        $gatewayCurrencies = GatewayCurrency::whereHas('method', fn ($gateway) => $gateway->active())
-                                            ->with('method')
-                                            ->orderby('method_code')
-                                            ->get();
+        
+        // Get user's country - prioritize IP detection for better UX
+        
+        $userCountry = null;
+
+        if(!session()->get('user_country'))
+        {
+        // 1. First try IP-based detection
+        $ipCountry = getUserCountryByIP();
+        if ($ipCountry) {
+            $userCountry = $ipCountry;
+        }
+        
+        // 2. If no IP detection, check logged-in user's country
+        if (!$userCountry && $authUser && $authUser->country_name) {
+            $userCountry = $authUser->country_name;
+        }
+        
+        // 3. If still no country, check session
+        if (!$userCountry && session()->has('user_country')) {
+            $userCountry = session()->get('user_country');
+            
+        }
+        session()->put('user_country', $userCountry);
+    }
+    else{
+        $userCountry = session()->get('user_country');
+    }
+        // dd(session());
+        echo $userCountry;
+        
+        // 4. If still no country, check request parameter
+        if (!$userCountry && request()->has('country')) {
+            $requestCountry = request('country');
+            if (!empty($requestCountry)) {
+                $userCountry = $requestCountry;
+                session()->put('user_country', $userCountry);
+            }
+        }
+        
+        // Filter gateways based on detected country
+        $gatewayCurrencies = GatewayCurrency::whereHas('method', function ($gateway) use ($userCountry) {
+                                            $gateway->active();
+                                            if ($userCountry) {
+                                                $gateway->forCountry($userCountry);
+                                            }
+                                        })
+                                        ->with('method')
+                                        ->orderby('method_code')
+                                        ->get();
+
+
 
         return view($this->activeTheme . 'page.campaignDonate', compact('pageTitle', 'campaignData', 'seoContents', 'authUser', 'countries', 'gatewayCurrencies'));
     }
@@ -193,6 +236,8 @@ class WebsiteController extends Controller
             'name'    => 'required|string|max:40',
             'email'   => 'required|string|max:40',
             'comment' => 'required|string',
+            'rating'  => 'nullable|integer|min:1|max:5',
+            'title'   => 'nullable|string|max:255',
         ]);
 
         // Check whether user active or not
@@ -250,6 +295,8 @@ class WebsiteController extends Controller
 
         $comment->campaign_id = $campaign->id;
         $comment->comment     = request('comment');
+        $comment->rating      = request('rating');
+        $comment->title       = request('title');
         $comment->save();
 
         // Create admin notification
@@ -266,7 +313,7 @@ class WebsiteController extends Controller
         $adminNotification->click_url = urlPath('admin.comments.index');
         $adminNotification->save();
 
-        $toast[] = ['success', 'Your comment has submitted. Please wait for admin approval'];
+        $toast[] = ['success', 'Your review has been submitted successfully! Please wait for admin approval.'];
 
         return back()->withToasts($toast);
     }
@@ -316,6 +363,32 @@ class WebsiteController extends Controller
         }
     }
 
+    function campaignDonations($slug) {
+        $pageTitle = 'All Donations';
+        $campaign = Campaign::where('slug', $slug)->approve()->firstOrFail();
+        
+        $donations = Deposit::with('user')
+                            ->where('campaign_id', $campaign->id)
+                            ->done()
+                            ->latest()
+                            ->paginate(20);
+
+        return view($this->activeTheme . 'page.campaignDonations', compact('pageTitle', 'campaign', 'donations'));
+    }
+
+    function campaignTopDonations($slug) {
+        $pageTitle = 'Top Donations';
+        $campaign = Campaign::where('slug', $slug)->approve()->firstOrFail();
+        
+        $donations = Deposit::with('user')
+                            ->where('campaign_id', $campaign->id)
+                            ->done()
+                            ->orderBy('amount', 'desc')
+                            ->paginate(20);
+
+        return view($this->activeTheme . 'page.campaignTopDonations', compact('pageTitle', 'campaign', 'donations'));
+    }
+
     function upcomingCampaigns() {
         $pageTitle         = 'Upcoming Campaigns';
         $upcomingCampaigns = Campaign::when(request()->filled('category'), function ($query) {
@@ -360,9 +433,9 @@ class WebsiteController extends Controller
     function stories() {
         $pageTitle       = 'Success Stories';
         $successElements = SiteData::where('data_key', 'success_story.element')->paginate(getPaginate());
+        $pageSEO         = getPageSEO('success_story');
 
-
-        return view($this->activeTheme . 'page.stories', compact('pageTitle', 'successElements'));
+        return view($this->activeTheme . 'page.stories', compact('pageTitle', 'successElements', 'pageSEO'));
     }
 
     function storyShow($id) {
@@ -386,8 +459,9 @@ class WebsiteController extends Controller
         $pageTitle = 'Business Resources';
         $successContent = getSiteData('success_story.content', true);
         $successElements = getSiteData('success_story.element', false, 4, true);
+        $pageSEO = getPageSEO('business_resources');
         
-        return view($this->activeTheme . 'page.businessResources', compact('pageTitle', 'successContent', 'successElements'));
+        return view($this->activeTheme . 'page.businessResources', compact('pageTitle', 'successContent', 'successElements', 'pageSEO'));
     }
 
     function contact() {
@@ -395,8 +469,9 @@ class WebsiteController extends Controller
         $user            = auth()->user();
         $contactContent  = getSiteData('contact_us.content', true);
         $contactElements = getSiteData('contact_us.element', false, null, true);
+        $pageSEO         = getPageSEO('contact_us');
 
-        return view($this->activeTheme . 'page.contact', compact('pageTitle', 'user', 'contactContent', 'contactElements'));
+        return view($this->activeTheme . 'page.contact', compact('pageTitle', 'user', 'contactContent', 'contactElements', 'pageSEO'));
     }
 
     function contactStore() {
@@ -509,5 +584,34 @@ class WebsiteController extends Controller
         imagettftext($image, $fontSize, 0, $textX, $textY, $colorFill, $fontFile, $text);
         imagejpeg($image);
         imagedestroy($image);
+    }
+
+    function updateUserCountry() {
+        $country = request('country');
+        
+        if ($country) {
+            session()->put('user_country', $country);
+            
+            // If user is logged in, update their profile too
+            if (auth()->check()) {
+                $user = auth()->user();
+                $user->country_name = $country;
+                $user->save();
+            }
+            
+            return response()->json(['success' => true, 'message' => 'Country updated successfully']);
+        } else {
+            // Clear country selection (All Countries)
+            session()->forget('user_country');
+            
+            // If user is logged in, clear their country too
+            if (auth()->check()) {
+                $user = auth()->user();
+                $user->country_name = null;
+                $user->save();
+            }
+            
+            return response()->json(['success' => true, 'message' => 'All Countries selected']);
+        }
     }
 }

@@ -77,10 +77,16 @@
                                         @if ($authUser)
                                             <input type="text" class="form--control" name="phone" value="{{ old('phone', @$authUser->mobile) }}" placeholder="@lang('+0123 456 789')" @readonly(@$authUser)>
                                         @else
+                                            @php
+                                                $detectedCountry = detectUserCountry();
+                                                $countryCode = $detectedCountry ? getCountryCode($detectedCountry) : null;
+                                                $phonePlaceholder = $countryCode ? getPhonePlaceholder($countryCode) : '@lang("Enter your phone number")';
+                                            @endphp
                                             <div class="input--group">
                                                 <span class="input-group-text input-group-text-light mobile-code"></span>
-                                                <input type="number" class="form--control checkUser" name="phone" value="{{ old('phone') }}" required>
+                                                <input type="tel" class="form--control checkUser phone-input" name="phone" value="{{ old('phone') }}" placeholder="{{ $phonePlaceholder }}" data-country-code="{{ $countryCode }}" required>
                                             </div>
+                                            <small class="form-text text-muted phone-help">@lang('Format will be applied based on your country')</small>
                                         @endif
                                     </div>
                                     <h4 class="post-sidebar__card__subtitle mt-4">@lang('Choose an amount')</h4>

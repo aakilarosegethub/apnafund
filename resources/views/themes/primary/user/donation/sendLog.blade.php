@@ -1,19 +1,20 @@
-@extends($activeTheme . 'layouts.frontend')
+@extends('themes.apnafund.layouts.dashboard')
 
-@section('frontend')
-    <div class="dashboard py-60">
+@section('dashboard-content')
+    <div class="dashboard-content">
         <div class="container">
-            <div class="card custom--card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-end mb-3">
-                        <form action="" method="GET" class="input--group">
-                            <input type="text" class="form--control" name="search" value="{{ request('search') }}" placeholder="@lang('Search by transaction')">
-                            <button type="submit" class="btn btn--sm btn--base">
-                                <i class="ti ti-search"></i>
-                            </button>
-                        </form>
-                    </div>
-                    <table class="table table-striped table-borderless table--responsive--xl">
+            <div class="content-card">
+                <h2 class="mb-4">@lang('My Donations')</h2>
+                                    <div class="d-flex justify-content-end mb-4">
+                    <form action="" method="GET" class="d-flex">
+                        <input type="text" class="form-control me-2" name="search" value="{{ request('search') }}" placeholder="@lang('Search by transaction')">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </form>
+                </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
                         <thead>
                             <tr>
                                 <th>@lang('S.N.')</th>
@@ -82,8 +83,8 @@
                                     @endphp
 
                                     <td>
-                                        <a href="javascript:void(0)" class="btn btn--icon btn--base @if ($deposit->method_code >= 1000) detailsBtn @else disabled @endif" @if ($deposit->method_code >= 1000) data-info="{{ $details }}" data-url="{{ route('user.file.download', ['filePath' => 'verify']) }}" @endif @if ($deposit->status == ManageStatus::PAYMENT_CANCEL) data-admin_feedback="{{ $deposit->admin_feedback }}" @endif>
-                                            <i class="ti ti-eye"></i>
+                                        <a href="javascript:void(0)" class="btn btn-sm btn-outline-primary @if ($deposit->method_code >= 1000) detailsBtn @else disabled @endif" @if ($deposit->method_code >= 1000) data-info="{{ $details }}" data-url="{{ route('user.file.download', ['filePath' => 'verify']) }}" @endif @if ($deposit->status == ManageStatus::PAYMENT_CANCEL) data-admin_feedback="{{ $deposit->admin_feedback }}" @endif>
+                                            <i class="fas fa-eye"></i>
                                         </a>
                                     </td>
                                 </tr>
@@ -96,6 +97,7 @@
                             @endforelse
                         </tbody>
                     </table>
+                </div>
 
                     @if ($deposits->hasPages())
                         {{ $deposits->links() }}
@@ -106,18 +108,18 @@
     </div>
 
     {{-- Details Modal --}}
-    <div class="modal custom--modal fade" id="detailsModal" tabindex="-1" role="dialog">
+    <div class="modal fade" id="detailsModal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title fs-5">@lang('Details')</h5>
+                    <h5 class="modal-title">@lang('Details')</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <ul class="list-group userData"></ul>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn--sm btn--secondary" data-bs-dismiss="modal">@lang('Close')</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@lang('Close')</button>
                 </div>
             </div>
         </div>

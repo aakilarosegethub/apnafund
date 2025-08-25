@@ -15,6 +15,7 @@ use App\Models\Comment;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Validator;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -101,6 +102,15 @@ class AppServiceProvider extends ServiceProvider
                     ]
                 ]);
             });
+
+            // Register custom validation rules
+            Validator::extend('phone_by_country', function ($attribute, $value, $parameters, $validator) {
+                $country = request('country');
+                if (!$country) {
+                    return false;
+                }
+                return validatePhoneByCountry($value, $country);
+            }, 'The :attribute format is invalid for the selected country.');
         }
 
         if ($setting && $setting->enforce_ssl) {

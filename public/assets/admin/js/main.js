@@ -67,6 +67,15 @@
         }
         // ========================= For Th In Small Devices End ==========
 
+        // ========================= Select2 Multiple Initialization Start ==========
+        $('.select2-multiple').select2({
+            placeholder: function() {
+                return $(this).data('placeholder');
+            },
+            allowClear: true
+        });
+        // ========================= Select2 Multiple Initialization End ==========
+
         $('.header__search__input').on('input', function () {
             var search = $(this).val().toLowerCase();
             var search_result_pane = $('.search-list');

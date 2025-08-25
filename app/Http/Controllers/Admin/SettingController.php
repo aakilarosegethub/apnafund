@@ -325,4 +325,53 @@ class SettingController extends Controller
         $toast[] = ['success', 'Clearing cache success'];
         return back()->withToasts($toast);
     }
+
+    function home() {
+        $pageTitle = 'Home Setting';
+        return view('admin.setting.home', compact('pageTitle'));
+    }
+
+    function homeUpdate() {
+        $setting = bs();
+        
+        // Hero Section
+        $setting->home_hero_title_1 = request('home_hero_title_1');
+        $setting->home_hero_title_2 = request('home_hero_title_2');
+        $setting->home_hero_subtitle = request('home_hero_subtitle');
+        $setting->home_business_button_text = request('home_business_button_text');
+        $setting->home_personal_button_text = request('home_personal_button_text');
+        
+        // Resource Section
+        $setting->home_resource_title = request('home_resource_title');
+        $setting->home_resource_subtitle = request('home_resource_subtitle');
+        $setting->home_resource_description = request('home_resource_description');
+        $setting->home_resource_button_text = request('home_resource_button_text');
+        
+        // Steps Section
+        $setting->home_steps_title = request('home_steps_title');
+        $setting->home_step_1_title = request('home_step_1_title');
+        $setting->home_step_1_description = request('home_step_1_description');
+        $setting->home_step_2_title = request('home_step_2_title');
+        $setting->home_step_2_description = request('home_step_2_description');
+        $setting->home_step_3_title = request('home_step_3_title');
+        $setting->home_step_3_description = request('home_step_3_description');
+        
+        // Success Stories Section
+        $setting->home_stories_title = request('home_stories_title');
+        $setting->home_stories_subtitle = request('home_stories_subtitle');
+        
+        // FAQ Section
+        $setting->home_faq_title = request('home_faq_title');
+        $setting->home_faq_subtitle = request('home_faq_subtitle');
+        
+        // Community Section
+        $setting->home_community_title = request('home_community_title');
+        $setting->home_community_description = request('home_community_description');
+        $setting->home_community_button_text = request('home_community_button_text');
+        
+        $setting->save();
+
+        $toast[] = ['success', 'Home setting update success'];
+        return back()->withToasts($toast);
+    }
 }

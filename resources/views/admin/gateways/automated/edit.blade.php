@@ -77,6 +77,35 @@
                 </div>
             </div>
 
+            <!-- Country Restrictions -->
+            <div class="col-12">
+                <div class="custom--card">
+                    <div class="card-header">
+                        <h3 class="title">@lang('Country Restrictions')</h3>
+                        <p class="text-muted">@lang('Select countries where this payment gateway should be available. Leave empty to make it available in all countries.')</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <div class="col-12">
+                                <label class="form--label">@lang('Available Countries')</label>
+                                <select class="form--control select2-multiple" name="countries[]" multiple data-placeholder="@lang('Select countries or leave empty for all countries')">
+                                    @php
+                                        $countryData = json_decode(file_get_contents(resource_path('views/partials/country.json')));
+                                        $selectedCountries = $gateway->countries ?? [];
+                                    @endphp
+                                    @foreach($countryData as $code => $country)
+                                        <option value="{{ $country->country }}" @selected(in_array($country->country, $selectedCountries))>
+                                            {{ $country->country }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <small class="form-text text-muted">@lang('If no countries are selected, this gateway will be available in all countries.')</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             @isset($gateway->currencies)
                 @foreach($gateway->currencies as $gatewayCurrency)
                     <div class="col-12 currencyBody">

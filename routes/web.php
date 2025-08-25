@@ -25,6 +25,8 @@ Route::controller('WebsiteController')->group(function () {
         Route::get('/rewards', 'RewardController@show')->name('rewards');
         Route::post('comment', 'storeCampaignComment')->name('comment');
         Route::get('fetch-comment', 'fetchCampaignComment')->name('comment.fetch');
+        Route::get('donations', 'campaignDonations')->name('donations');
+        Route::get('donations/top', 'campaignTopDonations')->name('donations.top');
     });
 
     Route::get('upcoming-campaigns', 'upcomingCampaigns')->name('upcoming');
@@ -55,4 +57,28 @@ Route::controller('WebsiteController')->group(function () {
     Route::get('policy/{slug}/{id}', 'policyPages')->name('policy.pages');
 
     Route::get('placeholder-image/{size}', 'placeholderImage')->name('placeholder.image');
+
+    // Update user country in session
+    Route::post('/update-user-country', [App\Http\Controllers\WebsiteController::class, 'updateUserCountry'])->name('update.user.country');
+
+// Test route for IP detection
+Route::get('/test-ip-detection', function() {
+    $ip = request()->ip();
+    $ipCountry = getUserCountryByIP();
+    $detectedCountry = detectUserCountry();
+    
+    return response()->json([
+        'user_ip' => $ip,
+        'ip_country' => $ipCountry,
+        'detected_country' => $detectedCountry,
+        'session_country' => session('user_country'),
+        'headers' => [
+            'HTTP_CF_CONNECTING_IP' => $_SERVER['HTTP_CF_CONNECTING_IP'] ?? null,
+            'HTTP_X_FORWARDED_FOR' => $_SERVER['HTTP_X_FORWARDED_FOR'] ?? null,
+            'HTTP_X_REAL_IP' => $_SERVER['HTTP_X_REAL_IP'] ?? null,
+            'HTTP_CLIENT_IP' => $_SERVER['HTTP_CLIENT_IP'] ?? null,
+            'REMOTE_ADDR' => $_SERVER['REMOTE_ADDR'] ?? null,
+        ]
+    ]);
+});
 });

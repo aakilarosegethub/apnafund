@@ -46,7 +46,9 @@
         $footerContactElements = getSiteData('contact_us.element', false, null, true);
     @endphp
 
-    @include($activeTheme.'partials.footer')
+    @if(!request()->routeIs('campaign.donate'))
+        @include($activeTheme.'partials.footer')
+    @endif
 
 
 @endsection

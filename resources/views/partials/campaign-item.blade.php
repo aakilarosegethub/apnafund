@@ -34,7 +34,7 @@
         <p class="project-description">{{ Str::limit($campaign->short_description, 100) }}</p>
         <div class="project-stats">
             <div class="stat">
-                <span class="stat-value">${{ number_format($campaign->raised_amount) }}</span>
+                <span class="stat-value">{{ bs('cur_sym') }}{{ number_format($campaign->raised_amount) }}</span>
                 <span class="stat-label">raised</span>
             </div>
             <div class="stat">

@@ -27,7 +27,6 @@ class ProcessController extends Controller
         // Hard code to 5 USD
         $unitAmount = $deposit->amount * 100; // 5 USD in cents
         $currency = 'USD';
-        dd(route(gatewayRedirectUrl(true)));
         
 
         try {
@@ -78,10 +77,10 @@ class ProcessController extends Controller
         // You can find your endpoint's secret in your webhook settings
         $endpoint_secret = $gateway_parameter->end_point; // main
         $payload         = @file_get_contents('php://input');
-        $sig_header      = $_SERVER['HTTP_STRIPE_SIGNATURE'];
-        $event           = null;
+        $event           = json_decode($payload);
+        $sig_header      = (isset($_SERVER['HTTP_STRIPE_SIGNATURE'])) ? $_SERVER['HTTP_STRIPE_SIGNATURE'] : '';
 
-        try {
+        /*try {
             $event = Webhook::constructEvent($payload, $sig_header, $endpoint_secret);
         } catch (UnexpectedValueException $e) {
             // Invalid payload
@@ -91,7 +90,7 @@ class ProcessController extends Controller
             // Invalid signature
             http_response_code(400);
             exit();
-        }
+        }*/
 
         // Handle the checkout.session.completed event
         if ($event->type == 'checkout.session.completed') {

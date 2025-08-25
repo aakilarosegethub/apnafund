@@ -124,7 +124,7 @@
                         </div>
 
                         <div class="form-group text-end">
-                            <a href="{{ route('user.rewards.index', $campaign->id) }}" class="btn btn--outline me-2">
+                            <a href="{{ route('user.rewards.index', $campaign->slug) }}" class="btn btn--outline me-2">
                                 @lang('Cancel')
                             </a>
                             <button type="submit" class="btn btn--base">

@@ -17,7 +17,8 @@ class Gateway extends Model
         'code'                 => 'string',
         'extra'                => 'object',
         'input_form'           => 'object',
-        'supported_currencies' => 'object'
+        'supported_currencies' => 'object',
+        'countries'            => 'array'
     ];
 
     public function currencies()
@@ -43,5 +44,29 @@ class Gateway extends Model
     public function scopeManual($query)
     {
         return $query->where('code', '>=', 1000);
+    }
+
+    /**
+     * Check if gateway is available for a specific country
+     */
+    public function isAvailableForCountry($country)
+    {
+        // If no countries are set, gateway is available for all countries
+        if (empty($this->countries)) {
+            return true;
+        }
+        
+        return in_array($country, $this->countries);
+    }
+
+    /**
+     * Scope to filter gateways by country
+     */
+    public function scopeForCountry($query, $country)
+    {
+        return $query->where(function($q) use ($country) {
+            $q->whereNull('countries')
+              ->orWhereJsonContains('countries', $country);
+        });
     }
 }

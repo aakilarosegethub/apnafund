@@ -764,6 +764,80 @@
                 </div>
             </div>
 
+            <!-- Country Selection (Hidden by default) -->
+            <div class="country-selection-section d-none" id="countrySelectionSection">
+                <h3 class="section-title">@lang('Select Your Country')</h3>
+                <p class="section-description">@lang('Choose your country to see available payment methods')</p>
+                
+                @if (!$authUser)
+                    <div class="row g-3 mb-4">
+                        <div class="col-lg-6">
+                            <label class="form--label required">@lang('Country')</label>
+                            @php
+                                $detectedCountry = session('user_country') ?? detectUserCountry() ?? null;
+                            @endphp
+                            <select class="form--control" name="country" id="countrySelect">
+                                <option value="">@lang('All Countries')</option>
+                                @foreach ($countries as $country)
+                                    <option value="{{ $country->country }}" @selected(old('country') == $country->country)>
+                                        {{ $country->country }}
+                                        @if($detectedCountry == $country->country)
+                                            ({{ count($gatewayCurrencies) }} @lang('methods available'))
+                                        @endif
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                @endif
+                
+                <!-- Country Status Message -->
+                @if($gatewayCurrencies && count($gatewayCurrencies) > 0)
+                    @if(session('user_country'))
+                        <div class="alert alert-success mb-3">
+                            <i class="ti ti-check"></i>
+                            @lang('Found') <strong>{{ count($gatewayCurrencies) }}</strong> @lang('payment methods available in') <strong>{{ session('user_country') }}</strong>
+                            <a href="#" onclick="showCountrySelection()" class="text-decoration-underline ms-2">@lang('Change country')</a>
+                        </div>
+                    @else
+                        <div class="alert alert-info mb-3">
+                            <i class="ti ti-globe"></i>
+                            @lang('Showing') <strong>{{ count($gatewayCurrencies) }}</strong> @lang('payment methods available in') <strong>@lang('All Countries')</strong>
+                            <a href="#" onclick="showCountrySelection()" class="text-decoration-underline ms-2">@lang('Select specific country')</a>
+                        </div>
+                    @endif
+                @else
+                    <div class="alert alert-warning mb-3">
+                        <i class="ti ti-alert-triangle"></i>
+                        @lang('No payment methods available for') <strong>{{ session('user_country') ?? 'selected country' }}</strong>
+                        <a href="#" onclick="showCountrySelection()" class="text-decoration-underline ms-2">@lang('Try different country')</a>
+                    </div>
+                @endif
+            </div>
+
+            <!-- Hidden Country Field for Form Submission -->
+            <input type="hidden" name="selected_country" value="{{ session('user_country') ?? '' }}">
+
+            <!-- Payment Methods (Only show if gateways available) -->
+            @if($gatewayCurrencies && count($gatewayCurrencies) > 0)
+                <div class="payment-methods">
+                    <h3 class="section-title">@lang('Payment method')</h3>
+                    
+                    @foreach ($gatewayCurrencies as $gatewayCurrency)
+                        <div class="payment-option" 
+                             data-method="{{ $gatewayCurrency->method_code }}" 
+                             data-currency="{{ $gatewayCurrency->currency }}"
+                             data-gateway="{{ json_encode($gatewayCurrency) }}">
+                            <div class="payment-radio"></div>
+                            <div class="payment-info">
+                                <div class="payment-logo">{{ strtoupper(substr($gatewayCurrency->method->name, 0, 2)) }}</div>
+                                <span class="payment-text">{{ __($gatewayCurrency->method->name) }} ({{ strtoupper($gatewayCurrency->currency) }})</span>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+
             <!-- Tip Section -->
             <div class="tip-section">
                 <h3 class="section-title">@lang('Tip') {{ $setting->site_name }} @lang('services')</h3>
@@ -777,26 +851,6 @@
                 <div style="text-align: center;">
                     <a href="#" class="custom-tip-link" id="customTipLink">@lang('Enter custom tip')</a>
                 </div>
-            </div>
-
-            <!-- Payment Methods -->
-            <div class="payment-methods">
-                <h3 class="section-title">@lang('Payment method')</h3>
-                @if($gatewayCurrencies && count($gatewayCurrencies) > 0)
-                    @foreach ($gatewayCurrencies as $gatewayCurrency)
-                        <div class="payment-option" data-method="{{ $gatewayCurrency->method_code }}" data-currency="{{ $gatewayCurrency->currency }}">
-                            <div class="payment-radio"></div>
-                            <div class="payment-info">
-                                <div class="payment-logo">{{ strtoupper(substr($gatewayCurrency->method->name, 0, 2)) }}</div>
-                                <span class="payment-text">{{ __($gatewayCurrency->method->name) }} ({{ strtoupper($gatewayCurrency->currency) }})</span>
-                            </div>
-                        </div>
-                    @endforeach
-                @else
-                    <div class="alert alert-warning">
-                        @lang('No payment gateways are currently available.')
-                    </div>
-                @endif
             </div>
 
             <!-- Personal Information -->
@@ -826,10 +880,16 @@
                         @if ($authUser)
                             <input type="text" class="form--control" name="phone" value="{{ old('phone', @$authUser->mobile) }}" placeholder="@lang('+0123 456 789')" @readonly(@$authUser) required>
                         @else
+                            @php
+                                $detectedCountry = detectUserCountry();
+                                $countryCode = $detectedCountry ? getCountryCode($detectedCountry) : null;
+                                $phonePlaceholder = $countryCode ? getPhonePlaceholder($countryCode) : '@lang("Enter your phone number")';
+                            @endphp
                             <div class="input--group">
                                 <span class="input-group-text input-group-text-light mobile-code"></span>
-                                <input type="number" class="form--control checkUser" name="phone" value="{{ old('phone') }}" required>
+                                <input type="tel" class="form--control checkUser phone-input" name="phone" value="{{ old('phone') }}" placeholder="{{ $phonePlaceholder }}" data-country-code="{{ $countryCode }}" required>
                             </div>
+                            <small class="form-text text-muted phone-help">@lang('Format will be applied based on your country')</small>
                         @endif
                     </div>
                     <div class="col-lg-3 col-md-6">
@@ -837,14 +897,13 @@
                         @if ($authUser)
                             <input type="text" class="form--control" name="country" value="{{ old('country', @$authUser->country_name) }}" @readonly(@$authUser) required>
                         @else
-                            <select class="form--control" name="country" required>
-                                <option value="">@lang('Select Country')</option>
-                                @foreach ($countries as $country)
-                                    <option value="{{ $country->country }}" @selected(old('country') == $country->country)>
-                                        {{ $country->country }}
-                                    </option>
-                                @endforeach
-                            </select>
+                            <input type="text" class="form--control" name="country_display" value="{{ session('user_country') ?? 'All Countries' }}" readonly>
+                            <input type="hidden" name="country" value="{{ session('user_country') ?? '' }}">
+                            @if(session('user_country'))
+                                <small class="form-text text-muted">
+                                    <a href="#" onclick="showCountrySelection()" class="text-decoration-underline">@lang('Change country')</a>
+                                </small>
+                            @endif
                         @endif
                     </div>
                 </div>
@@ -2070,6 +2129,26 @@
             padding: 1rem;
             border: 2px solid #28a745;
         }
+        
+        .country-selection-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 2px solid #e9ecef;
+        }
+        
+        .country-selection-section .section-description {
+            color: #6c757d;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .highlight-dropdown {
+            border: 2px solid #007bff !important;
+            box-shadow: 0 0 10px rgba(0, 123, 255, 0.3) !important;
+            transition: all 0.3s ease;
+        }
     </style>
 @endpush
 
@@ -2079,6 +2158,127 @@
             let selectedAmount = 0;
             let tipPercentage = 0;
             let selectedGateway = null;
+            
+            // Function to show country selection
+            window.showCountrySelection = function() {
+                // Show the country selection section
+                $('#countrySelectionSection').removeClass('d-none').show();
+                
+                // Focus on the country dropdown and scroll to it
+                $('#countrySelect').focus();
+                $('html, body').animate({
+                    scrollTop: $('#countrySelectionSection').offset().top - 100
+                }, 500);
+                
+                // Add a visual highlight to the dropdown
+                $('#countrySelect').addClass('highlight-dropdown');
+                setTimeout(function() {
+                    $('#countrySelect').removeClass('highlight-dropdown');
+                }, 2000);
+                
+                console.log('Country selection function called');
+            };
+
+            // Function to change country
+            window.changeCountry = function() {
+                $('#countrySelect').focus();
+                $('html, body').animate({
+                    scrollTop: $('#countrySelect').offset().top - 100
+                }, 500);
+            };
+            
+            // Country selection change handler - simple approach
+            $('#countrySelect').on('change', function() {
+                const selectedCountry = $(this).val();
+                console.log('Country changed to:', selectedCountry);
+                
+                // Show apply button
+                if (!$('#applyCountryBtn').length) {
+                    // $('#countrySelect').after('<button type="button" id="applyCountryBtn" class="btn btn-primary mt-2">Apply Country Selection</button>');
+                }
+            });
+            
+            // Apply country selection
+            // Now handle country selection on change instead of button click
+            $('#countrySelect').on('change', function() {
+                const selectedCountry = $(this).val();
+
+                // Remove apply button if it exists (no longer needed)
+                $('#applyCountryBtn').remove();
+
+                // Update the hidden country field for form submission
+                $('input[name="selected_country"]').val(selectedCountry);
+
+                if (selectedCountry) {
+                    // Update session and reload page
+                    $.ajax({
+                        url: '{{ route("update.user.country") }}',
+                        method: 'POST',
+                        data: {
+                            country: selectedCountry,
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function(response) {
+                            console.log('Country updated, reloading page...');
+                            window.location.reload();
+                        },
+                        error: function(xhr) {
+                            console.log('Failed to update country in session');
+                            alert('Failed to update country. Please try again.');
+                        }
+                    });
+                } else {
+                    // Clear country selection
+                    $.ajax({
+                        url: '{{ route("update.user.country") }}',
+                        method: 'POST',
+                        data: {
+                            country: '',
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function(response) {
+                            console.log('All Countries selected, reloading page...');
+                            window.location.reload();
+                        },
+                        error: function(xhr) {
+                            console.log('Failed to clear country in session');
+                            alert('Failed to clear country. Please try again.');
+                        }
+                    });
+                }
+            });
+
+            // Function to hide country selection section
+            window.hideCountrySelection = function() {
+                $('#countrySelectionSection').addClass('d-none').hide();
+            };
+
+            // Flag to prevent change event on page load
+            let pageLoaded = false;
+            
+            // Initialize country selection section (hidden by default)
+            $(document).ready(function() {
+                // Hide country selection section by default
+                $('#countrySelectionSection').addClass('d-none').hide();
+                
+                // Debug: Log country selection status
+                console.log('Country selection section is hidden by default');
+                console.log('Detected country:', '{{ $detectedCountry ?? "None" }}');
+                console.log('Session country:', '{{ session("user_country") ?? "None" }}');
+                console.log('Available gateways:', {{ count($gatewayCurrencies) }});
+                
+                // Test click handlers
+                $('a[onclick*="showCountrySelection"]').on('click', function(e) {
+                    console.log('Change country link clicked');
+                    e.preventDefault();
+                    showCountrySelection();
+                });
+                
+                // Set flag after page is loaded
+                setTimeout(function() {
+                    pageLoaded = true;
+                }, 1000);
+            });
 
             // Amount button selection
             $('.amount-btn').on('click', function() {
@@ -2177,7 +2377,94 @@
                 }
             }
 
-            // Form submission
+
+
+            // Initialize form state
+            updateSummary();
+            checkFormValidity();
+
+            // Phone validation functions
+            function isValidPhone(phone) {
+                const cleanPhone = phone.replace(/\D/g, '');
+                if (cleanPhone.length < 10) return false;
+                if (cleanPhone.length > 15) return false;
+                const phoneRegex = /^[\+]?[0-9\s\-\(\)]{10,15}$/;
+                return phoneRegex.test(phone);
+            }
+
+            function formatPhoneNumber(phone, countryCode) {
+                const cleanPhone = phone.replace(/\D/g, '');
+                
+                switch(countryCode) {
+                    case 'PK': // Pakistan
+                        if (cleanPhone.length === 11 && cleanPhone.startsWith('03')) {
+                            return `+92 ${cleanPhone.slice(1,4)} ${cleanPhone.slice(4,7)} ${cleanPhone.slice(7)}`;
+                        } else if (cleanPhone.length === 10 && cleanPhone.startsWith('3')) {
+                            return `+92 ${cleanPhone.slice(0,3)} ${cleanPhone.slice(3,6)} ${cleanPhone.slice(6)}`;
+                        } else if (cleanPhone.length === 12 && cleanPhone.startsWith('92')) {
+                            return `+${cleanPhone.slice(0,2)} ${cleanPhone.slice(2,5)} ${cleanPhone.slice(5,8)} ${cleanPhone.slice(8)}`;
+                        }
+                        break;
+                        
+                    case 'US': // United States
+                        if (cleanPhone.length === 10) {
+                            return `(${cleanPhone.slice(0,3)}) ${cleanPhone.slice(3,6)}-${cleanPhone.slice(6)}`;
+                        } else if (cleanPhone.length === 11 && cleanPhone.startsWith('1')) {
+                            return `+1 (${cleanPhone.slice(1,4)}) ${cleanPhone.slice(4,7)}-${cleanPhone.slice(7)}`;
+                        }
+                        break;
+                        
+                    case 'GB': // United Kingdom
+                        if (cleanPhone.length === 11 && cleanPhone.startsWith('0')) {
+                            return `+44 ${cleanPhone.slice(1,5)} ${cleanPhone.slice(5,8)} ${cleanPhone.slice(8)}`;
+                        } else if (cleanPhone.length === 12 && cleanPhone.startsWith('44')) {
+                            return `+${cleanPhone.slice(0,2)} ${cleanPhone.slice(2,6)} ${cleanPhone.slice(6,9)} ${cleanPhone.slice(9)}`;
+                        }
+                        break;
+                        
+                    case 'IN': // India
+                        if (cleanPhone.length === 10) {
+                            return `+91 ${cleanPhone.slice(0,5)} ${cleanPhone.slice(5)}`;
+                        } else if (cleanPhone.length === 12 && cleanPhone.startsWith('91')) {
+                            return `+${cleanPhone.slice(0,2)} ${cleanPhone.slice(2,7)} ${cleanPhone.slice(7)}`;
+                        }
+                        break;
+                        
+                    default:
+                        if (cleanPhone.length >= 10 && cleanPhone.length <= 15) {
+                            return `+${cleanPhone}`;
+                        }
+                }
+                return phone;
+            }
+
+            // Phone input validation
+            const phoneInput = document.querySelector('.phone-input');
+            if (phoneInput) {
+                phoneInput.addEventListener('input', function(e) {
+                    let value = e.target.value;
+                    value = value.replace(/[^\d\s\-\(\)\+]/g, '');
+                    e.target.value = value;
+                });
+                
+                phoneInput.addEventListener('blur', function(e) {
+                    const countryCode = e.target.getAttribute('data-country-code');
+                    if (e.target.value && isValidPhone(e.target.value)) {
+                        e.target.style.borderColor = '#05ce78';
+                        
+                        if (countryCode) {
+                            const formattedPhone = formatPhoneNumber(e.target.value, countryCode);
+                            if (formattedPhone !== e.target.value) {
+                                e.target.value = formattedPhone;
+                            }
+                        }
+                    } else if (e.target.value) {
+                        e.target.style.borderColor = '#dc3545';
+                    }
+                });
+            }
+
+            // Form submission - ensure phone is properly formatted
             $('#donationForm').on('submit', function(e) {
                 const amount = parseFloat($('#customAmount').val()) || 0;
                 const isAnonymous = $('#privacyCheckbox').hasClass('checked');
@@ -2192,6 +2479,31 @@
                     e.preventDefault();
                     alert('@lang("Please select a payment method")');
                     return false;
+                }
+
+                // Ensure country field is populated
+                const selectedCountry = $('#countrySelect').val();
+                if (!selectedCountry) {
+                    // If no country is selected, use the session country or default
+                    const sessionCountry = '{{ session("user_country") ?? "" }}';
+                    if (sessionCountry) {
+                        $('#countrySelect').val(sessionCountry);
+                    } else {
+                        // Set a default country or leave empty for "All Countries"
+                        $('#countrySelect').val('');
+                    }
+                }
+
+                // Validate and format phone number before submission
+                const phoneInput = $('input[name="phone"]');
+                if (phoneInput.length && phoneInput.val()) {
+                    const countryCode = phoneInput.attr('data-country-code');
+                    const phoneValue = phoneInput.val();
+                    
+                    if (countryCode && isValidPhone(phoneValue)) {
+                        const formattedPhone = formatPhoneNumber(phoneValue, countryCode);
+                        phoneInput.val(formattedPhone);
+                    }
                 }
 
                 // Add tip amount to form if tip is selected
@@ -2225,10 +2537,6 @@
                 // Update the amount input before submission
                 $('#amountInput').val(amount.toFixed(2));
             });
-
-            // Initialize form state
-            updateSummary();
-            checkFormValidity();
         });
     </script>
 @endpush 

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apna Fund</title>
+    <title> Apna Fund</title>
     <link rel="stylesheet" href="{{ asset('apnafund/assets/css/app.css') }}">
     <link rel="stylesheet" href="{{ asset('apnafund/assets/bootstrap/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -32,24 +32,17 @@
             <div class="row justify-content-center">
                 <div class="col-12 text-center">
                     <div class="text-dark">
-                        <h1 class="display-4 hero-heading theme-color-text fw-bold">Funding <span
-                                class="font-italic">By</span> The People,
-                        </h1>
-                        <h1 class="display-4 hero-heading text-white fw-bold">Funding <span
-                                class="font-italic">For</span> The People</h1>
-
+                        <h1 class="display-4 hero-heading theme-color-text fw-bold">{{ $setting->home_hero_title_1 ?? 'Funding By The People' }}</h1>
+                        <h1 class="display-4 hero-heading text-white fw-bold">{{ $setting->home_hero_title_2 ?? 'Funding For The People' }}</h1>
                     </div>
                     <div class="button-container">
                         <a href="{{ route('user.register') }}" class="button-theme">
-                            <i class="fas fa-briefcase me-2"></i>For Business
+                            <i class="fas fa-briefcase me-2"></i>{{ $setting->home_business_button_text ?? 'For Business' }}
                         </a>
                         <a href="{{ route('user.register') }}" class="button-theme">
-                            <i class="fas fa-user me-2"></i> For Myself
+                            <i class="fas fa-user me-2"></i>{{ $setting->home_personal_button_text ?? 'For Myself' }}
                         </a>
-                        <p class="text-white font-bold mt-4"><span class="quotes">Together, we empower small businesses—
-                                From young dreamers, bold visionaries and those who want to improve their societies.
-                            </span>
-                        </p>
+                        <p class="text-white font-bold mt-4"><span class="quotes">{{ $setting->home_hero_subtitle ?? 'Together, we empower small businesses— From young dreamers, bold visionaries and those who want to improve their societies.' }}</span></p>
                     </div>
                 </div>
             </div>
@@ -62,11 +55,10 @@
             <div class="row align-items-center">
                 <div class="col-lg-6">
                     <div class="content-left">
-                        <h3 class="small-heading">Creator Resource Hub</h3>
-                        <h2 class="large-heading">It's your turn.<br>Learn how to get started.</h2>
-                        <p class="description">Everything you need to get your project off the ground, reach the right
-                            people, build a marketing campaign, and see it through.</p>
-                        <a href="#" class="cta-button">Let's go</a>
+                        <h3 class="small-heading">{{ $setting->home_resource_title ?? 'Creator Resource Hub' }}</h3>
+                        <h2 class="large-heading">{{ $setting->home_resource_subtitle ?? 'It\'s your turn. Learn how to get started.' }}</h2>
+                        <p class="description">{{ $setting->home_resource_description ?? 'Everything you need to get your project off the ground, reach the right people, build a marketing campaign, and see it through.' }}</p>
+                        <a href="#" class="cta-button">{{ $setting->home_resource_button_text ?? 'Let\'s go' }}</a>
                     </div>
                 </div>
                 <div class="col-lg-6">
@@ -85,7 +77,7 @@
     <section class="steps-section d-none">
         <div class="container">
             <div class="section-header text-center">
-                <h2 class="steps-title">Create with confidence</h2>
+                <h2 class="steps-title">{{ $setting->home_steps_title ?? 'Create with confidence' }}</h2>
             </div>
 
             <div class="steps-container">
@@ -94,10 +86,8 @@
                     <div class="col-lg-4">
                         <div class="step-card step-1">
                             <div class="step-content">
-                                <h3 class="step-heading">23 million+ backers on Kickstarter</h3>
-                                <p class="step-description">Connect with passionate, engaged backers who share your
-                                    values and interests. You'll find your community here — people who get your vision
-                                    and are excited to support it.</p>
+                                <h3 class="step-heading">{{ $setting->home_step_1_title ?? '23 million+ backers on Kickstarter' }}</h3>
+                                <p class="step-description">{{ $setting->home_step_1_description ?? 'Connect with passionate, engaged backers who share your values and interests. You\'ll find your community here — people who get your vision and are excited to support it.' }}</p>
                             </div>
                             <div class="step-arrow step-arrow-right"></div>
                         </div>
@@ -107,9 +97,8 @@
                     <div class="col-lg-4">
                         <div class="step-card step-2">
                             <div class="step-content">
-                                <h3 class="step-heading">Creative independence</h3>
-                                <p class="step-description">Create on your own terms. You'll always have complete
-                                    creative control and ownership of every project you launch on Kickstarter.</p>
+                                <h3 class="step-heading">{{ $setting->home_step_2_title ?? 'Creative independence' }}</h3>
+                                <p class="step-description">{{ $setting->home_step_2_description ?? 'Create on your own terms. You\'ll always have complete creative control and ownership of every project you launch on Kickstarter.' }}</p>
                             </div>
                             <div class="step-arrow step-arrow-down"></div>
                         </div>
@@ -119,9 +108,8 @@
                     <div class="col-lg-4">
                         <div class="step-card step-3">
                             <div class="step-content">
-                                <h3 class="step-heading">Empowering platform</h3>
-                                <p class="step-description">We're here to help you succeed. Optimize your results with
-                                    tools, tips, and support throughout the life of your project and beyond.</p>
+                                <h3 class="step-heading">{{ $setting->home_step_3_title ?? 'Empowering platform' }}</h3>
+                                <p class="step-description">{{ $setting->home_step_3_description ?? 'We\'re here to help you succeed. Optimize your results with tools, tips, and support throughout the life of your project and beyond.' }}</p>
                             </div>
                             <div class="step-arrow step-arrow-left"></div>
                         </div>
@@ -142,9 +130,8 @@
             <div class="section-header">
                 <div class="row align-items-center">
                     <div class="col-lg-8">
-                        <h2 class="stories-title">Creators are the stars of Apna Fund</h2>
-                        <p class="stories-subtitle">We're the world's leading funding and launch platform because of the
-                            stellar ideas that come to life here.</p>
+                        <h2 class="stories-title">{{ $setting->home_stories_title ?? 'Creators are the stars of Apna Fund' }}</h2>
+                        <p class="stories-subtitle">{{ $setting->home_stories_subtitle ?? 'We\'re the world\'s leading funding and launch platform because of the stellar ideas that come to life here.' }}</p>
                     </div>
                     <div class="col-lg-4 text-end">
                         <div class="slider-nav">
@@ -268,8 +255,8 @@
             <div class="section-header">
                 <div class="row align-items-center">
                     <div class="col-lg-8">
-                        <h2 class="faq-title">Frequently Asked Questions</h2>
-                        <p class="faq-subtitle">Everything you need to know about Apna Fund and crowdfunding</p>
+                        <h2 class="faq-title">{{ $setting->home_faq_title ?? 'Frequently Asked Questions' }}</h2>
+                        <p class="faq-subtitle">{{ $setting->home_faq_subtitle ?? 'Everything you need to know about Apna Fund and crowdfunding' }}</p>
                     </div>
                     <div class="col-lg-4 text-end">
                         <button class="help-center-btn">Visit Help Center</button>
@@ -384,9 +371,8 @@
             <div class="community-card">
                 <div class="row justify-content-center">
                     <div class="col-lg-8 text-center">
-                        <h2 class="community-title">Join the Creator Community</h2>
-                        <p class="community-description">Be the first to know about product updates and enjoy monthly
-                            inspiration, guides & best practices, webinars and opportunities to connect.</p>
+                        <h2 class="community-title">{{ $setting->home_community_title ?? 'Join the Creator Community' }}</h2>
+                        <p class="community-description">{{ $setting->home_community_description ?? 'Be the first to know about product updates and enjoy monthly inspiration, guides & best practices, webinars and opportunities to connect.' }}</p>
 
                         <div class="signup-form">
                             <div class="row justify-content-center">
@@ -394,7 +380,7 @@
                                     <div class="input-group">
                                         <input type="email" class="form-control email-input"
                                             placeholder="Enter email address" aria-label="Email address">
-                                        <button class="btn signup-btn" type="button">Sign me up</button>
+                                        <button class="btn signup-btn" type="button">{{ $setting->home_community_button_text ?? 'Sign me up' }}</button>
                                     </div>
                                 </div>
                             </div>

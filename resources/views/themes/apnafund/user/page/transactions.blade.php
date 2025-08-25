@@ -1,4 +1,4 @@
-@extends($activeTheme . 'layouts.frontend')
+@extends($activeTheme . 'layouts.dashboard')
 
 @section('frontend')
     <div class="dashboard py-60">

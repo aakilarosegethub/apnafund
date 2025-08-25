@@ -270,10 +270,22 @@
             </a>
         </li>
         <li class="sidebar-item">
-            <a href="{{ route('admin.basic.setting') }}" class="sidebar-link {{ navigationActive('admin.basic*', 2) }}">
+            <a role="button" class="sidebar-link has-sub {{ navigationActive('admin.basic*', 2) }}">
                 <span class="nav-icon"><i class="ti ti-settings"></i></span>
-                <span class="sidebar-txt">@lang('Basic')</span>
+                <span class="sidebar-txt">@lang('Site Settings')</span>
             </a>
+            <ul class="sidebar-dropdown-menu">
+                <li class="sidebar-dropdown-item">
+                    <a href="{{ route('admin.basic.setting') }}" class="sidebar-link {{ navigationActive('admin.basic.setting', 1) }}">
+                        @lang('Basic Settings')
+                    </a>
+                </li>
+                <li class="sidebar-dropdown-item">
+                    <a href="{{ route('admin.home.setting') }}" class="sidebar-link {{ navigationActive('admin.home.setting', 1) }}">
+                        @lang('Home Settings')
+                    </a>
+                </li>
+            </ul>
         </li>
         <li class="sidebar-item">
             <a role="button" class="sidebar-link has-sub {{ navigationActive('admin.notification*', 2) }}">
@@ -346,6 +358,18 @@
                 <span class="sidebar-txt">@lang('Site Content')</span>
             </a>
             <ul class="sidebar-dropdown-menu">
+                                        <li class="sidebar-dropdown-item">
+                            <a href="{{ route('admin.homepage.index') }}"
+                               class="sidebar-link {{ navigationActive('admin.homepage*', 1) }}">
+                                <i class="ti ti-home me-2"></i>@lang('Home Page Management')
+                            </a>
+                        </li>
+                        <li class="sidebar-dropdown-item">
+                            <a href="{{ route('admin.customcode.index') }}"
+                               class="sidebar-link {{ navigationActive('admin.customcode*', 1) }}">
+                                <i class="ti ti-code me-2"></i>@lang('Custom Code')
+                            </a>
+                        </li>
                 @php $lastSegment =  collect(request()->segments())->last(); @endphp
 
                 @foreach(getPageSections(true) as $key => $section)

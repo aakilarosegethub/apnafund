@@ -45,6 +45,15 @@ class AutomatedGatewayController extends Controller
 
         $gateway->alias = request('alias');
         $gateway->gateway_parameters = json_encode($parameters);
+        
+        // Handle countries field
+        $countries = request('countries');
+        if (is_array($countries) && !empty($countries)) {
+            $gateway->countries = $countries;
+        } else {
+            $gateway->countries = null; // Available in all countries
+        }
+        
         $gateway->save();
 
         if (request()->has('currency')) {

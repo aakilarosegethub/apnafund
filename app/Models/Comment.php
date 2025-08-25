@@ -12,6 +12,22 @@ class Comment extends Model
     use Searchable;
 
     /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'user_id',
+        'campaign_id',
+        'name',
+        'email',
+        'comment',
+        'rating',
+        'title',
+        'status'
+    ];
+
+    /**
      * Get the campaign that owns the comment.
      */
     public function campaign()

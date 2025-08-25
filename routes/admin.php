@@ -192,6 +192,10 @@ Route::middleware(['admin'])->group(function () {
             // Kyc Setting
             Route::get('kyc/update', 'kyc')->name('kyc.setting');
             Route::post('kyc/update', 'kycUpdate');
+
+            // Home Setting
+            Route::get('home', 'home')->name('home.setting');
+            Route::post('home', 'homeUpdate')->name('home.setting.update');
         });
 
         // Cookie
@@ -249,4 +253,17 @@ Route::middleware(['admin'])->group(function () {
         Route::get('element/{key}/{id?}', 'element')->name('sections.element');
         Route::post('remove/{id}', 'remove')->name('remove');
     });
+
+    // Home Page Management
+    Route::controller('HomePageController')->prefix('homepage')->name('homepage.')->group(function() {
+    Route::get('/', 'index')->name('index');
+    Route::post('hero/update', 'updateHero')->name('hero.update');
+    Route::post('info-banner/update', 'updateInfoBanner')->name('info-banner.update');
+    Route::post('featured-projects/update', 'updateFeaturedProjects')->name('featured-projects.update');
+});
+
+Route::controller('CustomCodeController')->prefix('customcode')->name('customcode.')->group(function() {
+    Route::get('/', 'index')->name('index');
+    Route::post('update', 'update')->name('update');
+});
 });

@@ -123,6 +123,42 @@
 
                         @stack('divend')
 
+                        <!-- SEO Information Box -->
+                        <div class="col-12">
+                            <div class="custom--card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">
+                                        <i class="ti ti-seo text--primary"></i>
+                                        @lang('SEO Information')
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-12">
+                                            <label class="form--label">@lang('Meta Title')</label>
+                                            <input type="text" class="form--control" name="seo_meta_title" 
+                                                   value="{{ @$seoContent->data_info->meta_title }}" 
+                                                   placeholder="@lang('Enter meta title for this page')">
+                                            <small class="text--muted">@lang('Recommended: 50-60 characters')</small>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form--label">@lang('Meta Description')</label>
+                                            <textarea class="form--control" name="seo_meta_description" rows="3" 
+                                                      placeholder="@lang('Enter meta description for this page')">{{ @$seoContent->data_info->meta_description }}</textarea>
+                                            <small class="text--muted">@lang('Recommended: 150-160 characters')</small>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form--label">@lang('Meta Keywords')</label>
+                                            <input type="text" class="form--control" name="seo_meta_keywords" 
+                                                   value="{{ @$seoContent->data_info->meta_keywords }}" 
+                                                   placeholder="@lang('Enter keywords separated by commas')">
+                                            <small class="text--muted">@lang('Example: crowdfunding, donations, charity, help')</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="col-12">
                             <div class="d-flex justify-content-center">
                                 <button class="btn btn--base px-4" type="submit">@lang('Submit')</button>
