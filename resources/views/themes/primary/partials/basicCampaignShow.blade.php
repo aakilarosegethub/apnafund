@@ -1,5 +1,5 @@
 <div class="donation-details__img" data-aos="fade-up" data-aos-duration="1500">
-    <img src="{{ getImage(getFilePath('campaign') . '/' . @$campaignData->image, getFileSize('campaign')) }}" alt="image">
+    <img src="{{ getImage(getFilePath('campaign') . '/' . @$campaignData->image, getFileSize('campaign')) }}" alt="{{ $campaignData->name }}">
 </div>
 <nav>
     <div class="nav nav-tabs custom--tab" id="nav-tab" role="tablist">
@@ -47,7 +47,7 @@
                 <div class="col-md-4 col-sm-6 col-xsm-6">
                     <div class="donation-details__relevent-img">
                         <a href="{{ getImage(getFilePath('campaign') . '/' . @$image, getFileSize('campaign')) }}" data-lightbox="Campaign Name">
-                            <img src="{{ getImage(getFilePath('campaign') . '/' . @$image, getFileSize('campaign')) }}" alt="image">
+                            <img src="{{ getImage(getFilePath('campaign') . '/' . @$image, getFileSize('campaign')) }}" alt="{{ $campaignData->name }} - Gallery image">
                         </a>
                     </div>
                 </div>

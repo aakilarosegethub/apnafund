@@ -716,16 +716,16 @@
 <!--New design-->
 <!-- Main Content -->
 <div class="payment-container">
-        <form action="{{ route('user.deposit.insert', $campaignData->slug) }}" method="POST" id="donationForm">
-            @csrf
-            <input type="hidden" name="currency">
+                                <form action="{{ route('user.deposit.insert', $campaignData->slug) }}" method="POST" id="donationForm">
+                                    @csrf
+                                    <input type="hidden" name="currency">
             <input type="hidden" name="gateway">
             <input type="hidden" name="amount" id="amountInput">
 
-            @auth
-                <input type="hidden" name="country" value="{{ @$authUser->country_name }}">
-            @endauth
-            
+                                    @auth
+                                        <input type="hidden" name="country" value="{{ @$authUser->country_name }}">
+                                    @endauth
+
             <div class="payment-card">
             <!-- Fundraiser Info -->
             <div class="fundraiser-info">
@@ -735,9 +735,9 @@
                 <div class="fundraiser-details">
                 <h3>@lang('You\'re supporting') <strong>{{ $campaignData->name }}</strong></h3>
                 <p class="campaign-description">{{ strLimit($campaignData->description, 100) }}</p>
-                </div>
-            </div>
-
+                                        </div>
+                                    </div>
+                                    
             <!-- Donation Amount -->
             <div class="donation-section">
                 <h3 class="section-title">Enter your donation</h3>
@@ -850,53 +850,53 @@
                 </div>
                 <div style="text-align: center;">
                     <a href="#" class="custom-tip-link" id="customTipLink">@lang('Enter custom tip')</a>
-                </div>
-            </div>
+                                        </div>
+                                    </div>
 
-            <!-- Personal Information -->
+                                    <!-- Personal Information -->
             <div id="personalInfoSection">
                 <h3 class="section-title">@lang('Personal Information')</h3>
-                <div class="row g-3 mb-4">
+                                    <div class="row g-3 mb-4">
                     <div class="col-lg-3 col-md-6">
-                        <label class="form--label required">@lang('Full Name')</label>
-                        @if ($authUser)
-                            <input type="text" class="form--control" name="full_name" value="{{ old('full_name', @$authUser->fullname) }}" placeholder="@lang('Enter your full name')" @readonly(@$authUser) required>
-                        @else
-                            <input type="text" class="form--control" name="full_name" value="{{ old('full_name') }}" placeholder="@lang('Enter your full name')" required>
-                        @endif
-                    </div>
+                                            <label class="form--label required">@lang('Full Name')</label>
+                                            @if ($authUser)
+                                                <input type="text" class="form--control" name="full_name" value="{{ old('full_name', @$authUser->fullname) }}" placeholder="@lang('Enter your full name')" @readonly(@$authUser) required>
+                                            @else
+                                                <input type="text" class="form--control" name="full_name" value="{{ old('full_name') }}" placeholder="@lang('Enter your full name')" required>
+                                            @endif
+                                        </div>
                     <div class="col-lg-3 col-md-6">
-                        <label class="form--label required">@lang('Email')</label>
-                        @if ($authUser)
-                            <input type="email" class="form--control" name="email" value="{{ old('email', @$authUser->email) }}" placeholder="@lang('Enter your email')" @readonly(@$authUser) required>
-                        @else
-                            <input type="email" class="form--control" name="email" value="{{ old('email') }}" placeholder="@lang('Enter your email')" required>
-                        @endif
-                    </div>
+                                            <label class="form--label required">@lang('Email')</label>
+                                            @if ($authUser)
+                                                <input type="email" class="form--control" name="email" value="{{ old('email', @$authUser->email) }}" placeholder="@lang('Enter your email')" @readonly(@$authUser) required>
+                                            @else
+                                                <input type="email" class="form--control" name="email" value="{{ old('email') }}" placeholder="@lang('Enter your email')" required>
+                                            @endif
+                                        </div>
                     <div class="col-lg-3 col-md-6">
-                        <label class="form--label required">@lang('Phone')</label>
-                        <input type="hidden" name="mobile_code">
-                        
-                        @if ($authUser)
-                            <input type="text" class="form--control" name="phone" value="{{ old('phone', @$authUser->mobile) }}" placeholder="@lang('+0123 456 789')" @readonly(@$authUser) required>
-                        @else
+                                            <label class="form--label required">@lang('Phone')</label>
+                                            <input type="hidden" name="mobile_code">
+                                            
+                                            @if ($authUser)
+                                                <input type="text" class="form--control" name="phone" value="{{ old('phone', @$authUser->mobile) }}" placeholder="@lang('+0123 456 789')" @readonly(@$authUser) required>
+                                            @else
                             @php
                                 $detectedCountry = detectUserCountry();
                                 $countryCode = $detectedCountry ? getCountryCode($detectedCountry) : null;
                                 $phonePlaceholder = $countryCode ? getPhonePlaceholder($countryCode) : '@lang("Enter your phone number")';
                             @endphp
-                            <div class="input--group">
-                                <span class="input-group-text input-group-text-light mobile-code"></span>
+                                                <div class="input--group">
+                                                    <span class="input-group-text input-group-text-light mobile-code"></span>
                                 <input type="tel" class="form--control checkUser phone-input" name="phone" value="{{ old('phone') }}" placeholder="{{ $phonePlaceholder }}" data-country-code="{{ $countryCode }}" required>
-                            </div>
+                                                </div>
                             <small class="form-text text-muted phone-help">@lang('Format will be applied based on your country')</small>
-                        @endif
-                    </div>
+                                            @endif
+                                        </div>
                     <div class="col-lg-3 col-md-6">
-                        <label class="form--label required">@lang('Country')</label>
-                        @if ($authUser)
-                            <input type="text" class="form--control" name="country" value="{{ old('country', @$authUser->country_name) }}" @readonly(@$authUser) required>
-                        @else
+                                            <label class="form--label required">@lang('Country')</label>
+                                            @if ($authUser)
+                                                <input type="text" class="form--control" name="country" value="{{ old('country', @$authUser->country_name) }}" @readonly(@$authUser) required>
+                                            @else
                             <input type="text" class="form--control" name="country_display" value="{{ session('user_country') ?? 'All Countries' }}" readonly>
                             <input type="hidden" name="country" value="{{ session('user_country') ?? '' }}">
                             @if(session('user_country'))
@@ -904,10 +904,10 @@
                                     <a href="#" onclick="showCountrySelection()" class="text-decoration-underline">@lang('Change country')</a>
                                 </small>
                             @endif
-                        @endif
-                    </div>
-                </div>
-            </div>
+                                            @endif
+                                        </div>
+                                            </div>
+                                        </div>
 
             <!-- Checkboxes -->
             <div class="checkbox-section">
@@ -916,37 +916,37 @@
                     <label class="checkbox-label">
                         @lang('Don\'t display my name publicly on the fundraiser.')
                         <i class="fas fa-info-circle info-icon"></i>
-                    </label>
-                </div>
+                                                            </label>
+                                                        </div>
                 <div class="checkbox-item">
                     <div class="checkbox checked" id="marketingCheckbox"></div>
                     <label class="checkbox-label">
                         @lang('Get occasional marketing updates from') {{ $setting->site_name }}. @lang('You may unsubscribe at any time.')
-                    </label>
-                </div>
-            </div>
+                                                        </label>
+                                        </div>
+                                    </div>
 
             <!-- Donation Summary -->
             <div class="donation-summary">
                 <div class="summary-item">
                     <span class="summary-label">@lang('Your donation')</span>
                     <span class="summary-value" id="donationAmount">{{ $setting->cur_sym }}0.00</span>
-                </div>
+                                                        </div>
                 <div class="summary-item">
                     <span class="summary-label">{{ $setting->site_name }} @lang('tip')</span>
                     <span class="summary-value" id="tipAmount">{{ $setting->cur_sym }}0.00</span>
-                </div>
+                                                </div>
                 <div class="summary-item summary-total">
                     <span class="summary-label">@lang('Total due today')</span>
                     <span class="summary-value" id="totalAmount">{{ $setting->cur_sym }}0.00</span>
-                </div>
-            </div>
+                                        </div>
+                                    </div>
 
             <!-- Payment Button -->
             <button type="submit" class="payment-button" id="paymentButton" disabled>
                 <i class="ti ti-heart"></i>
                 @lang('Contribute Now')
-            </button>
+                                    </button>
 
             <!-- Legal Text -->
             <p class="legal-text">
@@ -956,461 +956,22 @@
                 <a href="#">@lang('Privacy Notice')</a>. 
                 @lang('Learn more about') <a href="#">@lang('pricing and fees')</a>.
             </p>
-        </div>
+                                </div>
         </form>
 
         <!-- Protection Section -->
         <div class="protection-section">
             <div class="protection-icon">
                 <i class="fas fa-shield-alt"></i>
-            </div>
+                                </div>
             <h3 class="protection-title">{{ $setting->site_name }} @lang('protects your donation')</h3>
             <p class="protection-text">
                 @lang('We guarantee you a full refund for up to a year in the rare case that fraud occurs. See our') 
                 <a href="#">{{ $setting->site_name }} @lang('Giving Guarantee')</a>.
             </p>
-        </div>
-    </div>
+                            </div>
+                        </div>
 <!-- Main Content -->
-<div class="payment-container d-none">
-        <div class="payment-card">
-            <!-- Fundraiser Info -->
-            <div class="fundraiser-info">
-                <div class="fundraiser-image">
-                    <img src="{{ getImage(getFilePath('campaign') . '/' . $campaignData->image) }}" alt="{{ $campaignData->name }}">
-                </div>
-                <div class="fundraiser-details">
-                    <h3>@lang('You\'re supporting') <strong>{{ $campaignData->name }}</strong></h3>
-                    <p>{{ strLimit($campaignData->description, 80) }}</p>
-                </div>
-            </div>
-
-            <!-- Donation Form -->
-            <form action="{{ route('user.deposit.insert', $campaignData->slug) }}" method="POST" id="donationForm">
-                @csrf
-                <input type="hidden" name="currency">
-
-                @auth
-                    <input type="hidden" name="country" value="{{ @$authUser->country_name }}">
-                @endauth
-
-                <!-- Donation Amount -->
-                <div class="donation-section">
-                    <h3 class="section-title">@lang('Enter your donation')</h3>
-                    <div class="amount-buttons">
-                        @if($campaignData->preferred_amounts && is_array($campaignData->preferred_amounts))
-                            @foreach ($campaignData->preferred_amounts as $preferredAmount)
-                                <button type="button" class="amount-btn" data-amount="{{ $preferredAmount }}">
-                                    {{ $setting->cur_sym . $preferredAmount }}
-                                </button>
-                            @endforeach
-                        @else
-                            <button type="button" class="amount-btn" data-amount="50">{{ $setting->cur_sym }}50</button>
-                            <button type="button" class="amount-btn" data-amount="100">{{ $setting->cur_sym }}100</button>
-                            <button type="button" class="amount-btn" data-amount="200">{{ $setting->cur_sym }}200</button>
-                            <button type="button" class="amount-btn" data-amount="300">{{ $setting->cur_sym }}300</button>
-                            <button type="button" class="amount-btn" data-amount="500">{{ $setting->cur_sym }}500</button>
-                            <button type="button" class="amount-btn" data-amount="1000">{{ $setting->cur_sym }}1,000</button>
-                        @endif
-                    </div>
-                    <div class="custom-amount">
-                        <span class="currency-symbol">{{ $setting->cur_sym }}</span>
-                        <input type="number" step="any" min="0" id="donationAmount" name="amount" value="{{ old('amount') }}" placeholder="0.00" required>
-                        <span class="currency-label">{{ strtoupper($setting->site_cur) }}</span>
-                    </div>
-                </div>
-
-                <!-- Tip Section -->
-                <div class="tip-section">
-                    <h3 class="section-title">@lang('Tip') {{ $setting->site_name }} @lang('services')</h3>
-                    <p class="tip-description">
-                        {{ $setting->site_name }} @lang('has a 0% platform fee for organizers.') {{ $setting->site_name }} @lang('will continue offering its services thanks to donors who will leave an optional amount here:')
-                    </p>
-                    <input type="range" class="tip-slider" id="tipSlider" min="0" max="25" value="0" step="0.5">
-                    <div style="text-align: center; margin-bottom: 10px;">
-                        <span class="tip-value" id="tipValue">0%</span>
-                    </div>
-                    <div style="text-align: center;">
-                        <a href="#" class="custom-tip-link" id="customTipLink">@lang('Enter custom tip')</a>
-                    </div>
-                </div>
-
-                <!-- Payment Methods -->
-                <div class="payment-methods">
-                    <h3 class="section-title">@lang('Payment method')</h3>
-                    @if($gatewayCurrencies && count($gatewayCurrencies) > 0)
-                        @foreach ($gatewayCurrencies as $gatewayCurrency)
-                            <div class="payment-option" data-method="{{ $gatewayCurrency->method_code }}" data-currency="{{ $gatewayCurrency->currency }}">
-                                <div class="payment-radio"></div>
-                                <div class="payment-info">
-                                    <div class="payment-logo">{{ strtoupper(substr($gatewayCurrency->method->name, 0, 2)) }}</div>
-                                    <span class="payment-text">{{ __($gatewayCurrency->method->name) }} ({{ strtoupper($gatewayCurrency->currency) }})</span>
-                                </div>
-                            </div>
-                        @endforeach
-                    @else
-                        <div class="alert alert-warning">
-                            @lang('No payment gateways are currently available.')
-                        </div>
-                    @endif
-                </div>
-
-                <!-- Personal Information -->
-                <div id="personalInfoSection">
-                    <h3 class="section-title">@lang('Personal Information')</h3>
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <label class="form--label required">@lang('Full Name')</label>
-                            @if ($authUser)
-                                <input type="text" class="form--control" name="full_name" value="{{ old('full_name', @$authUser->fullname) }}" placeholder="@lang('Enter your full name')" @readonly(@$authUser) required>
-                            @else
-                                <input type="text" class="form--control" name="full_name" value="{{ old('full_name') }}" placeholder="@lang('Enter your full name')" required>
-                            @endif
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form--label required">@lang('Email')</label>
-                            @if ($authUser)
-                                <input type="email" class="form--control" name="email" value="{{ old('email', @$authUser->email) }}" placeholder="@lang('Enter your email')" @readonly(@$authUser) required>
-                            @else
-                                <input type="email" class="form--control" name="email" value="{{ old('email') }}" placeholder="@lang('Enter your email')" required>
-                            @endif
-                        </div>
-                    </div>
-
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <label class="form--label required">@lang('Phone')</label>
-                            <input type="hidden" name="mobile_code">
-                            
-                            @if ($authUser)
-                                <input type="text" class="form--control" name="phone" value="{{ old('phone', @$authUser->mobile) }}" placeholder="@lang('+0123 456 789')" @readonly(@$authUser) required>
-                            @else
-                                <div class="input--group">
-                                    <span class="input-group-text input-group-text-light mobile-code"></span>
-                                    <input type="number" class="form--control checkUser" name="phone" value="{{ old('phone') }}" required>
-                                </div>
-                            @endif
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form--label required">@lang('Country')</label>
-                            @if ($authUser)
-                                <input type="text" class="form--control" name="country" value="{{ old('country', @$authUser->country_name) }}" @readonly(@$authUser) required>
-                            @else
-                                <select class="form--control" name="country" required>
-                                    <option value="">@lang('Select Country')</option>
-                                    @foreach ($countries as $country)
-                                        <option value="{{ $country->country }}" @selected(old('country') == $country->country)>
-                                            {{ $country->country }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Checkboxes -->
-                <div class="checkbox-section">
-                    <div class="checkbox-item">
-                        <div class="checkbox" id="privacyCheckbox"></div>
-                        <label class="checkbox-label">
-                            @lang('Don\'t display my name publicly on the fundraiser.')
-                            <i class="fas fa-info-circle info-icon"></i>
-                        </label>
-                    </div>
-                    <div class="checkbox-item">
-                        <div class="checkbox checked" id="marketingCheckbox"></div>
-                        <label class="checkbox-label">
-                            @lang('Get occasional marketing updates from') {{ $setting->site_name }}. @lang('You may unsubscribe at any time.')
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Donation Summary -->
-                <div class="donation-summary">
-                    <div class="summary-item">
-                        <span class="summary-label">@lang('Your donation')</span>
-                        <span class="summary-value" id="summaryDonationAmount">{{ $setting->cur_sym }}0.00</span>
-                    </div>
-                    <div class="summary-item">
-                        <span class="summary-label">{{ $setting->site_name }} @lang('tip')</span>
-                        <span class="summary-value" id="summaryTipAmount">{{ $setting->cur_sym }}0.00</span>
-                    </div>
-                    <div class="summary-item summary-total">
-                        <span class="summary-label">@lang('Total due today')</span>
-                        <span class="summary-value" id="summaryTotalAmount">{{ $setting->cur_sym }}0.00</span>
-                    </div>
-                </div>
-
-                <!-- Payment Button -->
-                <button type="submit" class="payment-button" id="donateBtn" disabled>
-                    <i class="ti ti-heart"></i>
-                    @lang('Donate Now')
-                </button>
-
-                <!-- Legal Text -->
-                <p class="legal-text">
-                    @lang('By clicking \'Donate Now\', you agree to') {{ $setting->site_name }}'s 
-                    <a href="#">@lang('Terms of Service')</a>
-                    @lang('and') 
-                    <a href="#">@lang('Privacy Notice')</a>. 
-                    @lang('Learn more about') <a href="#">@lang('pricing and fees')</a>.
-                </p>
-            </form>
-        </div>
-
-        <!-- Protection Section -->
-        <div class="protection-section">
-            <div class="protection-icon">
-                <i class="ti ti-shield-check"></i>
-            </div>
-            <h3 class="protection-title">{{ $setting->site_name }} @lang('protects your donation')</h3>
-            <p class="protection-text">
-                @lang('We guarantee you a full refund for up to a year in the rare case that fraud occurs. See our') 
-                <a href="#">{{ $setting->site_name }} @lang('Giving Guarantee')</a>.
-            </p>
-        </div>
-    </div>
-<!---New design end-->
-    <div class="donation-page pt-120 pb-60">
-        <div class="container">
-            <div class="row g-4">
-                <div class="col-lg-8">
-                    <div class="donation-form-card" data-aos="fade-up" data-aos-duration="1500">
-                        <div class="card custom--card">
-                            <div class="card-header">
-                                <h3 class="title">@lang('Make a Donation to') "{{ $campaignData->name }}"</h3>
-                                <p class="text-muted">@lang('Your contribution will make a difference')</p>
-                            </div>
-                            <div class="card-body">
-                                <form action="{{ route('user.deposit.insert', $campaignData->slug) }}" method="POST" id="donationForm">
-                                    @csrf
-                                    <input type="hidden" name="currency">
-
-                                    @auth
-                                        <input type="hidden" name="country" value="{{ @$authUser->country_name }}">
-                                    @endauth
-
-                                    <!-- Anonymous Donation Option -->
-                                    <div class="form-group mb-4">
-                                        <div class="form--check">
-                                            <input type="checkbox" class="form-check-input" name="anonymousDonation" @checked(old('anonymousDonation')) id="anonymousDonation">
-                                            <label class="form-check-label" for="anonymousDonation">
-                                                @lang('Donate as anonymous')
-                                            </label>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="form-group anonymous-alert-text d-none mb-4">
-                                        <div class="alert alert-info" role="alert">
-                                            @lang('We require your information even if you choose to donate anonymously. However, rest assured that your details will not be displayed anywhere in our system.')
-                                        </div>
-                                    </div>
-
-                                    <!-- Personal Information -->
-                                    <div class="row g-3 mb-4">
-                                        <div class="col-md-6">
-                                            <label class="form--label required">@lang('Full Name')</label>
-                                            @if ($authUser)
-                                                <input type="text" class="form--control" name="full_name" value="{{ old('full_name', @$authUser->fullname) }}" placeholder="@lang('Enter your full name')" @readonly(@$authUser) required>
-                                            @else
-                                                <input type="text" class="form--control" name="full_name" value="{{ old('full_name') }}" placeholder="@lang('Enter your full name')" required>
-                                            @endif
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form--label required">@lang('Email')</label>
-                                            @if ($authUser)
-                                                <input type="email" class="form--control" name="email" value="{{ old('email', @$authUser->email) }}" placeholder="@lang('Enter your email')" @readonly(@$authUser) required>
-                                            @else
-                                                <input type="email" class="form--control" name="email" value="{{ old('email') }}" placeholder="@lang('Enter your email')" required>
-                                            @endif
-                                        </div>
-                                    </div>
-
-                                    <div class="row g-3 mb-4">
-                                        <div class="col-md-6">
-                                            <label class="form--label required">@lang('Phone')</label>
-                                            <input type="hidden" name="mobile_code">
-                                            
-                                            @if ($authUser)
-                                                <input type="text" class="form--control" name="phone" value="{{ old('phone', @$authUser->mobile) }}" placeholder="@lang('+0123 456 789')" @readonly(@$authUser) required>
-                                            @else
-                                                <div class="input--group">
-                                                    <span class="input-group-text input-group-text-light mobile-code"></span>
-                                                    <input type="number" class="form--control checkUser" name="phone" value="{{ old('phone') }}" required>
-                                                </div>
-                                            @endif
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form--label required">@lang('Country')</label>
-                                            @if ($authUser)
-                                                <input type="text" class="form--control" name="country" value="{{ old('country', @$authUser->country_name) }}" @readonly(@$authUser) required>
-                                            @else
-                                                <select class="form--control" name="country" required>
-                                                    <option value="">@lang('Select Country')</option>
-                                                    @foreach ($countries as $country)
-                                                        <option value="{{ $country->country }}" @selected(old('country') == $country->country)>
-                                                            {{ $country->country }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            @endif
-                                        </div>
-                                    </div>
-
-                                    <!-- Amount Selection -->
-                                    <div class="amount-selection mb-4">
-                                        <h4 class="section-title">@lang('Choose an amount')</h4>
-                                        
-                                        <div class="form-group mb-3">
-                                            <div class="input--group">
-                                                <span class="input-group-text">{{ $setting->cur_sym }}</span>
-                                                <input type="number" step="any" min="0" class="form--control" id="donationAmount" name="amount" value="{{ old('amount') }}" placeholder="0" readonly required>
-                                            </div>
-                                        </div>
-
-                                        <div class="amount-options">
-                                            <div class="row g-2">
-                                                @if($campaignData->preferred_amounts && is_array($campaignData->preferred_amounts))
-                                                    @foreach ($campaignData->preferred_amounts as $preferredAmount)
-                                                        <div class="col-md-3 col-sm-6">
-                                                            <div class="form--radio amount-option">
-                                                                <input type="radio" class="form-check-input" id="{{ 'donationAmount_' . $loop->iteration }}" name="donationAmount" data-amount="{{ $preferredAmount }}">
-                                                                <label class="form-check-label" for="{{ 'donationAmount_' . $loop->iteration }}">
-                                                                    {{ $setting->cur_sym . $preferredAmount }}
-                                                                </label>
-                                                            </div>
-                                                        </div>
-                                                    @endforeach
-                                                @endif
-                                                <div class="col-md-3 col-sm-6">
-                                                    <div class="form--radio amount-option">
-                                                        <input type="radio" class="form-check-input" id="customDonationAmount" name="donationAmount">
-                                                        <label class="form-check-label" for="customDonationAmount">
-                                                            @lang('Custom')
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Payment Gateway Selection -->
-                                    <div class="payment-gateway mb-4">
-                                        <h4 class="section-title">@lang('Select Payment Method')</h4>
-                                        <div class="gateway-options">
-                                            @if($gatewayCurrencies && count($gatewayCurrencies) > 0)
-                                                @foreach ($gatewayCurrencies as $gatewayCurrency)
-                                                    <div class="form--radio gateway-option">
-                                                        <input type="radio" class="form-check-input" id="gateway_{{ $gatewayCurrency->id }}" name="gateway" value="{{ $gatewayCurrency->method_code }}" data-currency="{{ $gatewayCurrency->currency }}" required>
-                                                        <label class="form-check-label" for="gateway_{{ $gatewayCurrency->id }}">
-                                                            <div class="gateway-info">
-                                                                <span class="gateway-name">{{ __($gatewayCurrency->method->name) }}</span>
-                                                                <span class="gateway-currency">({{ strtoupper($gatewayCurrency->currency) }})</span>
-                                                            </div>
-                                                        </label>
-                                                    </div>
-                                                @endforeach
-                                            @else
-                                                <div class="alert alert-warning">
-                                                    @lang('No payment gateways are currently available.')
-                                                </div>
-                                            @endif
-                                        </div>
-                                    </div>
-
-                                    <!-- Payment Preview -->
-                                    <div class="payment-preview d-none mb-4">
-                                        <h4 class="section-title">@lang('Payment Summary')</h4>
-                                        <div class="preview-details">
-                                            <ul class="list-group">
-                                                <li class="list-group-item d-flex justify-content-between">
-                                                    <span>@lang('Donation Amount')</span>
-                                                    <span><span class="amount fw-bold">0</span> {{ __($setting->site_cur) }}</span>
-                                                </li>
-                                                <li class="list-group-item d-flex justify-content-between">
-                                                    <span>@lang('Limit')</span>
-                                                    <span><span class="min fw-bold">0</span> {{ __($setting->site_cur) }} - <span class="max fw-bold">0</span> {{ __($setting->site_cur) }}</span>
-                                                </li>
-                                                <li class="list-group-item d-flex justify-content-between">
-                                                    <span>@lang('Charge')</span>
-                                                    <span><span class="charge fw-bold">0</span> {{ __($setting->site_cur) }}</span>
-                                                </li>
-                                                <li class="list-group-item d-flex justify-content-between">
-                                                    <span>@lang('Payable')</span>
-                                                    <span><span class="payable fw-bold">0</span> {{ __($setting->site_cur) }}</span>
-                                                </li>
-                                                <li class="list-group-item justify-content-between d-none rate-element"></li>
-                                                <li class="list-group-item justify-content-between d-none in-site-cur">
-                                                    <span>@lang('In') <span class="method_currency"></span></span>
-                                                    <span class="final_amount fw-bold">0</span>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-
-                                    <!-- Submit Button -->
-                                    <button type="submit" class="btn btn--base w-100 btn-lg" id="donateBtn" disabled>
-                                        <i class="ti ti-heart me-2"></i>@lang('Donate Now')
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-4">
-                    <div class="campaign-summary" data-aos="fade-up" data-aos-duration="1500">
-                        <!-- Campaign Info Card -->
-                        <div class="post-sidebar__card mb-4">
-                            <h3 class="post-sidebar__card__header">@lang('Campaign Summary')</h3>
-                            <div class="post-sidebar__card__body">
-                                <div class="campaign-info">
-                                    <img src="{{ getImage(getFilePath('campaign') . '/' . $campaignData->image) }}" alt="{{ $campaignData->name }}" class="campaign-image mb-3">
-                                    <h3>@lang('You\'re supporting') <strong>OKK {{ $campaignData->name }}</strong></h3>
-                                    <p class="campaign-description">{{ strLimit($campaignData->description, 100) }}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Progress Card -->
-                        <div class="post-sidebar__card mb-4">
-                            <h3 class="post-sidebar__card__header">@lang('Progress')</h3>
-                            <div class="post-sidebar__card__body">
-                                @php
-                                    $percentage = donationPercentage($campaignData->goal_amount, $campaignData->raised_amount);
-                                @endphp
-
-                                <div class="progress custom--progress my-4" role="progressbar" aria-label="Campaign Progress" aria-valuenow="{{ $percentage }}" aria-valuemin="0" aria-valuemax="100">
-                                    <div class="progress-bar" style="width: {{ $percentage }}%"><span class="progress-txt">{{ $percentage . '%' }}</span></div>
-                                </div>
-                                
-                                <ul class="campaign-status">
-                                    <li>
-                                        <span><i class="ti ti-cash-register"></i> @lang('Goal'):</span> {{ $setting->cur_sym . showAmount(@$campaignData->goal_amount) }}
-                                    </li>
-                                    <li>
-                                        <span><i class="ti ti-building-bank"></i> @lang('Raised'):</span> {{ $setting->cur_sym . showAmount(@$campaignData->raised_amount) }}
-                                    </li>
-                                    <li>
-                                        <span><i class="ti ti-users"></i> @lang('Donors'):</span> {{ $campaignData->donors_count ?? 0 }}
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <!-- Time Left Card -->
-                        <div class="post-sidebar__card">
-                            <h3 class="post-sidebar__card__header">@lang('Time Left')</h3>
-                            <div class="post-sidebar__card__body">
-                                <div class="campaign__countdown" data-target-date="{{ showDateTime(@$campaignData->end_date, 'Y-m-d\TH:i:s') }}"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 @endsection
 
 @push('page-style')

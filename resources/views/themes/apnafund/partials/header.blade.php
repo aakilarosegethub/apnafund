@@ -4,8 +4,7 @@
             <!-- Left: Logo -->
             <div class="col-12 col-md-2 text-center text-md-start">
                 <a href="/">
-                    <img src="{{ getImage(getFilePath('logoFavicon') . '/logo_light.png') }}" alt="Apna Fund Logo" class="logo-img"
-                        style="max-height:50px;">
+                    <img src="{{ getImage(getFilePath('logoFavicon') . '/logo_light.png') }}" alt="Apna Fund Logo" class="logo-img">
                 </a>
             </div>
 

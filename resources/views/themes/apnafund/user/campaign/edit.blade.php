@@ -81,9 +81,10 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <label for="gigDescription" class="form-label">Description *</label>
-                            <textarea class="form-control ck-editor" id="gigDescription" name="description" rows="10" placeholder="Describe your gig, its purpose, and how donations will be used" required>{{ $campaign->description ?? '' }}</textarea>
+                        <!-- Description -->
+                        <div class="form-group mb-4">
+                            <label for="campaignDescription" class="form-label">Description *</label>
+                            <textarea class="form-control" id="campaignDescription" name="description" rows="8" placeholder="Describe your campaign, its purpose, and how donations will be used" required>{{ $campaign->description ?? '' }}</textarea>
                         </div>
 
                         <!-- Main Campaign Image -->
@@ -543,8 +544,8 @@
                 if (typeof CKEDITOR !== 'undefined') {
                     try {
                         // Check if element exists
-                        if ($('#gigDescription').length > 0) {
-                            CKEDITOR.replace('gigDescription', {
+                        if ($('#campaignDescription').length > 0) {
+                            CKEDITOR.replace('campaignDescription', {
                                 height: 300,
                                 toolbar: [
                                     { name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Strike'] },
@@ -567,17 +568,17 @@
                             });
                             console.log('CKEditor initialized successfully');
                         } else {
-                            console.error('gigDescription textarea not found!');
+                            console.error('campaignDescription textarea not found!');
                         }
                     } catch (error) {
                         console.error('Error initializing CKEditor:', error);
                         // Fallback to regular textarea
-                        $('#gigDescription').show();
+                        $('#campaignDescription').show();
                     }
                 } else {
                     console.error('CKEditor is not loaded! Using fallback textarea');
                     // Show the original textarea if CKEditor fails
-                    $('#gigDescription').show();
+                    $('#campaignDescription').show();
                 }
             }
             
@@ -586,9 +587,9 @@
             
             // Fallback: If CKEditor doesn't load within 3 seconds, show regular textarea
             setTimeout(function() {
-                if (typeof CKEDITOR === 'undefined' || !CKEDITOR.instances.gigDescription) {
+                if (typeof CKEDITOR === 'undefined' || !CKEDITOR.instances.campaignDescription) {
                     console.log('CKEditor failed to load, showing fallback textarea');
-                    $('#gigDescription').show().css({
+                    $('#campaignDescription').show().css({
                         'display': 'block',
                         'min-height': '300px',
                         'width': '100%',
@@ -647,8 +648,8 @@
             
             // Description preview update (for CKEditor and fallback textarea)
             function setupDescriptionPreview() {
-                if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances && CKEDITOR.instances.gigDescription) {
-                    const editor = CKEDITOR.instances.gigDescription;
+                if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances && CKEDITOR.instances.campaignDescription) {
+                    const editor = CKEDITOR.instances.campaignDescription;
                     if (editor && typeof editor.on === 'function') {
                         // CKEditor is available
                         editor.on('change', function() {
@@ -676,7 +677,7 @@
                     }
                 } else {
                     // Fallback to regular textarea
-                    $('#gigDescription').on('input keyup keydown change paste', function() {
+                    $('#campaignDescription').on('input keyup keydown change paste', function() {
                         updateDescriptionPreview();
                     });
                 }
@@ -688,15 +689,15 @@
             // Description preview update function
             function updateDescriptionPreview() {
                 let description = '';
-                if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances && CKEDITOR.instances.gigDescription) {
-                    const editor = CKEDITOR.instances.gigDescription;
+                if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances && CKEDITOR.instances.campaignDescription) {
+                    const editor = CKEDITOR.instances.campaignDescription;
                     if (editor && typeof editor.getData === 'function') {
                         description = editor.getData();
                     } else {
-                        description = $('#gigDescription').val();
+                        description = $('#campaignDescription').val();
                     }
                 } else {
-                    description = $('#gigDescription').val();
+                    description = $('#campaignDescription').val();
                 }
                 
                 // Remove HTML tags and get plain text
@@ -713,8 +714,8 @@
             // Add real-time typing preview with debouncing
             let typingTimer;
             function setupRealTimeDescriptionPreview() {
-                if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances && CKEDITOR.instances.gigDescription) {
-                    const editor = CKEDITOR.instances.gigDescription;
+                if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances && CKEDITOR.instances.campaignDescription) {
+                    const editor = CKEDITOR.instances.campaignDescription;
                     
                     if (editor && typeof editor.on === 'function') {
                         // Listen to all possible input events
@@ -750,7 +751,7 @@
             // Initialize real-time preview after CKEditor is ready
             if (typeof CKEDITOR !== 'undefined') {
                 CKEDITOR.on('instanceReady', function(evt) {
-                    if (evt.editor && evt.editor.name === 'gigDescription') {
+                    if (evt.editor && evt.editor.name === 'campaignDescription') {
                         setupRealTimeDescriptionPreview();
                     }
                 });
@@ -1033,8 +1034,8 @@
             var formData = new FormData(this);
             
             // Add CKEditor content to form data
-            if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances && CKEDITOR.instances.gigDescription) {
-                const editor = CKEDITOR.instances.gigDescription;
+            if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances && CKEDITOR.instances.campaignDescription) {
+                const editor = CKEDITOR.instances.campaignDescription;
                 if (editor && typeof editor.getData === 'function') {
                     formData.set('description', editor.getData());
                 }
@@ -1126,29 +1127,29 @@
             
             // Validate Description
             let description = '';
-            if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances && CKEDITOR.instances.gigDescription) {
-                const editor = CKEDITOR.instances.gigDescription;
+            if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances && CKEDITOR.instances.campaignDescription) {
+                const editor = CKEDITOR.instances.campaignDescription;
                 if (editor && typeof editor.getData === 'function') {
                     description = editor.getData().replace(/<[^>]*>/g, '').trim();
                 } else {
-                    description = $('#gigDescription').val().trim();
+                    description = $('#campaignDescription').val().trim();
                 }
             } else {
-                description = $('#gigDescription').val().trim();
+                description = $('#campaignDescription').val().trim();
             }
             
             if (!description) {
-                $('#gigDescription').addClass('is-invalid');
-                $('#gigDescription').after('<div class="invalid-feedback">Description is required</div>');
+                $('#campaignDescription').addClass('is-invalid');
+                $('#campaignDescription').after('<div class="invalid-feedback">Description is required</div>');
                 errors.push('Description is required');
                 isValid = false;
             } else if (description.length < 50) {
-                $('#gigDescription').addClass('is-invalid');
-                $('#gigDescription').after('<div class="invalid-feedback">Description must be at least 50 characters long</div>');
+                $('#campaignDescription').addClass('is-invalid');
+                $('#campaignDescription').after('<div class="invalid-feedback">Description must be at least 50 characters long</div>');
                 errors.push('Description must be at least 50 characters long');
                 isValid = false;
             } else {
-                $('#gigDescription').addClass('is-valid');
+                $('#campaignDescription').addClass('is-valid');
             }
             
             // Validate Target Amount

@@ -27,7 +27,7 @@
                                         <input type="file" id="image{{ $loop->index }}" class="image-upload" name="image_input[{{ @$imgKey }}]" accept=".jpeg, .jpg, .png" @if (!@$data) required @endif>
 
                                         <label for="image{{ $loop->index }}" class="upload__img-preview image-preview">
-                                            <img src="{{getImage('assets/images/site/' . $key .'/'. @$data->data_info->$imgKey, @$section->element->images->$imgKey->size) }}" alt="image">
+                                            <img src="{{getImage('assets/images/site/' . $key .'/'. @$data->data_info->$imgKey, @$section->element->images->$imgKey->size) }}" alt="{{ @$data->data_info->{$imgKey.'_alt'} ?? 'image' }}">
                                         </label>
 
                                         <button type="button" class="btn btn--sm btn--icon btn--danger custom-file-input-clear d-none"><i class="ti ti-circle-x"></i></button>
@@ -42,6 +42,12 @@
                                             @lang('Thumb size') <span class="fw-semibold text--base">{{ @$section->element->images->$imgKey->thumb }}@lang('px').</span>
                                         @endif
                                     </label>
+                                    
+                                    <!-- Image Alt Text Field -->
+                                    <div class="mt-2">
+                                        <label class="form--label">@lang('Image Alt Text') ({{ keyToTitle($imgKey) }})</label>
+                                        <input type="text" class="form--control" name="{{ $imgKey }}_alt" value="{{ @$data->data_info->{$imgKey.'_alt'} }}" placeholder="@lang('Enter alt text for accessibility')">
+                                    </div>
                                 </div>
                             @endforeach
 

@@ -131,13 +131,6 @@
                             </div>
                         @endif
                     </div>
-
-                    <!-- Pagination -->
-                    @if ($campaigns->hasPages())
-                        <div class="pagination-wrapper mt-5">
-                            {{ paginateLinks($campaigns) }}
-                        </div>
-                    @endif
                 </div>
             </div>
         </div>

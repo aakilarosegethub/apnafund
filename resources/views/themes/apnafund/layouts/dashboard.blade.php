@@ -471,7 +471,6 @@
         @include('partials.toasts')
 
         @stack('page-script-lib')
-        Test here
         @yield('page-script')
 </body>
 

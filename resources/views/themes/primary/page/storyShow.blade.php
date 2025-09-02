@@ -6,7 +6,7 @@
             <div class="row g-4">
                 <div class="col-lg-8">
                     <div class="success-details__img">
-                        <img src="{{ getImage('assets/images/site/success_story/' . @$storyData->data_info->image, '855x475') }}" alt="image">
+                        <img src="{{ getImage('assets/images/site/success_story/' . @$storyData->data_info->image, '855x475') }}" alt="{{ getImageAlt($storyData, 'image', @$storyData->data_info->title ?? 'Success story image') }}">
                     </div>
                     <div class="success-details__txt">
                         <h2 class="success-details__title">{{ __(@$storyData->data_info->title) }}</h2>

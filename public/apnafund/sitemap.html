@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sitemap - Apna Fund</title>
+    <link rel="stylesheet" href="assets/css/app.css">
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="shortcut icon" href="assets/images/fav-icon.png" type="image/png">
+    <style>
+        /* Sitemap Styles */
+        .sitemap-title {
+            color: #D4AF37;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            text-align: center;
+            position: relative;
+        }
+        
+        .sitemap-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background: #D4AF37;
+        }
+        
+        .sitemap-card {
+            background: #f1f1f1;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 60px;
+        }
+        
+        .sitemap-card:hover {
+            background: #05ce78;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(5, 206, 120, 0.3);
+        }
+        
+        .sitemap-card a {
+            color: #666;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+            transition: color 0.3s ease;
+            text-transform: uppercase;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .sitemap-card:hover a {
+            color: white;
+        }
+        
+        /* Header adjustments */
+        .header {
+            background: #05ce78;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        /* Footer adjustments */
+        .footer {
+            background: #343a40;
+            color: white;
+        }
+        
+        .footer-tagline {
+            color: #adb5bd;
+        }
+        
+        .copyright {
+            color: #adb5bd;
+        }
+        
+        .email {
+            color: white;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sitemap-title {
+                font-size: 1.5rem;
+            }
+            
+            .sitemap-card {
+                margin-bottom: 15px;
+                padding: 15px;
+                min-height: 50px;
+            }
+            
+            .sitemap-card a {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="row align-items-center justify-content-between">
+                <!-- Left: Logo -->
+                <div class="col-12 col-md-2 text-center text-md-start">
+                    <a href="/">
+                        <img src="assets/images/White Logo.png" alt="Apna Fund Logo" class="logo-img"
+                            style="max-height:50px;">
+                    </a>
+                </div>
+
+                <!-- Center: Search Bar -->
+                <div class="col-12 col-md-8">
+                    <div class="search-container">
+                        <div class="search-box">
+                            <input type="text" class="search-input"
+                                placeholder="Search projects, creators, and categories..." aria-label="Search">
+                            <button class="search-btn" type="button">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Buttons -->
+                <div class="col-12 col-md-2 text-center text-md-end">
+                    <a href="creator.html" class="btn btn-outline-light me-2">Creator</a>
+                    <a href="login.html" class="btn text-white">Login</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area - Sitemap -->
+    <main style="min-height: 70vh; padding: 60px 0; background: #f8f9fa;">
+        <div class="container">
+            <!-- All Pages Section -->
+            <div class="row mb-5">
+                <div class="col-12 text-center mb-4">
+                    <h2 class="sitemap-title">All Pages</h2>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="sitemap-card">
+                        <a href="index.html">HOME</a>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="sitemap-card">
+                        <a href="about.html">ABOUT US</a>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="sitemap-card">
+                        <a href="contact.html">CONTACT US</a>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="sitemap-card">
+                        <a href="blog.html">BLOG</a>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="sitemap-card">
+                        <a href="help.html">FAQS</a>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="sitemap-card">
+                        <a href="privacy-policy.html">PRIVACY POLICY</a>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="sitemap-card">
+                        <a href="terms-conditions.html">REFUND POLICY</a>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="sitemap-card">
+                        <a href="business-resources.html">SHIPPING POLICY</a>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="sitemap-card">
+                        <a href="gig-showcase.html">SHOP</a>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="sitemap-card">
+                        <a href="terms-conditions.html">TERMS & CONDITION</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Category Section -->
+            <div class="row">
+                <div class="col-12 text-center mb-4">
+                    <h2 class="sitemap-title">Product Category</h2>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="sitemap-card">
+                        <a href="#">LOUGE CHAIRS</a>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="sitemap-card">
+                        <a href="#">BARCELONA CHAIRS</a>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="sitemap-card">
+                        <a href="#">EAMES LOUNGE CHAIRS</a>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="sitemap-card">
+                        <a href="#">EAMES LOUNG CHAIRS XL</a>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="sitemap-card">
+                        <a href="#">DINING CHAIRS</a>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="sitemap-card">
+                        <a href="#">DAW DINING CHAIRS</a>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="sitemap-card">
+                        <a href="#">DSW DINING CHAIRS</a>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="sitemap-card">
+                        <a href="#">TULIP DINING CHAIRS</a>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="sitemap-card">
+                        <a href="#">OFFICE CHAIRS</a>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="sitemap-card">
+                        <a href="#">MESH OFFICE CHAIRS</a>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="sitemap-card">
+                        <a href="#">SOFT PAD OFFICE CHAIRS</a>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="sitemap-card">
+                        <a href="#">THIN PAD OFFICE CHARS</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="footer-logo">
+                        <img src="assets/images/White Logo.png" alt="Apna Fund Logo" class="footer-logo-img">
+                        <p class="footer-tagline">Empowering Dreams, Building Futures</p>
+                    </div>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="footer-info">
+                        <p class="copyright">© 2024 Apna Fund. All rights reserved.</p>
+                        <p class="email">contact@apnafund.com</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+</body>
+
+</html>

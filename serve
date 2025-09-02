@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Laravel Development Server Script
+echo "Starting Laravel development server..."
+echo "Server will be available at: http://127.0.0.1:8000"
+echo "Press Ctrl+C to stop the server"
+echo ""
+
+# Run the Laravel development server
+/Applications/XAMPP/xamppfiles/bin/php artisan serve --host=127.0.0.1 --port=8000
+

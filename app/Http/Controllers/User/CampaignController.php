@@ -120,6 +120,8 @@ class CampaignController extends Controller
             $this->validate(request(), [
                 'category_id'         => 'required|integer|gt:0',
                 'image'               => ['required', File::types(['png', 'jpg', 'jpeg'])],
+                'video'               => ['nullable', File::types(['mp4', 'avi', 'mov', 'wmv', 'flv', '3gp']), 'max:512000'], // 500MB max
+                'location'            => 'nullable|string|max:255',
                 'name'                => 'required|string|max:190|unique:campaigns,name',
                 'description'         => 'required|min:30',
                 'goal_amount'         => 'required|numeric|gt:0',
@@ -128,6 +130,7 @@ class CampaignController extends Controller
             ], [
                 'category_id.required' => 'The category field is required.',
                 'category_id.integer'  => 'The category must be an integer.',
+                'video.max'           => 'Video file size must be less than 500MB.',
             ]);
             
             $category = Category::where('id', request('category_id'))->active()->first();
@@ -199,9 +202,26 @@ class CampaignController extends Controller
                 return back()->withToasts($toast);
             }
 
+            // Upload video (optional)
+            if (request()->hasFile('video')) {
+                try {
+                    $campaign->video = fileUploader(request('video'), getFilePath('campaign'), getFileSize('campaign'));
+                } catch (Exception) {
+                    $toast[] = ['error', 'Video uploading process has failed'];
+                    if (request()->ajax()) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Video uploading process has failed'
+                        ], 400);
+                    }
+                    return back()->withToasts($toast);
+                }
+            }
+
             $campaign->gallery     = !empty($gallery) ? $gallery : [];
             $campaign->name        = request('name');
             $campaign->slug        = slug(request('name'));
+            $campaign->location    = request('location');
             $purifier              = new HTMLPurifier();
             $campaign->description = $purifier->purify(request('description'));
 
@@ -370,6 +390,8 @@ class CampaignController extends Controller
             $this->validate(request(), [
                 'category_id'         => 'required|integer|gt:0',
                 'image'               => ['nullable', File::types(['png', 'jpg', 'jpeg'])],
+                'video'               => ['nullable', File::types(['mp4', 'avi', 'mov', 'wmv', 'flv', '3gp']), 'max:512000'], // 500MB max
+                'location'            => 'nullable|string|max:255',
                 'name'                => 'required|string|max:190|unique:campaigns,name,' . $id,
                 'description'         => 'required|min:30',
                 'goal_amount'         => 'required|numeric|gt:0',
@@ -379,6 +401,7 @@ class CampaignController extends Controller
             ], [
                 'category_id.required' => 'The category field is required.',
                 'category_id.integer'  => 'The category must be an integer.',
+                'video.max'           => 'Video file size must be less than 500MB.',
             ]);
 
             $campaign = Campaign::where('id', $id)->where('user_id', auth()->id())->first();
@@ -422,6 +445,7 @@ class CampaignController extends Controller
             $campaign->category_id = request('category_id');
             $campaign->name        = request('name');
             $campaign->slug        = slug(request('name'));
+            $campaign->location    = request('location');
             $purifier              = new HTMLPurifier();
             $campaign->description = $purifier->purify(request('description'));
             $campaign->goal_amount = request('goal_amount');
@@ -438,6 +462,22 @@ class CampaignController extends Controller
                         return response()->json([
                             'success' => false,
                             'message' => 'Image uploading process has failed'
+                        ], 400);
+                    }
+                    return back()->withToasts($toast);
+                }
+            }
+
+            // Upload new video
+            if (request()->hasFile('video')) {
+                try {
+                    $campaign->video = fileUploader(request('video'), getFilePath('campaign'), getFileSize('campaign'), @$campaign->video);
+                } catch (Exception) {
+                    $toast[] = ['error', 'Video uploading process has failed'];
+                    if (request()->ajax()) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Video uploading process has failed'
                         ], 400);
                     }
                     return back()->withToasts($toast);

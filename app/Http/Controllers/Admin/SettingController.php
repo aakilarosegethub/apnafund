@@ -72,6 +72,14 @@ class SettingController extends Controller
     }
 
     function logoFaviconUpdate() {
+        // Debug: Log request data
+        \Log::info('Logo Upload Debug:', [
+            'has_logo_light' => request()->hasFile('logo_light'),
+            'has_logo_dark' => request()->hasFile('logo_dark'),
+            'has_favicon' => request()->hasFile('favicon'),
+            'request_files' => request()->allFiles(),
+        ]);
+
         $this->validate(request(), [
             'logo_light' => [File::types(['png'])],
             'logo_dark'  => [File::types(['png'])],
@@ -79,45 +87,95 @@ class SettingController extends Controller
         ]);
 
         $path = getFilePath('logoFavicon');
+        $fullPath = public_path($path);
+        
+        // Debug: Log path info
+        \Log::info('Path Debug:', [
+            'relative_path' => $path,
+            'full_path' => $fullPath,
+            'path_exists' => file_exists($fullPath),
+            'is_writable' => is_writable(dirname($fullPath)),
+        ]);
 
         if (request()->hasFile('logo_light')) {
             try {
-                if (!file_exists($path)) {
-                    mkdir($path, 0755, true);
+                if (!file_exists($fullPath)) {
+                    mkdir($fullPath, 0755, true);
+                    \Log::info('Created directory: ' . $fullPath);
                 }
-                Image::make(request('logo_light'))->save($path . '/logo_light.png');
+                
+                $logoPath = $fullPath . '/logo_light.png';
+                Image::make(request('logo_light'))->save($logoPath);
+                
+                \Log::info('Logo Light Upload Success:', [
+                    'file_path' => $logoPath,
+                    'file_exists_after_save' => file_exists($logoPath),
+                    'file_size' => file_exists($logoPath) ? filesize($logoPath) : 0,
+                ]);
+                
+                $toast[] = ['success', 'Light logo uploaded successfully'];
             } catch (\Exception $exp) {
-                $toast[] = ['error', 'Unable to upload light logo'];
+                \Log::error('Light Logo Upload Error: ' . $exp->getMessage());
+                $toast[] = ['error', 'Unable to upload light logo: ' . $exp->getMessage()];
                 return back()->withToasts($toast);
             }
         }
 
         if (request()->hasFile('logo_dark')) {
             try {
-                if (!file_exists($path)) {
-                    mkdir($path, 0755, true);
+                if (!file_exists($fullPath)) {
+                    mkdir($fullPath, 0755, true);
+                    \Log::info('Created directory: ' . $fullPath);
                 }
-                Image::make(request('logo_dark'))->save($path . '/logo_dark.png');
+                
+                $logoPath = $fullPath . '/logo_dark.png';
+                Image::make(request('logo_dark'))->save($logoPath);
+                
+                \Log::info('Logo Dark Upload Success:', [
+                    'file_path' => $logoPath,
+                    'file_exists_after_save' => file_exists($logoPath),
+                    'file_size' => file_exists($logoPath) ? filesize($logoPath) : 0,
+                ]);
+                
+                $toast[] = ['success', 'Dark logo uploaded successfully'];
             } catch (\Exception $exp) {
-                $toast[] = ['error', 'Unable to upload dark logo'];
+                \Log::error('Dark Logo Upload Error: ' . $exp->getMessage());
+                $toast[] = ['error', 'Unable to upload dark logo: ' . $exp->getMessage()];
                 return back()->withToasts($toast);
             }
         }
 
         if (request()->hasFile('favicon')) {
             try {
-                if (!file_exists($path)) {
-                    mkdir($path, 0755, true);
+                if (!file_exists($fullPath)) {
+                    mkdir($fullPath, 0755, true);
+                    \Log::info('Created directory: ' . $fullPath);
                 }
+                
                 $size = explode('x', getFileSize('favicon'));
-                Image::make(request('favicon'))->resize($size[0], $size[1])->save($path . '/favicon.png');
+                $faviconPath = $fullPath . '/favicon.png';
+                Image::make(request('favicon'))->resize($size[0], $size[1])->save($faviconPath);
+                
+                \Log::info('Favicon Upload Success:', [
+                    'file_path' => $faviconPath,
+                    'file_exists_after_save' => file_exists($faviconPath),
+                    'file_size' => file_exists($faviconPath) ? filesize($faviconPath) : 0,
+                ]);
+                
+                $toast[] = ['success', 'Favicon uploaded successfully'];
             } catch (\Exception $exp) {
-                $toast[] = ['error', 'Unable to upload the favicon'];
+                \Log::error('Favicon Upload Error: ' . $exp->getMessage());
+                $toast[] = ['error', 'Unable to upload the favicon: ' . $exp->getMessage()];
                 return back()->withToasts($toast);
             }
         }
 
-        $toast[] = ['success', 'Logo and favicon update success'];
+        if (empty($toast)) {
+            $toast[] = ['info', 'No files were uploaded'];
+        } else {
+            $toast[] = ['success', 'Logo and favicon update completed'];
+        }
+        
         return back()->withToasts($toast);
     }
 
@@ -130,7 +188,8 @@ class SettingController extends Controller
     function coverUpdate() {
         $this->validate(request(), [
             'cover_image' => ['nullable', 'image', File::types(['png', 'jpg', 'jpeg'])],
-            'heading' => 'required|string|max:255',
+            'heading' => 'required|string|max:2 local ptr ho rha live server pr ni mje kuch debuging checks lga k do 
+            55',
             'subheading' => 'required|string|max:255',
             'description' => 'required|string',
             'first_button_text' => 'required|string|max:100',

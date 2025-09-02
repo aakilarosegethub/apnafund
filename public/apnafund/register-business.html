@@ -657,17 +657,8 @@
                     }
                 })
                 .catch(error => {
-                    let errorMessage = 'An error occurred while creating your account.';
-                    if (data.errors) {
-                                // data.errors is an object: { field: [messages] }
-                                const firstField = Object.keys(data.errors)[0];
-                                const firstError = data.errors[firstField][0];
-                                showToast('error', firstError);
-                            } else if (data.message) {
-                            errorMessage = data.message;
-                        }
-                        
-                        showToast('error', errorMessage);
+                    console.error('Error:', error);
+                    alert('An error occurred while creating your account. Please try again.');
                 });
             } else {
                 alert('Please fill in all required fields and accept the terms before creating your account.');

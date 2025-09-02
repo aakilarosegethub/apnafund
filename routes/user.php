@@ -67,7 +67,7 @@ Route::middleware('auth')->name('user.')->namespace('User')->group(function () {
         });
 
         // Rewards
-        Route::controller('RewardController')->prefix('campaign/{slug}/rewards')->name('rewards.')->group(function () {
+        Route::controller('RewardController')->prefix('campaign/{slug}/rewards')->name('user.rewards.index')->group(function () {
             Route::get('/', 'index')->name('index');
             Route::get('/create', 'create')->name('create');
             Route::post('/store', 'store')->name('store');

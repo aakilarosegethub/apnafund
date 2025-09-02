@@ -9,7 +9,7 @@
     <section class="banner-section">
         <div class="banner-slider">
             @foreach ($bannerElements as $banner)
-                <div class="banner-slider__slide bg-img" data-background-image="{{ getImage('assets/images/site/banner/' . @$banner->data_info->background_image, '1920x1080') }}">
+                <div class="banner-slider__slide bg-img" data-background-image="{{ getImage('assets/images/site/banner/' . @$banner->data_info->background_image, '1920x1080') }}" title="{{ getImageAlt($banner, 'background_image', 'Banner background') }}">
                     <div class="container">
                         <div class="row align-items-center justify-content-center">
                             <div class="col-lg-6 col-md-7">

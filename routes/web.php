@@ -53,6 +53,10 @@ Route::controller('WebsiteController')->group(function () {
     // Language
     Route::get('change/{lang?}', 'changeLanguage')->name('lang');
 
+    // Help & Sitemap
+    Route::get('help', 'help')->name('help');
+    Route::get('sitemap', 'sitemap')->name('sitemap');
+
     // Policy Details
     Route::get('policy/{slug}/{id}', 'policyPages')->name('policy.pages');
 

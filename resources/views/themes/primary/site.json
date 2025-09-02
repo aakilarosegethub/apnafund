@@ -180,9 +180,6 @@
         "name": "About Section",
         "content": {
             "images": {
-                "background_image": {
-                    "size": "1920x1080"
-                },
                 "image": {
                     "size": "655x690"
                 }

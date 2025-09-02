@@ -16,6 +16,7 @@ use App\Models\AdminNotification;
 use App\Models\Subscriber;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Http;
 
 class WebsiteController extends Controller
 {
@@ -613,5 +614,82 @@ class WebsiteController extends Controller
             
             return response()->json(['success' => true, 'message' => 'All Countries selected']);
         }
+    }
+
+    public function help()
+    {
+        $pageTitle = 'Help & Support';
+
+        $cacheFilePath = base_path('help.json');
+        $apiUrl        = 'https://apnacrowdfunding.com/help-admin/wp-json/zia-api/v1/categories-with-posts';
+        $cachedPayload = null;
+        $lastUpdated   = null;
+        $needsRefresh  = false;
+
+        // Read existing cache if present
+        if (file_exists($cacheFilePath)) {
+            try {
+                $raw = file_get_contents($cacheFilePath);
+                $decoded = json_decode($raw, true);
+                if (is_array($decoded)) {
+                    $cachedPayload = $decoded['data'] ?? null;
+                    $lastUpdated   = $decoded['last_updated'] ?? null;
+
+                    // Determine staleness (older than 60 minutes)
+                    if ($lastUpdated) {
+                        try {
+                            $last = Carbon::parse($lastUpdated);
+                            $needsRefresh = $last->diffInMinutes(now()) >= 60;
+                        } catch (\Throwable $e) {
+                            $needsRefresh = true;
+                        }
+                    } else {
+                        $needsRefresh = true;
+                    }
+                } else {
+                    $needsRefresh = true;
+                }
+            } catch (\Throwable $e) {
+                $needsRefresh = true;
+            }
+        } else {
+            $needsRefresh = true;
+        }
+
+        // Refresh from API if needed
+        if ($needsRefresh) {
+            try {
+                $response = Http::timeout(15)->acceptJson()->get($apiUrl);
+                if ($response->ok()) {
+                    $json = $response->json();
+                    if (is_array($json) && ($json['status'] ?? null) === 'success') {
+                        $cachedPayload = $json;
+                        $lastUpdated   = now()->toIso8601String();
+
+                        // Persist to cache file
+                        $toWrite = json_encode([
+                            'last_updated' => $lastUpdated,
+                            'data'         => $cachedPayload,
+                        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+
+                        @file_put_contents($cacheFilePath, $toWrite);
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Ignore API failures; fall back to existing cache if any
+            }
+        }
+
+        // Ensure we always pass arrays to the view
+        $helpData    = $cachedPayload ?: null;
+        $lastUpdated = $lastUpdated ?: null;
+
+        return view($this->activeTheme . 'page.help', compact('pageTitle', 'helpData', 'lastUpdated'));
+    }
+
+    public function sitemap()
+    {
+        $pageTitle = 'Sitemap';
+        return view($this->activeTheme . 'page.sitemap', compact('pageTitle'));
     }
 }

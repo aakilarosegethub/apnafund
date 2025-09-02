@@ -27,6 +27,8 @@ class Campaign extends Model
         'slug',
         'description',
         'image',
+        'video',
+        'location',
         'gallery',
         'preferred_amounts',
         'goal_amount',

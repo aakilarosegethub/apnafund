@@ -1,7 +1,7 @@
 <div class="success-showcase__card">
     <div class="success-showcase__img">
         <a href="{{ route('stories.show', @$successElement->id) }}">
-            <img src="{{ getImage('assets/images/site/success_story/thumb_' . @$successElement->data_info->image, '415x230') }}" alt="image">
+            <img src="{{ getImage('assets/images/site/success_story/thumb_' . @$successElement->data_info->image, '415x230') }}" alt="{{ getImageAlt($successElement, 'image', @$successElement->data_info->title ?? 'Success story image') }}">
         </a>
     </div>
     <div class="success-showcase__txt">

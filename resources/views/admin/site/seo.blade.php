@@ -41,11 +41,17 @@
                             <label for="seo" class="upload__img__btn"><i class="ti ti-camera"></i></label>
                             <input type="file" id="seo" class="image-upload" name="image_input" accept=".png, .jpg, .jpeg">
                             <label for="seo" class="upload__img-preview image-preview">
-                                <img src="{{ getImage(getFilePath('seo').'/'. @$seo->data_info->image, getFileSize('seo')) }}" alt="seo-image">
+                                <img src="{{ getImage(getFilePath('seo').'/'. @$seo->data_info->image, getFileSize('seo')) }}" alt="{{ @$seo->data_info->image_alt ?? 'seo-image' }}">
                             </label>
                             <button type="button" class="btn btn--sm btn--icon btn--danger custom-file-input-clear d-none"><i class="ti ti-circle-x"></i></button>
                         </div>
                         <label class="text-center small">@lang('Supported files'): <span class="fw-semibold text--warning">@lang('jpeg'), @lang('jpg'), @lang('png').</span> @lang('Image size') <span class="fw-semibold text--warning">{{getFileSize('seo')}}@lang('px').</span></label>
+                        
+                        <!-- SEO Image Alt Text Field -->
+                        <div class="mt-2">
+                            <label class="form--label">@lang('SEO Image Alt Text')</label>
+                            <input type="text" class="form--control" name="image_alt" value="{{ @$seo->data_info->image_alt }}" placeholder="@lang('Enter alt text for SEO image')">
+                        </div>
                     </div>
 
                     <div class="col-12 order-3">

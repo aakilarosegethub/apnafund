@@ -201,7 +201,7 @@
     @if (!request()->routeIs('home'))
         @php $breadcrumbContent = getSiteData('breadcrumb.content', true); @endphp
 
-        <section class="breadcrumb bg-img" data-background-image="{{ getImage('assets/images/site/breadcrumb/' . @$breadcrumbContent->data_info->background_image, '1920x700') }}">
+        <section class="breadcrumb bg-img" data-background-image="{{ getImage('assets/images/site/breadcrumb/' . @$breadcrumbContent->data_info->background_image, '1920x700') }}" title="{{ getImageAlt($breadcrumbContent, 'background_image', 'Breadcrumb background') }}">
             <div class="breadcrumb__bg bg-img" data-background-image="{{ asset($activeThemeTrue . 'images/breadcrumb-vector.png') }}"></div>
             <div class="container">
                 <div class="row justify-content-center">

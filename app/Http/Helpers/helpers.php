@@ -276,6 +276,15 @@ function getImage($image, $size = null, $avatar = false): string {
     return asset('assets/universal/images/default.png');
 }
 
+function getImageAlt($content, $imageKey, $default = 'image') {
+    if (!$content || !$content->data_info) {
+        return $default;
+    }
+    
+    $altKey = $imageKey . '_alt';
+    return @$content->data_info->$altKey ?: $default;
+}
+
 function isImage($string): bool {
     $allowedExtensions = array('jpg', 'jpeg', 'png', 'gif');
     $fileExtension     = pathinfo($string, PATHINFO_EXTENSION);
