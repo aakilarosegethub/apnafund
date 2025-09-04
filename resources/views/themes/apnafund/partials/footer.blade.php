@@ -44,6 +44,7 @@
                         <li><a href="{{ url('policy/support-policy/82') }}">Support Policy
                         </a></li>
                         <li><a href="{{ url('help') }}">Help Center</a></li>
+                        <li><a href="{{ url('sitemap') }}">Sitemap</a></li>
                     </ul>
                 </div>
             </div>

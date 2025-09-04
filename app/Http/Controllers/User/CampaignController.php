@@ -11,6 +11,7 @@ use App\Models\Campaign;
 use App\Models\Category;
 use App\Models\AdminNotification;
 use App\Http\Controllers\Controller;
+use App\Services\YouTubeUploadService;
 use Illuminate\Validation\Rules\File;
 use Illuminate\Support\Facades\Validator;
 
@@ -121,6 +122,7 @@ class CampaignController extends Controller
                 'category_id'         => 'required|integer|gt:0',
                 'image'               => ['required', File::types(['png', 'jpg', 'jpeg'])],
                 'video'               => ['nullable', File::types(['mp4', 'avi', 'mov', 'wmv', 'flv', '3gp']), 'max:512000'], // 500MB max
+                'youtube_url'         => 'nullable|url|regex:/^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/',
                 'location'            => 'nullable|string|max:255',
                 'name'                => 'required|string|max:190|unique:campaigns,name',
                 'description'         => 'required|min:30',
@@ -131,6 +133,8 @@ class CampaignController extends Controller
                 'category_id.required' => 'The category field is required.',
                 'category_id.integer'  => 'The category must be an integer.',
                 'video.max'           => 'Video file size must be less than 500MB.',
+                'youtube_url.url'     => 'YouTube URL must be a valid URL.',
+                'youtube_url.regex'   => 'Please enter a valid YouTube URL.',
             ]);
             
             $category = Category::where('id', request('category_id'))->active()->first();
@@ -202,20 +206,58 @@ class CampaignController extends Controller
                 return back()->withToasts($toast);
             }
 
-            // Upload video (optional)
+            // Handle video upload or YouTube URL
             if (request()->hasFile('video')) {
                 try {
-                    $campaign->video = fileUploader(request('video'), getFilePath('campaign'), getFileSize('campaign'));
-                } catch (Exception) {
-                    $toast[] = ['error', 'Video uploading process has failed'];
+                    // Check if YouTube auto-upload is enabled
+                    if (request('auto_upload_youtube') === '1') {
+                        $youtubeService = new YouTubeUploadService();
+                        
+                        if ($youtubeService->isConfigured()) {
+                            // Upload to YouTube
+                            $videoFile = request('video');
+                            $tempPath = $videoFile->getRealPath();
+                            
+                            $title = request('name') . ' - Campaign Video';
+                            $description = 'Campaign video for: ' . request('name') . "\n\n" . request('description');
+                            $tags = ['campaign', 'donation', 'fundraising', 'apnafund'];
+                            
+                            $youtubeUrl = $youtubeService->uploadVideo(
+                                $tempPath,
+                                $title,
+                                $description,
+                                $tags,
+                                'unlisted' // Videos are unlisted by default
+                            );
+                            
+                            $campaign->youtube_url = $youtubeUrl;
+                            $campaign->video = null; // Don't store local file if uploaded to YouTube
+                            
+                            $toast[] = ['success', 'Video uploaded to YouTube successfully!'];
+                        } else {
+                            // Fallback to local upload if YouTube not configured
+                            $campaign->video = fileUploader(request('video'), getFilePath('campaign'), getFileSize('campaign'));
+                            $campaign->youtube_url = null;
+                            $toast[] = ['warning', 'YouTube not configured. Video saved locally.'];
+                        }
+                    } else {
+                        // Regular local upload
+                        $campaign->video = fileUploader(request('video'), getFilePath('campaign'), getFileSize('campaign'));
+                        $campaign->youtube_url = null;
+                    }
+                } catch (Exception $e) {
+                    $toast[] = ['error', 'Video uploading process has failed: ' . $e->getMessage()];
                     if (request()->ajax()) {
                         return response()->json([
                             'success' => false,
-                            'message' => 'Video uploading process has failed'
+                            'message' => 'Video uploading process has failed: ' . $e->getMessage()
                         ], 400);
                     }
                     return back()->withToasts($toast);
                 }
+            } elseif (request('youtube_url')) {
+                $campaign->youtube_url = request('youtube_url');
+                $campaign->video = null; // Clear video file if YouTube URL is provided
             }
 
             $campaign->gallery     = !empty($gallery) ? $gallery : [];
@@ -391,6 +433,7 @@ class CampaignController extends Controller
                 'category_id'         => 'required|integer|gt:0',
                 'image'               => ['nullable', File::types(['png', 'jpg', 'jpeg'])],
                 'video'               => ['nullable', File::types(['mp4', 'avi', 'mov', 'wmv', 'flv', '3gp']), 'max:512000'], // 500MB max
+                'youtube_url'         => 'nullable|url|regex:/^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/',
                 'location'            => 'nullable|string|max:255',
                 'name'                => 'required|string|max:190|unique:campaigns,name,' . $id,
                 'description'         => 'required|min:30',
@@ -402,6 +445,8 @@ class CampaignController extends Controller
                 'category_id.required' => 'The category field is required.',
                 'category_id.integer'  => 'The category must be an integer.',
                 'video.max'           => 'Video file size must be less than 500MB.',
+                'youtube_url.url'     => 'YouTube URL must be a valid URL.',
+                'youtube_url.regex'   => 'Please enter a valid YouTube URL.',
             ]);
 
             $campaign = Campaign::where('id', $id)->where('user_id', auth()->id())->first();
@@ -468,10 +513,11 @@ class CampaignController extends Controller
                 }
             }
 
-            // Upload new video
+            // Handle video upload or YouTube URL update
             if (request()->hasFile('video')) {
                 try {
                     $campaign->video = fileUploader(request('video'), getFilePath('campaign'), getFileSize('campaign'), @$campaign->video);
+                    $campaign->youtube_url = null; // Clear YouTube URL if file is uploaded
                 } catch (Exception) {
                     $toast[] = ['error', 'Video uploading process has failed'];
                     if (request()->ajax()) {
@@ -482,6 +528,12 @@ class CampaignController extends Controller
                     }
                     return back()->withToasts($toast);
                 }
+            } elseif (request('youtube_url')) {
+                $campaign->youtube_url = request('youtube_url');
+                // Don't clear video file automatically - let user choose
+            } elseif (request('video_type') === 'youtube' && !request('youtube_url')) {
+                // If YouTube option is selected but no URL provided, clear YouTube URL
+                $campaign->youtube_url = null;
             }
 
             // Upload new document

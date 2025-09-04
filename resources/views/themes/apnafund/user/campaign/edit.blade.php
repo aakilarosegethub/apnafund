@@ -2,6 +2,12 @@
     $activeTheme = 'themes.apnafund.';
     $activeThemeTrue = 'themes.apnafund.';
 @endphp
+@section('style')
+    <link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/jodit@latest/es2021/jodit.fat.min.css"
+/>
+@endsection
 @extends($activeTheme . 'layouts.dashboard')
 @section('frontend')
     <!-- Edit Gig Tab -->
@@ -84,7 +90,7 @@
                         <!-- Description -->
                         <div class="form-group mb-4">
                             <label for="campaignDescription" class="form-label">Description *</label>
-                            <textarea class="form-control" id="campaignDescription" name="description" rows="8" placeholder="Describe your campaign, its purpose, and how donations will be used" required>{{ $campaign->description ?? '' }}</textarea>
+                            <textarea class="form-control" id="gigDescription" name="description" rows="8" placeholder="Describe your campaign, its purpose, and how donations will be used" required>{{ $campaign->description ?? '' }}</textarea>
                         </div>
 
                         <!-- Main Campaign Image -->
@@ -111,6 +117,49 @@
                                     </a>
                                 </div>
                             @endif
+                        </div>
+
+                        <!-- Video Upload Options -->
+                        <div class="form-group mb-4">
+                            <label class="form-label">Campaign Video</label>
+                            
+                            <!-- Video Upload Toggle -->
+                            <div class="mb-3">
+                                <div class="btn-group" role="group" aria-label="Video upload options">
+                                    <input type="radio" class="btn-check" name="video_type" id="video_file" value="file" autocomplete="off" {{ !$campaign->youtube_url ? 'checked' : '' }}>
+                                    <label class="btn btn-outline-primary" for="video_file">Upload Video File</label>
+                                    
+                                    <input type="radio" class="btn-check" name="video_type" id="video_youtube" value="youtube" autocomplete="off" {{ $campaign->youtube_url ? 'checked' : '' }}>
+                                    <label class="btn btn-outline-primary" for="video_youtube">YouTube URL</label>
+                                </div>
+                            </div>
+                            
+                            <!-- File Upload Section -->
+                            <div id="file_upload_section" style="{{ $campaign->youtube_url ? 'display: none;' : '' }}">
+                                <input type="file" class="form-control mb-2" name="video" accept="video/*">
+                                <small class="text-muted">Upload a video file (MP4, AVI, MOV, etc.)</small>
+                                @if($campaign->video && !$campaign->youtube_url)
+                                    <div class="mt-2">
+                                        <video width="300" height="200" controls>
+                                            <source src="{{ asset(getFilePath('campaign') . '/' . $campaign->video) }}" type="video/mp4">
+                                            Your browser does not support the video tag.
+                                        </video>
+                                    </div>
+                                @endif
+                            </div>
+                            
+                            <!-- YouTube URL Section -->
+                            <div id="youtube_url_section" style="{{ !$campaign->youtube_url ? 'display: none;' : '' }}">
+                                <input type="url" class="form-control mb-2" name="youtube_url" id="youtube_url" value="{{ $campaign->youtube_url ?? '' }}" placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
+                                <small class="text-muted">Enter YouTube video URL for better streaming performance</small>
+                                @if($campaign->youtube_url)
+                                    <div class="mt-2">
+                                        <div class="youtube-preview">
+                                            <iframe width="300" height="200" src="{{ str_replace('watch?v=', 'embed/', $campaign->youtube_url) }}" frameborder="0" allowfullscreen></iframe>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
                         </div>
 
                         <div class="row">
@@ -1216,8 +1265,53 @@
             }
         }
 
+        // Handle video type toggle
+        $('input[name="video_type"]').change(function() {
+            if ($(this).val() === 'file') {
+                $('#file_upload_section').show();
+                $('#youtube_url_section').hide();
+                $('#youtube_url').removeAttr('required');
+            } else {
+                $('#file_upload_section').hide();
+                $('#youtube_url_section').show();
+                $('#youtube_url').attr('required', false); // Optional for now
+            }
+        });
+
+        // YouTube URL validation and preview
+        $('#youtube_url').on('blur', function() {
+            const url = $(this).val();
+            if (url && isValidYouTubeUrl(url)) {
+                updateYouTubePreview(url);
+            }
+        });
+
+        function isValidYouTubeUrl(url) {
+            const pattern = /^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
+            return pattern.test(url);
+        }
+
+        function updateYouTubePreview(url) {
+            let embedUrl = url;
+            if (url.includes('watch?v=')) {
+                embedUrl = url.replace('watch?v=', 'embed/');
+            } else if (url.includes('youtu.be/')) {
+                embedUrl = url.replace('youtu.be/', 'youtube.com/embed/');
+            }
+            
+            const preview = `<iframe width="300" height="200" src="${embedUrl}" frameborder="0" allowfullscreen></iframe>`;
+            $('.youtube-preview').html(preview);
+        }
+
         }); // End of document ready
 
     })(jQuery)
 </script>
+<script src="https://cdn.jsdelivr.net/npm/jodit@latest/es2021/jodit.fat.min.js"></script>
+    <script>
+        alert('jodit');
+        const editor = Jodit.make('#gigDescription', {
+            buttons: ['bold', 'italic', 'underline', '|', 'ul', 'ol']
+        });
+    </script>
 @endsection

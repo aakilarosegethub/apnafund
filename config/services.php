@@ -39,4 +39,13 @@ return [
         'maps_api_key' => env('GOOGLE_MAPS_API_KEY'),
     ],
 
+    'youtube' => [
+        'client_id' => env('YOUTUBE_CLIENT_ID'),
+        'client_secret' => env('YOUTUBE_CLIENT_SECRET'),
+        'redirect_uri' => env('YOUTUBE_REDIRECT_URI', env('APP_URL') . '/youtube/callback'),
+        'credentials_path' => env('YOUTUBE_CREDENTIALS_PATH', storage_path('app/youtube-credentials.json')),
+        'access_token' => env('YOUTUBE_ACCESS_TOKEN'),
+        'refresh_token' => env('YOUTUBE_REFRESH_TOKEN'),
+    ],
+
 ];

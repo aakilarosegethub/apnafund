@@ -680,6 +680,12 @@ class WebsiteController extends Controller
             }
         }
 
+        // Check if we have valid data, if not use fallback data
+        if (!$cachedPayload || !isset($cachedPayload['data']) || empty($cachedPayload['data'])) {
+            $cachedPayload = $this->getFallbackHelpData();
+            $lastUpdated = now()->toIso8601String();
+        }
+
         // Ensure we always pass arrays to the view
         $helpData    = $cachedPayload ?: null;
         $lastUpdated = $lastUpdated ?: null;
@@ -691,5 +697,160 @@ class WebsiteController extends Controller
     {
         $pageTitle = 'Sitemap';
         return view($this->activeTheme . 'page.sitemap', compact('pageTitle'));
+    }
+
+    private function getFallbackHelpData()
+    {
+        return [
+            "status" => "success",
+            "data" => [
+                [
+                    "id" => 2,
+                    "name" => "Getting Started",
+                    "slug" => "apnafund-basics",
+                    "description" => "",
+                    "count" => 5,
+                    "posts" => [
+                        [
+                            "id" => 7,
+                            "title" => "How to sign up",
+                            "slug" => "how-to-sign-up",
+                            "excerpt" => "Signing up is the first step to join our crowdfunding platform. Create your account and start your journey.",
+                            "date" => "2025-08-29 10:34:10",
+                            "author" => "admin",
+                            "featured_image" => false,
+                            "permalink" => "#"
+                        ],
+                        [
+                            "id" => 11,
+                            "title" => "How to start a campaign",
+                            "slug" => "how-to-start-a-campaign",
+                            "excerpt" => "Anyone can start a campaign after creating an account. Learn the basics of launching your first project.",
+                            "date" => "2025-08-29 10:38:08",
+                            "author" => "admin",
+                            "featured_image" => false,
+                            "permalink" => "#"
+                        ],
+                        [
+                            "id" => 13,
+                            "title" => "How to edit your profile",
+                            "slug" => "how-to-edit-your-profile",
+                            "excerpt" => "Update your profile information, add a photo, and customize your public presence on the platform.",
+                            "date" => "2025-08-29 10:39:58",
+                            "author" => "admin",
+                            "featured_image" => false,
+                            "permalink" => "#"
+                        ]
+                    ]
+                ],
+                [
+                    "id" => 5,
+                    "name" => "Backer Questions",
+                    "slug" => "backer-questions",
+                    "description" => "",
+                    "count" => 3,
+                    "posts" => [
+                        [
+                            "id" => 15,
+                            "title" => "How do I back a project?",
+                            "slug" => "how-do-i-back-a-project",
+                            "excerpt" => "Find projects you want to support and learn how to make pledges safely and securely.",
+                            "date" => "2025-08-29 10:44:30",
+                            "author" => "admin",
+                            "featured_image" => false,
+                            "permalink" => "#"
+                        ],
+                        [
+                            "id" => 17,
+                            "title" => "How do refunds work?",
+                            "slug" => "how-do-refunds-work",
+                            "excerpt" => "Understand our refund policy and how to get your money back if needed.",
+                            "date" => "2025-08-29 10:51:50",
+                            "author" => "admin",
+                            "featured_image" => false,
+                            "permalink" => "#"
+                        ],
+                        [
+                            "id" => 19,
+                            "title" => "Can I change my pledge?",
+                            "slug" => "can-i-change-my-pledge",
+                            "excerpt" => "Learn how to modify or cancel your existing pledges before the campaign ends.",
+                            "date" => "2025-08-29 10:54:19",
+                            "author" => "admin",
+                            "featured_image" => false,
+                            "permalink" => "#"
+                        ]
+                    ]
+                ],
+                [
+                    "id" => 4,
+                    "name" => "Creator Questions",
+                    "slug" => "creators-questions",
+                    "description" => "",
+                    "count" => 2,
+                    "posts" => [
+                        [
+                            "id" => 21,
+                            "title" => "How do I launch my campaign?",
+                            "slug" => "how-do-i-launch-my-campaign",
+                            "excerpt" => "Step-by-step guide to preparing and launching your crowdfunding campaign successfully.",
+                            "date" => "2025-08-29 10:56:21",
+                            "author" => "admin",
+                            "featured_image" => false,
+                            "permalink" => "#"
+                        ],
+                        [
+                            "id" => 25,
+                            "title" => "How to communicate with backers?",
+                            "slug" => "how-to-communicate-with-backers",
+                            "excerpt" => "Best practices for keeping your supporters engaged and informed throughout your campaign.",
+                            "date" => "2025-08-29 10:58:38",
+                            "author" => "admin",
+                            "featured_image" => false,
+                            "permalink" => "#"
+                        ]
+                    ]
+                ],
+                [
+                    "id" => 3,
+                    "name" => "Payments & Billing",
+                    "slug" => "payments-billing",
+                    "description" => "",
+                    "count" => 3,
+                    "posts" => [
+                        [
+                            "id" => 27,
+                            "title" => "How payments are processed",
+                            "slug" => "how-payments-are-processed",
+                            "excerpt" => "Learn about our secure payment processing and when charges occur.",
+                            "date" => "2025-08-29 10:59:44",
+                            "author" => "admin",
+                            "featured_image" => false,
+                            "permalink" => "#"
+                        ],
+                        [
+                            "id" => 29,
+                            "title" => "Failed payment solutions",
+                            "slug" => "failed-payment-solutions",
+                            "excerpt" => "What to do when your payment fails and how to resolve common issues.",
+                            "date" => "2025-08-29 11:01:07",
+                            "author" => "admin",
+                            "featured_image" => false,
+                            "permalink" => "#"
+                        ],
+                        [
+                            "id" => 23,
+                            "title" => "What are the fees?",
+                            "slug" => "what-are-the-fees",
+                            "excerpt" => "Understand our transparent fee structure for both creators and backers.",
+                            "date" => "2025-08-29 10:57:36",
+                            "author" => "admin",
+                            "featured_image" => false,
+                            "permalink" => "#"
+                        ]
+                    ]
+                ]
+            ]
+        ];
     }
 }

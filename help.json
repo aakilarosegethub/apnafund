@@ -1,253 +1,583 @@
 {
-    "last_updated": "2025-09-02T06:45:45+00:00",
+    "last_updated": "2025-09-02T13:23:01+00:00",
     "data": {
         "status": "success",
         "data": [
             {
-                "id": 7,
-                "name": "Account &amp; Security",
-                "slug": "account-security",
+                "id": 19,
+                "name": "Acount &amp; Security",
+                "slug": "acount-security",
                 "description": "",
                 "count": 3,
                 "posts": [
                     {
-                        "id": 44,
+                        "id": 187,
                         "title": "Deleting your account",
                         "slug": "deleting-your-account",
-                        "excerpt": "Log in → go to Account Settings > Delete Account. Confirm by entering your password. Once deleted, your campaigns and...",
-                        "date": "2025-08-29 11:12:40",
+                        "excerpt": "Log in → go to Account Settings &gt; Delete Account. Confirm by entering your password. Once deleted, your campaigns and...",
+                        "date": "2025-09-02 10:26:50",
                         "author": "admin",
                         "featured_image": false,
-                        "permalink": "https://apnacrowdfunding.com/help-admin/deleting-your-account/"
+                        "permalink": "https://apnacrowdfunding.com/help-admin/docs/deleting-your-account/"
                     },
                     {
-                        "id": 41,
+                        "id": 184,
                         "title": "Enabling 2FA (Two-Factor Authentication)",
                         "slug": "enabling-2fa-two-factor-authentication",
-                        "excerpt": "Log in and go to Account Settings > Security. Enable Two-Factor Authentication. Scan the QR code with Google Authenticator/Authy. Enter...",
-                        "date": "2025-08-29 11:11:13",
+                        "excerpt": "Log in and go to Account Settings &gt; Security. Enable Two-Factor Authentication. Scan the QR code with Google Authenticator/Authy. Enter...",
+                        "date": "2025-09-02 10:25:03",
                         "author": "admin",
                         "featured_image": false,
-                        "permalink": "https://apnacrowdfunding.com/help-admin/enabling-2fa-two-factor-authentication/"
+                        "permalink": "https://apnacrowdfunding.com/help-admin/docs/enabling-2fa-two-factor-authentication/"
                     },
                     {
-                        "id": 39,
+                        "id": 181,
                         "title": "Resetting your password",
                         "slug": "resetting-your-password",
                         "excerpt": "Go to the login page → click Forgot Password. Enter your email → check inbox for reset link. Create a...",
-                        "date": "2025-08-29 11:09:42",
+                        "date": "2025-09-02 10:18:40",
                         "author": "admin",
                         "featured_image": false,
-                        "permalink": "https://apnacrowdfunding.com/help-admin/resetting-your-password/"
+                        "permalink": "https://apnacrowdfunding.com/help-admin/docs/resetting-your-password/"
                     }
-                ]
+                ],
+                "debug_info": {
+                    "object_ids_found": [
+                        "181",
+                        "184",
+                        "187"
+                    ],
+                    "posts_found": 3,
+                    "post_types_found": [
+                        "docs"
+                    ],
+                    "post_details": [
+                        {
+                            "id": 187,
+                            "title": "Deleting your account",
+                            "type": "docs",
+                            "status": "publish"
+                        },
+                        {
+                            "id": 184,
+                            "title": "Enabling 2FA (Two-Factor Authentication)",
+                            "type": "docs",
+                            "status": "publish"
+                        },
+                        {
+                            "id": 181,
+                            "title": "Resetting your password",
+                            "type": "docs",
+                            "status": "publish"
+                        }
+                    ],
+                    "individual_post_checks": [
+                        {
+                            "id": 181,
+                            "title": "Resetting your password",
+                            "type": "docs",
+                            "status": "publish"
+                        },
+                        {
+                            "id": 184,
+                            "title": "Enabling 2FA (Two-Factor Authentication)",
+                            "type": "docs",
+                            "status": "publish"
+                        },
+                        {
+                            "id": 187,
+                            "title": "Deleting your account",
+                            "type": "docs",
+                            "status": "publish"
+                        }
+                    ],
+                    "term_taxonomy_id": 19
+                }
             },
             {
-                "id": 5,
-                "name": "Backer Questions",
-                "slug": "backer-questions",
-                "description": "",
-                "count": 3,
-                "posts": [
-                    {
-                        "id": 19,
-                        "title": "Can I change my pledge?",
-                        "slug": "can-i-change-my-pledge",
-                        "excerpt": "Go to Backed Projects in your dashboard. Select the project → Edit Pledge. You can increase, decrease, or cancel your...",
-                        "date": "2025-08-29 10:54:19",
-                        "author": "admin",
-                        "featured_image": false,
-                        "permalink": "https://apnacrowdfunding.com/help-admin/can-i-change-my-pledge/"
-                    },
-                    {
-                        "id": 17,
-                        "title": "How do refunds work?",
-                        "slug": "how-do-refunds-work",
-                        "excerpt": "If a project does not reach its funding goal, all backers are refunded automatically. If a project is canceled before...",
-                        "date": "2025-08-29 10:51:50",
-                        "author": "admin",
-                        "featured_image": false,
-                        "permalink": "https://apnacrowdfunding.com/help-admin/how-do-refunds-work/"
-                    },
-                    {
-                        "id": 15,
-                        "title": "How do I back a project?",
-                        "slug": "how-do-i-back-a-project",
-                        "excerpt": "Find the project you want to support. Click Back This Project. Select a pledge amount or reward tier. Enter payment...",
-                        "date": "2025-08-29 10:44:30",
-                        "author": "admin",
-                        "featured_image": false,
-                        "permalink": "https://apnacrowdfunding.com/help-admin/how-do-i-back-a-project/"
-                    }
-                ]
-            },
-            {
-                "id": 4,
-                "name": "Creator Questions",
-                "slug": "creators-questions",
-                "description": "",
-                "count": 2,
-                "posts": [
-                    {
-                        "id": 25,
-                        "title": "How to communicate with backers?",
-                        "slug": "how-to-communicate-with-backers",
-                        "excerpt": "Use the Updates tab on your campaign page. Reply to backer messages in your dashboard. Send thank-you notes and milestone...",
-                        "date": "2025-08-29 10:58:38",
-                        "author": "admin",
-                        "featured_image": false,
-                        "permalink": "https://apnacrowdfunding.com/help-admin/how-to-communicate-with-backers/"
-                    },
-                    {
-                        "id": 21,
-                        "title": "How do I launch my campaign?",
-                        "slug": "how-do-i-launch-my-campaign",
-                        "excerpt": "Prepare your campaign content (title, story, images, video). Click Launch a Campaign. Submit your project for review. Once approved, click...",
-                        "date": "2025-08-29 10:56:21",
-                        "author": "admin",
-                        "featured_image": false,
-                        "permalink": "https://apnacrowdfunding.com/help-admin/how-do-i-launch-my-campaign/"
-                    }
-                ]
-            },
-            {
-                "id": 2,
-                "name": "Getting Started",
+                "id": 14,
+                "name": "ApnaCrowdFunding Basics",
                 "slug": "apnacrowdfunding-basics",
                 "description": "",
-                "count": 3,
+                "count": 4,
                 "posts": [
                     {
-                        "id": 13,
+                        "id": 137,
                         "title": "How to edit your profile",
                         "slug": "how-to-edit-your-profile",
                         "excerpt": "Log in and go to your dashboard. Click Profile Settings. Update your profile photo, bio, and contact information. Save changes.Tip:...",
-                        "date": "2025-08-29 10:39:58",
+                        "date": "2025-09-02 09:07:56",
                         "author": "admin",
                         "featured_image": false,
-                        "permalink": "https://apnacrowdfunding.com/help-admin/how-to-edit-your-profile/"
+                        "permalink": "https://apnacrowdfunding.com/help-admin/docs/how-to-edit-your-profile/"
                     },
                     {
-                        "id": 11,
+                        "id": 134,
                         "title": "How to start a campaign",
                         "slug": "how-to-start-a-campaign",
                         "excerpt": "Anyone can start a campaign after creating an account.Steps: Log in to your account. Click “Start a Campaign” on the...",
-                        "date": "2025-08-29 10:38:08",
+                        "date": "2025-09-02 09:04:13",
                         "author": "admin",
                         "featured_image": false,
-                        "permalink": "https://apnacrowdfunding.com/help-admin/how-to-start-a-campaign/"
+                        "permalink": "https://apnacrowdfunding.com/help-admin/docs/how-to-start-a-campaign/"
                     },
                     {
-                        "id": 7,
+                        "id": 131,
                         "title": "How to sign up",
                         "slug": "how-to-sign-up",
                         "excerpt": "Signing up is the first step to join our crowdfunding platform.Steps: Go to the [Sign Up] page. Enter your full...",
-                        "date": "2025-08-29 10:34:10",
+                        "date": "2025-09-02 09:02:29",
                         "author": "admin",
                         "featured_image": false,
-                        "permalink": "https://apnacrowdfunding.com/help-admin/how-to-sign-up/"
+                        "permalink": "https://apnacrowdfunding.com/help-admin/docs/how-to-sign-up/"
+                    },
+                    {
+                        "id": 128,
+                        "title": "What is ApnaCrowdFunding",
+                        "slug": "what-is-apnacrowdfunding",
+                        "excerpt": "",
+                        "date": "2025-09-02 08:59:39",
+                        "author": "admin",
+                        "featured_image": false,
+                        "permalink": "https://apnacrowdfunding.com/help-admin/docs/what-is-apnacrowdfunding/"
                     }
-                ]
+                ],
+                "debug_info": {
+                    "object_ids_found": [
+                        "128",
+                        "131",
+                        "134",
+                        "137"
+                    ],
+                    "posts_found": 4,
+                    "post_types_found": [
+                        "docs"
+                    ],
+                    "post_details": [
+                        {
+                            "id": 137,
+                            "title": "How to edit your profile",
+                            "type": "docs",
+                            "status": "publish"
+                        },
+                        {
+                            "id": 134,
+                            "title": "How to start a campaign",
+                            "type": "docs",
+                            "status": "publish"
+                        },
+                        {
+                            "id": 131,
+                            "title": "How to sign up",
+                            "type": "docs",
+                            "status": "publish"
+                        },
+                        {
+                            "id": 128,
+                            "title": "What is ApnaCrowdFunding",
+                            "type": "docs",
+                            "status": "publish"
+                        }
+                    ],
+                    "individual_post_checks": [
+                        {
+                            "id": 128,
+                            "title": "What is ApnaCrowdFunding",
+                            "type": "docs",
+                            "status": "publish"
+                        },
+                        {
+                            "id": 131,
+                            "title": "How to sign up",
+                            "type": "docs",
+                            "status": "publish"
+                        },
+                        {
+                            "id": 134,
+                            "title": "How to start a campaign",
+                            "type": "docs",
+                            "status": "publish"
+                        },
+                        {
+                            "id": 137,
+                            "title": "How to edit your profile",
+                            "type": "docs",
+                            "status": "publish"
+                        }
+                    ],
+                    "term_taxonomy_id": 14
+                }
             },
             {
-                "id": 3,
-                "name": "Payments &amp; Billing",
-                "slug": "payments-billing",
+                "id": 15,
+                "name": "Backers Questions",
+                "slug": "backers-questions",
                 "description": "",
                 "count": 3,
                 "posts": [
                     {
-                        "id": 31,
+                        "id": 147,
+                        "title": "Can I change my pledge?",
+                        "slug": "can-i-change-my-pledge",
+                        "excerpt": "Go to Backed Projects in your dashboard. Select the project → Edit Pledge. You can increase, decrease, or cancel your...",
+                        "date": "2025-09-02 09:47:28",
+                        "author": "admin",
+                        "featured_image": false,
+                        "permalink": "https://apnacrowdfunding.com/help-admin/docs/can-i-change-my-pledge/"
+                    },
+                    {
+                        "id": 144,
+                        "title": "How do refunds work?",
+                        "slug": "how-do-refunds-work",
+                        "excerpt": "If a project does not reach its funding goal, all backers are refunded automatically. If a project is canceled before...",
+                        "date": "2025-09-02 09:18:31",
+                        "author": "admin",
+                        "featured_image": false,
+                        "permalink": "https://apnacrowdfunding.com/help-admin/docs/how-do-refunds-work/"
+                    },
+                    {
+                        "id": 140,
+                        "title": "How do I back a project?",
+                        "slug": "how-do-i-back-a-project",
+                        "excerpt": "Find the project you want to support. Click Back This Project. Select a pledge amount or reward tier. Enter payment...",
+                        "date": "2025-09-02 09:10:56",
+                        "author": "admin",
+                        "featured_image": false,
+                        "permalink": "https://apnacrowdfunding.com/help-admin/docs/how-do-i-back-a-project/"
+                    }
+                ],
+                "debug_info": {
+                    "object_ids_found": [
+                        "140",
+                        "144",
+                        "147"
+                    ],
+                    "posts_found": 3,
+                    "post_types_found": [
+                        "docs"
+                    ],
+                    "post_details": [
+                        {
+                            "id": 147,
+                            "title": "Can I change my pledge?",
+                            "type": "docs",
+                            "status": "publish"
+                        },
+                        {
+                            "id": 144,
+                            "title": "How do refunds work?",
+                            "type": "docs",
+                            "status": "publish"
+                        },
+                        {
+                            "id": 140,
+                            "title": "How do I back a project?",
+                            "type": "docs",
+                            "status": "publish"
+                        }
+                    ],
+                    "individual_post_checks": [
+                        {
+                            "id": 140,
+                            "title": "How do I back a project?",
+                            "type": "docs",
+                            "status": "publish"
+                        },
+                        {
+                            "id": 144,
+                            "title": "How do refunds work?",
+                            "type": "docs",
+                            "status": "publish"
+                        },
+                        {
+                            "id": 147,
+                            "title": "Can I change my pledge?",
+                            "type": "docs",
+                            "status": "publish"
+                        }
+                    ],
+                    "term_taxonomy_id": 15
+                }
+            },
+            {
+                "id": 16,
+                "name": "Creater Questions",
+                "slug": "creater-questions",
+                "description": "",
+                "count": 3,
+                "posts": [
+                    {
+                        "id": 159,
+                        "title": "How to communicate with backers?",
+                        "slug": "how-to-communicate-with-backers",
+                        "excerpt": "Use the Updates tab on your campaign page. Reply to backer messages in your dashboard. Send thank-you notes and milestone updates.Tip: Regular communication...",
+                        "date": "2025-09-02 10:01:17",
+                        "author": "admin",
+                        "featured_image": false,
+                        "permalink": "https://apnacrowdfunding.com/help-admin/docs/how-to-communicate-with-backers/"
+                    },
+                    {
+                        "id": 153,
+                        "title": "What are the fees?",
+                        "slug": "what-are-the-fees",
+                        "excerpt": "Platform fee: 5% of total funds raised. Payment processing: 2.9% + $0.30 per transaction. No hidden costs.Example: If you raise...",
+                        "date": "2025-09-02 09:52:56",
+                        "author": "admin",
+                        "featured_image": false,
+                        "permalink": "https://apnacrowdfunding.com/help-admin/docs/what-are-the-fees/"
+                    },
+                    {
+                        "id": 150,
+                        "title": "How do I launch my campaign?",
+                        "slug": "how-do-i-launch-my-campaign",
+                        "excerpt": "Prepare your campaign content (title, story, images, video). Click Launch a Campaign. Submit your project for review. Once approved, click...",
+                        "date": "2025-09-02 09:51:18",
+                        "author": "admin",
+                        "featured_image": false,
+                        "permalink": "https://apnacrowdfunding.com/help-admin/docs/how-do-i-launch-my-campaign/"
+                    }
+                ],
+                "debug_info": {
+                    "object_ids_found": [
+                        "150",
+                        "153",
+                        "159"
+                    ],
+                    "posts_found": 3,
+                    "post_types_found": [
+                        "docs"
+                    ],
+                    "post_details": [
+                        {
+                            "id": 159,
+                            "title": "How to communicate with backers?",
+                            "type": "docs",
+                            "status": "publish"
+                        },
+                        {
+                            "id": 153,
+                            "title": "What are the fees?",
+                            "type": "docs",
+                            "status": "publish"
+                        },
+                        {
+                            "id": 150,
+                            "title": "How do I launch my campaign?",
+                            "type": "docs",
+                            "status": "publish"
+                        }
+                    ],
+                    "individual_post_checks": [
+                        {
+                            "id": 150,
+                            "title": "How do I launch my campaign?",
+                            "type": "docs",
+                            "status": "publish"
+                        },
+                        {
+                            "id": 153,
+                            "title": "What are the fees?",
+                            "type": "docs",
+                            "status": "publish"
+                        },
+                        {
+                            "id": 159,
+                            "title": "How to communicate with backers?",
+                            "type": "docs",
+                            "status": "publish"
+                        }
+                    ],
+                    "term_taxonomy_id": 16
+                }
+            },
+            {
+                "id": 17,
+                "name": "Payment &amp; Billing",
+                "slug": "payment-billing",
+                "description": "",
+                "count": 3,
+                "posts": [
+                    {
+                        "id": 169,
                         "title": "Currencies we support",
                         "slug": "currencies-we-support",
                         "excerpt": "USD (default) EUR, GBP, AUD, CAD (where available)Tip: Backers see campaigns in their local currency automatically (if supported).",
-                        "date": "2025-08-29 11:01:53",
+                        "date": "2025-09-02 10:09:09",
                         "author": "admin",
                         "featured_image": false,
-                        "permalink": "https://apnacrowdfunding.com/help-admin/currencies-we-support/"
+                        "permalink": "https://apnacrowdfunding.com/help-admin/docs/currencies-we-support/"
                     },
                     {
-                        "id": 29,
+                        "id": 165,
                         "title": "Failed payment solutions",
                         "slug": "failed-payment-solutions",
                         "excerpt": "If a payment fails, the backer will get a notification email. They can update payment details within 7 days. If...",
-                        "date": "2025-08-29 11:01:07",
+                        "date": "2025-09-02 10:06:51",
                         "author": "admin",
                         "featured_image": false,
-                        "permalink": "https://apnacrowdfunding.com/help-admin/failed-payment-solutions/"
+                        "permalink": "https://apnacrowdfunding.com/help-admin/docs/failed-payment-solutions/"
                     },
                     {
-                        "id": 27,
+                        "id": 162,
                         "title": "How payments are processed",
                         "slug": "how-payments-are-processed",
                         "excerpt": "All payments are securely handled through Stripe/PayPal. Backers are charged only if the campaign reaches its funding goal. Funds are...",
-                        "date": "2025-08-29 10:59:44",
+                        "date": "2025-09-02 10:03:48",
                         "author": "admin",
                         "featured_image": false,
-                        "permalink": "https://apnacrowdfunding.com/help-admin/how-payments-are-processed/"
+                        "permalink": "https://apnacrowdfunding.com/help-admin/docs/how-payments-are-processed/"
                     }
-                ]
+                ],
+                "debug_info": {
+                    "object_ids_found": [
+                        "162",
+                        "165",
+                        "169"
+                    ],
+                    "posts_found": 3,
+                    "post_types_found": [
+                        "docs"
+                    ],
+                    "post_details": [
+                        {
+                            "id": 169,
+                            "title": "Currencies we support",
+                            "type": "docs",
+                            "status": "publish"
+                        },
+                        {
+                            "id": 165,
+                            "title": "Failed payment solutions",
+                            "type": "docs",
+                            "status": "publish"
+                        },
+                        {
+                            "id": 162,
+                            "title": "How payments are processed",
+                            "type": "docs",
+                            "status": "publish"
+                        }
+                    ],
+                    "individual_post_checks": [
+                        {
+                            "id": 162,
+                            "title": "How payments are processed",
+                            "type": "docs",
+                            "status": "publish"
+                        },
+                        {
+                            "id": 165,
+                            "title": "Failed payment solutions",
+                            "type": "docs",
+                            "status": "publish"
+                        },
+                        {
+                            "id": 169,
+                            "title": "Currencies we support",
+                            "type": "docs",
+                            "status": "publish"
+                        }
+                    ],
+                    "term_taxonomy_id": 17
+                }
             },
             {
-                "id": 6,
+                "id": 18,
                 "name": "Policies",
                 "slug": "policies",
                 "description": "",
                 "count": 3,
                 "posts": [
                     {
-                        "id": 37,
+                        "id": 178,
                         "title": "Community Guidelines",
                         "slug": "community-guidelines",
                         "excerpt": "Be respectful to other members. No spam, hate speech, or prohibited content. Violations may result in suspension.",
-                        "date": "2025-08-29 11:05:49",
+                        "date": "2025-09-02 10:16:25",
                         "author": "admin",
                         "featured_image": false,
-                        "permalink": "https://apnacrowdfunding.com/help-admin/community-guidelines/"
+                        "permalink": "https://apnacrowdfunding.com/help-admin/docs/community-guidelines/"
                     },
                     {
-                        "id": 35,
+                        "id": 175,
                         "title": "Privacy Policy",
                         "slug": "privacy-policy",
                         "excerpt": "We respect your privacy. We collect only necessary data (name, email, payment info). We don’t sell your data to third...",
-                        "date": "2025-08-29 11:05:06",
+                        "date": "2025-09-02 10:13:17",
                         "author": "admin",
                         "featured_image": false,
-                        "permalink": "https://apnacrowdfunding.com/help-admin/privacy-policy/"
+                        "permalink": "https://apnacrowdfunding.com/help-admin/docs/privacy-policy/"
                     },
                     {
-                        "id": 33,
+                        "id": 172,
                         "title": "Terms of Use",
                         "slug": "terms-of-use",
                         "excerpt": "By using our platform, you agree to follow our terms. Key points: honesty in campaigns, respect for community, no illegal...",
-                        "date": "2025-08-29 11:03:54",
+                        "date": "2025-09-02 10:10:51",
                         "author": "admin",
                         "featured_image": false,
-                        "permalink": "https://apnacrowdfunding.com/help-admin/terms-of-use/"
+                        "permalink": "https://apnacrowdfunding.com/help-admin/docs/terms-of-use/"
                     }
-                ]
-            },
-            {
-                "id": 1,
-                "name": "Uncategorized",
-                "slug": "uncategorized",
-                "description": "",
-                "count": 1,
-                "posts": [
-                    {
-                        "id": 23,
-                        "title": "What are the fees?",
-                        "slug": "what-are-the-fees",
-                        "excerpt": "Platform fee: 5% of total funds raised. Payment processing: 2.9% + $0.30 per transaction. No hidden costs.Example: If you raise...",
-                        "date": "2025-08-29 10:57:36",
-                        "author": "admin",
-                        "featured_image": false,
-                        "permalink": "https://apnacrowdfunding.com/help-admin/what-are-the-fees/"
-                    }
-                ]
+                ],
+                "debug_info": {
+                    "object_ids_found": [
+                        "172",
+                        "175",
+                        "178"
+                    ],
+                    "posts_found": 3,
+                    "post_types_found": [
+                        "docs"
+                    ],
+                    "post_details": [
+                        {
+                            "id": 178,
+                            "title": "Community Guidelines",
+                            "type": "docs",
+                            "status": "publish"
+                        },
+                        {
+                            "id": 175,
+                            "title": "Privacy Policy",
+                            "type": "docs",
+                            "status": "publish"
+                        },
+                        {
+                            "id": 172,
+                            "title": "Terms of Use",
+                            "type": "docs",
+                            "status": "publish"
+                        }
+                    ],
+                    "individual_post_checks": [
+                        {
+                            "id": 172,
+                            "title": "Terms of Use",
+                            "type": "docs",
+                            "status": "publish"
+                        },
+                        {
+                            "id": 175,
+                            "title": "Privacy Policy",
+                            "type": "docs",
+                            "status": "publish"
+                        },
+                        {
+                            "id": 178,
+                            "title": "Community Guidelines",
+                            "type": "docs",
+                            "status": "publish"
+                        }
+                    ],
+                    "term_taxonomy_id": 18
+                }
             }
         ],
-        "total_categories": 7,
-        "message": "Categories with posts retrieved successfully"
+        "total_categories": 6,
+        "debug": {
+            "post_type_exists": false,
+            "taxonomy_exists": true
+        },
+        "message": "Doc categories with posts retrieved successfully"
     }
 }

@@ -5,6 +5,11 @@
 @extends($activeTheme . 'layouts.dashboard')
 @section('frontend')
     <!-- Create Gig Tab -->
+    <link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/jodit@latest/es2021/jodit.fat.min.css"
+/>
+
      <style>
         .input-group-text {
     display: flex
@@ -64,7 +69,45 @@
                                         <small class="text-muted">This will be the primary image displayed for your campaign</small>
                                     </div>
 
-
+                                    <!-- Video Upload Options -->
+                                    <div class="form-group mb-4">
+                                        <label class="form-label">Campaign Video</label>
+                                        
+                                        <!-- Video Upload Toggle -->
+                                        <div class="mb-3">
+                                            <div class="btn-group" role="group" aria-label="Video upload options">
+                                                <input type="radio" class="btn-check" name="video_type" id="video_file_new" value="file" autocomplete="off" checked>
+                                                <label class="btn btn-outline-primary" for="video_file_new">Upload Video File</label>
+                                                
+                                                <input type="radio" class="btn-check" name="video_type" id="video_youtube_new" value="youtube" autocomplete="off">
+                                                <label class="btn btn-outline-primary" for="video_youtube_new">YouTube URL</label>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- File Upload Section -->
+                                        <div id="file_upload_section_new">
+                                            <input type="file" class="form-control mb-2" name="video" accept="video/*">
+                                            <small class="text-muted">Upload a video file (MP4, AVI, MOV, etc.) - Optional</small>
+                                            
+                                            <!-- Auto Upload to YouTube Option -->
+                                            <div class="form-check mt-2">
+                                                <input class="form-check-input" type="checkbox" name="auto_upload_youtube" id="auto_upload_youtube_new" value="1">
+                                                <label class="form-check-label" for="auto_upload_youtube_new">
+                                                    <strong>🚀 Auto-upload to YouTube</strong> (Better streaming performance)
+                                                </label>
+                                                <small class="text-muted d-block">Video will be automatically uploaded to YouTube and streamed from there</small>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- YouTube URL Section -->
+                                        <div id="youtube_url_section_new" style="display: none;">
+                                            <input type="url" class="form-control mb-2" name="youtube_url" id="youtube_url_new" placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
+                                            <small class="text-muted">Enter YouTube video URL for better streaming performance - Optional</small>
+                                            <div class="mt-2">
+                                                <div class="youtube-preview-new"></div>
+                                            </div>
+                                        </div>
+                                    </div>
 
                                     <div class="row">
                                         <div class="col-md-12">
@@ -472,638 +515,13 @@
 }
 </style>
 
+
 @section('page-script')
-    <script type="text/javascript">
-        
-        // CKEditor License Configuration
-        if (typeof CKEDITOR !== 'undefined') {
-            // Set license key from environment variable (recommended for production)
-            // Add this to your .env file: CKEDITOR_LICENSE_KEY=your_license_key_here
-            CKEDITOR.licenseKey = '{{ config("app.ckeditor_license_key", "") }}';
-            
-            // If you want to hardcode the license key (not recommended for production):
-            // CKEDITOR.licenseKey = 'YOUR_LICENSE_KEY_HERE';
-        }
-        
-        // Wait for document to be ready
-        $(document).ready(function() {
-            
-            // CKEditor Configuration - Initialize inside document ready
-            function initializeCKEditor() {
-                if (typeof CKEDITOR !== 'undefined') {
-                    try {
-                        // Check if element exists
-                        if ($('#gigDescription').length > 0) {
-                            CKEDITOR.replace('gigDescription', {
-                                height: 300,
-                                toolbar: [
-                                    { name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Strike'] },
-                                    { name: 'paragraph', items: ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'Blockquote', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'] },
-                                    { name: 'links', items: ['Link', 'Unlink'] },
-                                    { name: 'insert', items: ['Image', 'Table', 'HorizontalRule'] },
-                                    { name: 'styles', items: ['Format'] },
-                                    { name: 'tools', items: ['Maximize'] }
-                                ],
-                                removeButtons: '',
-                                removePlugins: 'elementspath,resize',
-                                removeDialogTabs: 'image:advanced;link:advanced',
-                                contentsCss: ['body { font-family: Arial, sans-serif; font-size: 14px; }'],
-                                on: {
-                                    instanceReady: function(evt) {
-                                        setupRealTimeDescriptionPreview();
-                                    }
-                                }
-                            });
-                        } else {
-                            console.error('gigDescription textarea not found!');
-                        }
-                    } catch (error) {
-                        console.error('Error initializing CKEditor:', error);
-                        // Fallback to regular textarea
-                        $('#gigDescription').show();
-                    }
-                } else {
-                    console.error('CKEditor is not loaded! Using fallback textarea');
-                    // Show the original textarea if CKEditor fails
-                    $('#gigDescription').show();
-                }
-            }
-            
-            // Initialize CKEditor
-            initializeCKEditor();
-            
-            // Fallback: If CKEditor doesn't load within 3 seconds, show regular textarea
-            setTimeout(function() {
-                if (typeof CKEDITOR === 'undefined' || !CKEDITOR.instances.gigDescription) {
-                    $('#gigDescription').show().css({
-                        'display': 'block',
-                        'min-height': '300px',
-                        'width': '100%',
-                        'padding': '10px',
-                        'border': '1px solid #ced4da',
-                        'border-radius': '6px',
-                        'font-family': 'Arial, sans-serif',
-                        'font-size': '14px'
-                    });
-                    setupDescriptionPreview(); // Setup preview for regular textarea
-                }
-            }, 3000);
-
-            // Initialize datepicker with error handling
-            if (typeof $.fn.datepicker !== 'undefined') {
-                $('.date-picker').datepicker({
-                    dateFormat: 'dd-mm-yyyy',
-                    minDate: new Date(),
-                });
-
-                $('.date-picker').on('input keyup keydown keypress', function() {
-                    return false;
-                });
-            } else {
-                console.error('Datepicker plugin not loaded!');
-                // Fallback to HTML5 date inputs
-                $('.date-picker').attr('type', 'date');
-            }
-            
-            // Real-time preview updates
-            $('#gigTitle').on('input', function() {
-                $('.preview-title').text($(this).val() || 'Your Gig Title');
-            });
-            
-            // Yeh code targetAmount input field ki value change hone par preview section ko update karta hai.
-            // Jab user targetAmount field mein koi value dalta hai, to yeh function chalta hai:
-            // 1. amount variable mein input ki value store hoti hai (agar khali ho to '0' set hota hai).
-            // 2. currencySymbol variable mein currency ka symbol aata hai (Laravel variable se).
-            // 3. '.preview-amount' element mein updated amount show hota hai (currency ke sath).
-            // 4. progress bar ki width update hoti hai (lekin abhi yahan 0/amount hai, to hamesha 0% hi rahegi).
-            // 5. '.text-muted' element mein goal ka text update hota hai (0% of $amount goal).
-            $('#targetAmount').on('input', function() {
-                var amount = $(this).val() || '0';
-                var currencySymbol = '{{ $setting->cur_sym }}';
-                $('.preview-amount').text(currencySymbol + amount);
-                var progress = amount > 0 ? Math.min((0 / amount) * 100, 100) : 0;
-                $('.progress-bar').css('width', progress + '%');
-                // $('.text-muted').text('0% of ' + currencySymbol + amount + ' goal');
-            });
-            
-            $('#gigCategory').on('change', function() {
-                var categoryText = $(this).find('option:selected').text();
-                $('.preview-category').text(categoryText || 'Category');
-            });
-            
-            // Description preview update (for CKEditor and fallback textarea)
-            function setupDescriptionPreview() {
-                if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances && CKEDITOR.instances.gigDescription) {
-                    const editor = CKEDITOR.instances.gigDescription;
-                    if (editor && typeof editor.on === 'function') {
-                        // CKEditor is available
-                        editor.on('change', function() {
-                            updateDescriptionPreview();
-                        });
-                        
-                        editor.on('keyup', function() {
-                            updateDescriptionPreview();
-                        });
-                        
-                        editor.on('keydown', function() {
-                            updateDescriptionPreview();
-                        });
-                        
-                        editor.on('input', function() {
-                            updateDescriptionPreview();
-                        });
-                        
-                        // Also listen for paste events
-                        editor.on('paste', function() {
-                            setTimeout(function() {
-                                updateDescriptionPreview();
-                            }, 100);
-                        });
-                    }
-                } else {
-                    // Fallback to regular textarea
-                    $('#gigDescription').on('input keyup keydown change paste', function() {
-                        updateDescriptionPreview();
-                    });
-                }
-            }
-            
-            // Setup description preview
-            setupDescriptionPreview();
-            
-            // Description preview update function
-            function updateDescriptionPreview() {
-                let description = '';
-                if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances && CKEDITOR.instances.gigDescription) {
-                    const editor = CKEDITOR.instances.gigDescription;
-                    if (editor && typeof editor.getData === 'function') {
-                        description = editor.getData();
-                    } else {
-                        description = $('#gigDescription').val();
-                    }
-                } else {
-                    description = $('#gigDescription').val();
-                }
-                
-                // Remove HTML tags and get plain text
-                let plainText = description.replace(/<[^>]*>/g, '').trim();
-                
-                // Limit to 150 characters for preview
-                if (plainText.length > 150) {
-                    plainText = plainText.substring(0, 150) + '...';
-                }
-                
-                $('.preview-description').text(plainText || 'Your gig description will appear here...');
-            }
-            
-            // Add real-time typing preview with debouncing
-            let typingTimer;
-            function setupRealTimeDescriptionPreview() {
-                if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances && CKEDITOR.instances.gigDescription) {
-                    const editor = CKEDITOR.instances.gigDescription;
-                    
-                    if (editor && typeof editor.on === 'function') {
-                        // Listen to all possible input events
-                        editor.on('keyup', function() {
-                            clearTimeout(typingTimer);
-                            typingTimer = setTimeout(function() {
-                                updateDescriptionPreview();
-                            }, 50); // Update after 50ms of no typing
-                        });
-                        
-                        editor.on('keydown', function() {
-                            clearTimeout(typingTimer);
-                            updateDescriptionPreview(); // Immediate update on keydown
-                        });
-                        
-                        editor.on('input', function() {
-                            clearTimeout(typingTimer);
-                            typingTimer = setTimeout(function() {
-                                updateDescriptionPreview();
-                            }, 30); // Very fast update
-                        });
-                        
-                        editor.on('paste', function() {
-                            clearTimeout(typingTimer);
-                            typingTimer = setTimeout(function() {
-                                updateDescriptionPreview();
-                            }, 100);
-                        });
-                    }
-                }
-            }
-            
-            // Initialize real-time preview after CKEditor is ready
-            if (typeof CKEDITOR !== 'undefined') {
-                CKEDITOR.on('instanceReady', function(evt) {
-                    if (evt.editor && evt.editor.name === 'gigDescription') {
-                        setupRealTimeDescriptionPreview();
-                    }
-                });
-            }
-            
-            // Main Image Preview Functionality
-            $('#mainImage').on('change', function() {
-                const file = this.files[0];
-                const previewImage = $('#previewImage');
-                const previewImageIcon = $('#previewImageIcon');
-                
-                if (file) {
-                    // Check if file is an image
-                    if (!file.type.startsWith('image/')) {
-                        alert('Please select an image file');
-                        this.value = '';
-                        return;
-                    }
-                    
-                    // Check file size (5MB limit)
-                    if (file.size > 5 * 1024 * 1024) {
-                        alert('Image size must be less than 5MB');
-                        this.value = '';
-                        return;
-                    }
-                    
-                    // Create a FileReader to preview the image
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        previewImage.attr('src', e.target.result);
-                        previewImage.show();
-                        previewImageIcon.hide();
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    // No file selected, show default icon
-                    previewImage.hide();
-                    previewImageIcon.show();
-                    previewImage.attr('src', '');
-                }
-            });
+    <script src="https://cdn.jsdelivr.net/npm/jodit@latest/es2021/jodit.fat.min.js"></script>
+    <script>
+        alert('jodit');
+        const editor = Jodit.make('#gigDescription', {
+            buttons: ['bold', 'italic', 'underline', '|', 'ul', 'ol']
         });
-
-        // Form Validation Function
-        function validateForm() {
-            let isValid = true;
-            let errors = [];
-            
-            // Clear previous validation states
-            $('.form-control').removeClass('is-invalid is-valid');
-            $('.invalid-feedback').remove();
-            
-            // Validate Gig Title
-            const gigTitle = $('#gigTitle').val().trim();
-            if (!gigTitle) {
-                $('#gigTitle').addClass('is-invalid');
-                $('#gigTitle').after('<div class="invalid-feedback">Gig title is required</div>');
-                errors.push('Gig title is required');
-                isValid = false;
-            } else if (gigTitle.length < 10) {
-                $('#gigTitle').addClass('is-invalid');
-                $('#gigTitle').after('<div class="invalid-feedback">Gig title must be at least 10 characters long</div>');
-                errors.push('Gig title must be at least 10 characters long');
-                isValid = false;
-            } else {
-                $('#gigTitle').addClass('is-valid');
-            }
-            
-            // Validate Category
-            const category = $('#gigCategory').val();
-            if (!category) {
-                $('#gigCategory').addClass('is-invalid');
-                $('#gigCategory').after('<div class="invalid-feedback">Please select a category</div>');
-                errors.push('Please select a category');
-                isValid = false;
-            } else {
-                $('#gigCategory').addClass('is-valid');
-            }
-            
-            // Validate Description
-            let description = '';
-            if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances && CKEDITOR.instances.gigDescription) {
-                const editor = CKEDITOR.instances.gigDescription;
-                if (editor && typeof editor.getData === 'function') {
-                    description = editor.getData().replace(/<[^>]*>/g, '').trim();
-                } else {
-                    description = $('#gigDescription').val().trim();
-                }
-            } else {
-                description = $('#gigDescription').val().trim();
-            }
-            
-            if (!description) {
-                $('#gigDescription').addClass('is-invalid');
-                $('#gigDescription').after('<div class="invalid-feedback">Description is required</div>');
-                errors.push('Description is required');
-                isValid = false;
-            } else if (description.length < 50) {
-                $('#gigDescription').addClass('is-invalid');
-                $('#gigDescription').after('<div class="invalid-feedback">Description must be at least 50 characters long</div>');
-                errors.push('Description must be at least 50 characters long');
-                isValid = false;
-            } else {
-                $('#gigDescription').addClass('is-valid');
-            }
-            
-            // Validate Main Image
-            const mainImage = $('#mainImage')[0].files[0];
-            if (!mainImage) {
-                $('#mainImage').addClass('is-invalid');
-                $('#mainImage').after('<div class="invalid-feedback">Main campaign image is required</div>');
-                errors.push('Main campaign image is required');
-                isValid = false;
-            } else {
-                // Check file size (5MB limit)
-                if (mainImage.size > 5 * 1024 * 1024) {
-                    $('#mainImage').addClass('is-invalid');
-                    $('#mainImage').after('<div class="invalid-feedback">Main image size must be less than 5MB</div>');
-                    errors.push('Main image size must be less than 5MB');
-                    isValid = false;
-                } else {
-                    $('#mainImage').addClass('is-valid');
-                }
-            }
-            
-            // Validate Target Amount
-            const targetAmount = $('#targetAmount').val();
-            if (!targetAmount) {
-                $('#targetAmount').addClass('is-invalid');
-                $('#targetAmount').after('<div class="invalid-feedback">Target amount is required</div>');
-                errors.push('Target amount is required');
-                isValid = false;
-            } else if (targetAmount < 1) {
-                $('#targetAmount').addClass('is-invalid');
-                $('#targetAmount').after('<div class="invalid-feedback">Target amount must be at least $1</div>');
-                errors.push('Target amount must be at least $1');
-                isValid = false;
-            } else {
-                $('#targetAmount').addClass('is-valid');
-            }
-            
-            // Validate Start Date
-            const startDate = $('#startDate').val();
-            if (!startDate) {
-                $('#startDate').addClass('is-invalid');
-                $('#startDate').after('<div class="invalid-feedback">Start date is required</div>');
-                errors.push('Start date is required');
-                isValid = false;
-            } else {
-                const today = new Date();
-                const selectedDate = new Date(startDate);
-                if (selectedDate < today) {
-                    $('#startDate').addClass('is-invalid');
-                    $('#startDate').after('<div class="invalid-feedback">Start date cannot be in the past</div>');
-                    errors.push('Start date cannot be in the past');
-                    isValid = false;
-                } else {
-                    $('#startDate').addClass('is-valid');
-                }
-            }
-            
-            // Validate End Date
-            const endDate = $('#endDate').val();
-            if (!endDate) {
-                $('#endDate').addClass('is-invalid');
-                $('#endDate').after('<div class="invalid-feedback">End date is required</div>');
-                errors.push('End date is required');
-                isValid = false;
-            } else {
-                const startDateObj = new Date(startDate);
-                const endDateObj = new Date(endDate);
-                if (endDateObj <= startDateObj) {
-                    $('#endDate').addClass('is-invalid');
-                    $('#endDate').after('<div class="invalid-feedback">End date must be after start date</div>');
-                    errors.push('End date must be after start date');
-                    isValid = false;
-                } else {
-                    $('#endDate').addClass('is-valid');
-                }
-            }
-            
-            // Validate Gallery Images - COMMENTED OUT
-            /*
-            const galleryImages = $('#galleryImages')[0].files;
-            if (!galleryImages || galleryImages.length === 0) {
-                $('#galleryImages').addClass('is-invalid');
-                $('#galleryImages').after('<div class="invalid-feedback">At least one gallery image is required</div>');
-                errors.push('At least one gallery image is required');
-                isValid = false;
-            } else {
-                // Check each gallery image
-                for (let i = 0; i < galleryImages.length; i++) {
-                    if (galleryImages[i].size > 5 * 1024 * 1024) {
-                        $('#galleryImages').addClass('is-invalid');
-                        $('#galleryImages').after('<div class="invalid-feedback">Gallery image size must be less than 5MB each</div>');
-                        errors.push('Gallery image size must be less than 5MB each');
-                        isValid = false;
-                        break;
-                    }
-                }
-                if (isValid) {
-                    $('#galleryImages').addClass('is-valid');
-                }
-            }
-            */
-            
-            return { isValid, errors };
-        }
-
-        // Show Toast Function
-        function showToast(type, message) {
-            if (typeof iziToast !== 'undefined') {
-                iziToast[type]({
-                    message: message,
-                    position: "topRight",
-                    timeout: 5000
-                });
-            } else {
-                // Fallback to alert if iziToast is not available
-                alert(message);
-            }
-        }
-
-        // Form Submission with Validation
-        $(document).on('submit', '#createGigForm', function(e) {
-            e.preventDefault();
-            
-            // Disable HTML5 validation
-            this.setAttribute('novalidate', true);
-            
-            // Validate form
-            const validation = validateForm();
-            
-            if (!validation.isValid) {
-                // Show first error in toast
-                if (validation.errors.length > 0) {
-                    showToast('error', validation.errors[0]);
-                }
-                return false;
-            }
-            
-            // Show loading state
-            $('#submitBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Submitting...');
-            
-            // Get form data
-            var formData = new FormData(this);
-            
-            // Add CKEditor content to form data
-            if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances && CKEDITOR.instances.gigDescription) {
-                const editor = CKEDITOR.instances.gigDescription;
-                if (editor && typeof editor.getData === 'function') {
-                    formData.set('description', editor.getData());
-                }
-            }
-            
-            // Submit form via AJAX
-            $.ajax({
-                url: $(this).attr('action'),
-                type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                },
-                success: function(response) {
-                    // Success toast
-                    showToast('success', '✅ Campaign created successfully!');
-                    
-                    // Redirect to campaigns list or show success message
-                    if (response.redirect) {
-                        window.location.href = response.redirect;
-                    } else {
-                        window.location.href = '{{ route("user.campaign.index") }}';
-                    }
-                },
-                error: function(xhr, status, error) {
-                    // Error toast
-                    var errorMessage = '❌ Error occurred while creating campaign!';
-                    
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        errorMessage = '❌ ' + xhr.responseJSON.message;
-                    } else if (xhr.responseJSON && xhr.responseJSON.errors) {
-                        // Handle validation errors from server
-                        const errors = xhr.responseJSON.errors;
-                        const firstError = Object.values(errors)[0];
-                        if (Array.isArray(firstError)) {
-                            errorMessage = '❌ ' + firstError[0];
-                        } else {
-                            errorMessage = '❌ ' + firstError;
-                        }
-                    } else if (xhr.responseText) {
-                        errorMessage = '❌ ' + xhr.responseText;
-                    }
-                    
-                    showToast('error', errorMessage);
-                    
-                    // Reset button state
-                    $('#submitBtn').prop('disabled', false).html('<i class="fas fa-save me-2"></i>Submit');
-                }
-            });
-        });
-
-        // Preview function
-        window.previewGig = function() {
-            var title = $('#gigTitle').val() || 'Your Gig Title';
-            var category = $('#gigCategory option:selected').text() || 'Category';
-            var amount = $('#targetAmount').val() || '0';
-            var currencySymbol = '{{ $setting->cur_sym }}';
-            
-            $('.preview-title').text(title);
-            $('.preview-category').text(category);
-            $('.preview-amount').text(currencySymbol + amount);
-            
-            // Update description preview
-            updateDescriptionPreview();
-            
-            // Update progress bar
-            var progress = amount > 0 ? Math.min((0 / amount) * 100, 100) : 0;
-            $('.progress-bar').css('width', progress + '%');
-            $('.text-muted').text('0% of ' + currencySymbol + amount + ' goal');
-            
-            // Check if main image is selected and show preview
-            const mainImageFile = $('#mainImage')[0].files[0];
-            if (mainImageFile) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    $('#previewImage').attr('src', e.target.result).show();
-                    $('#previewImageIcon').hide();
-                };
-                reader.readAsDataURL(mainImageFile);
-            }
-        };
-        
-        // Dropzone Configuration - COMMENTED OUT
-        /*
-        console.log('Checking Dropzone availability...');
-        console.log('Dropzone type:', typeof Dropzone);
-        
-        // Use simple file input by default to avoid Dropzone issues
-        $('#simpleFileInput').show();
-        $('#gigImagesDropzone').hide();
-        
-        // Optional: Try to initialize Dropzone if needed (commented out to avoid errors)
-        if (typeof Dropzone === 'undefined') {
-            console.error('Dropzone is not loaded! Using simple file input.');
-        } else {
-            console.log('Dropzone is available, but using simple file input for reliability.');
-            Dropzone.autoDiscover = false;
-
-            // Create a simple Dropzone without URL first
-            try {
-                const gigImagesDropzone = new Dropzone("#gigImagesDropzone", {
-                    url: "{{ url('user/campaign/gallery-upload') }}",
-                    paramName: "file",
-                    maxFilesize: 5, // MB
-                    acceptedFiles: "image/*",
-                    addRemoveLinks: true,
-                    maxFiles: 10, // Maximum 10 images
-                    parallelUploads: 3, // Upload 3 files at once
-                    dictDefaultMessage: "Drop images here or click to upload",
-                    dictRemoveFile: "Remove",
-                    dictCancelUpload: "Cancel",
-                    dictFileTooBig: "File is too big (@{{filesize}}MB). Max filesize: @{{maxFilesize}}MB.",
-                    dictInvalidFileType: "You can't upload files of this type.",
-                    dictMaxFilesExceeded: "You can not upload any more files.",
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    init: function() {
-                        this.on("success", function(file, response) {
-                            file.serverFileName = response.image;
-                            console.log('File uploaded successfully:', response.image);
-                        });
-                        this.on("error", function(file, errorMessage) {
-                            console.error('Upload error:', errorMessage);
-                            alert('❌ Error uploading file: ' + errorMessage);
-                        });
-                        this.on("removedfile", function(file) {
-                            if (file.serverFileName) {
-                                $.ajax({
-                                    url: "{{ url('user/campaign/gallery-remove') }}",
-                                    type: "POST",
-                                    data: {
-                                        file: file.serverFileName,
-                                        _token: $('meta[name="csrf-token"]').attr('content')
-                                    },
-                                    success: function(response) {
-                                        console.log('File removed successfully');
-                                    },
-                                    error: function(xhr, status, error) {
-                                        console.error('Error removing file:', error);
-                                    }
-                                });
-                            }
-                        });
-                        this.on("addedfile", function(file) {
-                            console.log('File added to dropzone:', file.name);
-                        });
-                    }
-                });
-                console.log('Dropzone initialized successfully');
-            } catch (error) {
-                console.error('Error initializing Dropzone:', error);
-                console.log('Using simple file input instead.');
-            }
-        }
-        */
     </script>
 @endsection

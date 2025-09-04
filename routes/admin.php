@@ -266,4 +266,12 @@ Route::controller('CustomCodeController')->prefix('customcode')->name('customcod
     Route::get('/', 'index')->name('index');
     Route::post('update', 'update')->name('update');
 });
+
+// YouTube Integration Management
+Route::controller('YouTubeController')->prefix('youtube')->name('youtube.')->group(function() {
+    Route::get('/', 'index')->name('index');
+    Route::get('/auth', 'auth')->name('auth');
+    Route::get('/callback', 'callback')->name('callback');
+    Route::get('/test', 'testUpload')->name('test');
+});
 });

@@ -28,6 +28,7 @@ class Campaign extends Model
         'description',
         'image',
         'video',
+        'youtube_url',
         'location',
         'gallery',
         'preferred_amounts',

@@ -85,4 +85,20 @@ Route::get('/test-ip-detection', function() {
         ]
     ]);
 });
+
+// YouTube OAuth Callback (Public route)
+Route::get('/youtube/callback', function(\Illuminate\Http\Request $request) {
+    try {
+        $youtubeService = new \App\Services\YouTubeUploadService();
+        $accessToken = $youtubeService->handleCallback($request->get('code'));
+        
+        // You can store tokens in database or session here
+        // For now, we'll redirect to admin with success message
+        
+        return redirect('/admin/youtube')->with('success', 'YouTube authorization successful!');
+        
+    } catch (\Exception $e) {
+        return redirect('/admin/youtube')->with('error', 'YouTube authorization failed: ' . $e->getMessage());
+    }
+})->name('youtube.callback');
 });

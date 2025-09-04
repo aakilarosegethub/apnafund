@@ -11,6 +11,7 @@
     $dashboardNavigation = getDashboardNavigation();
     $notificationTypes = getNotificationTypes();
     $userMenuItems = getUserMenuItems();
+    
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -472,6 +473,7 @@
 
         @stack('page-script-lib')
         @yield('page-script')
+        
 </body>
 
 </html> 
