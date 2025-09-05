@@ -462,11 +462,6 @@
     </script>
     <script src="{{ asset('assets/universal/js/jquery-3.7.1.min.js') }}"></script>
         <script src="{{ asset('assets/universal/js/bootstrap.js') }}"></script>
-        <script src="{{ asset('apnafund/assets/themes/'.bs('active_theme').'/js/slick.min.js') }}"></script>
-        <script src="{{ asset($activeThemeTrue . 'js/viewport.jquery.js') }}"></script>
-        <script src="{{ asset($activeThemeTrue . 'js/lightbox.min.js') }}"></script>
-        <script src="{{ asset($activeThemeTrue . 'js/aos.js') }}"></script>
-        <script src="{{ asset($activeThemeTrue . 'js/main.js') }}"></script>
 
         @include('partials.plugins')
         @include('partials.toasts')

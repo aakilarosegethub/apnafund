@@ -56,6 +56,7 @@ Route::middleware('auth')->name('user.')->namespace('User')->group(function () {
             Route::get('test', function() { return response()->json(['message' => 'Test route working']); })->name('test');
             Route::get('edit/{slug}', 'edit')->name('edit');
             Route::post('image-remove/{id}', 'removeImage')->name('image.remove');
+            Route::post('upload-image', 'uploadImage')->name('upload-image');
             Route::post('update/{id}', 'update')->name('update');
             Route::get('details/{slug}', 'show')->name('show');
             Route::delete('{id}', 'destroy')->name('destroy');

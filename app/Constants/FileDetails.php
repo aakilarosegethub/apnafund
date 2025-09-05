@@ -63,6 +63,12 @@ class FileDetails
             'size' => '1920x1080',
         ];
 
+        $data['success_story'] = [
+            'path' => 'assets/images/site/success_story',
+            'size' => '855x475',
+            'thumb' => '415x230',
+        ];
+
         return $data;
     }
 }

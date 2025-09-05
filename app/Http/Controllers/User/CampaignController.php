@@ -122,7 +122,7 @@ class CampaignController extends Controller
                 'category_id'         => 'required|integer|gt:0',
                 'image'               => ['required', File::types(['png', 'jpg', 'jpeg'])],
                 'video'               => ['nullable', File::types(['mp4', 'avi', 'mov', 'wmv', 'flv', '3gp']), 'max:512000'], // 500MB max
-                'youtube_url'         => 'nullable|url|regex:/^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/',
+                'youtube_url'         => 'nullable|url',
                 'location'            => 'nullable|string|max:255',
                 'name'                => 'required|string|max:190|unique:campaigns,name',
                 'description'         => 'required|min:30',
@@ -136,6 +136,21 @@ class CampaignController extends Controller
                 'youtube_url.url'     => 'YouTube URL must be a valid URL.',
                 'youtube_url.regex'   => 'Please enter a valid YouTube URL.',
             ]);
+            
+            // Custom YouTube URL validation
+            if (request('youtube_url')) {
+                $youtubeUrl = request('youtube_url');
+                if (!preg_match('/^(https?\:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/|v\/)|youtu\.be\/)[\w\-]+/i', $youtubeUrl)) {
+                    $toast[] = ['error', 'Please enter a valid YouTube URL (e.g., https://www.youtube.com/watch?v=VIDEO_ID or https://youtu.be/VIDEO_ID)'];
+                    if (request()->ajax()) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Please enter a valid YouTube URL'
+                        ], 400);
+                    }
+                    return back()->withToasts($toast);
+                }
+            }
             
             $category = Category::where('id', request('category_id'))->active()->first();
 
@@ -433,7 +448,7 @@ class CampaignController extends Controller
                 'category_id'         => 'required|integer|gt:0',
                 'image'               => ['nullable', File::types(['png', 'jpg', 'jpeg'])],
                 'video'               => ['nullable', File::types(['mp4', 'avi', 'mov', 'wmv', 'flv', '3gp']), 'max:512000'], // 500MB max
-                'youtube_url'         => 'nullable|url|regex:/^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/',
+                'youtube_url'         => 'nullable|url',
                 'location'            => 'nullable|string|max:255',
                 'name'                => 'required|string|max:190|unique:campaigns,name,' . $id,
                 'description'         => 'required|min:30',
@@ -448,6 +463,21 @@ class CampaignController extends Controller
                 'youtube_url.url'     => 'YouTube URL must be a valid URL.',
                 'youtube_url.regex'   => 'Please enter a valid YouTube URL.',
             ]);
+
+            // Custom YouTube URL validation
+            if (request('youtube_url')) {
+                $youtubeUrl = request('youtube_url');
+                if (!preg_match('/^(https?\:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/|v\/)|youtu\.be\/)[\w\-]+/i', $youtubeUrl)) {
+                    $toast[] = ['error', 'Please enter a valid YouTube URL (e.g., https://www.youtube.com/watch?v=VIDEO_ID or https://youtu.be/VIDEO_ID)'];
+                    if (request()->ajax()) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Please enter a valid YouTube URL'
+                        ], 400);
+                    }
+                    return back()->withToasts($toast);
+                }
+            }
 
             $campaign = Campaign::where('id', $id)->where('user_id', auth()->id())->first();
 
@@ -529,8 +559,13 @@ class CampaignController extends Controller
                     return back()->withToasts($toast);
                 }
             } elseif (request('youtube_url')) {
-                $campaign->youtube_url = request('youtube_url');
-                // Don't clear video file automatically - let user choose
+                try {
+                    $campaign->youtube_url = request('youtube_url');
+                    $campaign->video = null; // Clear video file when YouTube URL is provided
+                } catch (Exception $e) {
+                    \Log::error('Error setting YouTube URL', ['error' => $e->getMessage()]);
+                    $toast[] = ['error', 'Error setting YouTube URL: ' . $e->getMessage()];
+                }
             } elseif (request('video_type') === 'youtube' && !request('youtube_url')) {
                 // If YouTube option is selected but no URL provided, clear YouTube URL
                 $campaign->youtube_url = null;
@@ -677,5 +712,63 @@ class CampaignController extends Controller
         }
 
         return;
+    }
+
+    // Handle image uploads from editor
+    public function uploadImage() {
+        try {
+            $request = request();
+            
+            if (!$request->hasFile('files')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No image file provided'
+                ], 400);
+            }
+
+            $file = $request->file('files');
+            
+            // Validate file
+            $validator = Validator::make(['file' => $file], [
+                'file' => ['required', 'image', 'mimes:jpeg,png,jpg,gif', 'max:5120'] // 5MB max
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $validator->errors()->first('file')
+                ], 400);
+            }
+
+            // Generate unique filename
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            
+            // Upload file
+            $path = fileManager()->uploadFile($file, getFilePath('campaign'), null, $filename);
+            
+            if (!$path) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to upload image'
+                ], 500);
+            }
+
+            // Return success response with image URL
+            $imageUrl = asset(getFilePath('campaign') . '/' . $filename);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Image uploaded successfully',
+                'files' => [$imageUrl],
+                'baseurl' => asset(getFilePath('campaign') . '/'),
+                'path' => $filename
+            ]);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while uploading the image: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

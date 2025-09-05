@@ -18,7 +18,7 @@
 
 <div class="project-card {{ isset($featured) && $featured ? 'featured-project' : '' }}">
     <div class="project-image">
-        <img src="{{ getImage(getFilePath('campaign') . '/' . $campaign->image) }}" alt="{{ $campaign->name }}" class="img-fluid">
+        <img src="{{ getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')) }}" alt="{{ $campaign->name }}" class="img-fluid">
         <div class="project-overlay">
             <div class="project-category">{{ $campaign->category->name ?? 'General' }}</div>
             <div class="project-progress">

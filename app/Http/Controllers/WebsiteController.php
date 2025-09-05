@@ -458,11 +458,29 @@ class WebsiteController extends Controller
 
     function businessResources() {
         $pageTitle = 'Business Resources';
+        
+        // Get dynamic content from database
+        $businessContent = getSiteData('business_resources.content', true);
         $successContent = getSiteData('success_story.content', true);
         $successElements = getSiteData('success_story.element', false, 4, true);
+        
+        // Get featured campaigns for inspiration
+        $featuredCampaigns = Campaign::commonQuery()->approve()->featured()->latest()->limit(2)->get();
+        
+        // Get categories for tips
+        $categories = Category::active()->get();
+        
         $pageSEO = getPageSEO('business_resources');
         
-        return view($this->activeTheme . 'page.businessResources', compact('pageTitle', 'successContent', 'successElements', 'pageSEO'));
+        return view($this->activeTheme . 'page.businessResources', compact(
+            'pageTitle', 
+            'businessContent', 
+            'successContent', 
+            'successElements', 
+            'featuredCampaigns',
+            'categories',
+            'pageSEO'
+        ));
     }
 
     function contact() {

@@ -9,8 +9,8 @@
     <div class="resource-hub-container">
         <div class="resource-hub-sections">
             <div class="resource-hub-header">
-                <h1 class="resource-hub-title">@lang('Learn Crowd Funding')</h1>
-                <p class="resource-hub-subtitle">@lang('This is a comprehensive guidelines for your crowdfunding campaign success')</p>
+                <h1 class="resource-hub-title">{{ $businessContent->data_info->title ?? 'Learn Crowd Funding' }}</h1>
+                <p class="resource-hub-subtitle">{{ $businessContent->data_info->subtitle ?? 'This is a comprehensive guidelines for your crowdfunding campaign success' }}</p>
             </div>
         </div>
 
@@ -43,7 +43,9 @@
                  <a href="{{ route('user.register.business') }}" class="btn-theme">@lang('Start a project')</a> 
             </div>
             <div class="col-md-4 text-center">
-                <img src="{{ asset('assets/images/light.avif') }}" alt="Light bulb illustration" style="max-width: 25%;">
+                <img src="{{ getImage(getFilePath('logoFavicon') . '/lightbulb.png', getFileSize('logoFavicon')) }}" 
+                     alt="Light bulb illustration" 
+                     style="max-width: 25%;">
             </div>
         </div>
 
@@ -51,7 +53,18 @@
         <div class="category-section">
             <h2 class="category-title">@lang('Creator tips by category')</h2>
             <div class="row">
-                <!-- Category 1 -->
+                @forelse($categories as $category)
+                    <div class="col-md-3 mb-4">
+                        <div class="category-card">
+                            <div class="category-icon" style="background-color: {{ $category->color ?? '#05ce78' }}20; color: {{ $category->color ?? '#05ce78' }};">
+                                <i class="{{ $category->icon ?? 'fas fa-folder' }}"></i>
+                            </div>
+                            <h3 class="category-name">{{ $category->name }}</h3>
+                            <p class="category-description">{{ $category->description ?? 'Explore campaigns in this category' }}</p>
+                        </div>
+                    </div>
+                @empty
+                    <!-- Fallback categories if none exist -->
                 <div class="col-md-3 mb-4">
                     <div class="category-card">
                         <div class="category-icon category-icon-basics">
@@ -61,8 +74,6 @@
                         <p class="category-description">@lang('Essential knowledge for all creators')</p>
                     </div>
                 </div>
-
-                <!-- Category 2 -->
                 <div class="col-md-3 mb-4">
                     <div class="category-card">
                         <div class="category-icon category-icon-guide">
@@ -72,8 +83,6 @@
                         <p class="category-description">@lang('Detailed instructions and helpful tools')</p>
                     </div>
                 </div>
-
-                <!-- Category 3 -->
                 <div class="col-md-3 mb-4">
                     <div class="category-card">
                         <div class="category-icon category-icon-education">
@@ -83,8 +92,6 @@
                         <p class="category-description">@lang('Learn through examples and tutorials')</p>
                     </div>
                 </div>
-
-                <!-- Category 4 -->
                 <div class="col-md-3 mb-4">
                     <div class="category-card">
                         <div class="category-icon category-icon-faq">
@@ -94,6 +101,7 @@
                         <p class="category-description">@lang('Answers to common questions')</p>
                     </div>
                 </div>
+                @endforelse
             </div>
         </div>
 
@@ -110,27 +118,39 @@
         <div class="featured-section">
             <h2 class="featured-title">@lang('Get inspired')</h2>
             <div class="row">
-                <!-- Featured Item 1 -->
+                @forelse($featuredCampaigns as $campaign)
+                    <div class="col-md-6 mb-4">
+                        <div class="featured-card">
+                            <img src="{{ getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')) }}" 
+                                 alt="{{ $campaign->name }}">
+                            <div class="featured-card-overlay">
+                                <h3 class="featured-card-title">{{ $campaign->name }}</h3>
+                                <p class="featured-card-text text-white">{{ strLimit($campaign->short_description, 80) }}</p>
+                                <a href="{{ route('campaign.show', $campaign->slug) }}" class="btn btn-sm btn-light mt-2">@lang('View Campaign')</a>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <!-- Fallback featured content -->
                 <div class="col-md-6 mb-4">
                     <div class="featured-card">
-                        <img src="{{ asset('assets/images/banner-1.jpg') }}" alt="Success Story">
+                            <img src="{{ getImage(getFilePath('logoFavicon') . '/banner-1.jpg', getFileSize('logoFavicon')) }}" alt="Success Story">
                         <div class="featured-card-overlay">
                             <h3 class="featured-card-title">@lang('Success Stories')</h3>
                             <p class="featured-card-text text-white">@lang('Learn from campaigns that exceeded their goals')</p>
                         </div>
                     </div>
                 </div>
-
-                <!-- Featured Item 2 -->
                 <div class="col-md-6 mb-4">
                     <div class="featured-card">
-                        <img src="{{ asset('assets/images/banner-2.jpg') }}" alt="Creative Independence">
+                            <img src="{{ getImage(getFilePath('logoFavicon') . '/banner-2.jpg', getFileSize('logoFavicon')) }}" alt="Creative Independence">
                         <div class="featured-card-overlay">
                             <h3 class="featured-card-title">@lang('The Creative Independence')</h3>
                             <p class="featured-card-text text-white">@lang('Insights on building sustainable creative businesses')</p>
                         </div>
                     </div>
                 </div>
+                @endforelse
             </div>
         </div>
 
@@ -147,41 +167,52 @@
         <div class="featured-section">
             <h2 class="featured-title">@lang('What\'s happening around Apnafund')</h2>
             <div class="row">
-                <!-- News Item 1 -->
+                @forelse($successElements->take(3) as $index => $story)
+                    <div class="col-md-4 mb-4">
+                        <div class="campaign-card">
+                            <img src="{{ getImage('assets/images/site/success_story/thumb_' . $story->data_info->image, '415x230') }}" 
+                                 alt="{{ $story->data_info->title }}" 
+                                 class="campaign-card-img">
+                            <div class="campaign-card-body">
+                                <h3 class="campaign-card-title">{{ $story->data_info->title }}</h3>
+                                <p class="campaign-card-text">{{ strLimit($story->data_info->details, 80) }}</p>
+                                <a href="{{ route('stories.show', $story->id) }}" class="campaign-card-link">@lang('Read more') <i class="fas fa-arrow-right"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <!-- Fallback news items -->
                 <div class="col-md-4 mb-4">
                     <div class="campaign-card">
-                        <img src="{{ asset('assets/images/banner-3.jpeg') }}" alt="Creator Interview" class="campaign-card-img">
+                        <img src="{{ getImage('assets/images/site/success_story/thumb_success-story-1.jpg', '415x230') }}" alt="Creator Interview" class="campaign-card-img">
                         <div class="campaign-card-body">
                             <h3 class="campaign-card-title">@lang('Creator Interviews')</h3>
                             <p class="campaign-card-text">@lang('Insights from successful entrepreneurs')</p>
-                            <a href="{{ route('stories.show', 5) }}" class="campaign-card-link">@lang('Read more') <i class="fas fa-arrow-right"></i></a>
+                            <a href="{{ route('stories') }}" class="campaign-card-link">@lang('Read more') <i class="fas fa-arrow-right"></i></a>
                         </div>
                     </div>
                 </div>
-
-                <!-- News Item 2 -->
                 <div class="col-md-4 mb-4">
                     <div class="campaign-card">
-                        <img src="{{ asset('assets/images/banner-4.jpg') }}" alt="Funding News" class="campaign-card-img">
+                        <img src="{{ getImage('assets/images/site/success_story/thumb_success-story-2.jpg', '415x230') }}" alt="Funding News" class="campaign-card-img">
                         <div class="campaign-card-body">
                             <h3 class="campaign-card-title">@lang('Funding News')</h3>
                             <p class="campaign-card-text">@lang('Latest updates on campaign successes')</p>
-                            <a href="{{ route('stories.show', 6) }}" class="campaign-card-link">@lang('Read more') <i class="fas fa-arrow-right"></i></a>
+                            <a href="{{ route('campaign') }}" class="campaign-card-link">@lang('Read more') <i class="fas fa-arrow-right"></i></a>
                         </div>
                     </div>
                 </div>
-
-                <!-- News Item 3 -->
                 <div class="col-md-4 mb-4">
                     <div class="campaign-card">
-                        <img src="{{ asset('assets/images/banner-5.jpg') }}" alt="Campaign of the Month" class="campaign-card-img">
+                        <img src="{{ getImage('assets/images/site/success_story/thumb_success-story-3.jpg', '415x230') }}" alt="Campaign of the Month" class="campaign-card-img">
                         <div class="campaign-card-body">
                             <h3 class="campaign-card-title">@lang('Campaign of the Month')</h3>
                             <p class="campaign-card-text">@lang('Highlighting exceptional projects')</p>
-                            <a href="{{ route('stories.show', 7) }}" class="campaign-card-link">@lang('Read more') <i class="fas fa-arrow-right"></i></a>
+                            <a href="{{ route('campaign') }}" class="campaign-card-link">@lang('Read more') <i class="fas fa-arrow-right"></i></a>
                         </div>
                     </div>
                 </div>
+                @endforelse
             </div>
         </div>
 
@@ -190,7 +221,7 @@
             <div class="container">
                 <h2 class="community-title">@lang('Got questions?')</h2>
                 <p class="community-description">@lang('Our team is here to help you navigate every step of your crowdfunding journey')</p>
-                <a href="{{ route('contact') }}" class="btn-theme">@lang('Contact Support')</a>
+                <a href="{{ route('help') }}" class="btn-theme">@lang('Contact Support')</a>
             </div>
         </div>
     </div>
@@ -544,124 +575,63 @@
             `;
         }
 
-        // Function to fetch fallback data from API
-        async function fetchFallbackData() {
-            try {
-                // Try multiple API endpoints for fallback data
-                const apiEndpoints = [
-                    
-                    'https://apnafund.com/blog/wp-json/custom/posts?count=4'
-                ];
-
-                for (const endpoint of apiEndpoints) {
-                    try {
-                        const response = await fetch(endpoint);
-                        
-                        if (response.ok) {
-                            const data = await response.json();
-                            if (data && data.length > 0) {
-                                return data;
-                            }
-                        }
-                    } catch (error) {
-                        console.warn(`Failed to fetch from ${endpoint}:`, error);
-                        continue;
-                    }
-                }
-                
-                return null;
-            } catch (error) {
-                console.error('Error fetching fallback data:', error);
-                return null;
-            }
-        }
-
-        // Function to fetch alternative data from different sources
-        async function fetchAlternativeData() {
-            try {
-                // Try alternative data sources
-                const alternativeEndpoints = [
-                    'https://apnafund.com/blog/wp-json/custom/posts?count=4',
-                ];
-
-                for (const endpoint of alternativeEndpoints) {
-                    try {
-                        const response = await fetch(endpoint);
-                        
-                        if (response.ok) {
-                            const data = await response.json();
-                            if (data && data.length > 0) {
-                                return data;
-                            }
-                        }
-                    } catch (error) {
-                        console.warn(`Failed to fetch from alternative endpoint ${endpoint}:`, error);
-                        continue;
-                    }
-                }
-                
-                return null;
-            } catch (error) {
-                console.error('Error fetching alternative data:', error);
-                return null;
-            }
-        }
-
         // Function to render fallback cards if main API fails
         async function renderFallbackCards() {
-            // yhn ajax ka code likho
-            // Example AJAX call using jQuery to fetch fallback data (if jQuery is available)
-            
-            $.ajax({
-                url: 'https://apnafund.com/blog/wp-json/custom/posts?count=4',
-                method: 'GET',
-                dataType: 'json',
-                success: function(data) {
-                    fallbackData = data.data;
-                    // Generate HTML for each fallback post and append to #success-stories-container
-                    var html = '';
-                    if (Array.isArray(fallbackData) && fallbackData.length > 0) {
-                        fallbackData.forEach(function(post) {
-                            // Fallback for missing fields
-                            var title = post.title && post.title.rendered ? post.title.rendered : (post.title || 'Success Story');
-                            var excerpt = post.excerpt && post.excerpt.rendered ? post.excerpt.rendered : (post.excerpt || 'Learn from successful campaigns and their strategies');
-                            var link = post.url || (post.link || '#');
-                            var imageUrl = post.image_url || (post.image_url || '{{ asset("apnafund/assets/images/banner-1.jpg") }}');
-                            // Clean excerpt from HTML tags and limit length
-                            var cleanExcerpt = $('<div>').html(excerpt).text().substring(0, 100) + '...';
+            return new Promise((resolve) => {
+                // yhn ajax ka code likho
+                // Example AJAX call using jQuery to fetch fallback data (if jQuery is available)
+                
+                $.ajax({
+                    url: 'https://apnafund.com/blog/wp-json/custom/posts?count=4',
+                    method: 'GET',
+                    dataType: 'json',
+                    success: function(data) {
+                        fallbackData = data.data;
+                        // Generate HTML for each fallback post and append to #success-stories-container
+                        var html = '';
+                        if (Array.isArray(fallbackData) && fallbackData.length > 0) {
+                            fallbackData.forEach(function(post) {
+                                // Fallback for missing fields
+                                var title = post.title && post.title.rendered ? post.title.rendered : (post.title || 'Success Story');
+                                var excerpt = post.excerpt && post.excerpt.rendered ? post.excerpt.rendered : (post.excerpt || 'Learn from successful campaigns and their strategies');
+                                var link = post.url || (post.link || '#');
+                                var imageUrl = post.image_url || (post.image_url || '{{ asset("apnafund/assets/images/banner-1.jpg") }}');
+                                // Clean excerpt from HTML tags and limit length
+                                var cleanExcerpt = $('<div>').html(excerpt).text().substring(0, 100) + '...';
 
-                            html += `
-                                <div class="col-md-3 mb-4">
-                                    <div class="campaign-card">
-                                        <div class="campaign-card-img" 
-                                             style="background-image: url('${imageUrl}'); background-size: cover; background-position: center;">
-                                        </div>
-                                        <div class="campaign-card-body">
-                                            <h3 class="campaign-card-title">${title}</h3>
-                                            <p class="campaign-card-text">${cleanExcerpt}</p>
-                                            <a href="${link}" class="campaign-card-link" target="_blank">Learn more <i class="fas fa-arrow-right"></i></a>
+                                html += `
+                                    <div class="col-md-3 mb-4">
+                                        <div class="campaign-card">
+                                            <div class="campaign-card-img" 
+                                                 style="background-image: url('${imageUrl}'); background-size: cover; background-position: center;">
+                                            </div>
+                                            <div class="campaign-card-body">
+                                                <h3 class="campaign-card-title">${title}</h3>
+                                                <p class="campaign-card-text">${cleanExcerpt}</p>
+                                                <a href="${link}" class="campaign-card-link" target="_blank">Learn more <i class="fas fa-arrow-right"></i></a>
+                                            </div>
                                         </div>
                                     </div>
+                                `;
+                            });
+                            // Add "View All" button below the posts
+                            html += `
+                                <div class="col-12 text-center mt-3">
+                                    <a href="https://apnafund.com/blog/" class="btn btn-theme">
+                                        View All
+                                    </a>
                                 </div>
                             `;
-                        });
-                        // Add "View All" button below the posts
-                        html += `
-                            <div class="col-12 text-center mt-3">
-                                <a href="https://apnafund.com/blog/" class="btn btn-theme">
-                                    View All
-                                </a>
-                            </div>
-                        `;
-                    } else {
-                        html = '<div class="col-12 text-center"><p>No success stories found.</p></div>';
+                        } else {
+                            html = '<div class="col-12 text-center"><p>No success stories found.</p></div>';
+                        }
+                        resolve(html);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', status, error);
+                        resolve('<div class="col-12 text-center"><p>Error loading content. Please try again later.</p></div>');
                     }
-                    $('#success-stories-container').html(html);
-                    // You can process and render the data here if needed
-                },
-                error: function(xhr, status, error) {
-                    console.error('AJAX Error:', status, error);
-                }
+                });
             });
         }
 

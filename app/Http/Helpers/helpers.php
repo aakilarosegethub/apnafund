@@ -267,7 +267,25 @@ function getThumbSize($key) {
 function getImage($image, $size = null, $avatar = false): string {
     $clean = '';
 
-    if (file_exists($image) && is_file($image)) return asset($image) . $clean;
+    // Multiple path checks for better compatibility
+    $paths = [
+        public_path($image),
+        base_path('public/' . $image),
+        base_path($image),
+        $image
+    ];
+
+    foreach ($paths as $path) {
+        if (file_exists($path) && is_file($path)) {
+            return asset($image) . $clean;
+        }
+    }
+
+    // If file not found, try direct asset URL (for live servers)
+    $assetUrl = asset($image);
+    if ($assetUrl && $assetUrl !== asset('assets/universal/images/default.png')) {
+        return $assetUrl . $clean;
+    }
 
     if ($avatar) return asset('assets/universal/images/avatar.png');
 
@@ -540,6 +558,9 @@ function appendQuery($key, $value): string {
 }
 
 function strLimit($title = null, $length = 10): string {
+    if ($title === null) {
+        return '';
+    }
     return Str::limit($title, $length);
 }
 

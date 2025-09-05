@@ -730,7 +730,7 @@
             <!-- Fundraiser Info -->
             <div class="fundraiser-info">
                 <div class="fundraiser-image">
-                <img src="{{ getImage(getFilePath('campaign') . '/' . $campaignData->image) }}" alt="{{ $campaignData->name }}" class="campaign-image mb-3">
+                <img src="{{ getImage(getFilePath('campaign') . '/' . $campaignData->image, getFileSize('campaign')) }}" alt="{{ $campaignData->name }}" class="campaign-image mb-3">
                 </div>
                 <div class="fundraiser-details">
                 <h3>@lang('You\'re supporting') <strong>{{ $campaignData->name }}</strong></h3>

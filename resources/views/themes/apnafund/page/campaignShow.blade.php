@@ -1471,9 +1471,58 @@
                 <h1 class="banner-title">{{ __(@$campaignData->name) }}</h1>
                 <div class="fundraiser-banner">
                     <div class="banner-overlay">
-                        <!-- Banner image content can go here if needed -->
+                        @if(@$campaignData->youtube_url ?? @$campaign->youtube_url)
+                            <!-- YouTube Video - Simple Direct Embed -->
+                            @php
+                                $youtubeUrl = @$campaignData->youtube_url ?? @$campaign->youtube_url;
+                                $videoId = '';
+                                if (strpos($youtubeUrl, 'youtu.be/') !== false) {
+                                    $videoId = explode('youtu.be/', $youtubeUrl)[1];
+                                    $videoId = explode('?', $videoId)[0];
+                                } elseif (strpos($youtubeUrl, 'youtube.com/watch?v=') !== false) {
+                                    $videoId = explode('v=', $youtubeUrl)[1];
+                                    $videoId = explode('&', $videoId)[0];
+                                } elseif (strpos($youtubeUrl, 'youtube.com/embed/') !== false) {
+                                    $videoId = explode('embed/', $youtubeUrl)[1];
+                                    $videoId = explode('?', $videoId)[0];
+                                }
+                            @endphp
+                            
+                            @if($videoId)
+                                <div style="width: 100%; height: 400px; border-radius: 10px; overflow: hidden; position: relative;">
+                                    <!-- Campaign Image with Play Button (Initially Visible) -->
+                                    <div id="campaign-image-{{ $videoId }}" style="width: 100%; height: 100%; position: relative; display: block;">
+                                        <img src="{{ getImage(getFilePath('campaign') . '/' . (@$campaignData->image ?? @$campaign->image), getFileSize('campaign')) }}" 
+                                             alt="{{ @$campaignData->name ?? @$campaign->name }}" 
+                                             style="width: 100%; height: 100%; object-fit: cover;">
+                                        
+                                        <!-- Play Button Overlay -->
+                                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); border-radius: 50%; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; cursor: pointer;"
+                                             onclick="showVideo('{{ $videoId }}')">
+                                            <i class="fas fa-play" style="font-size: 30px; color: #05ce78; margin-left: 5px;"></i>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- YouTube Video (Initially Hidden) -->
+                                    <div id="youtube-video-{{ $videoId }}" style="width: 100%; height: 100%; display: none;">
+                                        <iframe id="video-iframe-{{ $videoId }}" 
+                                                src="" 
+                                                style="width: 100%; height: 100%; border: none;" 
+                                                frameborder="0" 
+                                                allowfullscreen
+                                                allow="autoplay; encrypted-media">
+                                        </iframe>
+                                    </div>
+                                </div>
+                            @else
+                                <!-- Fallback to campaign image if video ID not found -->
+                                <img src="{{ getImage(getFilePath('campaign') . '/' . (@$campaignData->image ?? @$campaign->image), getFileSize('campaign')) }}" alt="{{ @$campaignData->name ?? @$campaign->name }}">
+                            @endif
+                        @else
+                            <!-- Regular Image Display -->
                         <img src="{{ getImage(getFilePath('campaign') . '/' . @$campaignData->image, getFileSize('campaign')) }}"
-                            alt="">
+                                alt="{{ @$campaignData->name }}">
+                        @endif
                     </div>
                 </div>
             </div>
@@ -2439,5 +2488,26 @@
             }
 
         })(jQuery)
+
+        // Simple function to show video
+        function showVideo(videoId) {
+            // Hide campaign image
+            const imageDiv = document.getElementById('campaign-image-' + videoId);
+            if (imageDiv) {
+                imageDiv.style.display = 'none';
+            }
+            
+            // Show YouTube video
+            const videoDiv = document.getElementById('youtube-video-' + videoId);
+            const iframe = document.getElementById('video-iframe-' + videoId);
+            
+            if (videoDiv && iframe) {
+                videoDiv.style.display = 'block';
+                
+                // Set iframe source with autoplay
+                iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&showinfo=0&controls=1&mute=0`;
+            }
+        }
+
     </script>
 @endpush

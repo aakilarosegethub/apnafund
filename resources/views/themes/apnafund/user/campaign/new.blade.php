@@ -4,11 +4,7 @@
 @endphp
 @extends($activeTheme . 'layouts.dashboard')
 @section('frontend')
-    <!-- Create Gig Tab -->
-    <link
-  rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/jodit@latest/es2021/jodit.fat.min.css"
-/>
+<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
 
      <style>
         .input-group-text {
@@ -27,6 +23,22 @@
     border-radius: var(--bs-border-radius);
 }
     </style>
+    <style>
+  /* push IMAGE (and VIDEO) button(s) to the far right */
+  .jodit-toolbar__box .jodit-toolbar-editor-collection {
+    display: flex;
+  }
+  /* image to right */
+  .jodit-toolbar__box .jodit-toolbar-editor-collection
+  .jodit-toolbar-button[data-ref="image"] {
+    margin-left: auto !important;   /* pushes it to the right edge */
+  }
+  /* if you also want video right next to image on the right side */
+  .jodit-toolbar__box .jodit-toolbar-editor-collection
+  .jodit-toolbar-button[data-ref="video"] {
+    order: 999;                      /* keep it at the end */
+  }
+</style>
                 <div class="tab-pane fade active show" id="create" role="tabpanel">
                     <div class="row">
                         <div class="col-lg-8">
@@ -59,7 +71,7 @@
 
                                     <div class="form-group">
                                         <label for="gigDescription" class="form-label">Description *</label>
-                                        <textarea class="form-control ck-editor" id="gigDescription" name="description" rows="10" placeholder="Describe your gig, its purpose, and how donations will be used" required style="display: block; min-height: 300px;">@php echo old('description') @endphp</textarea>
+                                        <textarea class="form-control" id="gigDescription" name="description" rows="10" placeholder="Describe your gig, its purpose, and how donations will be used" required style="display: block; min-height: 300px;">@php echo old('description') @endphp</textarea>
                                     </div>
 
                                     <!-- Main Campaign Image -->
@@ -85,7 +97,7 @@
                                         </div>
                                         
                                         <!-- File Upload Section -->
-                                        <div id="file_upload_section_new">
+                                        <div id="file_upload_section_new" style="display: block;">
                                             <input type="file" class="form-control mb-2" name="video" accept="video/*">
                                             <small class="text-muted">Upload a video file (MP4, AVI, MOV, etc.) - Optional</small>
                                             
@@ -213,18 +225,11 @@
 
 @push('page-style-lib')
     <link rel="stylesheet" href="{{ asset('assets/universal/css/datepicker.css') }}">
-    <!-- Load Dropzone CSS from CDN for reliability -->
-    <link rel="stylesheet" href="https://unpkg.com/dropzone@6.0.0-beta.2/dist/dropzone.css">
 @endpush
 
 @push('page-script-lib')
-<!-- CKEditor 4 CDN - Latest LTS Version -->
-<script src="https://cdn.ckeditor.com/4.25.1-lts/standard/ckeditor.js"></script>
-
 <script src="{{ asset('assets/universal/js/datepicker.js') }}"></script>
 <script src="{{ asset('assets/universal/js/datepicker.en.js') }}"></script>
-    <!-- Load Dropzone from CDN for reliability -->
-    <script src="https://unpkg.com/dropzone@6.0.0-beta.2/dist/dropzone-min.js"></script>
 @endpush
 
 <style>
@@ -465,34 +470,25 @@
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
-/* CKEditor Specific Styling */
-.cke_chrome {
+/* Jodit Editor Specific Styling */
+.jodit-container {
     border: 1px solid #ced4da !important;
     border-radius: 6px !important;
     box-shadow: none !important;
 }
 
-.cke_top {
+.jodit-toolbar {
     background: #f8f9fa !important;
     border-bottom: 1px solid #ced4da !important;
     border-radius: 6px 6px 0 0 !important;
 }
 
-.cke_bottom {
-    background: #f8f9fa !important;
-    border-top: 1px solid #ced4da !important;
+.jodit-workplace {
     border-radius: 0 0 6px 6px !important;
 }
 
-.cke_editor_gigDescription {
-    margin-bottom: 20px !important;
-}
-
-/* Ensure CKEditor is visible */
-.cke {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
+.jodit-wysiwyg {
+    min-height: 250px !important;
 }
 
 /* Validation Error Styling */
@@ -517,11 +513,127 @@
 
 
 @section('page-script')
-    <script src="https://cdn.jsdelivr.net/npm/jodit@latest/es2021/jodit.fat.min.js"></script>
     <script>
-        alert('jodit');
-        const editor = Jodit.make('#gigDescription', {
-            buttons: ['bold', 'italic', 'underline', '|', 'ul', 'ol']
+        // TinyMCE initialization with debugging
+        function initTinyMCE() {
+            console.log('Trying to initialize TinyMCE...');
+            console.log('TinyMCE available:', typeof tinymce !== 'undefined');
+            console.log('Textarea element:', document.getElementById('gigDescription'));
+            
+            if (typeof tinymce !== 'undefined') {
+                try {
+                    tinymce.init({
+                        selector: '#gigDescription',
+                        height: 300,
+                        menubar: false,
+                        plugins: 'lists link image media table',
+                        toolbar: 'undo redo | bold italic underline | bullist numlist | link image | removeformat',
+                        content_style: 'body { font-family: Arial, sans-serif; font-size: 14px; }',
+                        setup: function (editor) {
+                            console.log('TinyMCE editor initialized successfully!');
+                            editor.on('change', function () {
+                                editor.save();
+                            });
+                        }
+                    });
+                } catch (error) {
+                    console.error('TinyMCE initialization error:', error);
+                }
+            } else {
+                console.log('TinyMCE not loaded, retrying in 1 second...');
+                setTimeout(initTinyMCE, 1000);
+            }
+        }
+        
+        // Try to initialize when page loads
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initTinyMCE);
+        } else {
+            initTinyMCE();
+        }
+
+        // Handle video type selection
+        function toggleVideoSections() {
+            console.log('toggleVideoSections called');
+            const fileRadio = document.getElementById('video_file_new');
+            const youtubeRadio = document.getElementById('video_youtube_new');
+            const fileSection = document.getElementById('file_upload_section_new');
+            const youtubeSection = document.getElementById('youtube_url_section_new');
+
+            console.log('Elements found:', {
+                fileRadio: !!fileRadio,
+                youtubeRadio: !!youtubeRadio,
+                fileSection: !!fileSection,
+                youtubeSection: !!youtubeSection
+            });
+
+            if (fileRadio && fileRadio.checked) {
+                console.log('File radio checked');
+                if (fileSection) fileSection.style.display = 'block';
+                if (youtubeSection) youtubeSection.style.display = 'none';
+            } else if (youtubeRadio && youtubeRadio.checked) {
+                console.log('YouTube radio checked');
+                if (fileSection) fileSection.style.display = 'none';
+                if (youtubeSection) youtubeSection.style.display = 'block';
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing video toggle');
+            
+            // Set initial state (file upload is selected by default)
+            toggleVideoSections();
+            
+            // Add event listeners for both radio buttons and labels
+            const fileRadio = document.getElementById('video_file_new');
+            const youtubeRadio = document.getElementById('video_youtube_new');
+            const fileLabel = document.querySelector('label[for="video_file_new"]');
+            const youtubeLabel = document.querySelector('label[for="video_youtube_new"]');
+            
+            // Radio button change events
+            if (fileRadio) {
+                fileRadio.addEventListener('change', function() {
+                    console.log('File radio changed');
+                    toggleVideoSections();
+                });
+            }
+            
+            if (youtubeRadio) {
+                youtubeRadio.addEventListener('change', function() {
+                    console.log('YouTube radio changed');
+                    toggleVideoSections();
+                });
+            }
+            
+            // Label click events (backup)
+            if (fileLabel) {
+                fileLabel.addEventListener('click', function() {
+                    console.log('File label clicked');
+                    setTimeout(toggleVideoSections, 10);
+                });
+            }
+            
+            if (youtubeLabel) {
+                youtubeLabel.addEventListener('click', function() {
+                    console.log('YouTube label clicked');
+                    setTimeout(toggleVideoSections, 10);
+                });
+            }
         });
     </script>
+
+<style>
+  /* Move image button to right corner */
+  .jodit-toolbar__box .jodit-toolbar-editor-collection {
+    display: flex;
+  }
+  .jodit-toolbar__box .jodit-toolbar-editor-collection 
+  .jodit-toolbar-button[data-ref="image"] {
+    margin-left: auto !important;  /* push image to far right */
+  }
+  .jodit-toolbar__box .jodit-tool
+</style>
+
+
 @endsection

@@ -22,7 +22,7 @@
                             <div class="preview-card">
                                 <div class="preview-image">
                                     @if($campaign->image)
-                                        <img src="{{ getImage(getFilePath('campaign') . '/' . $campaign->image) }}" alt="{{ __($campaign->name) }}">
+                                        <img src="{{ getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')) }}" alt="{{ __($campaign->name) }}">
                                     @else
                                         <i class="fas fa-seedling"></i>
                                     @endif
