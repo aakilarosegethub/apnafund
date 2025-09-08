@@ -56,9 +56,9 @@ class FileManager
     /**
      * Current filename, which is uploading
      *
-     * @var string
+     * @var string|null
      */
-    public string $filename;
+    public ?string $filename = null;
 
     /**
      * Set the file and file type to properties if exist
