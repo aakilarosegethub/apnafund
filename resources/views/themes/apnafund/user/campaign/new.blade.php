@@ -4,31 +4,6 @@
 @endphp
 @extends($activeTheme . 'layouts.dashboard')
 @section('frontend')
-<!-- Place the first <script> tag in your HTML's <head> -->
-<script src="https://cdn.tiny.cloud/1/tbbnzs0lggltrfknci0wuhmwxhod5797lrzvw9epadovnya5/tinymce/8/tinymce.min.js" referrerpolicy="origin" crossorigin="anonymous"></script>
-
-<!-- Place the following <script> and <textarea> tags your HTML's <body> -->
-<script>
-  tinymce.init({
-    selector: 'textarea#gigDescription',
-    plugins: [
-      // Core editing features
-      'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'link', 'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount',
-      // Your account includes a free trial of TinyMCE premium features
-      // Try the most popular premium features until Sep 19, 2025:
-      'checklist', 'mediaembed', 'casechange', 'formatpainter', 'pageembed', 'a11ychecker', 'tinymcespellchecker', 'permanentpen', 'powerpaste', 'advtable', 'advcode', 'advtemplate', 'ai', 'uploadcare', 'mentions', 'tinycomments', 'tableofcontents', 'footnotes', 'mergetags', 'autocorrect', 'typography', 'inlinecss', 'markdown','importword', 'exportword', 'exportpdf'
-    ],
-    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography uploadcare | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
-    tinycomments_mode: 'embedded',
-    tinycomments_author: 'Author name',
-    mergetags_list: [
-      { value: 'First.Name', title: 'First Name' },
-      { value: 'Email', title: 'Email' },
-    ],
-    ai_request: (request, respondWith) => respondWith.string(() => Promise.reject('See docs to implement AI Assistant')),
-    uploadcare_public_key: 'c164087b8687b1fe3294',
-  });
-</script>
                 <div class="tab-pane fade active show" id="create" role="tabpanel">
                     <div class="row">
                         <div class="col-lg-8">
@@ -297,6 +272,27 @@
                 });
             }
         });
+
+        // Preview functionality
+        function previewGig() {
+            const title = document.getElementById('gigTitle').value || 'Your Gig Title';
+            
+            // Get description from textarea
+            let description = document.getElementById('gigDescription').value || 'Your gig description will appear here...';
+            
+            const categorySelect = document.getElementById('gigCategory');
+            const category = categorySelect ? categorySelect.options[categorySelect.selectedIndex].text : 'Category';
+            const amount = document.getElementById('targetAmount').value || '0';
+            const currencySymbol = '{{ $setting->cur_sym }}';
+            
+            const previewCard = document.querySelector('#gigPreview .preview-card');
+            if (previewCard) {
+                previewCard.querySelector('.preview-title').textContent = title;
+                previewCard.querySelector('.preview-description').textContent = description;
+                previewCard.querySelector('.preview-category').textContent = category;
+                previewCard.querySelector('.preview-amount').textContent = currencySymbol + parseFloat(amount).toLocaleString();
+            }
+        }
     </script>
 
 <style>
