@@ -63,7 +63,7 @@
                             <div class="content-card">
                                 <h4 class="mb-4">Create New Donation Gig</h4>
                                 
-                                <form action="{{ route('user.campaign.store') }}" method="POST" id="createGigForm" enctype="multipart/form-data" novalidate>
+                                <form action="{{ route('user.campaign.store') }}" method="POST" id="createGigForm" enctype="multipart/form-data">
                                     @csrf
                                     <div class="row">
                                         <div class="col-md-8">
@@ -215,7 +215,7 @@
                                     --}}
 
                                     <div class="d-flex gap-3">
-                                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                                        <button type="submit" class="btn btn-primary" id="submitBtn" onclick="console.log('Submit button clicked')">
                                             <i class="fas fa-save me-2"></i>Submit 
                                         </button>
                                         <button type="button" class="btn btn-primary" onclick="previewGig()">
@@ -329,17 +329,55 @@
 
   // Handle form submission - copy Quill content to hidden textarea
   document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, setting up form submission handler');
+    
     const form = document.querySelector('form');
+    const textarea = document.getElementById('gigDescription');
+    
+    console.log('Form found:', !!form);
+    console.log('Textarea found:', !!textarea);
+    console.log('Quill instance:', !!quill);
+    
     if (form) {
       form.addEventListener('submit', function(e) {
-        const editorContent = quill.root.innerHTML;
-        const textarea = document.getElementById('gigDescription');
-        textarea.value = editorContent;
+        console.log('Form submit event triggered');
         
-        // Debug logging
-        console.log('Form submitted with content:', editorContent);
-        console.log('Textarea value set to:', textarea.value);
+        // Check if all required fields are filled
+        const requiredFields = form.querySelectorAll('[required]');
+        let allFieldsValid = true;
+        
+        requiredFields.forEach(function(field) {
+          if (!field.value.trim()) {
+            console.error('Required field is empty:', field.name || field.id);
+            allFieldsValid = false;
+            field.style.borderColor = 'red';
+          } else {
+            field.style.borderColor = '';
+          }
+        });
+        
+        if (!allFieldsValid) {
+          e.preventDefault();
+          alert('Please fill in all required fields');
+          return false;
+        }
+        
+        if (quill) {
+          const editorContent = quill.root.innerHTML;
+          console.log('Editor content:', editorContent);
+          
+          if (textarea) {
+            textarea.value = editorContent;
+            console.log('Textarea value set to:', textarea.value);
+          } else {
+            console.error('Textarea not found!');
+          }
+        } else {
+          console.error('Quill instance not found!');
+        }
       });
+    } else {
+      console.error('Form not found!');
     }
   });
 </script>

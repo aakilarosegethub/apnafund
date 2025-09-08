@@ -251,17 +251,35 @@
 
         // Handle form submission - copy Quill content to hidden textarea
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, setting up form submission handler');
+            
             const form = document.querySelector('form');
+            const textarea = document.getElementById('gigDescription');
+            
+            console.log('Form found:', !!form);
+            console.log('Textarea found:', !!textarea);
+            console.log('Quill instance:', !!quill);
+            
             if (form) {
                 form.addEventListener('submit', function(e) {
-                    const editorContent = quill.root.innerHTML;
-                    const textarea = document.getElementById('gigDescription');
-                    textarea.value = editorContent;
+                    console.log('Form submit event triggered');
                     
-                    // Debug logging
-                    console.log('Form submitted with content:', editorContent);
-                    console.log('Textarea value set to:', textarea.value);
+                    if (quill) {
+                        const editorContent = quill.root.innerHTML;
+                        console.log('Editor content:', editorContent);
+                        
+                        if (textarea) {
+                            textarea.value = editorContent;
+                            console.log('Textarea value set to:', textarea.value);
+                        } else {
+                            console.error('Textarea not found!');
+                        }
+                    } else {
+                        console.error('Quill instance not found!');
+                    }
                 });
+            } else {
+                console.error('Form not found!');
             }
         });
 
