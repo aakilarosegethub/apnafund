@@ -226,14 +226,78 @@
 
 
 @section('page-script')
-<!-- include libraries(jQuery, bootstrap) -->
-<link href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" rel="stylesheet">
-<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <script>
 
-<!-- include summernote css/js -->
-<link href="https://cdn.jsdelivr.net/npm/summernote@0.9.0/dist/summernote.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/summernote@0.9.0/dist/summernote.min.js"></script>
+        // Handle video type selection
+        function toggleVideoSections() {
+            console.log('toggleVideoSections called');
+            const fileRadio = document.getElementById('video_file_new');
+            const youtubeRadio = document.getElementById('video_youtube_new');
+            const fileSection = document.getElementById('file_upload_section_new');
+            const youtubeSection = document.getElementById('youtube_url_section_new');
+
+            console.log('Elements found:', {
+                fileRadio: !!fileRadio,
+                youtubeRadio: !!youtubeRadio,
+                fileSection: !!fileSection,
+                youtubeSection: !!youtubeSection
+            });
+
+            if (fileRadio && fileRadio.checked) {
+                console.log('File radio checked');
+                if (fileSection) fileSection.style.display = 'block';
+                if (youtubeSection) youtubeSection.style.display = 'none';
+            } else if (youtubeRadio && youtubeRadio.checked) {
+                console.log('YouTube radio checked');
+                if (fileSection) fileSection.style.display = 'none';
+                if (youtubeSection) youtubeSection.style.display = 'block';
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing video toggle');
+            
+            // Set initial state (file upload is selected by default)
+            toggleVideoSections();
+            
+            // Add event listeners for both radio buttons and labels
+            const fileRadio = document.getElementById('video_file_new');
+            const youtubeRadio = document.getElementById('video_youtube_new');
+            const fileLabel = document.querySelector('label[for="video_file_new"]');
+            const youtubeLabel = document.querySelector('label[for="video_youtube_new"]');
+            
+            // Radio button change events
+            if (fileRadio) {
+                fileRadio.addEventListener('change', function() {
+                    console.log('File radio changed');
+                    toggleVideoSections();
+                });
+            }
+            
+            if (youtubeRadio) {
+                youtubeRadio.addEventListener('change', function() {
+                    console.log('YouTube radio changed');
+                    toggleVideoSections();
+                });
+            }
+            
+            // Label click events (backup)
+            if (fileLabel) {
+                fileLabel.addEventListener('click', function() {
+                    console.log('File label clicked');
+                    setTimeout(toggleVideoSections, 10);
+                });
+            }
+            
+            if (youtubeLabel) {
+                youtubeLabel.addEventListener('click', function() {
+                    console.log('YouTube label clicked');
+                    setTimeout(toggleVideoSections, 10);
+                });
+            }
+        });
+    </script>
 
 <style>
   /* Move image button to right corner */
