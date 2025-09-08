@@ -109,7 +109,7 @@
         </span>
       </div>
     </div>
-                                        <textarea id="gigDescription" name="description" style="display: none;" required></textarea>
+                                        <textarea id="gigDescription" name="description" style="visibility: hidden;" required></textarea>
                                     </div>
 
                                     <!-- Main Campaign Image -->
@@ -214,7 +214,7 @@
                                     --}}
 
                                     <div class="d-flex gap-3">
-                                        <button type="submit" class="btn btn-primary" id="submitBtn" onclick="console.log('Submit button clicked')">
+                                        <button type="button" class="btn btn-primary" id="submitBtn" onclick="showEditorContent()">
                                             <i class="fas fa-save me-2"></i>Submit 
                                         </button>
                                         <button type="button" class="btn btn-primary" onclick="previewGig()">
@@ -324,6 +324,18 @@
     const range = quill.getSelection(true);
     quill.insertEmbed(range.index, 'video', url, 'user');
     quill.setSelection(range.index + 1, 0);
+  }
+
+  // Function to show editor content in alert
+  function showEditorContent() {
+    if (quill) {
+      const editorContent = quill.root.innerHTML;
+      const textContent = quill.getText();
+      
+      alert('Editor Content (HTML):\n' + editorContent + '\n\nEditor Content (Text):\n' + textContent);
+    } else {
+      alert('Quill editor not found!');
+    }
   }
 
   // Handle form submission - copy Quill content to hidden textarea
