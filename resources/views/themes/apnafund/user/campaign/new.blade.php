@@ -55,44 +55,48 @@
       formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
       xhr.send(formData);
     },
-    // File picker for images
-    file_picker_types: 'image',
-    file_picker_callback: function (callback, value, meta) {
-      if (meta.filetype == 'image') {
-        var input = document.createElement('input');
-        input.setAttribute('type', 'file');
-        input.setAttribute('accept', 'image/*');
-        
-        input.onchange = function () {
-          var file = this.files[0];
-          if (file) {
-            var formData = new FormData();
-            formData.append('files', file);
-            formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
-            
-            var xhr = new XMLHttpRequest();
-            xhr.open('POST', '/user/campaign/upload-image');
-            xhr.onload = function() {
-              if (xhr.status === 200) {
-                var response = JSON.parse(xhr.responseText);
-                if (response.location) {
-                  callback(response.location, { title: file.name });
-                } else {
-                  alert('Upload failed: Invalid response');
+            // File picker for images
+            file_picker_types: 'image',
+            file_picker_callback: function (callback, value, meta) {
+                if (meta.filetype == 'image') {
+                    var input = document.createElement('input');
+                    input.setAttribute('type', 'file');
+                    input.setAttribute('accept', 'image/*');
+                    
+                    input.onchange = function () {
+                        var file = this.files[0];
+                        if (file) {
+                            var formData = new FormData();
+                            formData.append('files', file);
+                            formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+                            
+                            var xhr = new XMLHttpRequest();
+                            xhr.open('POST', '/user/campaign/upload-image');
+                            xhr.onload = function() {
+                                if (xhr.status === 200) {
+                                    try {
+                                        var response = JSON.parse(xhr.responseText);
+                                        if (response.location) {
+                                            callback(response.location, { title: file.name });
+                                        } else {
+                                            alert('Upload failed: Invalid response');
+                                        }
+                                    } catch (e) {
+                                        alert('Upload failed: Invalid JSON response');
+                                    }
+                                } else {
+                                    alert('Upload failed: ' + xhr.status);
+                                }
+                            };
+                            xhr.onerror = function() {
+                                alert('Upload failed: Network error');
+                            };
+                            xhr.send(formData);
+                        }
+                    };
+                    input.click();
                 }
-              } else {
-                alert('Upload failed: ' + xhr.status);
-              }
-            };
-            xhr.onerror = function() {
-              alert('Upload failed: Network error');
-            };
-            xhr.send(formData);
-          }
-        };
-        input.click();
-      }
-    },
+            },
     // Media/Video configuration
     media_live_embeds: true,
     media_url_resolver: function (data, resolve) {

@@ -279,11 +279,15 @@
                             xhr.open('POST', '/user/campaign/upload-image');
                             xhr.onload = function() {
                                 if (xhr.status === 200) {
-                                    var response = JSON.parse(xhr.responseText);
-                                    if (response.location) {
-                                        callback(response.location, { title: file.name });
-                                    } else {
-                                        alert('Upload failed: Invalid response');
+                                    try {
+                                        var response = JSON.parse(xhr.responseText);
+                                        if (response.location) {
+                                            callback(response.location, { title: file.name });
+                                        } else {
+                                            alert('Upload failed: Invalid response');
+                                        }
+                                    } catch (e) {
+                                        alert('Upload failed: Invalid JSON response');
                                     }
                                 } else {
                                     alert('Upload failed: ' + xhr.status);
