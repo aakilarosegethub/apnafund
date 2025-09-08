@@ -64,16 +64,29 @@
       
       input.onchange = function () {
         var file = this.files[0];
-        var reader = new FileReader();
-        reader.onload = function () {
-          var id = 'blobid' + (new Date()).getTime();
-          var blobCache = tinymce.activeEditor.editorUpload.blobCache;
-          var base64 = reader.result.split(',')[1];
-          var blobInfo = blobCache.create(id, file, base64);
-          blobCache.add(blobInfo);
-          cb(blobInfo.blobUri(), { title: file.name });
-        };
-        reader.readAsDataURL(file);
+        if (file) {
+          var formData = new FormData();
+          formData.append('files', file);
+          
+          var xhr = new XMLHttpRequest();
+          xhr.open('POST', '/upload-image');
+          xhr.onload = function() {
+            if (xhr.status === 200) {
+              var response = JSON.parse(xhr.responseText);
+              if (response.location) {
+                cb(response.location, { title: file.name });
+              } else {
+                alert('Upload failed: Invalid response');
+              }
+            } else {
+              alert('Upload failed: ' + xhr.status);
+            }
+          };
+          xhr.onerror = function() {
+            alert('Upload failed: Network error');
+          };
+          xhr.send(formData);
+        }
       };
       input.click();
     },
