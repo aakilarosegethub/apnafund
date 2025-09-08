@@ -89,12 +89,9 @@
 
                                     <div class="form-group">
                                         <label for="gigDescription" class="form-label">Description *</label>
-                                        <div id="editor" style="height: 400px;">
-                                            
-                                        </div>
                                         <div class="editor-shell">
       <!-- The editor -->
-      <div id="editor" placeholder="Hi, my name is Jane and I’m fundraising for…"></div>
+      <div id="editor" placeholder="Hi, my name is Jane and I'm fundraising for…"></div>
 
       <!-- Toolbar at the bottom -->
       <div id="toolbar">
@@ -111,6 +108,7 @@
         </span>
       </div>
     </div>
+                                        <textarea id="gigDescription" name="description" style="display: none;" required></textarea>
                                     </div>
 
                                     <!-- Main Campaign Image -->
