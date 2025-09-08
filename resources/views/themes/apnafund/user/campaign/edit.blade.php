@@ -257,6 +257,7 @@
                 
                 formData = new FormData();
                 formData.append('files', blobInfo.blob(), blobInfo.filename());
+                formData.append('_token', '{{ csrf_token() }}');
                 xhr.send(formData);
             },
             // File picker for images
@@ -272,6 +273,7 @@
                         if (file) {
                             var formData = new FormData();
                             formData.append('files', file);
+                            formData.append('_token', '{{ csrf_token() }}');
                             
                             var xhr = new XMLHttpRequest();
                             xhr.open('POST', '/user/campaign/upload-image');
