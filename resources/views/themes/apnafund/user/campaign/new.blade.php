@@ -29,12 +29,12 @@
     ],
     ai_request: (request, respondWith) => respondWith.string(() => Promise.reject('See docs to implement AI Assistant')),
     // Image upload configuration
-    images_upload_url: '/upload-image',
+    images_upload_url: '/user/campaign/upload-image',
     images_upload_handler: function (blobInfo, success, failure) {
       var xhr, formData;
       xhr = new XMLHttpRequest();
       xhr.withCredentials = false;
-      xhr.open('POST', '/upload-image');
+      xhr.open('POST', '/user/campaign/upload-image');
       
       xhr.onload = function() {
         var json;
@@ -69,7 +69,7 @@
             formData.append('files', file);
             
             var xhr = new XMLHttpRequest();
-            xhr.open('POST', '/upload-image');
+            xhr.open('POST', '/user/campaign/upload-image');
             xhr.onload = function() {
               if (xhr.status === 200) {
                 var response = JSON.parse(xhr.responseText);
