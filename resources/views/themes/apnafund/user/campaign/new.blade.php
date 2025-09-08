@@ -33,6 +33,7 @@
             relative_urls: false,
             remove_script_host: false,
             convert_urls: false,
+            document_base_url: 'http://127.0.0.1:8000/',
     images_upload_handler: function (blobInfo, success, failure) {
       var xhr, formData;
       xhr = new XMLHttpRequest();
