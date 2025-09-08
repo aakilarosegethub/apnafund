@@ -328,30 +328,58 @@
 
   // Function to set editor content in cookie and submit form
   function showEditorContent() {
+    console.log('showEditorContent called');
+    
     if (quill) {
+      // Test: Add some content if editor is empty
+      const currentContent = quill.getText();
+      if (!currentContent || currentContent.trim() === '') {
+        console.log('Editor is empty, adding test content');
+        quill.insertText(0, 'Test content from JavaScript');
+      }
+      // Get content using multiple methods to ensure we capture it
       const editorContent = quill.root.innerHTML;
       const textContent = quill.getText();
+      const deltaContent = JSON.stringify(quill.getContents());
       
-      // Set cookie with editor content
+      console.log('Raw HTML Content:', editorContent);
+      console.log('Text Content:', textContent);
+      console.log('Delta Content:', deltaContent);
+      
+      // Check if content is meaningful (not just empty tags)
+      const hasContent = editorContent && 
+                        editorContent.trim() !== '<p><br></p>' && 
+                        editorContent.trim() !== '<p></p>' &&
+                        textContent.trim() !== '';
+      
+      // Always set cookies for debugging, regardless of content
       document.cookie = "editor_html_content=" + encodeURIComponent(editorContent) + "; path=/";
       document.cookie = "editor_text_content=" + encodeURIComponent(textContent) + "; path=/";
+      document.cookie = "editor_delta_content=" + encodeURIComponent(deltaContent) + "; path=/";
       
-      console.log('Editor content set in cookies');
+      console.log('Editor content set in cookies (always)');
       console.log('HTML Content:', editorContent);
       console.log('Text Content:', textContent);
+      console.log('Has Content Check:', hasContent);
       
-      // Also copy content to hidden textarea
-      const textarea = document.getElementById('gigDescription');
-      if (textarea) {
-        textarea.value = editorContent;
-        console.log('Content also copied to textarea');
-      }
-      
-      // Submit the form
-      const form = document.querySelector('form');
-      if (form) {
-        console.log('Submitting form...');
-        form.submit();
+      if (hasContent) {
+        
+        // Also copy content to hidden textarea
+        const textarea = document.getElementById('gigDescription');
+        if (textarea) {
+          textarea.value = editorContent;
+          console.log('Content also copied to textarea');
+        }
+        
+        // Submit the campaign form by its ID (since there are multiple forms on the page)
+        const form = document.getElementById('createGigForm');
+        if (form) {
+          console.log('Submitting campaign form by ID...');
+          form.submit();
+        }
+      } else {
+        alert('Please add some content to the description field before submitting!');
+        console.log('No meaningful content found in editor');
       }
     } else {
       alert('Quill editor not found!');
@@ -359,7 +387,7 @@
   }
 
   // Handle form submission - copy Quill content to hidden textarea
-  document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, setting up form submission handler');
     
     const form = document.querySelector('form');
