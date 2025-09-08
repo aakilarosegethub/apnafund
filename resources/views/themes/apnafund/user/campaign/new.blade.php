@@ -11,7 +11,8 @@
 <script>
   tinymce.init({
     selector: 'textarea#gigDescription',
-    height: 500, // Increased height
+    height: 600, // Increased height for typing area
+    min_height: 600, // Minimum height
     plugins: [
       // Core editing features
       'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'link', 'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount',
@@ -327,6 +328,19 @@
     </script>
 
 <style>
+  /* TinyMCE Editor Styling */
+  .tox-tinymce {
+    height: 600px !important;
+  }
+  
+  .tox-edit-area__iframe {
+    height: 550px !important;
+  }
+  
+  .tox-editor-container {
+    height: 600px !important;
+  }
+  
   /* Move image button to right corner */
   .jodit-toolbar__box .jodit-toolbar-editor-collection {
     display: flex;
