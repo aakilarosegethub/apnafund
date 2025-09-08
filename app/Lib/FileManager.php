@@ -143,6 +143,34 @@ class FileManager
     }
 
     /**
+     * Public method to upload a file
+     *
+     * @param mixed $file
+     * @param string $path
+     * @param string|null $old
+     * @param string|null $filename
+     * @return string|false
+     */
+    public function uploadFile($file, $path, $old = null, $filename = null)
+    {
+        $this->file = $file;
+        $this->path = $path;
+        $this->old = $old;
+        $this->filename = $filename;
+        
+        if (!$this->file) {
+            return false;
+        }
+        
+        try {
+            $this->upload();
+            return $this->path . '/' . $this->filename;
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    /**
      * Make directory doesn't exist
      * Developer can also call this method statically
      *
