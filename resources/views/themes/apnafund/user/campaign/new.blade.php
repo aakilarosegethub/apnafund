@@ -26,6 +26,7 @@
     /* Editor */
     #editor{
       background:#fff;
+      height: 400px;
     }
     .ql-container.ql-snow{border:none;}
     .ql-editor{
@@ -340,7 +341,22 @@
       form.addEventListener('submit', function(e) {
         console.log('Form submit event triggered');
         
-        // Check if all required fields are filled
+        // First, copy Quill content to textarea
+        if (quill) {
+          const editorContent = quill.root.innerHTML;
+          console.log('Editor content:', editorContent);
+          
+          if (textarea) {
+            textarea.value = editorContent;
+            console.log('Textarea value set to:', textarea.value);
+          } else {
+            console.error('Textarea not found!');
+          }
+        } else {
+          console.error('Quill instance not found!');
+        }
+        
+        // Then check if all required fields are filled
         const requiredFields = form.querySelectorAll('[required]');
         let allFieldsValid = true;
         
@@ -358,20 +374,6 @@
           e.preventDefault();
           alert('Please fill in all required fields');
           return false;
-        }
-        
-        if (quill) {
-          const editorContent = quill.root.innerHTML;
-          console.log('Editor content:', editorContent);
-          
-          if (textarea) {
-            textarea.value = editorContent;
-            console.log('Textarea value set to:', textarea.value);
-          } else {
-            console.error('Textarea not found!');
-          }
-        } else {
-          console.error('Quill instance not found!');
         }
       });
     } else {

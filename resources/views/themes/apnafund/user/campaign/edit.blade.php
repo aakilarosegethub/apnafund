@@ -264,6 +264,7 @@
                 form.addEventListener('submit', function(e) {
                     console.log('Form submit event triggered');
                     
+                    // First, copy Quill content to textarea
                     if (quill) {
                         const editorContent = quill.root.innerHTML;
                         console.log('Editor content:', editorContent);
