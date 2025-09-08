@@ -110,11 +110,25 @@ class CampaignController extends Controller
     }
 
     function store() {
+        // Get editor content from cookies
+        $editorHtmlContent = request()->cookie('editor_html_content');
+        $editorTextContent = request()->cookie('editor_text_content');
+        
+        // Debug: Show cookie content
+        dd([
+            'POST Data' => $_POST,
+            'Editor HTML Content from Cookie' => $editorHtmlContent,
+            'Editor Text Content from Cookie' => $editorTextContent,
+            'All Cookies' => request()->cookies->all()
+        ]);
+        
         // Debug logging
         \Log::info('Campaign store method called', [
             'request_data' => request()->all(),
             'files' => request()->hasFile('image') ? 'Image file present' : 'No image file',
-            'user_id' => auth()->id()
+            'user_id' => auth()->id(),
+            'editor_html_content' => $editorHtmlContent,
+            'editor_text_content' => $editorTextContent
         ]);
         
         try {

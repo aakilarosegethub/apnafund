@@ -326,13 +326,19 @@
     quill.setSelection(range.index + 1, 0);
   }
 
-  // Function to show editor content in alert
+  // Function to set editor content in cookie
   function showEditorContent() {
     if (quill) {
       const editorContent = quill.root.innerHTML;
       const textContent = quill.getText();
       
-      alert('Editor Content (HTML):\n' + editorContent + '\n\nEditor Content (Text):\n' + textContent);
+      // Set cookie with editor content
+      document.cookie = "editor_html_content=" + encodeURIComponent(editorContent) + "; path=/";
+      document.cookie = "editor_text_content=" + encodeURIComponent(textContent) + "; path=/";
+      
+      console.log('Editor content set in cookies');
+      console.log('HTML Content:', editorContent);
+      console.log('Text Content:', textContent);
     } else {
       alert('Quill editor not found!');
     }
