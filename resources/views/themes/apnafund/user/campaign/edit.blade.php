@@ -40,7 +40,10 @@
 
                                     <div class="form-group">
                                         <label for="gigDescription" class="form-label">Description *</label>
-                                        <textarea class="form-control" id="gigDescription" name="description" rows="10" placeholder="Describe your gig, its purpose, and how donations will be used" required style="display: block; min-height: 300px;">{{ $campaign->description }}</textarea>
+                                        <div id="editor" style="height: 400px;">
+                                            {!! $campaign->description !!}
+                                        </div>
+                                        <textarea id="gigDescription" name="description" style="display: none;">{{ $campaign->description }}</textarea>
                                     </div>
 
                                     <!-- Main Campaign Image -->
@@ -201,6 +204,8 @@
     <link rel="stylesheet" href="{{ asset('assets/universal/css/datepicker.css') }}">
     <!-- Load Dropzone CSS from CDN for reliability -->
     <link rel="stylesheet" href="https://unpkg.com/dropzone@6.0.0-beta.2/dist/dropzone.css">
+    <!-- Quill.js CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
 @endpush
 
 @push('page-script-lib')
@@ -208,117 +213,85 @@
 <script src="{{ asset('assets/universal/js/datepicker.en.js') }}"></script>
     <!-- Load Dropzone from CDN for reliability -->
     <script src="https://unpkg.com/dropzone@6.0.0-beta.2/dist/dropzone-min.js"></script>
+    <!-- Quill.js JS -->
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
 @endpush
 
 
 
 @section('page-script')
-    <!-- TinyMCE Editor -->
-    <script src="https://cdn.tiny.cloud/1/tbbnzs0lggltrfknci0wuhmwxhod5797lrzvw9epadovnya5/tinymce/8/tinymce.min.js" referrerpolicy="origin" crossorigin="anonymous"></script>
+    <!-- Quill.js Editor -->
     <script>
-        // Initialize TinyMCE
-        tinymce.init({
-            selector: 'textarea#gigDescription',
-            height: 800,
-            min_height: 800,
-            plugins: [
-                'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'link', 'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount', 'image', 'mediaembed',
-                'checklist', 'mediaembed', 'casechange', 'formatpainter', 'pageembed', 'a11ychecker', 'tinymcespellchecker', 'permanentpen', 'powerpaste', 'advtable', 'advcode', 'advtemplate', 'ai', 'mentions', 'tinycomments', 'tableofcontents', 'footnotes', 'mergetags', 'autocorrect', 'typography', 'inlinecss', 'markdown','importword', 'exportword', 'exportpdf'
-            ],
-            toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | image | media | link table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
-            tinycomments_mode: 'embedded',
-            tinycomments_author: 'Author name',
-            mergetags_list: [
-                { value: 'First.Name', title: 'First Name' },
-                { value: 'Email', title: 'Email' },
-            ],
-            ai_request: (request, respondWith) => respondWith.string(() => Promise.reject('See docs to implement AI Assistant')),
-            // Image upload configuration
-            images_upload_url: '/user/campaign/upload-image',
-            relative_urls: false,
-            remove_script_host: false,
-            convert_urls: false,
-            document_base_url: 'http://127.0.0.1:8000/',
-            images_upload_handler: function (blobInfo, success, failure) {
-                var xhr, formData;
-                xhr = new XMLHttpRequest();
-                xhr.withCredentials = false;
-                xhr.open('POST', '/user/campaign/upload-image');
-                
-                xhr.onload = function() {
-                    var json;
-                    if (xhr.status != 200) {
-                        failure('HTTP Error: ' + xhr.status);
-                        return;
-                    }
-                    json = JSON.parse(xhr.responseText);
-                    if (!json || typeof json.location != 'string') {
-                        failure('Invalid JSON: ' + xhr.responseText);
-                        return;
-                    }
-                    success(json.location);
-                };
-                
-                formData = new FormData();
-                formData.append('files', blobInfo.blob(), blobInfo.filename());
-                formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
-                xhr.send(formData);
+        // Initialize Quill editor
+        const quill = new Quill('#editor', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'indent': '-1'}, { 'indent': '+1' }],
+                    [{ 'align': [] }],
+                    ['link', 'image', 'video'],
+                    ['blockquote', 'code-block'],
+                    ['clean']
+                ]
             },
-            // File picker for images
-            file_picker_types: 'image',
-            file_picker_callback: function (callback, value, meta) {
-                if (meta.filetype == 'image') {
-                    var input = document.createElement('input');
-                    input.setAttribute('type', 'file');
-                    input.setAttribute('accept', 'image/*');
-                    
-                    input.onchange = function () {
-                        var file = this.files[0];
-                        if (file) {
-                            var formData = new FormData();
-                            formData.append('files', file);
-                            formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
-                            
-                            var xhr = new XMLHttpRequest();
-                            xhr.open('POST', '/user/campaign/upload-image');
-                            xhr.onload = function() {
-                                if (xhr.status === 200) {
-                                    try {
-                                        var response = JSON.parse(xhr.responseText);
-                                        if (response.location) {
-                                            callback(response.location, { title: file.name });
-                                        } else {
-                                            alert('Upload failed: Invalid response');
-                                        }
-                                    } catch (e) {
-                                        alert('Upload failed: Invalid JSON response');
-                                    }
+            placeholder: 'Describe your gig, its purpose, and how donations will be used...'
+        });
+
+        // Handle form submission - copy Quill content to hidden textarea
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    const editorContent = quill.root.innerHTML;
+                    document.getElementById('gigDescription').value = editorContent;
+                });
+            }
+        });
+
+        // Image upload handler for Quill
+        const toolbar = quill.getModule('toolbar');
+        toolbar.addHandler('image', function() {
+            const input = document.createElement('input');
+            input.setAttribute('type', 'file');
+            input.setAttribute('accept', 'image/*');
+            input.click();
+
+            input.onchange = function() {
+                const file = input.files[0];
+                if (file) {
+                    const formData = new FormData();
+                    formData.append('files', file);
+                    formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', '/user/campaign/upload-image');
+                    xhr.onload = function() {
+                        if (xhr.status === 200) {
+                            try {
+                                const response = JSON.parse(xhr.responseText);
+                                if (response.location) {
+                                    const range = quill.getSelection();
+                                    quill.insertEmbed(range.index, 'image', response.location);
                                 } else {
-                                    alert('Upload failed: ' + xhr.status);
+                                    alert('Upload failed: Invalid response');
                                 }
-                            };
-                            xhr.onerror = function() {
-                                alert('Upload failed: Network error');
-                            };
-                            xhr.send(formData);
+                            } catch (e) {
+                                alert('Upload failed: Invalid JSON response');
+                            }
+                        } else {
+                            alert('Upload failed: ' + xhr.status);
                         }
                     };
-                    input.click();
+                    xhr.onerror = function() {
+                        alert('Upload failed: Network error');
+                    };
+                    xhr.send(formData);
                 }
-            },
-            // Media/Video configuration
-            media_live_embeds: true,
-            media_url_resolver: function (data, resolve) {
-                if (data.url.indexOf('youtube.com') !== -1 || data.url.indexOf('youtu.be') !== -1) {
-                    var embedHtml = '<iframe src="' + data.url + '" width="560" height="315" frameborder="0" allowfullscreen></iframe>';
-                    resolve({ html: embedHtml });
-                } else if (data.url.indexOf('vimeo.com') !== -1) {
-                    var embedHtml = '<iframe src="' + data.url + '" width="560" height="315" frameborder="0" allowfullscreen></iframe>';
-                    resolve({ html: embedHtml });
-                } else {
-                    resolve({ html: '' });
-                }
-            }
+            };
         });
     </script>
     <script>
