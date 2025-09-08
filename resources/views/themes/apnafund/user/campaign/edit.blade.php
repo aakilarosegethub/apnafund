@@ -7,107 +7,6 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 @endsection
 @section('frontend')
-<!-- Place the first <script> tag in your HTML's <head> -->
-<script src="https://cdn.tiny.cloud/1/tbbnzs0lggltrfknci0wuhmwxhod5797lrzvw9epadovnya5/tinymce/8/tinymce.min.js" referrerpolicy="origin" crossorigin="anonymous"></script>
-
-<!-- Place the following <script> and <textarea> tags your HTML's <body> -->
-<script>
-  tinymce.init({
-    selector: 'textarea#gigDescription',
-    height: 600, // Increased height for typing area
-    min_height: 600, // Minimum height
-    plugins: [
-      // Core editing features
-      'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'link', 'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount', 'image', 'mediaembed',
-      // Your account includes a free trial of TinyMCE premium features
-      // Try the most popular premium features until Sep 19, 2025:
-      'checklist', 'mediaembed', 'casechange', 'formatpainter', 'pageembed', 'a11ychecker', 'tinymcespellchecker', 'permanentpen', 'powerpaste', 'advtable', 'advcode', 'advtemplate', 'ai', 'mentions', 'tinycomments', 'tableofcontents', 'footnotes', 'mergetags', 'autocorrect', 'typography', 'inlinecss', 'markdown','importword', 'exportword', 'exportpdf'
-    ],
-    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | image | media | link table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
-    tinycomments_mode: 'embedded',
-    tinycomments_author: 'Author name',
-    mergetags_list: [
-      { value: 'First.Name', title: 'First Name' },
-      { value: 'Email', title: 'Email' },
-    ],
-    ai_request: (request, respondWith) => respondWith.string(() => Promise.reject('See docs to implement AI Assistant')),
-    // Image upload configuration
-    images_upload_url: '/upload-image', // Laravel route for image upload
-    images_upload_handler: function (blobInfo, success, failure) {
-      var xhr, formData;
-      xhr = new XMLHttpRequest();
-      xhr.withCredentials = false;
-      xhr.open('POST', '/upload-image');
-      
-      xhr.onload = function() {
-        var json;
-        if (xhr.status != 200) {
-          failure('HTTP Error: ' + xhr.status);
-          return;
-        }
-        json = JSON.parse(xhr.responseText);
-        if (!json || typeof json.location != 'string') {
-          failure('Invalid JSON: ' + xhr.responseText);
-          return;
-        }
-        success(json.location);
-      };
-      
-      formData = new FormData();
-      formData.append('files', blobInfo.blob(), blobInfo.filename());
-      xhr.send(formData);
-    },
-    // Image upload settings
-    automatic_uploads: true,
-    file_picker_types: 'image',
-    file_picker_callback: function (cb, value, meta) {
-      var input = document.createElement('input');
-      input.setAttribute('type', 'file');
-      input.setAttribute('accept', 'image/*');
-      
-      input.onchange = function () {
-        var file = this.files[0];
-        if (file) {
-          var formData = new FormData();
-          formData.append('files', file);
-          
-          var xhr = new XMLHttpRequest();
-          xhr.open('POST', '/upload-image');
-          xhr.onload = function() {
-            if (xhr.status === 200) {
-              var response = JSON.parse(xhr.responseText);
-              if (response.location) {
-                cb(response.location, { title: file.name });
-              } else {
-                alert('Upload failed: Invalid response');
-              }
-            } else {
-              alert('Upload failed: ' + xhr.status);
-            }
-          };
-          xhr.onerror = function() {
-            alert('Upload failed: Network error');
-          };
-          xhr.send(formData);
-        }
-      };
-      input.click();
-    },
-    // Media/Video configuration
-    media_live_embeds: true,
-    media_url_resolver: function (data, resolve) {
-      if (data.url.indexOf('youtube.com') !== -1 || data.url.indexOf('youtu.be') !== -1) {
-        var embedHtml = '<iframe src="' + data.url + '" width="560" height="315" frameborder="0" allowfullscreen></iframe>';
-        resolve({ html: embedHtml });
-      } else if (data.url.indexOf('vimeo.com') !== -1) {
-        var embedHtml = '<iframe src="' + data.url + '" width="560" height="315" frameborder="0" allowfullscreen></iframe>';
-        resolve({ html: embedHtml });
-      } else {
-        resolve({ html: '' });
-      }
-    }
-  });
-</script>
                 <div class="tab-pane fade active show" id="create" role="tabpanel">
                     <div class="row">
                         <div class="col-lg-8">
@@ -605,6 +504,104 @@
 
 
 @section('page-script')
+    <!-- TinyMCE Editor -->
+    <script src="https://cdn.tiny.cloud/1/tbbnzs0lggltrfknci0wuhmwxhod5797lrzvw9epadovnya5/tinymce/8/tinymce.min.js" referrerpolicy="origin" crossorigin="anonymous"></script>
+    <script>
+        // Initialize TinyMCE
+        tinymce.init({
+            selector: 'textarea#gigDescription',
+            height: 600,
+            min_height: 600,
+            plugins: [
+                'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'link', 'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount', 'image', 'mediaembed',
+                'checklist', 'mediaembed', 'casechange', 'formatpainter', 'pageembed', 'a11ychecker', 'tinymcespellchecker', 'permanentpen', 'powerpaste', 'advtable', 'advcode', 'advtemplate', 'ai', 'mentions', 'tinycomments', 'tableofcontents', 'footnotes', 'mergetags', 'autocorrect', 'typography', 'inlinecss', 'markdown','importword', 'exportword', 'exportpdf'
+            ],
+            toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | image | media | link table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
+            tinycomments_mode: 'embedded',
+            tinycomments_author: 'Author name',
+            mergetags_list: [
+                { value: 'First.Name', title: 'First Name' },
+                { value: 'Email', title: 'Email' },
+            ],
+            ai_request: (request, respondWith) => respondWith.string(() => Promise.reject('See docs to implement AI Assistant')),
+            // Image upload configuration
+            images_upload_url: '/upload-image',
+            images_upload_handler: function (blobInfo, success, failure) {
+                var xhr, formData;
+                xhr = new XMLHttpRequest();
+                xhr.withCredentials = false;
+                xhr.open('POST', '/upload-image');
+                
+                xhr.onload = function() {
+                    var json;
+                    if (xhr.status != 200) {
+                        failure('HTTP Error: ' + xhr.status);
+                        return;
+                    }
+                    json = JSON.parse(xhr.responseText);
+                    if (!json || typeof json.location != 'string') {
+                        failure('Invalid JSON: ' + xhr.responseText);
+                        return;
+                    }
+                    success(json.location);
+                };
+                
+                formData = new FormData();
+                formData.append('files', blobInfo.blob(), blobInfo.filename());
+                xhr.send(formData);
+            },
+            // File picker for images
+            file_picker_types: 'image',
+            file_picker_callback: function (callback, value, meta) {
+                if (meta.filetype == 'image') {
+                    var input = document.createElement('input');
+                    input.setAttribute('type', 'file');
+                    input.setAttribute('accept', 'image/*');
+                    
+                    input.onchange = function () {
+                        var file = this.files[0];
+                        if (file) {
+                            var formData = new FormData();
+                            formData.append('files', file);
+                            
+                            var xhr = new XMLHttpRequest();
+                            xhr.open('POST', '/upload-image');
+                            xhr.onload = function() {
+                                if (xhr.status === 200) {
+                                    var response = JSON.parse(xhr.responseText);
+                                    if (response.location) {
+                                        callback(response.location, { title: file.name });
+                                    } else {
+                                        alert('Upload failed: Invalid response');
+                                    }
+                                } else {
+                                    alert('Upload failed: ' + xhr.status);
+                                }
+                            };
+                            xhr.onerror = function() {
+                                alert('Upload failed: Network error');
+                            };
+                            xhr.send(formData);
+                        }
+                    };
+                    input.click();
+                }
+            },
+            // Media/Video configuration
+            media_live_embeds: true,
+            media_url_resolver: function (data, resolve) {
+                if (data.url.indexOf('youtube.com') !== -1 || data.url.indexOf('youtu.be') !== -1) {
+                    var embedHtml = '<iframe src="' + data.url + '" width="560" height="315" frameborder="0" allowfullscreen></iframe>';
+                    resolve({ html: embedHtml });
+                } else if (data.url.indexOf('vimeo.com') !== -1) {
+                    var embedHtml = '<iframe src="' + data.url + '" width="560" height="315" frameborder="0" allowfullscreen></iframe>';
+                    resolve({ html: embedHtml });
+                } else {
+                    resolve({ html: '' });
+                }
+            }
+        });
+    </script>
     <script>
         // Handle video type selection
         function toggleVideoSections() {

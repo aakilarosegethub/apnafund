@@ -29,7 +29,7 @@
     ],
     ai_request: (request, respondWith) => respondWith.string(() => Promise.reject('See docs to implement AI Assistant')),
     // Image upload configuration
-    images_upload_url: '/upload-image', // Laravel route for image upload
+    images_upload_url: '/upload-image',
     images_upload_handler: function (blobInfo, success, failure) {
       var xhr, formData;
       xhr = new XMLHttpRequest();
@@ -54,41 +54,42 @@
       formData.append('files', blobInfo.blob(), blobInfo.filename());
       xhr.send(formData);
     },
-    // Image upload settings
-    automatic_uploads: true,
+    // File picker for images
     file_picker_types: 'image',
-    file_picker_callback: function (cb, value, meta) {
-      var input = document.createElement('input');
-      input.setAttribute('type', 'file');
-      input.setAttribute('accept', 'image/*');
-      
-      input.onchange = function () {
-        var file = this.files[0];
-        if (file) {
-          var formData = new FormData();
-          formData.append('files', file);
-          
-          var xhr = new XMLHttpRequest();
-          xhr.open('POST', '/upload-image');
-          xhr.onload = function() {
-            if (xhr.status === 200) {
-              var response = JSON.parse(xhr.responseText);
-              if (response.location) {
-                cb(response.location, { title: file.name });
+    file_picker_callback: function (callback, value, meta) {
+      if (meta.filetype == 'image') {
+        var input = document.createElement('input');
+        input.setAttribute('type', 'file');
+        input.setAttribute('accept', 'image/*');
+        
+        input.onchange = function () {
+          var file = this.files[0];
+          if (file) {
+            var formData = new FormData();
+            formData.append('files', file);
+            
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/upload-image');
+            xhr.onload = function() {
+              if (xhr.status === 200) {
+                var response = JSON.parse(xhr.responseText);
+                if (response.location) {
+                  callback(response.location, { title: file.name });
+                } else {
+                  alert('Upload failed: Invalid response');
+                }
               } else {
-                alert('Upload failed: Invalid response');
+                alert('Upload failed: ' + xhr.status);
               }
-            } else {
-              alert('Upload failed: ' + xhr.status);
-            }
-          };
-          xhr.onerror = function() {
-            alert('Upload failed: Network error');
-          };
-          xhr.send(formData);
-        }
-      };
-      input.click();
+            };
+            xhr.onerror = function() {
+              alert('Upload failed: Network error');
+            };
+            xhr.send(formData);
+          }
+        };
+        input.click();
+      }
     },
     // Media/Video configuration
     media_live_embeds: true,
