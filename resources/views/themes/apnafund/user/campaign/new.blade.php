@@ -4,41 +4,31 @@
 @endphp
 @extends($activeTheme . 'layouts.dashboard')
 @section('frontend')
-<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+<!-- Place the first <script> tag in your HTML's <head> -->
+<script src="https://cdn.tiny.cloud/1/tbbnzs0lggltrfknci0wuhmwxhod5797lrzvw9epadovnya5/tinymce/8/tinymce.min.js" referrerpolicy="origin" crossorigin="anonymous"></script>
 
-     <style>
-        .input-group-text {
-    display: flex
-;
-    align-items: center;
-    padding: .375rem .75rem;
-    font-size: 1rem;
-    font-weight: 400;
-    line-height: 1.5;
-    color: var(--bs-body-color);
-    text-align: center;
-    white-space: nowrap;
-    background-color: var(--bs-tertiary-bg);
-    border: var(--bs-border-width) solid var(--bs-border-color);
-    border-radius: var(--bs-border-radius);
-}
-    </style>
-    <style>
-  /* push IMAGE (and VIDEO) button(s) to the far right */
-  .jodit-toolbar__box .jodit-toolbar-editor-collection {
-    display: flex;
-  }
-  /* image to right */
-  .jodit-toolbar__box .jodit-toolbar-editor-collection
-  .jodit-toolbar-button[data-ref="image"] {
-    margin-left: auto !important;   /* pushes it to the right edge */
-  }
-  /* if you also want video right next to image on the right side */
-  .jodit-toolbar__box .jodit-toolbar-editor-collection
-  .jodit-toolbar-button[data-ref="video"] {
-    order: 999;                      /* keep it at the end */
-  }
-</style>
+<!-- Place the following <script> and <textarea> tags your HTML's <body> -->
+<script>
+  tinymce.init({
+    selector: 'textarea#gigDescription',
+    plugins: [
+      // Core editing features
+      'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'link', 'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount',
+      // Your account includes a free trial of TinyMCE premium features
+      // Try the most popular premium features until Sep 19, 2025:
+      'checklist', 'mediaembed', 'casechange', 'formatpainter', 'pageembed', 'a11ychecker', 'tinymcespellchecker', 'permanentpen', 'powerpaste', 'advtable', 'advcode', 'advtemplate', 'ai', 'uploadcare', 'mentions', 'tinycomments', 'tableofcontents', 'footnotes', 'mergetags', 'autocorrect', 'typography', 'inlinecss', 'markdown','importword', 'exportword', 'exportpdf'
+    ],
+    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography uploadcare | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
+    tinycomments_mode: 'embedded',
+    tinycomments_author: 'Author name',
+    mergetags_list: [
+      { value: 'First.Name', title: 'First Name' },
+      { value: 'Email', title: 'Email' },
+    ],
+    ai_request: (request, respondWith) => respondWith.string(() => Promise.reject('See docs to implement AI Assistant')),
+    uploadcare_public_key: 'c164087b8687b1fe3294',
+  });
+</script>
                 <div class="tab-pane fade active show" id="create" role="tabpanel">
                     <div class="row">
                         <div class="col-lg-8">
@@ -232,396 +222,18 @@
 <script src="{{ asset('assets/universal/js/datepicker.en.js') }}"></script>
 @endpush
 
-<style>
-/* Dropzone Styling */
-.dropzone {
-    border: 2px dashed #dee2e6 !important;
-    border-radius: 8px !important;
-    background: #ffffff !important;
-    min-height: 150px !important;
-    padding: 30px 20px !important;
-    text-align: center !important;
-    transition: all 0.3s ease !important;
-    cursor: pointer !important;
-    margin-bottom: 15px !important;
-}
 
-.dropzone:hover {
-    border-color: #007bff !important;
-    background: #f8f9fa !important;
-}
-
-.dropzone.dz-drag-hover {
-    border-color: #007bff !important;
-    background: #e3f2fd !important;
-}
-
-.dz-message {
-    margin: 0 !important;
-}
-
-.dz-message i {
-    font-size: 2rem;
-    color: #6c757d;
-    margin-bottom: 10px;
-    display: block;
-}
-
-.dz-message h4 {
-    color: #495057;
-    margin-bottom: 5px;
-    font-weight: 500;
-    font-size: 1rem;
-}
-
-.dz-message p {
-    color: #6c757d;
-    margin-bottom: 0;
-    font-size: 0.9rem;
-}
-
-.dz-message small {
-    color: #adb5bd;
-    font-size: 0.8rem;
-}
-
-.dz-preview {
-    margin: 5px !important;
-}
-
-.dz-preview .dz-image {
-    border-radius: 6px !important;
-    overflow: hidden !important;
-}
-
-.dz-preview .dz-details {
-    color: #333 !important;
-    font-size: 0.85rem !important;
-}
-
-.dz-preview .dz-remove {
-    color: #dc3545 !important;
-    font-weight: 500 !important;
-    text-decoration: none !important;
-    border: 1px solid #dc3545 !important;
-    border-radius: 4px !important;
-    padding: 3px 8px !important;
-    font-size: 0.8rem !important;
-    transition: all 0.3s ease !important;
-}
-
-.dz-preview .dz-remove:hover {
-    background: #dc3545 !important;
-    color: white !important;
-}
-
-/* Content Card Styling */
-.content-card {
-    background: white;
-    border-radius: 15px;
-    padding: 30px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-    margin-bottom: 30px;
-}
-
-.preview-card {
-    border: 1px solid #e9ecef;
-    border-radius: 10px;
-    overflow: hidden;
-    background: white;
-}
-
-.preview-image {
-    height: 150px;
-    background: #f8f9fa;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #6c757d;
-    font-size: 2rem;
-}
-
-.preview-content {
-    padding: 15px;
-}
-
-.preview-title {
-    font-weight: 600;
-    font-size: 1.1rem;
-    margin-bottom: 8px;
-    color: #212529;
-}
-
-.preview-description {
-    color: #6c757d;
-    font-size: 0.9rem;
-    margin-bottom: 12px;
-    line-height: 1.4;
-}
-
-.preview-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-}
-
-.preview-category {
-    background: #e9ecef;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    color: #495057;
-}
-
-.preview-amount {
-    font-weight: 600;
-    color: #28a745;
-}
-
-.preview-progress {
-    margin-top: 10px;
-}
-
-.progress {
-    height: 8px;
-    border-radius: 4px;
-    background: #e9ecef;
-    margin-bottom: 5px;
-}
-
-.progress-bar {
-    background: #28a745;
-    border-radius: 4px;
-}
-
-/* File Input Styling */
-.form-control[type="file"] {
-    padding: 8px 12px;
-    border: 1px solid #ced4da;
-    border-radius: 6px;
-    background-color: #fff;
-}
-
-.form-control[type="file"]:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-
-/* Gallery Section Styling - COMMENTED OUT */
-/*
-.gallery-section {
-    margin-bottom: 30px;
-}
-
-.gallery-section .form-label {
-    font-weight: 600;
-    color: #495057;
-    margin-bottom: 10px;
-}
-*/
-
-/* Form Group Spacing */
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-label {
-    font-weight: 600;
-    color: #495057;
-    margin-bottom: 8px;
-}
-
-/* Button Styling */
-.btn {
-    border-radius: 8px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-}
-
-.btn-primary {
-    background: #007bff;
-    border-color: #007bff;
-}
-
-.btn-primary:hover {
-    background: #0056b3;
-    border-color: #0056b3;
-}
-
-/* Input Styling */
-.form-control {
-    border-radius: 6px;
-    border: 1px solid #ced4da;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-.form-control:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-
-/* Preview Card Enhancements */
-.preview-card {
-    transition: all 0.3s ease;
-}
-
-.preview-card:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-/* Jodit Editor Specific Styling */
-.jodit-container {
-    border: 1px solid #ced4da !important;
-    border-radius: 6px !important;
-    box-shadow: none !important;
-}
-
-.jodit-toolbar {
-    background: #f8f9fa !important;
-    border-bottom: 1px solid #ced4da !important;
-    border-radius: 6px 6px 0 0 !important;
-}
-
-.jodit-workplace {
-    border-radius: 0 0 6px 6px !important;
-}
-
-.jodit-wysiwyg {
-    min-height: 250px !important;
-}
-
-/* Validation Error Styling */
-.form-control.is-invalid {
-    border-color: #dc3545;
-    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
-}
-
-.form-control.is-valid {
-    border-color: #28a745;
-    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
-}
-
-.invalid-feedback {
-    display: block;
-    width: 100%;
-    margin-top: 0.25rem;
-    font-size: 0.875rem;
-    color: #dc3545;
-}
-</style>
 
 
 @section('page-script')
-    <script>
-        // TinyMCE initialization with debugging
-        function initTinyMCE() {
-            console.log('Trying to initialize TinyMCE...');
-            console.log('TinyMCE available:', typeof tinymce !== 'undefined');
-            console.log('Textarea element:', document.getElementById('gigDescription'));
-            
-            if (typeof tinymce !== 'undefined') {
-                try {
-                    tinymce.init({
-                        selector: '#gigDescription',
-                        height: 300,
-                        menubar: false,
-                        plugins: 'lists link image media table',
-                        toolbar: 'undo redo | bold italic underline | bullist numlist | link image | removeformat',
-                        content_style: 'body { font-family: Arial, sans-serif; font-size: 14px; }',
-                        setup: function (editor) {
-                            console.log('TinyMCE editor initialized successfully!');
-                            editor.on('change', function () {
-                                editor.save();
-                            });
-                        }
-                    });
-                } catch (error) {
-                    console.error('TinyMCE initialization error:', error);
-                }
-            } else {
-                console.log('TinyMCE not loaded, retrying in 1 second...');
-                setTimeout(initTinyMCE, 1000);
-            }
-        }
-        
-        // Try to initialize when page loads
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initTinyMCE);
-        } else {
-            initTinyMCE();
-        }
+<!-- include libraries(jQuery, bootstrap) -->
+<link href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 
-        // Handle video type selection
-        function toggleVideoSections() {
-            console.log('toggleVideoSections called');
-            const fileRadio = document.getElementById('video_file_new');
-            const youtubeRadio = document.getElementById('video_youtube_new');
-            const fileSection = document.getElementById('file_upload_section_new');
-            const youtubeSection = document.getElementById('youtube_url_section_new');
-
-            console.log('Elements found:', {
-                fileRadio: !!fileRadio,
-                youtubeRadio: !!youtubeRadio,
-                fileSection: !!fileSection,
-                youtubeSection: !!youtubeSection
-            });
-
-            if (fileRadio && fileRadio.checked) {
-                console.log('File radio checked');
-                if (fileSection) fileSection.style.display = 'block';
-                if (youtubeSection) youtubeSection.style.display = 'none';
-            } else if (youtubeRadio && youtubeRadio.checked) {
-                console.log('YouTube radio checked');
-                if (fileSection) fileSection.style.display = 'none';
-                if (youtubeSection) youtubeSection.style.display = 'block';
-            }
-        }
-
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, initializing video toggle');
-            
-            // Set initial state (file upload is selected by default)
-            toggleVideoSections();
-            
-            // Add event listeners for both radio buttons and labels
-            const fileRadio = document.getElementById('video_file_new');
-            const youtubeRadio = document.getElementById('video_youtube_new');
-            const fileLabel = document.querySelector('label[for="video_file_new"]');
-            const youtubeLabel = document.querySelector('label[for="video_youtube_new"]');
-            
-            // Radio button change events
-            if (fileRadio) {
-                fileRadio.addEventListener('change', function() {
-                    console.log('File radio changed');
-                    toggleVideoSections();
-                });
-            }
-            
-            if (youtubeRadio) {
-                youtubeRadio.addEventListener('change', function() {
-                    console.log('YouTube radio changed');
-                    toggleVideoSections();
-                });
-            }
-            
-            // Label click events (backup)
-            if (fileLabel) {
-                fileLabel.addEventListener('click', function() {
-                    console.log('File label clicked');
-                    setTimeout(toggleVideoSections, 10);
-                });
-            }
-            
-            if (youtubeLabel) {
-                youtubeLabel.addEventListener('click', function() {
-                    console.log('YouTube label clicked');
-                    setTimeout(toggleVideoSections, 10);
-                });
-            }
-        });
-    </script>
+<!-- include summernote css/js -->
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.9.0/dist/summernote.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.9.0/dist/summernote.min.js"></script>
 
 <style>
   /* Move image button to right corner */
