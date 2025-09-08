@@ -28,8 +28,11 @@
       { value: 'Email', title: 'Email' },
     ],
     ai_request: (request, respondWith) => respondWith.string(() => Promise.reject('See docs to implement AI Assistant')),
-    // Image upload configuration
-    images_upload_url: '/user/campaign/upload-image',
+            // Image upload configuration
+            images_upload_url: '/user/campaign/upload-image',
+            relative_urls: false,
+            remove_script_host: false,
+            convert_urls: false,
     images_upload_handler: function (blobInfo, success, failure) {
       var xhr, formData;
       xhr = new XMLHttpRequest();
