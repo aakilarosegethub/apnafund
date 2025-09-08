@@ -153,6 +153,14 @@ class FileManager
             return false;
         }
         
+        // Set the isImage property based on file extension
+        $imageExtensions = ['jpg', 'jpeg', 'png', 'JPG', 'JPEG', 'PNG'];
+        if (in_array($this->file->getClientOriginalExtension(), $imageExtensions)) {
+            $this->isImage = true;
+        } else {
+            $this->isImage = false;
+        }
+        
         try {
             $this->upload();
             return $this->path . '/' . $this->filename;
