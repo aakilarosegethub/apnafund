@@ -11,8 +11,8 @@
 <script>
   tinymce.init({
     selector: 'textarea#gigDescription',
-    height: 600, // Increased height for typing area
-    min_height: 600, // Minimum height
+    height: 800, // Increased height for typing area
+    min_height: 800, // Minimum height
     plugins: [
       // Core editing features
       'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'link', 'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount', 'image', 'mediaembed',
@@ -405,15 +405,15 @@
 <style>
   /* TinyMCE Editor Styling */
   .tox-tinymce {
-    height: 600px !important;
+    height: 800px !important;
   }
   
   .tox-edit-area__iframe {
-    height: 550px !important;
+    height: 750px !important;
   }
   
   .tox-editor-container {
-    height: 600px !important;
+    height: 800px !important;
   }
   
   /* Move image button to right corner */

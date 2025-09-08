@@ -219,8 +219,8 @@
         // Initialize TinyMCE
         tinymce.init({
             selector: 'textarea#gigDescription',
-            height: 600,
-            min_height: 600,
+            height: 800,
+            min_height: 800,
             plugins: [
                 'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'link', 'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount', 'image', 'mediaembed',
                 'checklist', 'mediaembed', 'casechange', 'formatpainter', 'pageembed', 'a11ychecker', 'tinymcespellchecker', 'permanentpen', 'powerpaste', 'advtable', 'advcode', 'advtemplate', 'ai', 'mentions', 'tinycomments', 'tableofcontents', 'footnotes', 'mergetags', 'autocorrect', 'typography', 'inlinecss', 'markdown','importword', 'exportword', 'exportpdf'
@@ -405,5 +405,20 @@
             }
         });
     </script>
+    
+    <style>
+        /* TinyMCE Editor Styling */
+        .tox-tinymce {
+            height: 800px !important;
+        }
+        
+        .tox-edit-area__iframe {
+            height: 750px !important;
+        }
+        
+        .tox-editor-container {
+            height: 800px !important;
+        }
+    </style>
     
 @endsection
