@@ -97,8 +97,10 @@ class FileManager
         //remove the old file if exist
         if ($this->old) $this->removeFile();
 
-        //get the filename
-        $this->filename = $this->getFileName();
+        //get the filename (use provided filename if available, otherwise generate one)
+        if (!$this->filename) {
+            $this->filename = $this->getFileName();
+        }
 
         //upload file or image
         if ($this->isImage) $this->uploadImage();
