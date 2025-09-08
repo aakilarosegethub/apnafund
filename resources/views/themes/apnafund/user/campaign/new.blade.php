@@ -283,7 +283,7 @@
 
 <!-- Quill JS -->
 <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
-<script>
+    <script>
   // Init Quill with custom toolbar container (placed after the editor)
   const quill = new Quill('#editor', {
     theme: 'snow',
@@ -326,7 +326,7 @@
     quill.setSelection(range.index + 1, 0);
   }
 
-  // Function to set editor content in cookie
+  // Function to set editor content in cookie and submit form
   function showEditorContent() {
     if (quill) {
       const editorContent = quill.root.innerHTML;
@@ -339,6 +339,20 @@
       console.log('Editor content set in cookies');
       console.log('HTML Content:', editorContent);
       console.log('Text Content:', textContent);
+      
+      // Also copy content to hidden textarea
+      const textarea = document.getElementById('gigDescription');
+      if (textarea) {
+        textarea.value = editorContent;
+        console.log('Content also copied to textarea');
+      }
+      
+      // Submit the form
+      const form = document.querySelector('form');
+      if (form) {
+        console.log('Submitting form...');
+        form.submit();
+      }
     } else {
       alert('Quill editor not found!');
     }
@@ -396,9 +410,9 @@
       });
     } else {
       console.error('Form not found!');
-    }
-  });
-</script>
+            }
+        });
+    </script>
 
 <style>
   /* TinyMCE Editor Styling */

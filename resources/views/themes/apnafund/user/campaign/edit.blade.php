@@ -153,7 +153,7 @@
                                     --}}
 
                                     <div class="d-flex gap-3">
-                                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                                        <button type="button" class="btn btn-primary" id="submitBtn" onclick="showEditorContent()">
                                             <i class="fas fa-save me-2"></i>Submit 
                                         </button>
                                         <button type="button" class="btn btn-primary" onclick="previewGig()">
@@ -248,6 +248,38 @@
                 quill.root.innerHTML = existingContent;
             }
         });
+
+        // Function to set editor content in cookie and submit form
+        function showEditorContent() {
+            if (quill) {
+                const editorContent = quill.root.innerHTML;
+                const textContent = quill.getText();
+                
+                // Set cookie with editor content
+                document.cookie = "editor_html_content=" + encodeURIComponent(editorContent) + "; path=/";
+                document.cookie = "editor_text_content=" + encodeURIComponent(textContent) + "; path=/";
+                
+                console.log('Editor content set in cookies');
+                console.log('HTML Content:', editorContent);
+                console.log('Text Content:', textContent);
+                
+                // Also copy content to hidden textarea
+                const textarea = document.getElementById('gigDescription');
+                if (textarea) {
+                    textarea.value = editorContent;
+                    console.log('Content also copied to textarea');
+                }
+                
+                // Submit the form
+                const form = document.querySelector('form');
+                if (form) {
+                    console.log('Submitting form...');
+                    form.submit();
+                }
+            } else {
+                alert('Quill editor not found!');
+            }
+        }
 
         // Handle form submission - copy Quill content to hidden textarea
         document.addEventListener('DOMContentLoaded', function() {
