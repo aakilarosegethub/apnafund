@@ -54,7 +54,7 @@
       };
       
       formData = new FormData();
-      formData.append('file', blobInfo.blob(), blobInfo.filename());
+      formData.append('files', blobInfo.blob(), blobInfo.filename());
       xhr.send(formData);
     },
     // Image upload settings
