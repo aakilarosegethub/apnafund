@@ -132,15 +132,6 @@ class FileManager
         }
     }
 
-    /**
-     * Upload the file if this is not an image
-     *
-     * @return void
-     */
-    protected function uploadFile(): void
-    {
-        $this->file->move($this->path, $this->filename);
-    }
 
     /**
      * Public method to upload a file
