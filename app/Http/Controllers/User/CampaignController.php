@@ -114,14 +114,6 @@ class CampaignController extends Controller
         $editorHtmlContent = request()->cookie('editor_html_content');
         $editorTextContent = request()->cookie('editor_text_content');
         
-        // Debug: Show cookie content
-        dd([
-            'POST Data' => $_POST,
-            'Editor HTML Content from Cookie' => $editorHtmlContent,
-            'Editor Text Content from Cookie' => $editorTextContent,
-            'All Cookies' => request()->cookies->all()
-        ]);
-        
         // Debug logging
         \Log::info('Campaign store method called', [
             'request_data' => request()->all(),
@@ -330,11 +322,11 @@ class CampaignController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Campaign successfully created',
-                    'redirect' => route('user.campaign.index')
+                    'redirect' => route('user.campaign.new')
                 ]);
             }
 
-            return to_route('user.campaign.index')->withToasts($toast);
+            return to_route('user.campaign.new')->withToasts($toast);
             
         } catch (\Illuminate\Validation\ValidationException $e) {
             \Log::error('Validation failed', [
@@ -452,14 +444,6 @@ class CampaignController extends Controller
         // Get editor content from cookies
         $editorHtmlContent = request()->cookie('editor_html_content');
         $editorTextContent = request()->cookie('editor_text_content');
-        
-        // Debug: Show cookie content
-        dd([
-            'POST Data' => $_POST,
-            'Editor HTML Content from Cookie' => $editorHtmlContent,
-            'Editor Text Content from Cookie' => $editorTextContent,
-            'All Cookies' => request()->cookies->all()
-        ]);
         
         // Debug logging
         \Log::info('Campaign update method called', [
@@ -632,11 +616,11 @@ class CampaignController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Campaign successfully updated',
-                    'redirect' => route('user.campaign.index')
+                    'redirect' => route('user.campaign.edit', $id)
                 ]);
             }
             
-            return back()->withToasts($toast);
+            return redirect()->route('user.campaign.edit', $id)->withToasts($toast);
             
         } catch (\Illuminate\Validation\ValidationException $e) {
             \Log::error('Validation failed in update', [
