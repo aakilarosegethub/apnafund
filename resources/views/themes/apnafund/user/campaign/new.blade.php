@@ -52,7 +52,7 @@
       
       formData = new FormData();
       formData.append('files', blobInfo.blob(), blobInfo.filename());
-      formData.append('_token', '{{ csrf_token() }}');
+      formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
       xhr.send(formData);
     },
     // File picker for images
@@ -68,7 +68,7 @@
           if (file) {
             var formData = new FormData();
             formData.append('files', file);
-            formData.append('_token', '{{ csrf_token() }}');
+            formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
             
             var xhr = new XMLHttpRequest();
             xhr.open('POST', '/user/campaign/upload-image');
