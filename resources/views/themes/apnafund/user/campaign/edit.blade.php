@@ -241,13 +241,26 @@
             placeholder: 'Describe your gig, its purpose, and how donations will be used...'
         });
 
+        // Load existing content into Quill editor
+        document.addEventListener('DOMContentLoaded', function() {
+            const existingContent = document.getElementById('gigDescription').value;
+            if (existingContent) {
+                quill.root.innerHTML = existingContent;
+            }
+        });
+
         // Handle form submission - copy Quill content to hidden textarea
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.querySelector('form');
             if (form) {
                 form.addEventListener('submit', function(e) {
                     const editorContent = quill.root.innerHTML;
-                    document.getElementById('gigDescription').value = editorContent;
+                    const textarea = document.getElementById('gigDescription');
+                    textarea.value = editorContent;
+                    
+                    // Debug logging
+                    console.log('Form submitted with content:', editorContent);
+                    console.log('Textarea value set to:', textarea.value);
                 });
             }
         });

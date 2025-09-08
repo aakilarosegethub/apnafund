@@ -3,115 +3,60 @@
     $activeThemeTrue = 'themes.apnafund.';
 @endphp
 @extends($activeTheme . 'layouts.dashboard')
-@section('frontend')
-<!-- Place the first <script> tag in your HTML's <head> -->
-<script src="https://cdn.tiny.cloud/1/tbbnzs0lggltrfknci0wuhmwxhod5797lrzvw9epadovnya5/tinymce/8/tinymce.min.js" referrerpolicy="origin" crossorigin="anonymous"></script>
+@section('style')
+<link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet" />
 
-<!-- Place the following <script> and <textarea> tags your HTML's <body> -->
-<script>
-  tinymce.init({
-    selector: 'textarea#gigDescription',
-    height: 800, // Increased height for typing area
-    min_height: 800, // Minimum height
-    plugins: [
-      // Core editing features
-      'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'link', 'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount', 'image', 'mediaembed',
-      // Your account includes a free trial of TinyMCE premium features
-      // Try the most popular premium features until Sep 19, 2025:
-      'checklist', 'mediaembed', 'casechange', 'formatpainter', 'pageembed', 'a11ychecker', 'tinymcespellchecker', 'permanentpen', 'powerpaste', 'advtable', 'advcode', 'advtemplate', 'ai', 'mentions', 'tinycomments', 'tableofcontents', 'footnotes', 'mergetags', 'autocorrect', 'typography', 'inlinecss', 'markdown','importword', 'exportword', 'exportpdf'
-    ],
-    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | image | media | link table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
-    tinycomments_mode: 'embedded',
-    tinycomments_author: 'Author name',
-    mergetags_list: [
-      { value: 'First.Name', title: 'First Name' },
-      { value: 'Email', title: 'Email' },
-    ],
-    ai_request: (request, respondWith) => respondWith.string(() => Promise.reject('See docs to implement AI Assistant')),
-    // Image upload configuration
-    images_upload_url: '/user/campaign/upload-image',
-    images_upload_handler: function (blobInfo, success, failure) {
-      var xhr, formData;
-      xhr = new XMLHttpRequest();
-      xhr.withCredentials = false;
-      xhr.open('POST', '/user/campaign/upload-image');
-      
-      xhr.onload = function() {
-        var json;
-        if (xhr.status != 200) {
-          failure('HTTP Error: ' + xhr.status);
-          return;
-        }
-        json = JSON.parse(xhr.responseText);
-        if (!json || typeof json.location != 'string') {
-          failure('Invalid JSON: ' + xhr.responseText);
-          return;
-        }
-        success(json.location);
-      };
-      
-      formData = new FormData();
-      formData.append('files', blobInfo.blob(), blobInfo.filename());
-      formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
-      xhr.send(formData);
-    },
-            // File picker for images
-            file_picker_types: 'image',
-            file_picker_callback: function (callback, value, meta) {
-                if (meta.filetype == 'image') {
-                    var input = document.createElement('input');
-                    input.setAttribute('type', 'file');
-                    input.setAttribute('accept', 'image/*');
-                    
-                    input.onchange = function () {
-                        var file = this.files[0];
-                        if (file) {
-                            var formData = new FormData();
-                            formData.append('files', file);
-                            formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
-                            
-                            var xhr = new XMLHttpRequest();
-                            xhr.open('POST', '/user/campaign/upload-image');
-                            xhr.onload = function() {
-                                if (xhr.status === 200) {
-                                    try {
-                                        var response = JSON.parse(xhr.responseText);
-                                        if (response.location) {
-                                            callback(response.location, { title: file.name });
-                                        } else {
-                                            alert('Upload failed: Invalid response');
-                                        }
-                                    } catch (e) {
-                                        alert('Upload failed: Invalid JSON response');
-                                    }
-                                } else {
-                                    alert('Upload failed: ' + xhr.status);
-                                }
-                            };
-                            xhr.onerror = function() {
-                                alert('Upload failed: Network error');
-                            };
-                            xhr.send(formData);
-                        }
-                    };
-                    input.click();
-                }
-            },
-    // Media/Video configuration
-    media_live_embeds: true,
-    media_url_resolver: function (data, resolve) {
-      if (data.url.indexOf('youtube.com') !== -1 || data.url.indexOf('youtu.be') !== -1) {
-        var embedHtml = '<iframe src="' + data.url + '" width="560" height="315" frameborder="0" allowfullscreen></iframe>';
-        resolve({ html: embedHtml });
-      } else if (data.url.indexOf('vimeo.com') !== -1) {
-        var embedHtml = '<iframe src="' + data.url + '" width="560" height="315" frameborder="0" allowfullscreen></iframe>';
-        resolve({ html: embedHtml });
-      } else {
-        resolve({ html: '' });
-      }
+  <style>
+    :root { --radius: 24px; --border:#e6e6e6; }
+    body{
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Inter, Arial, sans-serif;
+      background:#fff;
+      color:#111;
+      padding:48px 20px;
+      line-height:1.4;
     }
-  });
-</script>
+    .wrap{max-width:1000px;margin:0 auto;}
+    h1{font-size:44px;margin:0 0 20px 0;letter-spacing:-.3px}
+    .editor-shell{
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      overflow:hidden;
+      box-shadow:0 1px 0 rgba(0,0,0,.02);
+    }
+    /* Editor */
+    #editor{
+      background:#fff;
+    }
+    .ql-container.ql-snow{border:none;}
+    .ql-editor{
+      font-size:22px;
+      color:#404040;
+    }
+    .ql-editor.ql-blank::before{
+      color:#9aa0a6; /* placeholder color */
+      left:32px; right:32px;
+    }
+    /* Toolbar placed at the bottom */
+    .ql-toolbar{
+      border-top:1px solid var(--border) !important;
+      border-bottom:none !important;
+      padding:10px 16px !important;
+      display:flex; gap:8px; justify-content:flex-start;
+      background:#fff;
+    }
+    .ql-snow .ql-picker, .ql-snow .ql-stroke{color:#111;stroke:#111}
+    .ql-snow .ql-fill{fill:#111}
+    .ql-snow .ql-active .ql-stroke{stroke:#0f8e6f}
+    .ql-snow .ql-active .ql-fill{fill:#0f8e6f}
+    /* Make buttons a bit larger, like the screenshot */
+    .ql-toolbar button{
+      width:36px;height:36px;border-radius:10px;
+    }
+    .hidden-input{ display:none; }
+  </style>
+@endsection
+@section('frontend')
+
                 <div class="tab-pane fade active show" id="create" role="tabpanel">
                     <div class="row">
                         <div class="col-lg-8">
@@ -145,9 +90,27 @@
                                     <div class="form-group">
                                         <label for="gigDescription" class="form-label">Description *</label>
                                         <div id="editor" style="height: 400px;">
-                                            @php echo old('description') @endphp
+                                            
                                         </div>
-                                        <textarea id="gigDescription" name="description" style="display: none;"></textarea>
+                                        <div class="editor-shell">
+      <!-- The editor -->
+      <div id="editor" placeholder="Hi, my name is Jane and I’m fundraising for…"></div>
+
+      <!-- Toolbar at the bottom -->
+      <div id="toolbar">
+        <span class="ql-formats">
+          <button class="ql-image"></button>
+          <button class="ql-video"></button>
+        </span>
+        <span class="ql-formats">
+          <button class="ql-bold"></button>
+          <button class="ql-italic"></button>
+          <button class="ql-link"></button>
+          <button class="ql-list" value="bullet"></button>
+          <button class="ql-list" value="ordered"></button>
+        </span>
+      </div>
+    </div>
                                     </div>
 
                                     <!-- Main Campaign Image -->
@@ -316,175 +279,70 @@
 
 
 @section('page-script')
-    <script>
-        // Initialize Quill editor
-        const quill = new Quill('#editor', {
-            theme: 'snow',
-            modules: {
-                toolbar: [
-                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-                    ['bold', 'italic', 'underline', 'strike'],
-                    [{ 'color': [] }, { 'background': [] }],
-                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                    [{ 'indent': '-1'}, { 'indent': '+1' }],
-                    [{ 'align': [] }],
-                    ['link', 'image', 'video'],
-                    ['blockquote', 'code-block'],
-                    ['clean']
-                ]
-            },
-            placeholder: 'Describe your gig, its purpose, and how donations will be used...'
-        });
+    <!-- Hidden file input for custom image handler -->
+  <input type="file" id="imageInput" accept="image/*" class="hidden-input" />
 
-        // Handle form submission - copy Quill content to hidden textarea
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.querySelector('form');
-            if (form) {
-                form.addEventListener('submit', function(e) {
-                    const editorContent = quill.root.innerHTML;
-                    document.getElementById('gigDescription').value = editorContent;
-                });
-            }
-        });
-
-        // Image upload handler for Quill
-        const toolbar = quill.getModule('toolbar');
-        toolbar.addHandler('image', function() {
-            const input = document.createElement('input');
-            input.setAttribute('type', 'file');
-            input.setAttribute('accept', 'image/*');
-            input.click();
-
-            input.onchange = function() {
-                const file = input.files[0];
-                if (file) {
-                    const formData = new FormData();
-                    formData.append('files', file);
-                    formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
-
-                    const xhr = new XMLHttpRequest();
-                    xhr.open('POST', '/user/campaign/upload-image');
-                    xhr.onload = function() {
-                        if (xhr.status === 200) {
-                            try {
-                                const response = JSON.parse(xhr.responseText);
-                                if (response.location) {
-                                    const range = quill.getSelection();
-                                    quill.insertEmbed(range.index, 'image', response.location);
-                                } else {
-                                    alert('Upload failed: Invalid response');
-                                }
-                            } catch (e) {
-                                alert('Upload failed: Invalid JSON response');
-                            }
-                        } else {
-                            alert('Upload failed: ' + xhr.status);
-                        }
-                    };
-                    xhr.onerror = function() {
-                        alert('Upload failed: Network error');
-                    };
-                    xhr.send(formData);
-                }
-            };
-        });
-
-        // Handle video type selection
-        function toggleVideoSections() {
-            console.log('toggleVideoSections called');
-            const fileRadio = document.getElementById('video_file_new');
-            const youtubeRadio = document.getElementById('video_youtube_new');
-            const fileSection = document.getElementById('file_upload_section_new');
-            const youtubeSection = document.getElementById('youtube_url_section_new');
-
-            console.log('Elements found:', {
-                fileRadio: !!fileRadio,
-                youtubeRadio: !!youtubeRadio,
-                fileSection: !!fileSection,
-                youtubeSection: !!youtubeSection
-            });
-
-            if (fileRadio && fileRadio.checked) {
-                console.log('File radio checked');
-                if (fileSection) fileSection.style.display = 'block';
-                if (youtubeSection) youtubeSection.style.display = 'none';
-            } else if (youtubeRadio && youtubeRadio.checked) {
-                console.log('YouTube radio checked');
-                if (fileSection) fileSection.style.display = 'none';
-                if (youtubeSection) youtubeSection.style.display = 'block';
-            }
+<!-- Quill JS -->
+<script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
+<script>
+  // Init Quill with custom toolbar container (placed after the editor)
+  const quill = new Quill('#editor', {
+    theme: 'snow',
+    placeholder: 'Hi, my name is Jane and I’m fundraising for…',
+    modules: {
+      toolbar: {
+        container: '#toolbar',
+        handlers: {
+          image: customImageHandler,
+          video: customVideoHandler
         }
+      }
+    }
+  });
 
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, initializing video toggle');
-            
-            // Set initial state (file upload is selected by default)
-            toggleVideoSections();
-            
-            // Add event listeners for both radio buttons and labels
-            const fileRadio = document.getElementById('video_file_new');
-            const youtubeRadio = document.getElementById('video_youtube_new');
-            const fileLabel = document.querySelector('label[for="video_file_new"]');
-            const youtubeLabel = document.querySelector('label[for="video_youtube_new"]');
-            
-            // Radio button change events
-            if (fileRadio) {
-                fileRadio.addEventListener('change', function() {
-                    console.log('File radio changed');
-                    toggleVideoSections();
-                });
-            }
-            
-            if (youtubeRadio) {
-                youtubeRadio.addEventListener('change', function() {
-                    console.log('YouTube radio changed');
-                    toggleVideoSections();
-                });
-            }
-            
-            // Label click events (backup)
-            if (fileLabel) {
-                fileLabel.addEventListener('click', function() {
-                    console.log('File label clicked');
-                    setTimeout(toggleVideoSections, 10);
-                });
-            }
-            
-            if (youtubeLabel) {
-                youtubeLabel.addEventListener('click', function() {
-                    console.log('YouTube label clicked');
-                    setTimeout(toggleVideoSections, 10);
-                });
-            }
-        });
+  // === Image handler (local file -> base64 embed) ===
+  function customImageHandler() {
+    const fileInput = document.getElementById('imageInput');
+    fileInput.value = '';
+    fileInput.click();
+    fileInput.onchange = () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const range = quill.getSelection(true);
+        quill.insertEmbed(range.index, 'image', e.target.result, 'user');
+        quill.setSelection(range.index + 1, 0);
+      };
+      reader.readAsDataURL(file);
+    };
+  }
 
-        // Preview functionality
-        function previewGig() {
-            const title = document.getElementById('gigTitle').value || 'Your Gig Title';
-            
-            // Get description from Quill editor
-            let description = 'Your gig description will appear here...';
-            if (typeof quill !== 'undefined') {
-                description = quill.getText() || 'Your gig description will appear here...';
-            } else {
-                description = document.getElementById('gigDescription').value || 'Your gig description will appear here...';
-            }
-            
-            const categorySelect = document.getElementById('gigCategory');
-            const category = categorySelect ? categorySelect.options[categorySelect.selectedIndex].text : 'Category';
-            const amount = document.getElementById('targetAmount').value || '0';
-            const currencySymbol = '{{ $setting->cur_sym }}';
-            
-            const previewCard = document.querySelector('#gigPreview .preview-card');
-            if (previewCard) {
-                previewCard.querySelector('.preview-title').textContent = title;
-                previewCard.querySelector('.preview-description').textContent = description;
-                previewCard.querySelector('.preview-category').textContent = category;
-                previewCard.querySelector('.preview-amount').textContent = currencySymbol + parseFloat(amount).toLocaleString();
-            }
-        }
-    </script>
+  // === Video handler (prompt for URL; Quill will embed iframe for YouTube/Vimeo) ===
+  function customVideoHandler() {
+    const url = prompt('Paste video URL (YouTube, Vimeo, MP4, etc.)');
+    if (!url) return;
+    const range = quill.getSelection(true);
+    quill.insertEmbed(range.index, 'video', url, 'user');
+    quill.setSelection(range.index + 1, 0);
+  }
+
+  // Handle form submission - copy Quill content to hidden textarea
+  document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    if (form) {
+      form.addEventListener('submit', function(e) {
+        const editorContent = quill.root.innerHTML;
+        const textarea = document.getElementById('gigDescription');
+        textarea.value = editorContent;
+        
+        // Debug logging
+        console.log('Form submitted with content:', editorContent);
+        console.log('Textarea value set to:', textarea.value);
+      });
+    }
+  });
+</script>
 
 <style>
   /* TinyMCE Editor Styling */
