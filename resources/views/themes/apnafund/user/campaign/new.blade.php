@@ -15,12 +15,12 @@
     min_height: 600, // Minimum height
     plugins: [
       // Core editing features
-      'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'link', 'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount',
+      'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'link', 'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount', 'image', 'mediaembed',
       // Your account includes a free trial of TinyMCE premium features
       // Try the most popular premium features until Sep 19, 2025:
       'checklist', 'mediaembed', 'casechange', 'formatpainter', 'pageembed', 'a11ychecker', 'tinymcespellchecker', 'permanentpen', 'powerpaste', 'advtable', 'advcode', 'advtemplate', 'ai', 'uploadcare', 'mentions', 'tinycomments', 'tableofcontents', 'footnotes', 'mergetags', 'autocorrect', 'typography', 'inlinecss', 'markdown','importword', 'exportword', 'exportpdf'
     ],
-    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography uploadcare | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
+    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | image | media | link table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography uploadcare | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
     tinycomments_mode: 'embedded',
     tinycomments_author: 'Author name',
     mergetags_list: [
@@ -29,6 +29,68 @@
     ],
     ai_request: (request, respondWith) => respondWith.string(() => Promise.reject('See docs to implement AI Assistant')),
     uploadcare_public_key: 'c164087b8687b1fe3294',
+    // Image upload configuration
+    images_upload_url: '/upload-image', // Laravel route for image upload
+    images_upload_handler: function (blobInfo, success, failure) {
+      var xhr, formData;
+      xhr = new XMLHttpRequest();
+      xhr.withCredentials = false;
+      xhr.open('POST', '/upload-image');
+      
+      xhr.onload = function() {
+        var json;
+        if (xhr.status != 200) {
+          failure('HTTP Error: ' + xhr.status);
+          return;
+        }
+        json = JSON.parse(xhr.responseText);
+        if (!json || typeof json.location != 'string') {
+          failure('Invalid JSON: ' + xhr.responseText);
+          return;
+        }
+        success(json.location);
+      };
+      
+      formData = new FormData();
+      formData.append('file', blobInfo.blob(), blobInfo.filename());
+      xhr.send(formData);
+    },
+    // Image upload settings
+    automatic_uploads: true,
+    file_picker_types: 'image',
+    file_picker_callback: function (cb, value, meta) {
+      var input = document.createElement('input');
+      input.setAttribute('type', 'file');
+      input.setAttribute('accept', 'image/*');
+      
+      input.onchange = function () {
+        var file = this.files[0];
+        var reader = new FileReader();
+        reader.onload = function () {
+          var id = 'blobid' + (new Date()).getTime();
+          var blobCache = tinymce.activeEditor.editorUpload.blobCache;
+          var base64 = reader.result.split(',')[1];
+          var blobInfo = blobCache.create(id, file, base64);
+          blobCache.add(blobInfo);
+          cb(blobInfo.blobUri(), { title: file.name });
+        };
+        reader.readAsDataURL(file);
+      };
+      input.click();
+    },
+    // Media/Video configuration
+    media_live_embeds: true,
+    media_url_resolver: function (data, resolve) {
+      if (data.url.indexOf('youtube.com') !== -1 || data.url.indexOf('youtu.be') !== -1) {
+        var embedHtml = '<iframe src="' + data.url + '" width="560" height="315" frameborder="0" allowfullscreen></iframe>';
+        resolve({ html: embedHtml });
+      } else if (data.url.indexOf('vimeo.com') !== -1) {
+        var embedHtml = '<iframe src="' + data.url + '" width="560" height="315" frameborder="0" allowfullscreen></iframe>';
+        resolve({ html: embedHtml });
+      } else {
+        resolve({ html: '' });
+      }
+    }
   });
 </script>
                 <div class="tab-pane fade active show" id="create" role="tabpanel">
