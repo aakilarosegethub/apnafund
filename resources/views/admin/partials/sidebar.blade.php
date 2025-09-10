@@ -370,6 +370,12 @@
                                 <i class="ti ti-code me-2"></i>@lang('Custom Code')
                             </a>
                         </li>
+                        <li class="sidebar-dropdown-item">
+                            <a href="{{ route('admin.report.fundraiser') }}"
+                               class="sidebar-link {{ navigationActive('admin.report*', 1) }}">
+                                <i class="ti ti-flag me-2"></i>@lang('Report Fundraiser')
+                            </a>
+                        </li>
                 @php $lastSegment =  collect(request()->segments())->last(); @endphp
 
                 @foreach(getPageSections(true) as $key => $section)

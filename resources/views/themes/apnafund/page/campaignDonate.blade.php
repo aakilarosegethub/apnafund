@@ -51,11 +51,6 @@
             text-align: center;
         }
 
-        .logo-img {
-            height: 35px;
-            width: auto;
-        }
-
         .signin-link {
             color: #fff;
             text-decoration: none;
@@ -734,7 +729,6 @@
                 </div>
                 <div class="fundraiser-details">
                 <h3>@lang('You\'re supporting') <strong>{{ $campaignData->name }}</strong></h3>
-                <p class="campaign-description">{{ strLimit($campaignData->description, 100) }}</p>
                                         </div>
                                     </div>
                                     
@@ -1025,10 +1019,7 @@
             text-align: center;
         }
 
-        .logo-img {
-            height: 35px;
-            width: auto;
-        }
+
 
         .signin-link {
             color: #fff;

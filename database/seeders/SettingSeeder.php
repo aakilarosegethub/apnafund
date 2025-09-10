@@ -21,7 +21,7 @@ class SettingSeeder extends Seeder
                 'site_logo' => null,
                 'site_favicon' => null,
                 'site_description' => 'Crowdfunding Platform',
-                'site_email' => 'admin@apnafund.com',
+                'site_email' => 'admin@apnacrowdfunding.com',
                 'site_phone' => '+1234567890',
                 'site_address' => 'Your Address Here',
                 'site_maintenance' => '0',

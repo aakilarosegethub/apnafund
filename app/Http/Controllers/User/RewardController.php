@@ -111,6 +111,25 @@ class RewardController extends Controller
 
         $reward = $campaign->rewards()->findOrFail($rewardId);
 
+        // Return JSON for AJAX requests
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'reward' => [
+                    'id' => $reward->id,
+                    'title' => $reward->title,
+                    'description' => $reward->description,
+                    'minimum_amount' => $reward->minimum_amount,
+                    'quantity' => $reward->quantity,
+                    'type' => $reward->type,
+                    'color_theme' => $reward->color_theme,
+                    'terms_conditions' => $reward->terms_conditions,
+                    'image' => $reward->image,
+                    'image_url' => $reward->image_url
+                ]
+            ]);
+        }
+
         $pageTitle = 'Edit Reward';
         
         return view($this->activeTheme . 'user.reward.edit', compact('pageTitle', 'campaign', 'reward'));
@@ -127,16 +146,27 @@ class RewardController extends Controller
 
         $reward = $campaign->rewards()->findOrFail($rewardId);
 
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string|min:10',
-            'minimum_amount' => 'required|numeric|min:1',
-            'quantity' => 'nullable|integer|min:1',
-            'type' => 'required|in:digital,physical',
-            'color_theme' => 'required|string',
-            'terms_conditions' => 'nullable|string',
-            'image' => ['nullable', File::types(['png', 'jpg', 'jpeg'])->max(2048)],
-        ]);
+        try {
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'description' => 'required|string|min:10',
+                'minimum_amount' => 'required|numeric|min:1',
+                'quantity' => 'nullable|integer|min:1',
+                'type' => 'required|in:digital,physical',
+                'color_theme' => 'required|string',
+                'terms_conditions' => 'nullable|string',
+                'image' => ['nullable', File::types(['png', 'jpg', 'jpeg'])->max(2048)],
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            throw $e;
+        }
 
         $reward->title = $request->title;
         $reward->description = $request->description;
@@ -151,6 +181,15 @@ class RewardController extends Controller
         }
 
         $reward->save();
+
+        // Check if request is AJAX
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Reward updated successfully',
+                'reward' => $reward
+            ]);
+        }
 
         $toast[] = ['success', 'Reward updated successfully'];
         return redirect()->route('user.rewards.index', $campaign->slug)->withToasts($toast);
@@ -167,6 +206,14 @@ class RewardController extends Controller
 
         $reward = $campaign->rewards()->findOrFail($rewardId);
         $reward->delete();
+
+        // Check if request is AJAX
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Reward deleted successfully'
+            ]);
+        }
 
         $toast[] = ['success', 'Reward deleted successfully'];
         return back()->withToasts($toast);

@@ -571,7 +571,7 @@ function ordinal($number): string {
     else return $number . $ends[$number % 10];
 }
 
-function donationPercentage($goalAmount, $raisedAmount): int {
+function contributionPercentage($goalAmount, $raisedAmount): int {
     return (int) (($raisedAmount / $goalAmount) * 100);
 }
 
@@ -657,7 +657,7 @@ function getRecentActivities(): array {
         [
             'type' => 'donation',
             'icon' => 'fas fa-sparkles',
-            'title' => __('New donation received'),
+            'title' => __('New contribution received'),
             'description' => '$50 for "Local Food Bank Support"',
             'color' => 'text-success'
         ],
@@ -745,7 +745,7 @@ function getDashboardNavigation(): array {
         ],
         [
             'id' => 'rewards',
-            'title' => __('Donations'),
+            'title' => __('Contributions'),
             'icon' => 'fas fa-heart',
             'route' => 'user.donation.history'
         ],
@@ -766,7 +766,7 @@ function getNotificationTypes(): array {
         ],
         'donation_received' => [
             'icon' => 'fas fa-donation',
-            'title' => __('Donation received')
+            'title' => __('Contribution received')
         ],
         'new_follower' => [
             'icon' => 'fas fa-user-plus',
@@ -795,7 +795,7 @@ function getUserMenuItems(): array {
         [
             'route' => 'user.donation.history',
             'icon' => 'fas fa-heart',
-            'title' => __('My Donations')
+            'title' => __('My Contributions')
         ],
         [
             'route' => 'user.change.password',
@@ -1123,4 +1123,18 @@ function getPhonePlaceholder($countryCode) {
     ];
     
     return $placeholders[$countryCode] ?? 'e.g., +1234567890';
+}
+
+/**
+ * Calculate donation percentage based on goal amount and raised amount
+ */
+function donationPercentage($goalAmount, $raisedAmount) {
+    if (!$goalAmount || $goalAmount <= 0) {
+        return 0;
+    }
+    
+    $percentage = ($raisedAmount / $goalAmount) * 100;
+    
+    // Cap at 100% to avoid showing more than 100%
+    return min(round($percentage, 2), 100);
 }

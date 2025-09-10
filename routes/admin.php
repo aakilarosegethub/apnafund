@@ -274,4 +274,10 @@ Route::controller('YouTubeController')->prefix('youtube')->name('youtube.')->gro
     Route::get('/callback', 'callback')->name('callback');
     Route::get('/test', 'testUpload')->name('test');
 });
+
+// Report Fundraiser Management
+Route::controller('ReportFundraiserController')->prefix('report')->name('report.')->group(function() {
+    Route::get('/fundraiser', 'index')->name('fundraiser');
+    Route::post('/fundraiser', 'update');
+});
 });

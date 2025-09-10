@@ -1,7 +1,7 @@
 @php
     $activeTheme = 'themes.apnafund.';
     $activeThemeTrue = 'themes.apnafund.';
-    $percentage = donationPercentage($campaign->goal_amount, $campaign->raised_amount);
+    $percentage = contributionPercentage($campaign->goal_amount, $campaign->raised_amount);
     
     // Format address as comma-separated string
     $userAddress = '';
@@ -17,6 +17,19 @@
 @extends($activeTheme . 'layouts.dashboard')
 
 @section('frontend')
+@php
+            $goalAmount = @$campaignData->goal_amount ?? 0;
+            $raisedAmount = @$campaignData->raised_amount ?? 0;
+            
+            // If raised_amount is 0, try to calculate from deposits
+            if ($raisedAmount == 0) {
+                $raisedAmount = $campaignData->deposits()
+                    ->where('status', \App\Constants\ManageStatus::PAYMENT_SUCCESS)
+                    ->sum('amount');
+            }
+            
+            $percentage = donationPercentage($goalAmount, $raisedAmount);
+        @endphp
 <style>
         body {
             background: #ffffff;
@@ -165,9 +178,152 @@
         }
 
         .donation-details__desc {
-            color: #666;
-            line-height: 1.6;
+            color: hsl(var(--body-color));
+            line-height: 1.8;
             font-size: 1rem;
+            font-family: var(--body-font);
+            margin-bottom: 20px;
+        }
+
+        /* Content styling within description */
+        .donation-details__desc h1,
+        .donation-details__desc h2,
+        .donation-details__desc h3,
+        .donation-details__desc h4,
+        .donation-details__desc h5,
+        .donation-details__desc h6 {
+            color: hsl(var(--heading-color));
+            font-family: var(--heading-font);
+            font-weight: 600;
+            margin: 25px 0 15px 0;
+            line-height: 1.4;
+        }
+
+        .donation-details__desc h1 { font-size: 2rem; }
+        .donation-details__desc h2 { font-size: 1.75rem; }
+        .donation-details__desc h3 { font-size: 1.5rem; }
+        .donation-details__desc h4 { font-size: 1.25rem; }
+        .donation-details__desc h5 { font-size: 1.1rem; }
+        .donation-details__desc h6 { font-size: 1rem; }
+
+        .donation-details__desc p {
+            margin-bottom: 15px;
+            color: hsl(var(--body-color));
+        }
+
+        .donation-details__desc img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: var(--box-shadow);
+            margin: 20px 0;
+            display: block;
+        }
+
+        .donation-details__desc ul,
+        .donation-details__desc ol {
+            margin: 15px 0;
+            padding-left: 30px;
+            color: hsl(var(--body-color));
+        }
+
+        .donation-details__desc li {
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        .donation-details__desc ul li {
+            list-style-type: disc;
+        }
+
+        .donation-details__desc ol li {
+            list-style-type: decimal;
+        }
+
+        .donation-details__desc blockquote {
+            border-left: 4px solid hsl(var(--base));
+            background: hsl(var(--section-bg));
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+            font-style: italic;
+            color: hsl(var(--body-color));
+        }
+
+        .donation-details__desc a {
+            color: hsl(var(--base));
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .donation-details__desc a:hover {
+            color: hsl(var(--base-d-200));
+            text-decoration: underline;
+        }
+
+        .donation-details__desc strong,
+        .donation-details__desc b {
+            font-weight: 600;
+            color: hsl(var(--heading-color));
+        }
+
+        .donation-details__desc em,
+        .donation-details__desc i {
+            font-style: italic;
+        }
+
+        .donation-details__desc code {
+            background: hsl(var(--section-bg));
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: hsl(var(--base-d-400));
+        }
+
+        .donation-details__desc pre {
+            background: hsl(var(--section-bg));
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+            border: 1px solid hsl(var(--border-color));
+        }
+
+        .donation-details__desc pre code {
+            background: none;
+            padding: 0;
+            color: hsl(var(--body-color));
+        }
+
+        .donation-details__desc table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: hsl(var(--white));
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--box-shadow);
+        }
+
+        .donation-details__desc th,
+        .donation-details__desc td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid hsl(var(--border-color));
+        }
+
+        .donation-details__desc th {
+            background: hsl(var(--base) / 0.1);
+            font-weight: 600;
+            color: hsl(var(--heading-color));
+        }
+
+        .donation-details__desc hr {
+            border: none;
+            height: 1px;
+            background: hsl(var(--border-color));
+            margin: 30px 0;
         }
 
         /* Engagement */
@@ -816,7 +972,7 @@
             </div>
             <div class="donation-protected">
                 <i class="fas fa-shield-alt"></i>
-                Donation protected
+                Contribution protected
             </div>
         </div>
 
@@ -824,7 +980,7 @@
         <div class="fundraiser-description">
             <h2 class="donation-details__title">{{ __(@$campaign->name) }}</h2>
             <div class="donation-details__desc">
-                @php echo @$campaign->description @endphp
+                {!! $campaign->description !!}
             </div>
         </div>
 
@@ -934,7 +1090,7 @@
                 </div>
                 <div class="stat-item">
                     <span class="stat-number">{{ @$campaign->user->deposits->count() }}</span>
-                    <span class="stat-label">Donations</span>
+                    <span class="stat-label">Contributions</span>
                 </div>
                 <div class="stat-item">
                     <span class="stat-number">{{ @$campaign->user->comments->count() }}</span>
@@ -1061,82 +1217,98 @@
 
     <!-- Sidebar -->
     <div class="fundraiser-sidebar">
-        <!-- Progress Card -->
-        <div class="sidebar-card mt-5">
-            <div class="progress-section">
-                <div class="progress-text">
-                    <h3 class="progress-title">{{ $setting->cur_sym . showAmount(@$campaign->raised_amount) }} raised</h3>
-                    <div class="progress-subtitle align-items-center">
-                        <span>{{ $percentage . '%' }} of goal</span>
-                        <span>{{ showAmount(@$campaign->goal_amount).$setting->cur_sym }} goal</span>
-                    </div>
-                </div>
-                <div class="progress-circle">
-                    <svg viewBox="0 0 100 100">
-                        <circle class="progress-circle-bg" cx="50" cy="50" r="45"></circle>
-                        <circle class="progress-circle-fill" cx="50" cy="50" r="45" 
-                                style="stroke-dashoffset: {{ 226 - (226 * $percentage / 100) }}"></circle>
-                    </svg>
-                    <span class="progress-percentage">{{ $percentage . '%' }}</span>
-                </div>
-            </div>
-
-            <div class="action-buttons">
-                <a href="#" class="btn-share-card" onclick="shareCampaign()">Share</a>
-                <a href="{{ route('campaign.donate', $campaign->slug) }}" class="btn-donate-card">Donate now</a>
-            </div>
-
-            <div class="donation-stats">
-                <i class="fas fa-chart-line"></i>
-                <span>{{ @$campaign->deposits->count() }} people just donated</span>
-            </div>
-
-            <div class="recent-donations">
-                @if(@$campaign->deposits && count(@$campaign->deposits) > 0)
-                    @foreach(@$campaign->deposits->take(2) as $deposit)
-                    <div class="donation-item">
-                        <div class="donation-info">
-                            <i class="fas fa-heart" style="color: #666; font-size: 0.9rem;"></i>
-                            <div class="donation-details">
-                                <span class="donation-name">{{ $deposit->full_name ?? 'Anonymous' }}</span>
-                                <span class="donation-amount">{{ $setting->cur_sym }}{{ showAmount($deposit->amount) }}</span>
-                            </div>
+            <!-- Progress Card -->
+            <div class="sidebar-card mt-5">
+                <div class="progress-section">
+                    <div class="progress-text">
+                        <h3 class="progress-title">{{ $setting->cur_sym . showAmount($raisedAmount) }} raised</h3>
+                        <div class="progress-subtitle align-items-center">
+                            <span>{{ $percentage . '%' }} of goal</span>
+                            <span>{{ showAmount($goalAmount).$setting->cur_sym }} goal</span>
                         </div>
-                        <span class="donation-type">{{ $loop->first ? 'Recent donation' : 'Top donation' }}</span>
                     </div>
-                    @endforeach
-                @else
-                    <div class="donation-item">
-                        <div class="donation-info">
-                            <i class="fas fa-heart" style="color: #666; font-size: 0.9rem;"></i>
-                            <div class="donation-details">
-                                <span class="donation-name">No donations yet</span>
-                                <span class="donation-amount">$0</span>
-                            </div>
-                        </div>
-                        <span class="donation-type">Be the first!</span>
+                    <div class="progress-circle">
+                        <svg viewBox="0 0 100 100" class="progress-ring">
+                            <circle class="progress-ring-bg" cx="50" cy="50" r="40" stroke-width="8" fill="none" stroke="#e8e8e8"/>
+                            <circle 
+                                class="progress-ring-fill" 
+                                cx="50" cy="50" r="40" 
+                                stroke-width="8" 
+                                fill="none" 
+                                stroke="#05ce78" 
+                                stroke-linecap="round" 
+                                stroke-dasharray="251.2" 
+                                stroke-dashoffset="{{ 251.2 - (251.2 * floatval($percentage) / 100) }}"
+                            />
+                        </svg>
+                        <span class="progress-percentage">{{ $percentage . '%' }}</span>
                     </div>
-                @endif
-                
-                <div class="donation-actions">
-                    <a href="#" class="donation-action-btn">See all</a>
-                    <a href="#" class="donation-action-btn">
-                        <i class="fas fa-star"></i>
-                        See top
-                    </a>
                 </div>
+
+                <div class="action-buttons">
+                    <a href="#" class="btn-share-card" onclick="openShareModal()">Share</a>
+                    <a href="{{ route('campaign.donate', $campaignData->slug) }}" class="btn-donate-card">Contribute now</a>
+                </div>
+
+                <div class="donation-stats">
+                    <i class="fas fa-chart-line"></i>
+                    <span>{{ $donations->count() }} people just donated</span>
+                </div>
+
+                <div class="recent-donations">
+                    @forelse ($donations as $donation)
+                        <div class="donation-item">
+                            <div class="donation-info">
+                                <i class="fas fa-heart" style="color: #666; font-size: 0.9rem;"></i>
+                                <div class="donation-details">
+                                    <span class="donation-name">{{ __($donation->donorName) }}</span>
+                                    <span class="donation-amount">{{ $setting->cur_sym . showAmount($donation->amount) }}</span>
+                                </div>
+                            </div>
+                            <span class="donation-type">
+                                @if($loop->first)
+                                    Recent donation
+                                @elseif($donation->amount == $donations->max('amount'))
+                                    Top donation
+                                @else
+                                    {{ diffForHumans($donation->created_at) }}
+                                @endif
+                            </span>
+                        </div>
+                    @empty
+                        <div class="donation-item">
+                            <div class="donation-info">
+                                <i class="fas fa-heart" style="color: #666; font-size: 0.9rem;"></i>
+                                <div class="donation-details">
+                                    <span class="donation-name">No donations yet</span>
+                                    <span class="donation-amount">Be the first!</span>
+                                </div>
+                            </div>
+                            <span class="donation-type">Start donating</span>
+                        </div>
+                    @endforelse
+                    
+                    @if($donations->count() > 0)
+                        <div class="donation-actions">
+                            <button class="donation-action-btn" id="showAllDonations">See all</button>
+                            <button class="donation-action-btn" id="showTopDonations">
+                                <i class="fas fa-star"></i>
+                                See top
+                            </button>
+                        </div>
+                    @endif
+                </div>
+            </div>
+            
+            <!-- Latest News Link -->
+            <div class="news-link-container mt-4">
+                <a href="#" class="news-link" id="newsLink">
+                    <i class="fas fa-newspaper"></i>
+                    <span>Latest News & Updates</span>
+                    <i class="fas fa-chevron-right"></i>
+                </a>
             </div>
         </div>
-        
-        <!-- Latest News Link -->
-        <div class="news-link-container mt-4">
-            <a href="#" class="news-link" id="newsLink">
-                <i class="fas fa-newspaper"></i>
-                <span>Latest News & Updates</span>
-                <i class="fas fa-chevron-right"></i>
-            </a>
-        </div>
-    </div>
 </div>
 
 <script>

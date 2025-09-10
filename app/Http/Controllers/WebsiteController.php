@@ -123,7 +123,7 @@ class WebsiteController extends Controller
     function campaignShow($slug) {
 
         $pageTitle        = 'Campaign Details';
-        $campaignData     = Campaign::where('slug', $slug)->approve()->firstOrFail();
+        $campaignData     = Campaign::with('rewards')->where('slug', $slug)->approve()->firstOrFail();
         $comments         = Comment::with('user')->where('campaign_id', $campaignData->id)->approve()->latest()->limit(6)->get();
 
         $commentCount     = Comment::where('campaign_id', $campaignData->id)->approve()->count();
@@ -233,6 +233,14 @@ class WebsiteController extends Controller
     }
 
     function storeCampaignComment($slug) {
+        // Debug logging
+        \Log::info('Comment submission attempt', [
+            'slug' => $slug,
+            'request_data' => request()->all(),
+            'user_id' => auth()->id(),
+            'ip' => request()->ip()
+        ]);
+        
         $this->validate(request(), [
             'name'    => 'required|string|max:40',
             'email'   => 'required|string|max:40',
@@ -296,9 +304,17 @@ class WebsiteController extends Controller
 
         $comment->campaign_id = $campaign->id;
         $comment->comment     = request('comment');
-        $comment->rating      = request('rating');
+        $comment->rating      = request('rating') ?: null;
         $comment->title       = request('title');
         $comment->save();
+        
+        \Log::info('Comment saved successfully', [
+            'comment_id' => $comment->id,
+            'campaign_id' => $campaign->id,
+            'user_id' => $comment->user_id,
+            'name' => $comment->name,
+            'email' => $comment->email
+        ]);
 
         // Create admin notification
         $adminNotification = new AdminNotification();
@@ -560,6 +576,18 @@ class WebsiteController extends Controller
         return view($this->activeTheme . 'page.policy', compact('policy', 'pageTitle'));
     }
 
+    function reportFundraiser() {
+        $pageTitle = 'Report a Fundraiser';
+        $reportContent = SiteData::where('data_key', 'report_fundraiser.content')->first();
+        
+        // Check if report page is enabled
+        if (!$reportContent || $reportContent->data_info->status != ManageStatus::ACTIVE) {
+            abort(404, 'Report Fundraiser page is not available');
+        }
+
+        return view($this->activeTheme . 'page.report-fundraiser', compact('pageTitle', 'reportContent'));
+    }
+
     function subscriberStore() {
         $validate = Validator::make(request()->all(),[
             'email' => 'required|email|unique:subscribers',
@@ -636,79 +664,8 @@ class WebsiteController extends Controller
 
     public function help()
     {
-        $pageTitle = 'Help & Support';
-
-        $cacheFilePath = base_path('help.json');
-        $apiUrl        = 'https://apnacrowdfunding.com/help-admin/wp-json/zia-api/v1/categories-with-posts';
-        $cachedPayload = null;
-        $lastUpdated   = null;
-        $needsRefresh  = false;
-
-        // Read existing cache if present
-        if (file_exists($cacheFilePath)) {
-            try {
-                $raw = file_get_contents($cacheFilePath);
-                $decoded = json_decode($raw, true);
-                if (is_array($decoded)) {
-                    $cachedPayload = $decoded['data'] ?? null;
-                    $lastUpdated   = $decoded['last_updated'] ?? null;
-
-                    // Determine staleness (older than 60 minutes)
-                    if ($lastUpdated) {
-                        try {
-                            $last = Carbon::parse($lastUpdated);
-                            $needsRefresh = $last->diffInMinutes(now()) >= 60;
-                        } catch (\Throwable $e) {
-                            $needsRefresh = true;
-                        }
-                    } else {
-                        $needsRefresh = true;
-                    }
-                } else {
-                    $needsRefresh = true;
-                }
-            } catch (\Throwable $e) {
-                $needsRefresh = true;
-            }
-        } else {
-            $needsRefresh = true;
-        }
-
-        // Refresh from API if needed
-        if ($needsRefresh) {
-            try {
-                $response = Http::timeout(15)->acceptJson()->get($apiUrl);
-                if ($response->ok()) {
-                    $json = $response->json();
-                    if (is_array($json) && ($json['status'] ?? null) === 'success') {
-                        $cachedPayload = $json;
-                        $lastUpdated   = now()->toIso8601String();
-
-                        // Persist to cache file
-                        $toWrite = json_encode([
-                            'last_updated' => $lastUpdated,
-                            'data'         => $cachedPayload,
-                        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-
-                        @file_put_contents($cacheFilePath, $toWrite);
-                    }
-                }
-            } catch (\Throwable $e) {
-                // Ignore API failures; fall back to existing cache if any
-            }
-        }
-
-        // Check if we have valid data, if not use fallback data
-        if (!$cachedPayload || !isset($cachedPayload['data']) || empty($cachedPayload['data'])) {
-            $cachedPayload = $this->getFallbackHelpData();
-            $lastUpdated = now()->toIso8601String();
-        }
-
-        // Ensure we always pass arrays to the view
-        $helpData    = $cachedPayload ?: null;
-        $lastUpdated = $lastUpdated ?: null;
-
-        return view($this->activeTheme . 'page.help', compact('pageTitle', 'helpData', 'lastUpdated'));
+        // Redirect to external support URL
+        return redirect('https://apnacrowdfunding.com/support/');
     }
 
     public function sitemap()

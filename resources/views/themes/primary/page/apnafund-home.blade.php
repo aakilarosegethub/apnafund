@@ -348,7 +348,7 @@
                             data-bs-parent="#faqAccordion">
                             <div class="accordion-body">
                                 We're here to help! You can reach our support team through multiple channels: email us
-                                at support@apnafund.com, use our live chat feature, or schedule a consultation call. We
+                                at support@apnacrowdfunding.com, use our live chat feature, or schedule a consultation call. We
                                 also offer comprehensive guides, video tutorials, and a community forum where
                                 experienced creators share their insights and advice.
                             </div>
@@ -418,7 +418,7 @@
                 <div class="col-md-6 text-end">
                     <div class="footer-info">
                         <p class="copyright">© 2024 Apna Fund. All rights reserved.</p>
-                        <p class="email">contact@apnafund.com</p>
+                        <p class="email">contact@apnacrowdfunding.com</p>
                     </div>
                 </div>
             </div>

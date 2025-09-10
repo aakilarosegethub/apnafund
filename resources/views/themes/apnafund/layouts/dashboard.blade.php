@@ -318,6 +318,7 @@
             }
         }
     </style>
+    @yield('style')
 </head>
 
 <body>
@@ -472,6 +473,7 @@
 
         @stack('page-script-lib')
         @yield('page-script')
+        @yield('script')
         
 </body>
 

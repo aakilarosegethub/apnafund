@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             SettingSeeder::class,
             FormSeeder::class,
             BusinessResourcesSeeder::class,
+            ReportFundraiserSeeder::class,
         ]);
     }
 }

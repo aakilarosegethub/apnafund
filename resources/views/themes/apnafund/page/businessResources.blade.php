@@ -528,7 +528,7 @@
 
     <script>
         // Configuration variables
-        const API_BASE_URL = 'https://apnafund.com/blog/wp-json/custom/posts';
+        const API_BASE_URL = 'https://apnacrowdfunding.com/blog/wp-json/custom/posts';
         const POSTS_COUNT = 4; // Variable to easily change the number of posts
 
         // Function to fetch success stories from API
@@ -582,7 +582,7 @@
                 // Example AJAX call using jQuery to fetch fallback data (if jQuery is available)
                 
                 $.ajax({
-                    url: 'https://apnafund.com/blog/wp-json/custom/posts?count=4',
+                    url: 'https://apnacrowdfunding.com/blog/wp-json/custom/posts?count=4',
                     method: 'GET',
                     dataType: 'json',
                     success: function(data) {
@@ -617,7 +617,7 @@
                             // Add "View All" button below the posts
                             html += `
                                 <div class="col-12 text-center mt-3">
-                                    <a href="https://apnafund.com/blog/" class="btn btn-theme">
+                                    <a href="https://apnacrowdfunding.com/blog/" class="btn btn-theme">
                                         View All
                                     </a>
                                 </div>

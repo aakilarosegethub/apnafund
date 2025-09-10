@@ -271,7 +271,7 @@
                 <div class="col-md-6 text-end">
                     <div class="footer-info">
                         <p class="copyright">© {{ date('Y') }} Apna Fund. All rights reserved.</p>
-                        <p class="email">contact@apnafund.com</p>
+                        <p class="email">contact@apnacrowdfunding.com</p>
                     </div>
                 </div>
             </div>

@@ -33,6 +33,7 @@ class Campaign extends Model
         'gallery',
         'preferred_amounts',
         'goal_amount',
+        'raised_amount',
         'start_date',
         'end_date',
         'status',
@@ -47,6 +48,8 @@ class Campaign extends Model
     protected $casts = [
         'gallery'           => 'array',
         'preferred_amounts' => 'array',
+        'goal_amount'       => 'decimal:2',
+        'raised_amount'     => 'decimal:2',
         'start_date'        => 'datetime:Y-m-d',
         'end_date'          => 'datetime:Y-m-d',
     ];
@@ -237,5 +240,40 @@ class Campaign extends Model
     public function isRunning(): bool
     {
         return Carbon::today()->betweenIncluded($this->start_date, $this->end_date);
+    }
+
+    /**
+     * Get the raised amount with fallback to calculated amount from deposits.
+     */
+    protected function raisedAmount(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                // If raised_amount is set and greater than 0, use it
+                if ($this->attributes['raised_amount'] && $this->attributes['raised_amount'] > 0) {
+                    return $this->attributes['raised_amount'];
+                }
+                
+                // Otherwise, calculate from deposits
+                return $this->deposits()
+                    ->where('status', ManageStatus::PAYMENT_SUCCESS)
+                    ->sum('amount');
+            },
+        );
+    }
+
+    /**
+     * Get the donors count.
+     */
+    protected function donorsCount(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                return $this->deposits()
+                    ->where('status', ManageStatus::PAYMENT_SUCCESS)
+                    ->distinct('user_id')
+                    ->count('user_id');
+            },
+        );
     }
 }

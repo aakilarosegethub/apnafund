@@ -59,6 +59,9 @@ Route::controller('WebsiteController')->group(function () {
 
     // Policy Details
     Route::get('policy/{slug}/{id}', 'policyPages')->name('policy.pages');
+    
+    // Report Fundraiser
+    Route::get('report-fundraiser', 'reportFundraiser')->name('report.fundraiser');
 
     Route::get('placeholder-image/{size}', 'placeholderImage')->name('placeholder.image');
 

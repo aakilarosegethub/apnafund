@@ -50,11 +50,6 @@
             text-align: center;
         }
 
-        .logo-img {
-            height: 35px;
-            width: auto;
-        }
-
         .signin-link {
             color: #fff;
             text-decoration: none;

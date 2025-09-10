@@ -57,6 +57,7 @@
             <thead>
                 <tr>
                     <th>@lang('Donor')</th>
+                    <th>@lang('Campaign')</th>
                     <th>@lang('Gateway') | @lang('Transaction')</th>
                     <th>@lang('Donation Date')</th>
                     <th>@lang('User Type')</th>
@@ -88,6 +89,15 @@
                                         </p>
                                     @endif
                                 </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                @if($deposit->campaign)
+                                    <a href="{{ route('admin.campaigns.details', $deposit->campaign->id) }}" class="fw-semibold text--base">{{ __($deposit->campaign->name) }}</a>
+                                @else
+                                    <span class="text--muted">@lang('N/A')</span>
+                                @endif
                             </div>
                         </td>
                         <td>
@@ -161,6 +171,8 @@
                                    data-donor_email    = "{{ $deposit->donorEmail }}"
                                    data-donor_phone    = "{{ $deposit->donorPhone }}"
                                    data-donor_country  = "{{ $deposit->donorCountry }}"
+                                   data-campaign_name  = "{{ $deposit->campaign ? $deposit->campaign->name : 'N/A' }}"
+                                   data-campaign_id    = "{{ $deposit->campaign ? $deposit->campaign->id : '' }}"
                                    data-url            = "{{ route('admin.file.download', ['filePath' => 'verify']) }}"
                                 >
                                     <i class="ti ti-eye"></i>
@@ -250,7 +262,7 @@
 @endsection
 
 @push('breadcrumb')
-    <x-searchForm placeholder="TRX / Username" dateSearch="yes" />
+    <x-searchForm placeholder="TRX / Username" dateSearch="yes" campaignSearch="yes" :campaigns="$campaigns" />
 @endpush
 
 @push('page-script')
@@ -349,6 +361,10 @@
                                 <tr>
                                     <td class="fw-bold">@lang('Donation Type')</td>
                                     <td>${donationHtml}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">@lang('Campaign')</td>
+                                    <td>${$(this).data('campaign_name')}</td>
                                 </tr>`;
 
                 if ($(this).data('admin_feedback')) {

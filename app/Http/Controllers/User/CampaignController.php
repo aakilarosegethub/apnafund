@@ -6,6 +6,7 @@ use Exception;
 use HTMLPurifier;
 use Carbon\Carbon;
 use App\Models\Comment;
+use App\Models\Deposit;
 use App\Models\Gallery;
 use App\Models\Campaign;
 use App\Models\Category;
@@ -109,18 +110,59 @@ class CampaignController extends Controller
         ]);
     }
 
+    /**
+     * Delete all gallery images for a campaign
+     */
+    function deleteAllGallery($id) {
+        $campaign = Campaign::where('id', $id)->where('user_id', auth()->id())->first();
+
+        if (!$campaign) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Campaign not found',
+            ]);
+        }
+
+        if ($campaign->isExpired()) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'This campaign has expired',
+            ]);
+        }
+
+        $gallery = $campaign->gallery;
+
+        if (empty($gallery)) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'No gallery images found',
+            ]);
+        }
+
+        // Remove all images from storage
+        foreach ($gallery as $image) {
+            fileManager()->removeFile(getFilePath('campaign') . '/' . $image);
+        }
+
+        // Clear gallery from database
+        $campaign->gallery = [];
+        $campaign->save();
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'All gallery images deleted successfully',
+        ]);
+    }
+
     function store() {
-        // Get editor content from cookies
-        $editorHtmlContent = request()->cookie('editor_html_content');
-        $editorTextContent = request()->cookie('editor_text_content');
+        // Initialize toast array
+        $toast = [];
         
         // Debug logging
         \Log::info('Campaign store method called', [
             'request_data' => request()->all(),
             'files' => request()->hasFile('image') ? 'Image file present' : 'No image file',
-            'user_id' => auth()->id(),
-            'editor_html_content' => $editorHtmlContent,
-            'editor_text_content' => $editorTextContent
+            'user_id' => auth()->id()
         ]);
         
         try {
@@ -286,7 +328,7 @@ class CampaignController extends Controller
             $campaign->slug        = slug(request('name'));
             $campaign->location    = request('location');
             $purifier              = new HTMLPurifier();
-            $campaign->description = $purifier->purify(request('description'));
+            $campaign->description = request('description');
 
             $campaign->goal_amount     = request('goal_amount');
             $campaign->start_date        = Carbon::parse(request('start_date'));
@@ -322,11 +364,11 @@ class CampaignController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Campaign successfully created',
-                    'redirect' => route('user.campaign.new')
+                    'redirect' => route('user.campaign.index')
                 ]);
             }
 
-            return to_route('user.campaign.new')->withToasts($toast);
+            return to_route('user.campaign.index')->withToasts($toast);
             
         } catch (\Illuminate\Validation\ValidationException $e) {
             \Log::error('Validation failed', [
@@ -343,13 +385,20 @@ class CampaignController extends Controller
             }
             throw $e;
         } catch (Exception $e) {
+            \Log::error('Campaign creation failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => request()->all()
+            ]);
+            
             if (request()->ajax()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'An error occurred while creating the campaign: ' . $e->getMessage()
                 ], 500);
             }
-            $toast[] = ['error', 'An error occurred while creating the campaign'];
+            
+            $toast = [['error', 'An error occurred while creating the campaign']];
             return back()->withToasts($toast);
         }
     }
@@ -363,13 +412,15 @@ class CampaignController extends Controller
 
             $pageTitle  = 'Edit Campaign';
             $categories = Category::active()->get();
-            $campaign   = Campaign::where('slug', $slug)
-                                    ->where('user_id', auth()->id())
-                                    // ->approve()
-                                    ->first();
-
+            $campaign = Campaign::where(function($query) use ($slug) {
+                                    $query->where('slug', $slug)
+                                          ->orWhere('id', $slug);
+                                })
+                                ->where('user_id', auth()->id())
+                                // ->approve()
+                                ->first();
             if (!$campaign) {
-                $toast[] = ['error', 'Campaign not found'];
+                $toast[] = ['error', 'Campaign not found - Line 376'];
                 return back()->withToasts($toast);
             }
 
@@ -394,7 +445,7 @@ class CampaignController extends Controller
         if (!$campaign) {
             return response()->json([
                 'status'  => 'error',
-                'message' => 'Campaign not found',
+                'message' => 'Campaign not found - Line 396',
             ]);
         }
 
@@ -441,18 +492,12 @@ class CampaignController extends Controller
     }
 
     function update($id) {
-        // Get editor content from cookies
-        $editorHtmlContent = request()->cookie('editor_html_content');
-        $editorTextContent = request()->cookie('editor_text_content');
-        
         // Debug logging
         \Log::info('Campaign update method called', [
             'campaign_id' => $id,
             'request_data' => request()->all(),
             'files' => request()->hasFile('image') ? 'Image file present' : 'No image file',
-            'user_id' => auth()->id(),
-            'editor_html_content' => $editorHtmlContent,
-            'editor_text_content' => $editorTextContent
+            'user_id' => auth()->id()
         ]);
         
         try {
@@ -493,12 +538,12 @@ class CampaignController extends Controller
 
             $campaign = Campaign::where('id', $id)->where('user_id', auth()->id())->first();
 
-            if (!$campaign) {
-                $toast[] = ['error', 'Campaign not found'];
+            if ($campaign->id != $id) {
+                $toast[] = ['error', 'Campaign not found - Line 495'];
                 if (request()->ajax()) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Campaign not found'
+                        'message' => 'Campaign not found - Line 495'
                     ], 404);
                 }
                 return back()->withToasts($toast);
@@ -534,7 +579,7 @@ class CampaignController extends Controller
             $campaign->slug        = slug(request('name'));
             $campaign->location    = request('location');
             $purifier              = new HTMLPurifier();
-            $campaign->description = $purifier->purify(request('description'));
+            $campaign->description = request('description');
             $campaign->goal_amount = request('goal_amount');
             $campaign->start_date  = Carbon::parse(request('start_date'));
             $campaign->end_date    = Carbon::parse(request('end_date'));
@@ -649,7 +694,7 @@ class CampaignController extends Controller
     }
     function show($slug) {
         $pageTitle = 'Campaign Details';
-        $campaign  = Campaign::with('user', 'category', 'comments.user')
+        $campaign  = Campaign::with('user', 'category', 'comments.user', 'deposits')
                         ->where('slug', $slug)
                         ->where('user_id', auth()->id())
                         ->firstOrFail();
@@ -661,6 +706,20 @@ class CampaignController extends Controller
                         ->get();
 
         $commentCount = Comment::where('campaign_id', $campaign->id)->approve()->count();
+        
+        // Get donations for this campaign
+        $donations = Deposit::with('user')
+                        ->where('campaign_id', $campaign->id)
+                        ->where('status', \App\Constants\ManageStatus::PAYMENT_SUCCESS)
+                        ->latest()
+                        ->limit(5)
+                        ->get();
+        
+        // Get setting for currency symbol
+        $setting = bs();
+        
+        // Use the same campaign data but with proper relationships
+        $campaignData = $campaign;
 
         $seoContents['keywords']           = $campaign->meta_keywords ?? [];
         $seoContents['social_title']       = $campaign->name;
@@ -669,15 +728,21 @@ class CampaignController extends Controller
         $imageSize                         = getFileSize('campaign');
         $seoContents['image']              = getImage(getFilePath('campaign') . '/' . $campaign->image, $imageSize);
         $seoContents['image_size']         = $imageSize;
+        $donations         = Deposit::with('user')
+                                    ->where('campaign_id', $campaignData->id)
+                                    ->done()
+                                    ->latest()
+                                    ->limit(5)
+                                    ->get();
 
-        return view($this->activeTheme . 'user.campaign.show', compact('pageTitle', 'campaign', 'comments', 'commentCount', 'seoContents'));
+        return view($this->activeTheme . 'user.campaign.show', compact('pageTitle', 'campaign', 'comments', 'commentCount', 'seoContents', 'campaignData', 'donations', 'setting'));
     }
 
     function destroy($id) {
-        $campaign = Campaign::where('id', $id)->where('user_id', auth()->id())->first();
+        $campaign = Campaign::where('id', $id)->first();
 
         if (!$campaign) {
-            $toast[] = ['error', 'Campaign not found'];
+            $toast[] = ['error', 'Campaign not found - Line 677'];
             return back()->withToasts($toast);
         }
 

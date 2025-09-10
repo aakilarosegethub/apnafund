@@ -169,3 +169,186 @@ label.required:after{
   margin-left: 0 !important;
 }
 
+/* ========================= Campaign Description Styling ======================== */
+.donation-details__desc {
+    color: hsl(var(--body-color));
+    line-height: 1.8;
+    font-size: 1rem;
+    font-family: var(--body-font);
+    margin-bottom: 20px;
+}
+
+/* Content styling within description */
+.donation-details__desc h1,
+.donation-details__desc h2,
+.donation-details__desc h3,
+.donation-details__desc h4,
+.donation-details__desc h5,
+.donation-details__desc h6 {
+    color: hsl(var(--heading-color));
+    font-family: var(--heading-font);
+    font-weight: 600;
+    margin: 25px 0 15px 0;
+    line-height: 1.4;
+}
+
+.donation-details__desc h1 { font-size: 2rem; }
+.donation-details__desc h2 { font-size: 1.75rem; }
+.donation-details__desc h3 { font-size: 1.5rem; }
+.donation-details__desc h4 { font-size: 1.25rem; }
+.donation-details__desc h5 { font-size: 1.1rem; }
+.donation-details__desc h6 { font-size: 1rem; }
+
+.donation-details__desc p {
+    margin-bottom: 15px;
+    color: hsl(var(--body-color));
+}
+
+.donation-details__desc img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: var(--box-shadow);
+    margin: 20px 0;
+    display: block;
+}
+
+.donation-details__desc ul,
+.donation-details__desc ol {
+    margin: 15px 0;
+    padding-left: 30px;
+    color: hsl(var(--body-color));
+}
+
+.donation-details__desc li {
+    margin-bottom: 8px;
+    line-height: 1.6;
+}
+
+.donation-details__desc ul li {
+    list-style-type: disc;
+}
+
+.donation-details__desc ol li {
+    list-style-type: decimal;
+}
+
+.donation-details__desc blockquote {
+    border-left: 4px solid hsl(var(--base));
+    background: hsl(var(--section-bg));
+    padding: 15px 20px;
+    margin: 20px 0;
+    border-radius: 0 8px 8px 0;
+    font-style: italic;
+    color: hsl(var(--body-color));
+}
+
+.donation-details__desc a {
+    color: hsl(var(--base));
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.donation-details__desc a:hover {
+    color: hsl(var(--base-d-200));
+    text-decoration: underline;
+}
+
+.donation-details__desc strong,
+.donation-details__desc b {
+    font-weight: 600;
+    color: hsl(var(--heading-color));
+}
+
+.donation-details__desc em,
+.donation-details__desc i {
+    font-style: italic;
+}
+
+.donation-details__desc code {
+    background: hsl(var(--section-bg));
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+    color: hsl(var(--base-d-400));
+}
+
+.donation-details__desc pre {
+    background: hsl(var(--section-bg));
+    padding: 15px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 15px 0;
+    border: 1px solid hsl(var(--border-color));
+}
+
+.donation-details__desc pre code {
+    background: none;
+    padding: 0;
+    color: hsl(var(--body-color));
+}
+
+.donation-details__desc table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    background: hsl(var(--white));
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--box-shadow);
+}
+
+.donation-details__desc th,
+.donation-details__desc td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid hsl(var(--border-color));
+}
+
+.donation-details__desc th {
+    background: hsl(var(--base) / 0.1);
+    font-weight: 600;
+    color: hsl(var(--heading-color));
+}
+
+.donation-details__desc hr {
+    border: none;
+    height: 1px;
+    background: hsl(var(--border-color));
+    margin: 30px 0;
+}
+
+/* Responsive adjustments for description content */
+@media (max-width: 768px) {
+    .donation-details__desc {
+        font-size: 0.95rem;
+        line-height: 1.7;
+    }
+    
+    .donation-details__desc h1 { font-size: 1.75rem; }
+    .donation-details__desc h2 { font-size: 1.5rem; }
+    .donation-details__desc h3 { font-size: 1.25rem; }
+    .donation-details__desc h4 { font-size: 1.1rem; }
+    .donation-details__desc h5 { font-size: 1rem; }
+    .donation-details__desc h6 { font-size: 0.95rem; }
+    
+    .donation-details__desc ul,
+    .donation-details__desc ol {
+        padding-left: 20px;
+    }
+    
+    .donation-details__desc img {
+        margin: 15px 0;
+    }
+    
+    .donation-details__desc table {
+        font-size: 0.9rem;
+    }
+    
+    .donation-details__desc th,
+    .donation-details__desc td {
+        padding: 8px 10px;
+    }
+}
+

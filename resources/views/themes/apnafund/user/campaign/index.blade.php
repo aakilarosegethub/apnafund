@@ -22,7 +22,7 @@
                             <div class="preview-card">
                                 <div class="preview-image">
                                     @if($campaign->image)
-                                        <img src="{{ getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')) }}" alt="{{ __($campaign->name) }}">
+                                        <img src="{{ getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')) }}" alt="{{ __($campaign->name) }}" style="height: 240px !important;">
                                     @else
                                         <i class="fas fa-seedling"></i>
                                     @endif
@@ -39,10 +39,6 @@
                                             $percentage = $campaign->goal_amount > 0 ? ($campaign->raised_amount / $campaign->goal_amount) * 100 : 0;
                                             $percentage = min($percentage, 100);
                                         @endphp
-                                        <div class="progress">
-                                            <div class="progress-bar" style="width: {{ $percentage }}%"></div>
-                                        </div>
-                                        <small class="text-muted">{{ number_format($percentage, 1) }}% of {{ bs('cur_sym') . showAmount($campaign->goal_amount) }} goal</small>
                                     </div>
                                     
                                     <!-- Status Badges -->
@@ -191,8 +187,7 @@
 }
 
 .preview-image img {
-    width: 100%;
-    height: 100%;
+    height: 240px !important;
     object-fit: cover;
 }
 

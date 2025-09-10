@@ -20,44 +20,53 @@ class DepositController extends Controller
         $pending     = $summary['pending'];
         $cancelled   = $summary['cancelled'];
         $charge      = $summary['charge'];
+        $campaigns   = \App\Models\Campaign::select('id', 'name')->orderBy('name')->get();
 
-        return view('admin.page.donations', compact('pageTitle', 'deposits', 'done', 'pending', 'cancelled', 'charge'));
+        return view('admin.page.donations', compact('pageTitle', 'deposits', 'done', 'pending', 'cancelled', 'charge', 'campaigns'));
     }
 
     function pending() {
         $pageTitle = 'Pending Donations';
         $deposits  = $this->donationData('pending');
+        $campaigns = \App\Models\Campaign::select('id', 'name')->orderBy('name')->get();
 
-        return view('admin.page.donations', compact('pageTitle', 'deposits'));
+        return view('admin.page.donations', compact('pageTitle', 'deposits', 'campaigns'));
     }
 
     function done() {
         $pageTitle = 'Done Donations';
         $deposits  = $this->donationData('done');
+        $campaigns = \App\Models\Campaign::select('id', 'name')->orderBy('name')->get();
 
-        return view('admin.page.donations', compact('pageTitle', 'deposits'));
+        return view('admin.page.donations', compact('pageTitle', 'deposits', 'campaigns'));
     }
 
     function cancelled() {
         $pageTitle = 'Cancelled Donations';
         $deposits  = $this->donationData('cancelled');
+        $campaigns = \App\Models\Campaign::select('id', 'name')->orderBy('name')->get();
 
-        return view('admin.page.donations', compact('pageTitle', 'deposits'));
+        return view('admin.page.donations', compact('pageTitle', 'deposits', 'campaigns'));
     }
 
     protected function donationData($scope = null, $summary = false) {
         if ($scope) {
-            $deposits = Deposit::with(['gateway', 'user'])->$scope();
+            $deposits = Deposit::with(['gateway', 'user', 'campaign'])->$scope();
         } else {
-            $deposits = Deposit::with(['gateway', 'user']);
+            $deposits = Deposit::with(['gateway', 'user', 'campaign']);
         }
 
-        $deposits = $deposits->searchable(['receiver_id', 'trx', 'user:username'])->dateFilter();
+        $deposits = $deposits->searchable(['receiver_id', 'trx', 'user:username', 'campaign:name'])->dateFilter();
 
         // Filter by payment method
         if (request('method')) {
             $method   = Gateway::where('alias', request('method'))->firstOrFail();
             $deposits = $deposits->where('method_code', $method->code);
+        }
+
+        // Filter by campaign
+        if (request('campaign')) {
+            $deposits = $deposits->where('campaign_id', request('campaign'));
         }
 
         if (!$summary) {

@@ -179,7 +179,7 @@
     </div>
 @endsection
 
-@section('script')
+@push('page-script')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Image upload functionality
@@ -248,7 +248,7 @@
             }
             
             if (typeSelect) {
-                typeSelect.addEventListener('change', updatePreview);
+            typeSelect.addEventListener('change', updatePreview);
             }
             
             if (colorSelect) {
@@ -306,11 +306,11 @@
                 // Update title
                 const titleElement = document.getElementById('previewTitle');
                 if (titleElement && titleInput) {
-                    const title = titleInput.value || 'Your Reward Title';
+                const title = titleInput.value || 'Your Reward Title';
                     titleElement.textContent = title;
                     console.log('Title updated:', title);
                 }
-                
+
                 // Update description
                 const descriptionElement = document.getElementById('previewDescription');
                 if (descriptionElement && descriptionInput) {
@@ -318,21 +318,21 @@
                     descriptionElement.textContent = description;
                     console.log('Description updated:', description);
                 }
-                
+
                 // Update amount
                 const amountElement = document.getElementById('previewAmount');
                 if (amountElement && amountInput) {
-                    const amount = amountInput.value || '0.00';
+                const amount = amountInput.value || '0.00';
                     const formattedAmount = parseFloat(amount).toFixed(2);
                     amountElement.textContent = '{{ $setting->cur_sym }}' + formattedAmount;
                     console.log('Amount updated:', formattedAmount);
                 }
-                
+
                 // Update type
                 const typeElement = document.getElementById('previewType');
                 if (typeElement && typeSelect) {
-                    const type = typeSelect.value;
-                    const typeText = type === 'digital' ? 'Digital Reward' : 'Physical Reward';
+                const type = typeSelect.value;
+                const typeText = type === 'digital' ? 'Digital Reward' : 'Physical Reward';
                     typeElement.textContent = typeText;
                     console.log('Type updated:', typeText);
                 }
@@ -362,7 +362,7 @@
             updatePreview();
         });
     </script>
-@endsection
+@endpush
 
 @push('page-style')
     <style>

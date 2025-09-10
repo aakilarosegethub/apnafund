@@ -1,31 +1,557 @@
 @php
     $activeTheme = 'themes.apnafund.';
     $activeThemeTrue = 'themes.apnafund.';
+    
+    // Check if campaign belongs to current user
+    if ($campaign->user_id !== auth()->id()) {
+        abort(403, 'Unauthorized access to this campaign.');
+    }
 @endphp
 @extends($activeTheme . 'layouts.dashboard')
 @section('style')
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
+<link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.min.css" rel="stylesheet" />
+
+  <style>
+    :root { --radius: 24px; --border:#e6e6e6; }
+    .editor-shell{
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      overflow:hidden;
+      box-shadow:0 1px 0 rgba(0,0,0,.02);
+      background: #fff;
+      position: relative;
+    }
+    /* Editor */
+    #editor{
+      background:#fff;
+      height: 400px;
+      min-height: 400px;
+    }
+    .ql-container.ql-snow{
+      border:none;
+      font-size: 16px;
+    }
+    .ql-editor{
+      font-size:22px;
+      color:#404040;
+      min-height: 350px;
+      padding: 20px;
+    }
+    .ql-editor p {
+      margin-bottom: 1em;
+    }
+    .ql-editor.ql-blank::before{
+      color:#9aa0a6; /* placeholder color */
+      left:32px; right:32px;
+    }
+    /* Toolbar placed at the bottom */
+    .ql-toolbar{
+      border-top:1px solid var(--border) !important;
+      border-bottom:none !important;
+      border-left:none !important;
+      border-right:none !important;
+      padding:10px 16px !important;
+      display:flex !important;
+      gap:8px;
+      justify-content:flex-start;
+      background:#fff !important;
+      min-height: 50px;
+    }
+    .ql-snow .ql-picker, .ql-snow .ql-stroke{color:#111;stroke:#111}
+    .ql-snow .ql-fill{fill:#111}
+    .ql-snow .ql-active .ql-stroke{stroke:#0f8e6f}
+    .ql-snow .ql-active .ql-fill{fill:#0f8e6f}
+    /* Make buttons a bit larger, like the screenshot */
+    .ql-toolbar button{
+      width:36px;height:36px;border-radius:10px;
+      border: 1px solid #ddd;
+      background: #fff;
+    }
+    .ql-toolbar button:hover {
+      background: #f5f5f5;
+    }
+    .ql-toolbar .ql-picker {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: #fff;
+    }
+    .hidden-input{ display:none; }
+    
+    /* Ensure Quill editor is visible */
+    .ql-container {
+      display: block !important;
+      visibility: visible !important;
+    }
+    .ql-editor {
+      display: block !important;
+      visibility: visible !important;
+    }
+    .ql-toolbar {
+      display: flex !important;
+      visibility: visible !important;
+    }
+    
+    /* YouTube iframe styling in editor */
+    .ql-editor iframe {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      margin: 10px 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    /* Responsive iframe */
+    .ql-editor iframe[src*="youtube.com/embed/"] {
+      width: 100%;
+      height: 315px;
+      max-width: 560px;
+    }
+    
+    @media (max-width: 768px) {
+      .ql-editor iframe[src*="youtube.com/embed/"] {
+        height: 200px;
+      }
+    }
+    
+    /* Gallery UI Styles */
+    .gallery-section {
+      margin-bottom: 2rem;
+    }
+    
+    .gallery-dropzone {
+      border: 2px dashed #dee2e6;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      transition: all 0.3s ease;
+      min-height: 200px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .gallery-dropzone:hover {
+      border-color: #0f8e6f;
+      background: linear-gradient(135deg, #e8f5f3 0%, #d1f2eb 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(15, 142, 111, 0.15);
+    }
+    
+    .gallery-dropzone .dz-message {
+      text-align: center;
+      padding: 2rem;
+      margin: 0;
+    }
+    
+    .upload-icon {
+      font-size: 3rem;
+      color: #0f8e6f;
+      margin-bottom: 1rem;
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    .upload-title {
+      color: #2c3e50;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    
+    .upload-subtitle {
+      color: #6c757d;
+      margin-bottom: 1rem;
+    }
+    
+    .upload-info {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    
+    .upload-info .badge {
+      font-size: 0.75rem;
+      padding: 0.4rem 0.8rem;
+    }
+    
+    .existing-gallery {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 1.5rem;
+      border: 1px solid #e9ecef;
+    }
+    
+    .gallery-image-card {
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+      height: 100%;
+    }
+    
+    .gallery-image-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .image-container {
+      position: relative;
+      width: 100%;
+      height: 180px;
+      overflow: hidden;
+    }
+    
+    .gallery-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+    
+    .gallery-image-card:hover .gallery-image {
+      transform: scale(1.05);
+    }
+    
+    .image-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .gallery-image-card:hover .image-overlay {
+      opacity: 1;
+    }
+    
+    .remove-btn {
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+    }
+    
+    .remove-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+    }
+    
+    .gallery-help-text {
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      background: #e3f2fd;
+      border-radius: 8px;
+      border-left: 4px solid #2196f3;
+    }
+    
+    .gallery-help-text i {
+      color: #2196f3;
+    }
+    
+    
+    /* Required field styling - only for fields with required-field class */
+    .required-field .form-label {
+      color: #dc3545 !important;
+      font-weight: 600;
+    }
+    
+    .required-field .form-label:after {
+      content: " *";
+      color: #dc3545;
+      font-weight: bold;
+    }
+    
+    /* Make entire label red for required fields */
+    .required-field .form-label {
+      color: #dc3545 !important;
+      font-weight: 600;
+    }
+    
+    /* Required input styling */
+    .form-control[required] {
+      border-left: 3px solid #dc3545;
+    }
+    
+    .form-control[required]:focus {
+      border-color: #dc3545;
+      box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+    
+    /* Required select styling */
+    .form-select[required] {
+      border-left: 3px solid #dc3545;
+    }
+    
+    .form-select[required]:focus {
+      border-color: #dc3545;
+      box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+    
+    /* Preview Styles */
+    .preview-card {
+      border: 1px solid #e9ecef;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
+    
+    .preview-card:hover {
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    }
+    
+    .preview-image {
+      height: 200px;
+      background: #f8f9fa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .preview-content {
+      padding: 1.5rem;
+    }
+    
+    .preview-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 0.75rem;
+      line-height: 1.3;
+    }
+    
+    .preview-description {
+      color: #6c757d;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 1rem;
+      min-height: 2.5rem;
+    }
+    
+    .preview-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    
+    .preview-category {
+      background: #e3f2fd;
+      color: #1976d2;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    
+    .preview-amount {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #0f8e6f;
+    }
+    
+    .preview-progress {
+      margin-top: 1rem;
+    }
+    
+    .preview-gallery, .preview-video {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 1rem;
+      border: 1px solid #e9ecef;
+    }
+    
+    .preview-gallery-title, .preview-video-title {
+      color: #495057;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+    
+    .preview-gallery-images img {
+      border-radius: 6px;
+      transition: transform 0.2s ease;
+    }
+    
+    .preview-gallery-images img:hover {
+      transform: scale(1.05);
+    }
+    
+    .preview-video-container iframe {
+      border-radius: 8px;
+    }
+    
+    /* Quill Toolbar Icon Fixes */
+    .ql-toolbar .ql-stroke {
+      fill: none;
+      stroke: currentColor;
+    }
+    
+    .ql-toolbar .ql-fill {
+      fill: currentColor;
+      stroke: none;
+    }
+    
+    .ql-toolbar .ql-picker-label {
+      color: #444;
+    }
+    
+    .ql-toolbar .ql-picker-options {
+      background-color: #fff;
+      border: 1px solid #ccc;
+    }
+    
+    /* Ensure Quill icons are visible */
+    .ql-toolbar button {
+      color: #444;
+    }
+    
+    .ql-toolbar button:hover {
+      color: #000;
+    }
+    
+    .ql-toolbar button.ql-active {
+      color: #0f8e6f;
+    }
+    
+    /* Fix for missing icon fonts - Use proper Quill icons */
+    .ql-toolbar .ql-bold:before { content: "B"; font-weight: bold; font-size: 14px; }
+    .ql-toolbar .ql-italic:before { content: "I"; font-style: italic; font-size: 14px; }
+    .ql-toolbar .ql-underline:before { content: "U"; text-decoration: underline; font-size: 14px; }
+    .ql-toolbar .ql-strike:before { content: "S"; text-decoration: line-through; font-size: 14px; }
+    .ql-toolbar .ql-list:before { content: "•"; font-size: 16px; }
+    .ql-toolbar .ql-list[value="ordered"]:before { content: "1."; font-size: 14px; }
+    .ql-toolbar .ql-link:before { content: "🔗"; font-size: 14px; }
+    .ql-toolbar .ql-image:before { content: "🖼"; font-size: 14px; }
+    .ql-toolbar .ql-video:before { content: "🎥"; font-size: 14px; }
+    .ql-toolbar .ql-clean:before { content: "✕"; font-size: 14px; }
+    .ql-toolbar .ql-align:before { content: "≡"; font-size: 14px; }
+    .ql-toolbar .ql-align[value="center"]:before { content: "≡"; font-size: 14px; }
+    .ql-toolbar .ql-align[value="right"]:before { content: "≡"; font-size: 14px; }
+    .ql-toolbar .ql-align[value="justify"]:before { content: "≡"; font-size: 14px; }
+    .ql-toolbar .ql-color:before { content: "A"; font-size: 14px; }
+    .ql-toolbar .ql-background:before { content: "A"; font-size: 14px; }
+    .ql-toolbar .ql-code-block:before { content: "</>"; font-size: 12px; }
+    
+    /* Ensure toolbar buttons are properly styled */
+    .ql-toolbar button {
+      position: relative;
+      display: inline-block;
+      width: 28px;
+      height: 28px;
+      border: 1px solid #ccc;
+      background: #fff;
+      color: #444;
+      cursor: pointer;
+      border-radius: 3px;
+      margin: 0 1px;
+    }
+    
+    .ql-toolbar button:hover {
+      background: #f0f0f0;
+      border-color: #999;
+    }
+    
+    .ql-toolbar button.ql-active {
+      background: #0f8e6f;
+      color: #fff;
+      border-color: #0f8e6f;
+    }
+    
+    /* Fix for Quill icon display */
+    .ql-toolbar .ql-stroke {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+    }
+    
+    .ql-toolbar .ql-fill {
+      fill: currentColor;
+      stroke: none;
+    }
+    
+    .ql-toolbar .ql-thin {
+      stroke-width: 1;
+    }
+    
+    .ql-toolbar .ql-thick {
+      stroke-width: 3;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .gallery-dropzone {
+        min-height: 150px;
+      }
+      
+      .upload-icon {
+        font-size: 2rem;
+      }
+      
+      .upload-title {
+        font-size: 1.1rem;
+      }
+      
+      .image-container {
+        height: 150px;
+      }
+      
+      .existing-gallery {
+        padding: 1rem;
+      }
+      
+      .preview-image {
+        height: 150px;
+      }
+      
+      .preview-content {
+        padding: 1rem;
+      }
+      
+      .preview-title {
+        font-size: 1.1rem;
+      }
+    }
+  </style>
 @endsection
 @section('frontend')
                 <div class="tab-pane fade active show" id="create" role="tabpanel">
                     <div class="row">
                         <div class="col-lg-8">
                             <div class="content-card">
-                                <h4 class="mb-4">Edit Donation Gig</h4>
+                                <h4 class="mb-4">Edit Contribution Campaign</h4>
                                 
-                                <form action="{{ route('user.campaign.update', $campaign->id) }}" method="POST" id="createGigForm" enctype="multipart/form-data" novalidate>
+                                <form action="{{ route('user.campaign.update', $campaign->id) }}" method="POST" id="editGigForm" enctype="multipart/form-data" novalidate>
                                     @csrf
                                     <input type="hidden" name="campaign_id" value="{{ $campaign->id }}">
                                     <div class="row">
                                         <div class="col-md-8">
-                                            <div class="form-group">
-                                                <label for="gigTitle" class="form-label">Gig Title *</label>
+                                            <div class="form-group required-field">
+                                                <label for="gigTitle" class="form-label">Gig Title  </label>
                                                 <input type="text" class="form-control" id="gigTitle" name="name" placeholder="Enter a compelling title for your gig" value="{{ $campaign->name }}" required>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
-                                            <div class="form-group">
-                                                <label for="gigCategory" class="form-label">Category *</label>
+                                            <div class="form-group required-field">
+                                                <label for="gigCategory" class="form-label">Category  </label>
                                                 <select class="form--control form-select" name="category_id" id="gigCategory" required>
                                                     <option value="">@lang('Select Category')</option>
                                                     @foreach ($categories as $category)
@@ -38,12 +564,44 @@
                                         </div>
                                     </div>
 
-                                    <div class="form-group">
-                                        <label for="gigDescription" class="form-label">Description *</label>
-                                        <div id="editor" style="height: 400px;">
-                                            {!! $campaign->description !!}
+                                    <div class="form-group required-field">
+                                        <label for="gigDescription" class="form-label">Story  </label>
+                                        <div class="editor-shell">
+      <!-- The editor -->
+      <div id="editor" placeholder="Hi, my name is Jane and I'm fundraising for…"></div>
+
+      <!-- Toolbar at the bottom -->
+      <div id="toolbar">
+        <span class="ql-formats">
+          <select class="ql-header">
+            <option value="1">Heading 1</option>
+            <option value="2">Heading 2</option>
+            <option value="3">Heading 3</option>
+            <option value="4">Heading 4</option>
+            <option value="5">Heading 5</option>
+            <option value="6">Heading 6</option>
+            <option selected>Normal</option>
+          </select>
+        </span>
+        <span class="ql-formats">
+          <button class="ql-bold"></button>
+          <button class="ql-italic"></button>
+          <button class="ql-underline"></button>
+          <button class="ql-strike"></button>
+        </span>
+        <span class="ql-formats">
+          <button class="ql-list" value="ordered"></button>
+          <button class="ql-list" value="bullet"></button>
+        </span>
+        <span class="ql-formats">
+          <button class="ql-link"></button>
+          <button class="ql-image"></button>
+          <button class="ql-video"></button>
+          <button class="ql-clean"></button>
+        </span>
+      </div>
                                         </div>
-                                        <textarea id="gigDescription" name="description" style="display: none;">{{ $campaign->description }}</textarea>
+                                        <textarea id="gigDescription" name="description" style="visibility: hidden;" required>{{ $campaign->description }}</textarea>
                                     </div>
 
                                     <!-- Main Campaign Image -->
@@ -58,50 +616,25 @@
                                         @endif
                                     </div>
 
-                                    <!-- Video Upload Options -->
-                                    <div class="form-group mb-4">
-                                        <label class="form-label">Campaign Video</label>
-                                        
-                                        <!-- Video Upload Toggle -->
-                                        <div class="mb-3">
-                                            <div class="btn-group" role="group" aria-label="Video upload options">
-                                                <input type="radio" class="btn-check" name="video_type" id="video_file_new" value="file" autocomplete="off" @checked($campaign->youtube_url ? false : true)>
-                                                <label class="btn btn-outline-primary" for="video_file_new">Upload Video File</label>
-                                                
-                                                <input type="radio" class="btn-check" name="video_type" id="video_youtube_new" value="youtube" autocomplete="off" @checked($campaign->youtube_url ? true : false)>
-                                                <label class="btn btn-outline-primary" for="video_youtube_new">YouTube URL</label>
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- File Upload Section -->
-                                        <div id="file_upload_section_new">
-                                            <input type="file" class="form-control mb-2" name="video" accept="video/*">
-                                            <small class="text-muted">Upload a video file (MP4, AVI, MOV, etc.) - Optional</small>
-                                            
-                                            <!-- Auto Upload to YouTube Option -->
-                                            <div class="form-check mt-2">
-                                                <input class="form-check-input" type="checkbox" name="auto_upload_youtube" id="auto_upload_youtube_new" value="1">
-                                                <label class="form-check-label" for="auto_upload_youtube_new">
-                                                    <strong>🚀 Auto-upload to YouTube</strong> (Better streaming performance)
-                                                </label>
-                                                <small class="text-muted d-block">Video will be automatically uploaded to YouTube and streamed from there</small>
-                                            </div>
-                                        </div>
+                                    <!-- YouTube Video URL --> 
+                                        <label class="form-label">Campaign Video (YouTube URL)</label>
                                         
                                         <!-- YouTube URL Section -->
-                                        <div id="youtube_url_section_new" style="display: none;">
+                                        <div id="youtube_url_section_new">
                                             <input type="url" class="form-control mb-2" name="youtube_url" id="youtube_url_new" placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ" value="{{ $campaign->youtube_url }}">
                                             <small class="text-muted">Enter YouTube video URL for better streaming performance - Optional</small>
                                             <div class="mt-2">
                                                 <div class="youtube-preview-new"></div>
+                                                <div id="youtube-validation-message" class="text-danger mt-1" style="display: none;"></div>
                                             </div>
                                         </div>
                                     </div>
 
+
                                     <div class="row">
                                         <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label for="targetAmount" class="form-label">Target Amount ({{ $setting->cur_sym }}) *</label>
+                                            <div class="form-group required-field">
+                                                <label for="targetAmount" class="form-label">Target Amount ({{ $setting->cur_sym }})  </label>
                                                 <input type="number" name="goal_amount" class="form-control" id="targetAmount" placeholder="5000" min="1" step="0.01" value="{{ $campaign->goal_amount }}" required>
                                             </div>
                                         </div>
@@ -109,55 +642,34 @@
 
                                     <div class="row">
                                         <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label for="startDate" class="form-label">Start Date *</label>
+                                            <div class="form-group required-field">
+                                                <label for="startDate" class="form-label">Start Date  </label>
                                                 <input type="date" name="start_date" class="form-control" id="startDate" value="{{ $campaign->start_date->format('Y-m-d') }}" required>
                                             </div>
                                         </div>
                                         <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label for="endDate" class="form-label">End Date *</label>
+                                            <div class="form-group required-field">
+                                                <label for="endDate" class="form-label">End Date  </label>
                                                 <input type="date" name="end_date" class="form-control" id="endDate" value="{{ $campaign->end_date->format('Y-m-d') }}" required>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <!-- Gallery Images Section - COMMENTED OUT -->
-                                    {{-- 
-                                    <div class="form-group gallery-section">
-                                        <label class="form-label">Gallery Images *</label>
-                                        
-                                        <!-- Simple Multiple File Input (Primary) -->
-                                        <div id="simpleFileInput">
-                                            <input type="file" class="form-control" name="gallery_images[]" id="galleryImages" accept="image/*" multiple required>
-                                            <small class="text-muted">Select multiple images for your campaign gallery (JPG, JPEG, PNG - Max 5MB each)</small>
-                                        </div>
-                                        
-                                        <!-- Dropzone (Fallback) -->
-                                        <div class="dropzone" id="" style="display: none;">
-                                            <div class="dz-message">
-                                                <i class="fas fa-cloud-upload-alt"></i>
-                                                <h4>Drop images here or click to upload</h4>
-                                                <p>Upload multiple images for your campaign gallery</p>
-                                                <small>Supported: JPG, JPEG, PNG (Max: 5MB each)</small>
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- Fallback file input in case Dropzone fails -->
-                                        <div id="fallbackFileInput" style="display: none;">
-                                            <input type="file" class="form-control" name="gallery_images[]" accept="image/*" multiple>
-                                            <small class="text-muted">Select multiple images for your campaign gallery</small>
-                                        </div>
-                                        <small class="text-muted">* Minimum one gallery image is required</small>
-                                    </div>
-                                    --}}
-
                                     <div class="d-flex gap-3">
                                         <button type="button" class="btn btn-primary" id="submitBtn" onclick="showEditorContent()">
-                                            <i class="fas fa-save me-2"></i>Submit 
+                                            <i class="fas fa-save me-2"></i>Update Campaign 
+                                        </button>
+                                        <button type="submit" class="btn btn-success" id="directSubmitBtn">
+                                            <i class="fas fa-save me-2"></i>Save Direct
                                         </button>
                                         <button type="button" class="btn btn-primary" onclick="previewGig()">
                                             <i class="fas fa-eye me-2"></i>Preview
+                                        </button>
+                                        <button type="button" class="btn btn-warning" onclick="testToast()">
+                                            <i class="fas fa-bell me-2"></i>Test Toast
+                                        </button>
+                                        <button type="button" class="btn btn-info" onclick="testEditor()">
+                                            <i class="fas fa-edit me-2"></i>Test Editor
                                         </button>
                                         <button type="button" class="btn btn-secondary">
                                             <i class="fas fa-times me-2"></i>Cancel
@@ -166,10 +678,18 @@
                                 </form>
                             </div>
                         </div>
+                    </div>
 
-                                                            <div class="col-lg-4">
+                    <div class="col-lg-4">
                             <div class="content-card">
-                                <h5 class="mb-3">Preview</h5>
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-eye me-2"></i>Live Preview
+                                    </h5>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="refreshPreview()">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+                                </div>
                                 <div id="gigPreview">
                                     <div class="preview-card">
                                         <div class="preview-image" id="previewMainImage">
@@ -177,18 +697,29 @@
                                             <img id="previewImage" src="{{ $campaign->image ? getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')) : '' }}" alt="Preview" style="{{ $campaign->image ? 'display: block;' : 'display: none;' }} width: 100%; height: 100%; object-fit: cover; border-radius: 10px 10px 0 0;">
                                         </div>
                                         <div class="preview-content">
-                                            <div class="preview-title">{{ $campaign->name ?: 'Your Gig Title' }}</div>
-                                            <div class="preview-description">{{ $campaign->description ? strip_tags(Str::limit($campaign->description, 100)) : 'Your gig description will appear here...' }}</div>
+                                            <div class="preview-title" id="previewTitle">{{ $campaign->name ?: 'Your Campaign Title' }}</div>
+                                            <div class="preview-description" id="previewDescription">{{ $campaign->description ? strip_tags(Str::limit($campaign->description, 100)) : 'Your campaign description will appear here...' }}</div>
                                             <div class="preview-meta">
-                                                <span class="preview-category">{{ $campaign->category->name ?? 'Category' }}</span>
-                                                <span class="preview-amount">{{ $setting->cur_sym }}{{ number_format($campaign->goal_amount, 2) }}</span>
+                                                <span class="preview-category" id="previewCategory">{{ $campaign->category->name ?? 'Category' }}</span>
+                                                <span class="preview-amount" id="previewAmount">{{ $setting->cur_sym }}{{ number_format($campaign->goal_amount, 2) }}</span>
                                             </div>
                                             <div class="preview-progress">
                                                 <div class="progress">
                                                     <div class="progress-bar" style="width: 0%"></div>
                                                 </div>
-                                                <small class="text-muted">0% of {{ $setting->cur_sym }}{{ number_format($campaign->goal_amount, 2) }} goal</small>
+                                                <small class="text-muted">0% of <span id="previewGoalAmount">{{ $setting->cur_sym }}{{ number_format($campaign->goal_amount, 2) }}</span> goal</small>
                                             </div>
+                                        </div>
+                                    </div>
+                                    
+                                    
+                                    <!-- YouTube Video Preview -->
+                                    <div class="preview-video mt-3" id="previewVideo" style="display: none;">
+                                        <h6 class="preview-video-title">
+                                            <i class="fab fa-youtube me-2"></i>Video Preview
+                                        </h6>
+                                        <div class="preview-video-container" id="previewVideoContainer">
+                                            <!-- YouTube video will be embedded here -->
                                         </div>
                                     </div>
                                 </div>
@@ -204,8 +735,6 @@
     <link rel="stylesheet" href="{{ asset('assets/universal/css/datepicker.css') }}">
     <!-- Load Dropzone CSS from CDN for reliability -->
     <link rel="stylesheet" href="https://unpkg.com/dropzone@6.0.0-beta.2/dist/dropzone.css">
-    <!-- Quill.js CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
 @endpush
 
 @push('page-script-lib')
@@ -213,79 +742,478 @@
 <script src="{{ asset('assets/universal/js/datepicker.en.js') }}"></script>
     <!-- Load Dropzone from CDN for reliability -->
     <script src="https://unpkg.com/dropzone@6.0.0-beta.2/dist/dropzone-min.js"></script>
-    <!-- Quill.js JS -->
-    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+    <!-- Quill.js JS - Use stable version -->
+    <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
 @endpush
 
 
 
 @section('page-script')
-    <!-- Quill.js Editor -->
-    <script>
-        // Initialize Quill editor
-        const quill = new Quill('#editor', {
-            theme: 'snow',
-            modules: {
-                toolbar: [
-                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-                    ['bold', 'italic', 'underline', 'strike'],
-                    [{ 'color': [] }, { 'background': [] }],
-                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                    [{ 'indent': '-1'}, { 'indent': '+1' }],
-                    [{ 'align': [] }],
-                    ['link', 'image', 'video'],
-                    ['blockquote', 'code-block'],
-                    ['clean']
-                ]
-            },
-            placeholder: 'Describe your gig, its purpose, and how donations will be used...'
-        });
+  <!-- Hidden file input for image uploads -->
+  <input type="file" id="imageInput" accept="image/*" class="hidden-input" />
 
-        // Load existing content into Quill editor
+<!-- Quill JS already loaded in page-script-lib -->
+
+<script>
+        // Wait for iziToast to load and then configure it
         document.addEventListener('DOMContentLoaded', function() {
-            const existingContent = document.getElementById('gigDescription').value;
-            if (existingContent) {
-                quill.root.innerHTML = existingContent;
+            // Configure iziToast after it's loaded
+            if (typeof iziToast !== 'undefined') {
+                // iziToast is already configured globally, just log success
+                console.log('iziToast configured successfully');
+            } else {
+                console.error('iziToast library not loaded');
             }
         });
+</script>
+    <script>
+  // Define handlers before initializing Quill
+  function customImageHandler() {
+    const input = document.getElementById('imageInput');
+    input.click();
 
-        // Function to set editor content in cookie and submit form
-        function showEditorContent() {
+    input.onchange = function() {
+      const file = input.files[0];
+      if (file) {
+        // Create FormData for file upload
+        const formData = new FormData();
+        formData.append('files', file);
+        formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+
+        // Upload file via AJAX
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/user/campaign/upload-image');
+        xhr.onload = function() {
+          if (xhr.status === 200) {
+            try {
+              const response = JSON.parse(xhr.responseText);
+              console.log('Upload response:', response);
+              
+              if (response.location) {
+                console.log('Inserting image:', response.location);
+                // Insert the uploaded image at current cursor position
+                const range = quill.getSelection();
+                if (range) {
+                  quill.insertEmbed(range.index, 'image', response.location);
+                  quill.setSelection(range.index + 1, 0);
+                } else {
+                  // If no selection, insert at the end
+                  const length = quill.getLength();
+                  quill.insertEmbed(length - 1, 'image', response.location);
+                  quill.setSelection(length, 0);
+                }
+                console.log('Image inserted successfully');
+              } else {
+                console.error('No location in response:', response);
+                alert('Upload failed: No image URL returned');
+              }
+            } catch (e) {
+              console.error('JSON parse error:', e);
+              console.log('Raw response:', xhr.responseText);
+              alert('Upload failed: Invalid response format');
+            }
+          } else {
+            console.error('Upload failed with status:', xhr.status);
+            console.log('Response:', xhr.responseText);
+            alert('Upload failed: Server error ' + xhr.status);
+          }
+        };
+        xhr.onerror = function() {
+          console.error('Network error during upload');
+          alert('Upload failed: Network error');
+        };
+        xhr.send(formData);
+      }
+    };
+  }
+
+  function customVideoHandler() {
+    const url = prompt('Paste video URL (YouTube, Vimeo, MP4, etc.)');
+    if (!url) return;
+    
+    // Convert YouTube URL to embeddable format
+    let embedUrl = url;
+    if (url.includes('youtube.com/watch?v=')) {
+      const videoId = url.split('v=')[1].split('&')[0];
+      embedUrl = `https://www.youtube.com/embed/${videoId}`;
+    } else if (url.includes('youtu.be/')) {
+      const videoId = url.split('youtu.be/')[1].split('?')[0];
+      embedUrl = `https://www.youtube.com/embed/${videoId}`;
+    }
+    
+    const range = quill.getSelection(true);
+    if (range) {
+      // Create iframe element for YouTube videos
+      if (embedUrl.includes('youtube.com/embed/')) {
+        const iframe = document.createElement('iframe');
+        iframe.src = embedUrl;
+        iframe.width = '560';
+        iframe.height = '315';
+        iframe.frameBorder = '0';
+        iframe.allowFullscreen = true;
+        iframe.style.border = 'none';
+        iframe.style.borderRadius = '8px';
+        iframe.style.margin = '10px 0';
+        
+        // Insert the iframe
+        quill.clipboard.dangerouslyPasteHTML(range.index, iframe.outerHTML);
+        quill.setSelection(range.index + 1, 0);
+      } else {
+        // For other video URLs, use the standard video embed
+        quill.insertEmbed(range.index, 'video', url, 'user');
+        quill.setSelection(range.index + 1, 0);
+      }
+    }
+  }
+
+  // Initialize Quill editor after DOM is loaded
+  let quill;
+  
+  function initializeQuill() {
+    // Check if editor element exists
+    const editorElement = document.getElementById('editor');
+    if (!editorElement) {
+      console.error('Editor element not found');
+      return false;
+    }
+    
+    // Check if Quill is available
+    if (typeof Quill === 'undefined') {
+      console.error('Quill library not loaded');
+      return false;
+    }
+    
+    try {
+      // Initialize Quill with custom toolbar container
+      quill = new Quill('#editor', {
+        theme: 'snow',
+        placeholder: 'Hi, my name is Jane and I\'m fundraising for…',
+        modules: {
+          toolbar: {
+            container: '#toolbar',
+            handlers: {
+              'image': customImageHandler,
+              'video': customVideoHandler
+            }
+          }
+        }
+      });
+      
+      console.log('Quill editor initialized successfully');
+      
+      // Make quill globally available for debugging
+      window.quill = quill;
+      return true;
+      
+    } catch (error) {
+      console.error('Error initializing Quill editor:', error);
+      return false;
+    }
+  }
+
+  // Wait for both DOM and Quill library to be ready
+  function waitForQuillAndInitialize() {
+    if (typeof Quill !== 'undefined' && document.getElementById('editor')) {
+      console.log('DOM loaded, initializing Quill editor...');
+      
+      // Initialize Quill first
+      const success = initializeQuill();
+      
+      if (success) {
+        // Wait a bit for Quill to be fully initialized
+        setTimeout(function() {
+          const existingContent = document.getElementById('gigDescription').value;
+          console.log('Existing content from textarea:', existingContent);
+          
+          if (existingContent && existingContent.trim() !== '') {
+            console.log('Loading content into Quill editor...');
+            quill.root.innerHTML = existingContent;
+            console.log('Content loaded successfully');
+            
+            // Also update the editor's internal state
+            quill.update();
+          } else {
+            console.log('No existing content found');
+          }
+        }, 100);
+      }
+    } else {
+      // Retry after a short delay
+      setTimeout(waitForQuillAndInitialize, 100);
+    }
+  }
+
+  // Start the initialization process
+  document.addEventListener('DOMContentLoaded', waitForQuillAndInitialize);
+
+  // Function to validate form fields one by one
+  function validateForm() {
+    const errors = [];
+    const form = document.getElementById('editGigForm');
+    
+    // Clear previous error styling
+    clearErrorStyling();
+    
+    // Validate Campaign Title
+    const titleField = document.getElementById('gigTitle');
+    if (!titleField.value.trim()) {
+      errors.push({
+        field: titleField,
+        message: 'Campaign title is required'
+      });
+    }
+    
+    // Validate Category
+    const categoryField = document.getElementById('gigCategory');
+    if (!categoryField.value) {
+      errors.push({
+        field: categoryField,
+        message: 'Please select a category'
+      });
+    }
+    
+    // Validate Description (Quill Editor)
+    let descriptionValid = false;
             if (quill) {
                 const editorContent = quill.root.innerHTML;
                 const textContent = quill.getText();
-                
-                // Set cookie with editor content
-                document.cookie = "editor_html_content=" + encodeURIComponent(editorContent) + "; path=/";
-                document.cookie = "editor_text_content=" + encodeURIComponent(textContent) + "; path=/";
-                
-                console.log('Editor content set in cookies');
-                console.log('HTML Content:', editorContent);
-                console.log('Text Content:', textContent);
-                
-                // Also copy content to hidden textarea
-                const textarea = document.getElementById('gigDescription');
-                if (textarea) {
-                    textarea.value = editorContent;
-                    console.log('Content also copied to textarea');
-                }
-                
-                // Submit the form
-                const form = document.querySelector('form');
-                if (form) {
-                    console.log('Submitting form...');
-                    form.submit();
-                }
-            } else {
-                alert('Quill editor not found!');
-            }
+      const hasContent = editorContent && 
+                        editorContent.trim() !== '<p><br></p>' && 
+                        editorContent.trim() !== '<p></p>' &&
+                        textContent.trim() !== '';
+      descriptionValid = hasContent;
+    }
+    
+    if (!descriptionValid) {
+      errors.push({
+        field: document.getElementById('gigDescription'),
+        message: 'Campaign description is required'
+      });
+    }
+    
+    // Validate Target Amount
+    const amountField = document.getElementById('targetAmount');
+    if (!amountField.value || parseFloat(amountField.value) <= 0) {
+      errors.push({
+        field: amountField,
+        message: 'Please enter a valid target amount'
+      });
+    }
+    
+    // Validate Start Date
+    const startDateField = document.getElementById('startDate');
+    if (!startDateField.value) {
+      errors.push({
+        field: startDateField,
+        message: 'Start date is required'
+      });
+    }
+    
+    // Validate End Date
+    const endDateField = document.getElementById('endDate');
+    if (!endDateField.value) {
+      errors.push({
+        field: endDateField,
+        message: 'End date is required'
+      });
+    }
+    
+    // Check if end date is after start date
+    if (startDateField.value && endDateField.value) {
+      const startDate = new Date(startDateField.value);
+      const endDate = new Date(endDateField.value);
+      if (endDate <= startDate) {
+        errors.push({
+          field: endDateField,
+          message: 'End date must be after start date'
+        });
+      }
+    }
+    
+    // Validate YouTube URL if provided
+    const youtubeField = document.getElementById('youtube_url_new');
+    if (youtubeField.value.trim()) {
+      const validation = validateYouTubeUrl(youtubeField.value);
+      if (!validation.valid) {
+        errors.push({
+          field: youtubeField,
+          message: validation.message
+        });
+      }
+    }
+    
+    return errors;
+  }
+  
+  // Function to clear error styling
+  function clearErrorStyling() {
+    const errorFields = document.querySelectorAll('.is-invalid');
+    errorFields.forEach(field => {
+      field.classList.remove('is-invalid');
+      field.style.borderColor = '';
+    });
+  }
+  
+  // Function to scroll to field and focus
+  function scrollToField(field) {
+    field.scrollIntoView({ 
+      behavior: 'smooth', 
+      block: 'center' 
+    });
+    setTimeout(() => {
+      field.focus();
+    }, 500);
+  }
+  
+  // Function to show validation errors
+  function showValidationErrors(errors) {
+    console.log('showValidationErrors called with errors:', errors);
+    
+    if (errors.length === 0) return;
+    
+    // Check if iziToast is available
+    if (typeof iziToast === 'undefined') {
+      console.error('iziToast not available, falling back to alert');
+      alert('Validation Error: ' + errors[0].message);
+      return;
+    }
+    
+    // Show first error with toast
+    const firstError = errors[0];
+    console.log('Showing error toast:', firstError.message);
+    iziToast.error({
+      message: firstError.message,
+      position: "topRight"
+    });
+    
+    // Add error styling to all error fields
+    errors.forEach(error => {
+      error.field.classList.add('is-invalid');
+      error.field.style.borderColor = '#dc3545';
+    });
+    
+    // Scroll to first error field
+    scrollToField(firstError.field);
+    
+    // Show additional errors as info toasts
+    if (errors.length > 1) {
+      setTimeout(() => {
+        console.log('Showing additional errors toast');
+        iziToast.info({
+          message: `Please fix ${errors.length - 1} more field(s)`,
+          position: "topRight"
+        });
+      }, 1000);
+    }
+  }
+  
+  // Test function to check if toast notifications are working
+  function testToast() {
+    console.log('Testing toast notifications...');
+    
+    if (typeof iziToast !== 'undefined') {
+      console.log('iziToast is available, showing test notifications');
+      iziToast.success({
+        message: 'Success toast is working!',
+        position: "topRight"
+      });
+      setTimeout(() => {
+        iziToast.error({
+          message: 'Error toast is working!',
+          position: "topRight"
+        });
+      }, 1000);
+      setTimeout(() => {
+        iziToast.info({
+          message: 'Info toast is working!',
+          position: "topRight"
+        });
+      }, 2000);
+    } else {
+      console.error('iziToast is not available');
+      alert('iziToast library is not loaded. Please check the console for errors.');
+    }
+  }
+
+  // Test function to check if Quill editor is working
+  function testEditor() {
+    console.log('Testing Quill editor...');
+    
+    if (typeof quill !== 'undefined' && quill) {
+      console.log('Quill editor is available and working');
+      
+      // Editor is ready for use
+      console.log('Editor is ready for content editing');
+      
+      if (typeof iziToast !== 'undefined') {
+        iziToast.success({
+          message: 'Quill editor is working! Test content inserted.',
+          position: "topRight"
+        });
+      } else {
+        alert('Quill editor is working! Test content inserted.');
+      }
+    } else {
+      console.error('Quill editor is not available');
+      
+      if (typeof iziToast !== 'undefined') {
+        iziToast.error({
+          message: 'Quill editor is not working. Check console for errors.',
+          position: "topRight"
+        });
+      } else {
+        alert('Quill editor is not working. Check console for errors.');
+      }
+    }
+  }
+
+  // Function to save editor content and submit form
+  function showEditorContent() {
+    console.log('showEditorContent called');
+    
+    // Copy Quill content to textarea first
+    if (quill) {
+      const editorContent = quill.root.innerHTML;
+      const textarea = document.getElementById('gigDescription');
+      if (textarea) {
+        textarea.value = editorContent;
+      }
+    }
+    
+    // Validate form
+    console.log('Starting form validation...');
+    const errors = validateForm();
+    console.log('Validation completed. Errors found:', errors.length);
+    
+    if (errors.length > 0) {
+      console.log('Validation failed, showing errors');
+      showValidationErrors(errors);
+      return false;
+    }
+    
+    // If validation passes, show success message and submit
+    console.log('Validation passed, showing success message');
+    if (typeof iziToast !== 'undefined') {
+      iziToast.success({
+        message: 'All fields validated successfully!',
+        position: "topRight"
+      });
+    } else {
+      alert('All fields validated successfully!');
+    }
+    
+    setTimeout(() => {
+      const form = document.getElementById('editGigForm');
+      if (form) {
+        console.log('Submitting form...');
+        form.submit();
+      }
+    }, 1000);
         }
 
         // Handle form submission - copy Quill content to hidden textarea
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, setting up form submission handler');
-            
-            const form = document.querySelector('form');
+        function setupFormSubmissionHandler() {
+            const form = document.getElementById('editGigForm');
             const textarea = document.getElementById('gigDescription');
             
             console.log('Form found:', !!form);
@@ -311,122 +1239,316 @@
                         console.error('Quill instance not found!');
                     }
                 });
+                console.log('Form submission handler set up successfully');
             } else {
                 console.error('Form not found!');
+                // Retry after a short delay
+                setTimeout(setupFormSubmissionHandler, 100);
             }
-        });
+        }
 
-        // Image upload handler for Quill
-        const toolbar = quill.getModule('toolbar');
-        toolbar.addHandler('image', function() {
-            const input = document.createElement('input');
-            input.setAttribute('type', 'file');
-            input.setAttribute('accept', 'image/*');
-            input.click();
-
-            input.onchange = function() {
-                const file = input.files[0];
-                if (file) {
-                    const formData = new FormData();
-                    formData.append('files', file);
-                    formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
-
-                    const xhr = new XMLHttpRequest();
-                    xhr.open('POST', '/user/campaign/upload-image');
-                    xhr.onload = function() {
-                        if (xhr.status === 200) {
-                            try {
-                                const response = JSON.parse(xhr.responseText);
-                                if (response.location) {
-                                    const range = quill.getSelection();
-                                    quill.insertEmbed(range.index, 'image', response.location);
-                                } else {
-                                    alert('Upload failed: Invalid response');
-                                }
-                            } catch (e) {
-                                alert('Upload failed: Invalid JSON response');
-                            }
-                        } else {
-                            alert('Upload failed: ' + xhr.status);
-                        }
-                    };
-                    xhr.onerror = function() {
-                        alert('Upload failed: Network error');
-                    };
-                    xhr.send(formData);
-                }
-            };
+        // Set up form submission handler after DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, setting up form submission handler');
+            // Wait a bit for all elements to be ready
+            setTimeout(setupFormSubmissionHandler, 200);
         });
     </script>
     <script>
-        // Handle video type selection
-        function toggleVideoSections() {
-            const fileRadio = document.getElementById('video_file_new');
-            const youtubeRadio = document.getElementById('video_youtube_new');
-            const fileSection = document.getElementById('file_upload_section_new');
-            const youtubeSection = document.getElementById('youtube_url_section_new');
+        // YouTube URL Validation
+        function validateYouTubeUrl(url) {
+            if (!url || url.trim() === '') {
+                return { valid: true, message: '' }; // Empty is allowed (optional field)
+            }
+            
+            const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/|v\/)|youtu\.be\/)[\w\-]+/i;
+            
+            if (!youtubeRegex.test(url)) {
+                return { 
+                    valid: false, 
+                    message: 'Please enter a valid YouTube URL (e.g., https://www.youtube.com/watch?v=VIDEO_ID or https://youtu.be/VIDEO_ID)' 
+                };
+            }
+            
+            return { valid: true, message: '' };
+        }
 
-            if (fileRadio && fileRadio.checked) {
-                fileSection.style.display = 'block';
-                youtubeSection.style.display = 'none';
-            } else if (youtubeRadio && youtubeRadio.checked) {
-                fileSection.style.display = 'none';
-                youtubeSection.style.display = 'block';
+        // Handle YouTube URL validation
+        function handleYouTubeValidation() {
+            const youtubeInput = document.getElementById('youtube_url_new');
+            const validationMessage = document.getElementById('youtube-validation-message');
+            
+            if (youtubeInput && validationMessage) {
+                youtubeInput.addEventListener('blur', function() {
+                    const url = this.value.trim();
+                    const validation = validateYouTubeUrl(url);
+                    
+                    if (!validation.valid) {
+                        validationMessage.textContent = validation.message;
+                        validationMessage.style.display = 'block';
+                        this.classList.add('is-invalid');
+                                } else {
+                        validationMessage.style.display = 'none';
+                        this.classList.remove('is-invalid');
+                    }
+                });
+                
+                youtubeInput.addEventListener('input', function() {
+                    if (this.classList.contains('is-invalid')) {
+                        const url = this.value.trim();
+                        const validation = validateYouTubeUrl(url);
+                        
+                        if (validation.valid) {
+                            validationMessage.style.display = 'none';
+                            this.classList.remove('is-invalid');
+                        }
+                    }
+                });
             }
         }
 
         // Set initial state based on existing data
         document.addEventListener('DOMContentLoaded', function() {
-            // Check if campaign has YouTube URL
-            const hasYoutubeUrl = '{{ $campaign->youtube_url }}' !== '';
+            // Initialize YouTube URL validation
+            handleYouTubeValidation();
             
-            const fileRadio = document.getElementById('video_file_new');
-            const youtubeRadio = document.getElementById('video_youtube_new');
-            
-            if (hasYoutubeUrl && youtubeRadio) {
-                youtubeRadio.checked = true;
-            } else if (fileRadio) {
-                fileRadio.checked = true;
+            // Wait for Quill to be initialized before setting up preview
+            function waitForQuillAndSetupPreview() {
+                if (typeof quill !== 'undefined' && quill) {
+                    console.log('Quill is ready, setting up preview...');
+                    // Add real-time preview event listeners
+                    setupRealTimePreview();
+                    
+                    // Setup gallery upload
+                    setupGalleryUpload();
+                } else {
+                    // Retry after a short delay
+                    setTimeout(waitForQuillAndSetupPreview, 100);
+                }
             }
             
-            // Toggle sections based on initial state
-            toggleVideoSections();
-            
-            // Add event listeners
-            if (fileRadio) {
-                fileRadio.addEventListener('change', toggleVideoSections);
-            }
-            if (youtubeRadio) {
-                youtubeRadio.addEventListener('change', toggleVideoSections);
-            }
-
-
+            // Start waiting for Quill
+            setTimeout(waitForQuillAndSetupPreview, 200);
         });
+        
+        function setupRealTimePreview() {
+            console.log('Setting up real-time preview...');
+            
+            try {
+                // Title input
+                const titleInput = document.getElementById('gigTitle');
+                if (titleInput) {
+                    titleInput.addEventListener('input', updatePreview);
+                    console.log('Title input listener added');
+                } else {
+                    console.warn('Title input not found');
+                }
+                
+                // Category select
+                const categorySelect = document.getElementById('gigCategory');
+                if (categorySelect) {
+                    categorySelect.addEventListener('change', updatePreview);
+                    console.log('Category select listener added');
+                } else {
+                    console.warn('Category select not found');
+                }
+                
+                // Target amount input
+                const amountInput = document.getElementById('targetAmount');
+                if (amountInput) {
+                    amountInput.addEventListener('input', updatePreview);
+                    console.log('Amount input listener added');
+                } else {
+                    console.warn('Amount input not found');
+                }
+                
+                // YouTube URL input
+                const youtubeInput = document.getElementById('youtube_url_new');
+                if (youtubeInput) {
+                    youtubeInput.addEventListener('input', updatePreview);
+                    console.log('YouTube input listener added');
+                } else {
+                    console.warn('YouTube input not found');
+                }
+                
+                // Main image input
+                const mainImageInput = document.getElementById('mainImage');
+                if (mainImageInput) {
+                    mainImageInput.addEventListener('change', function(e) {
+                        const file = e.target.files[0];
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onload = function(e) {
+                                const previewImage = document.getElementById('previewImage');
+                                const previewImageIcon = document.getElementById('previewImageIcon');
+                                if (previewImage && previewImageIcon) {
+                                    previewImage.src = e.target.result;
+                                    previewImage.style.display = 'block';
+                                    previewImageIcon.style.display = 'none';
+                                }
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                    });
+                    console.log('Main image input listener added');
+                } else {
+                    console.warn('Main image input not found');
+                }
+                
+                // Quill editor content changes
+                if (quill) {
+                    quill.on('text-change', function() {
+                        updatePreview();
+                    });
+                    console.log('Quill text-change listener added');
+                } else {
+                    console.warn('Quill instance not available for preview');
+                }
+                
+                // Gallery dropzone changes
+                const galleryDropzone = document.getElementById('galleryDropzone');
+                if (galleryDropzone) {
+                    // Listen for new uploads
+                    galleryDropzone.addEventListener('drop', function() {
+                        setTimeout(updatePreview, 1000); // Wait for upload to complete
+                    });
+                    console.log('Gallery dropzone listener added');
+                } else {
+                    console.log('Gallery dropzone not found (optional)');
+                }
+                
+                // Initial preview update
+                updatePreview();
+                console.log('Real-time preview setup completed');
+            } catch (error) {
+                console.error('Error in setupRealTimePreview:', error);
+            }
+        }
 
-        // Preview functionality
-        function previewGig() {
-            const title = document.getElementById('gigTitle').value || 'Your Gig Title';
+        // Real-time preview functionality
+        function updatePreview() {
+            try {
+                // Update title
+                const titleInput = document.getElementById('gigTitle');
+                const title = titleInput ? titleInput.value || 'Your Campaign Title' : 'Your Campaign Title';
+                const titleElement = document.getElementById('previewTitle');
+                if (titleElement) titleElement.textContent = title;
+                
+                // Update description from Quill editor
+                let description = 'Your campaign description will appear here...';
+                if (quill) {
+                    const editorContent = quill.getText();
+                    description = editorContent || 'Your campaign description will appear here...';
+                } else {
+                    const descTextarea = document.getElementById('gigDescription');
+                    description = descTextarea ? descTextarea.value || 'Your campaign description will appear here...' : 'Your campaign description will appear here...';
+                }
+                const descElement = document.getElementById('previewDescription');
+                if (descElement) descElement.textContent = description;
+                
+                // Update category
+                const categorySelect = document.getElementById('gigCategory');
+                const category = categorySelect ? categorySelect.options[categorySelect.selectedIndex].text : 'Category';
+                const categoryElement = document.getElementById('previewCategory');
+                if (categoryElement) categoryElement.textContent = category;
+                
+                // Update amount
+                const amountInput = document.getElementById('targetAmount');
+                const amount = amountInput ? amountInput.value || '0' : '0';
+                const currencySymbol = '{{ $setting->cur_sym }}';
+                const amountElement = document.getElementById('previewAmount');
+                const goalAmountElement = document.getElementById('previewGoalAmount');
+                if (amountElement) amountElement.textContent = currencySymbol + parseFloat(amount).toLocaleString();
+                if (goalAmountElement) goalAmountElement.textContent = currencySymbol + parseFloat(amount).toLocaleString();
+                
+                // Update YouTube video preview
+                updateVideoPreview();
+                
+                // Update gallery preview
+                updateGalleryPreview();
+            } catch (error) {
+                console.error('Error in updatePreview:', error);
+            }
+        }
+        
+        function updateVideoPreview() {
+            try {
+                const youtubeInput = document.getElementById('youtube_url_new');
+                const youtubeUrl = youtubeInput ? youtubeInput.value : '';
+                const videoPreview = document.getElementById('previewVideo');
+                const videoContainer = document.getElementById('previewVideoContainer');
+                
+                if (youtubeUrl && youtubeUrl.trim() !== '') {
+                    // Convert YouTube URL to embed format
+                    let embedUrl = youtubeUrl;
+                    if (youtubeUrl.includes('youtube.com/watch?v=')) {
+                        const videoId = youtubeUrl.split('v=')[1].split('&')[0];
+                        embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                    } else if (youtubeUrl.includes('youtu.be/')) {
+                        const videoId = youtubeUrl.split('youtu.be/')[1].split('?')[0];
+                        embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                    }
+                    
+                    if (videoContainer) {
+                        videoContainer.innerHTML = `
+                            <div class="ratio ratio-16x9">
+                                <iframe src="${embedUrl}" 
+                                        title="YouTube video player" 
+                                        frameborder="0" 
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                        allowfullscreen>
+                                </iframe>
+                            </div>
+                        `;
+                    }
+                    if (videoPreview) videoPreview.style.display = 'block';
+                } else {
+                    if (videoPreview) videoPreview.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error in updateVideoPreview:', error);
+            }
+        }
+        
+        function updateGalleryPreview() {
+            const galleryPreview = document.getElementById('previewGallery');
+            const galleryImages = document.getElementById('previewGalleryImages');
             
-            // Get description from TinyMCE editor
-            let description = 'Your gig description will appear here...';
-            if (typeof tinymce !== 'undefined' && tinymce.get('gigDescription')) {
-                description = tinymce.get('gigDescription').getContent({format: 'text'}) || 'Your gig description will appear here...';
+            // Get existing gallery images
+            const existingImages = document.querySelectorAll('.existing-image-item');
+            
+            if (existingImages.length > 0) {
+                let galleryHTML = '<div class="row g-2">';
+                
+                // Add existing images
+                existingImages.forEach(img => {
+                    const imgElement = img.querySelector('img');
+                    if (imgElement) {
+                        const imgSrc = imgElement.src;
+                        galleryHTML += `
+                            <div class="col-6">
+                                <img src="${imgSrc}" class="img-fluid rounded" style="width: 100%; height: 80px; object-fit: cover;">
+                            </div>
+                        `;
+                    }
+                });
+                
+                galleryHTML += '</div>';
+                
+                if (galleryImages) galleryImages.innerHTML = galleryHTML;
+                if (galleryPreview) galleryPreview.style.display = 'block';
             } else {
-                description = document.getElementById('gigDescription').value || 'Your gig description will appear here...';
+                if (galleryPreview) galleryPreview.style.display = 'none';
             }
-            
-            const categorySelect = document.getElementById('gigCategory');
-            const category = categorySelect ? categorySelect.options[categorySelect.selectedIndex].text : 'Category';
-            const amount = document.getElementById('targetAmount').value || '0';
-            const currencySymbol = '{{ $setting->cur_sym }}';
-            
-            const previewCard = document.querySelector('#gigPreview .preview-card');
-            if (previewCard) {
-                previewCard.querySelector('.preview-title').textContent = title;
-                previewCard.querySelector('.preview-description').textContent = description;
-                previewCard.querySelector('.preview-category').textContent = category;
-                previewCard.querySelector('.preview-amount').textContent = currencySymbol + parseFloat(amount).toLocaleString();
-            }
+        }
+        
+        function refreshPreview() {
+            updatePreview();
+        }
+        
+        // Legacy preview function for compatibility
+        function previewGig() {
+            updatePreview();
         }
 
 
@@ -451,21 +1573,220 @@
                 });
             }
         });
+
+        // Function to remove existing gallery images
+        function removeExistingImage(imageName, campaignId) {
+            if (!confirm('Are you sure you want to remove this image?')) {
+                return;
+            }
+
+            // Make AJAX request to remove image
+            fetch('{{ route("user.campaign.image.remove", ":id") }}'.replace(':id', campaignId), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({ image: imageName })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Remove the image element from DOM
+                    const imageElement = document.querySelector(`[data-image="${imageName}"]`);
+                    if (imageElement) {
+                        imageElement.remove();
+                    }
+                    
+                    // Update preview
+                    updateGalleryPreview();
+                    
+                    // Show success message
+                    alert('Image removed successfully');
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error removing image');
+            });
+        }
+        
+        // Function to delete all gallery images
+        function deleteAllImages(campaignId) {
+            if (!confirm('Are you sure you want to delete ALL gallery images? This action cannot be undone.')) {
+                return;
+            }
+
+            // Make AJAX request to delete all images
+            fetch('{{ route("user.campaign.gallery.delete-all", ":id") }}'.replace(':id', campaignId), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Remove all gallery images from DOM
+                    const existingGallery = document.getElementById('existingGalleryImages');
+                    if (existingGallery) {
+                        existingGallery.innerHTML = '';
+                    }
+                    
+                    // Hide the existing gallery section
+                    const existingGallerySection = document.querySelector('.existing-gallery');
+                    if (existingGallerySection) {
+                        existingGallerySection.style.display = 'none';
+                    }
+                    
+                    // Update preview
+                    updateGalleryPreview();
+                    
+                    // Show success message
+                    alert('All gallery images deleted successfully');
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error deleting images');
+            });
+        }
+        
+        // Gallery upload functionality
+        function setupGalleryUpload() {
+            const galleryInput = document.getElementById('galleryImages');
+            const uploadProgress = document.getElementById('uploadProgress');
+            
+            if (galleryInput) {
+                galleryInput.addEventListener('change', function(e) {
+                    const files = Array.from(e.target.files);
+                    
+                    if (files.length === 0) return;
+                    
+                    // Validate file sizes (5MB max)
+                    const validFiles = files.filter(file => {
+                        if (file.size > 5 * 1024 * 1024) {
+                            alert(`File ${file.name} is too large. Maximum size is 5MB.`);
+                            return false;
+                        }
+                        return true;
+                    });
+                    
+                    if (validFiles.length === 0) return;
+                    
+                    // Show progress bar
+                    if (uploadProgress) {
+                        uploadProgress.style.display = 'block';
+                    }
+                    
+                    // Upload files one by one
+                    uploadFilesSequentially(validFiles, 0);
+                });
+            }
+        }
+        
+        function uploadFilesSequentially(files, index) {
+            if (index >= files.length) {
+                // All files uploaded
+                const uploadProgress = document.getElementById('uploadProgress');
+                if (uploadProgress) {
+                    uploadProgress.style.display = 'none';
+                }
+                updateGalleryPreview();
+                return;
+            }
+            
+            const file = files[index];
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+            
+            // Upload file via AJAX
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '{{ route("user.campaign.gallery.upload") }}');
+            
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        if (response.image) {
+                            // Add image to existing gallery
+                            addImageToGallery(response.image);
+                        }
+                    } catch (e) {
+                        console.error('JSON parse error:', e);
+                        alert('Upload failed: Invalid response format');
+                    }
+                } else {
+                    console.error('Upload failed with status:', xhr.status);
+                    alert('Upload failed: Server error ' + xhr.status);
+                }
+                
+                // Upload next file
+                uploadFilesSequentially(files, index + 1);
+            };
+            
+            xhr.onerror = function() {
+                console.error('Network error during upload');
+                alert('Upload failed: Network error');
+                uploadFilesSequentially(files, index + 1);
+            };
+            
+            xhr.send(formData);
+        }
+        
+        function addImageToGallery(imageName) {
+            const existingGallery = document.getElementById('existingGalleryImages');
+            if (!existingGallery) return;
+            
+            const imageUrl = `{{ getFilePath('campaign') }}/${imageName}`;
+            const campaignId = {{ $campaign->id }};
+            
+            const imageHTML = `
+                <div class="col-lg-3 col-md-4 col-sm-6 existing-image-item" data-image="${imageName}">
+                    <div class="gallery-image-card">
+                        <div class="image-container">
+                            <img src="${imageUrl}" 
+                                 alt="Gallery Image" 
+                                 class="gallery-image">
+                            <div class="image-overlay">
+                                <button type="button" 
+                                        class="btn btn-danger btn-sm remove-btn" 
+                                        onclick="removeExistingImage('${imageName}', ${campaignId})"
+                                        title="Remove Image">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            existingGallery.insertAdjacentHTML('beforeend', imageHTML);
+            
+            // Show existing gallery section if it was hidden
+            const existingGallerySection = document.querySelector('.existing-gallery');
+            if (existingGallerySection) {
+                existingGallerySection.style.display = 'block';
+            }
+            
+            // Update the gallery count
+            updateGalleryCount();
+        }
+        
+        function updateGalleryCount() {
+            const existingImages = document.querySelectorAll('.existing-image-item');
+            const countBadge = document.querySelector('.existing-gallery .badge');
+            if (countBadge) {
+                countBadge.textContent = existingImages.length;
+            }
+        }
     </script>
     
-    <style>
-        /* TinyMCE Editor Styling */
-        .tox-tinymce {
-            height: 800px !important;
-        }
-        
-        .tox-edit-area__iframe {
-            height: 750px !important;
-        }
-        
-        .tox-editor-container {
-            height: 800px !important;
-        }
-    </style>
     
 @endsection

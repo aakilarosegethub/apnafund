@@ -195,7 +195,6 @@
                                 <div class="campaign-info">
                                     <img src="{{ getImage(getFilePath('campaign') . '/' . $campaignData->image) }}" alt="{{ $campaignData->name }}" class="campaign-image mb-3">
                                     <h4 class="campaign-title">{{ $campaignData->name }}</h4>
-                                    <p class="campaign-description">{{ strLimit($campaignData->description, 100) }}</p>
                                 </div>
                             </div>
                         </div>

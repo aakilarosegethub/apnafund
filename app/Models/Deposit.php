@@ -12,6 +12,24 @@ class Deposit extends Model
 {
     use UniversalStatus, Searchable;
 
+    protected $fillable = [
+        'user_id',
+        'method_code',
+        'method_currency',
+        'amount',
+        'charge',
+        'rate',
+        'final_amo',
+        'btc_amo',
+        'btc_wallet',
+        'trx',
+        'status',
+        'campaign_id',
+        'email',
+        'phone',
+        'name'
+    ];
+
     protected $casts = [
         'details' => 'object',
     ];

@@ -20,31 +20,32 @@
                         <td>
                             <div class="table-card-with-image">
                                 <div class="table-card-with-image__img">
-                                    <img src="{{ getImage(getFilePath('userProfile') . '/' . @$comment->campaign->user->image, getFileSize('userProfile'), true) }}" alt="Image">
+                                    @if($comment->campaign && $comment->campaign->user)
+                                        <img src="{{ getImage(getFilePath('userProfile') . '/' . $comment->campaign->user->image, getFileSize('userProfile'), true) }}" alt="Image">
+                                    @else
+                                        <img src="{{ getImage(getFilePath('userProfile') . '/' . 'default.png', getFileSize('userProfile'), true) }}" alt="Image">
+                                    @endif
                                 </div>
                                 <div class="table-card-with-image__content">
-                                    <p class="fw-semibold">{{ $comment->campaign->user->fullname }}</p>
-                                    <p class="fw-semibold">
-                                        <a href="{{ route('admin.user.details', $comment->campaign->user->id) }}"> <small>@</small>{{ $comment->campaign->user->username }}</a>
-                                    </p>
                                 </div>
                             </div>
                         </td>
                         <td>
-                            <span title="{{ __($comment->campaign->name) }}">
-                                <a href="{{ route('admin.campaigns.details', $comment->campaign->id) }}" target="_blank">
-                                    {{ __(strLimit($comment->campaign->name, 30)) }}
-                                </a>
-                            </span>
+                            @if($comment->campaign)
+                                <span title="{{ __($comment->campaign->name) }}">
+                                    <a href="{{ route('admin.campaigns.details', $comment->campaign->id) }}" target="_blank">
+                                        {{ __(strLimit($comment->campaign->name, 30)) }}
+                                    </a>
+                                </span>
+                            @else
+                                <span class="text-muted">Campaign Deleted</span>
+                            @endif
                         </td>
                         <td>
                             <div>
                                 @if($comment->user)
                                     <p>{{ $comment->user->fullname }}</p>
                                     <p>
-                                        <a href="{{ route('admin.user.details', $comment->user->id) }}">
-                                            {{ $comment->user->email }}
-                                        </a>
                                     </p>
                                 @else
                                     <p>{{ $comment->name }}</p>

@@ -43,34 +43,6 @@
                                 </div> -->
                             </div>
 
-                            <!-- Recent Activity -->
-                            <div class="content-card">
-                                <h4 class="mb-4">Recent Activity</h4>
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <div class="d-flex align-items-center p-3 bg-light rounded">
-                                            <div class="me-3">
-                                                <i class="fas fa-sparkles text-success"></i>
-                                            </div>
-                                            <div>
-                                                <strong>New donation received</strong>
-                                                <div class="text-muted small">$50 for "Local Food Bank Support"</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <div class="d-flex align-items-center p-3 bg-light rounded">
-                                            <div class="me-3">
-                                                <i class="fas fa-rocket text-primary"></i>
-                                            </div>
-                                            <div>
-                                                <strong>Gig published</strong>
-                                                <div class="text-muted small">"Community Garden Project" is now live</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>

@@ -55,7 +55,7 @@ class CommentController extends Controller
         }
 
         notify($user, $template, [
-            'campaign_name' => $comment->campaign->name,
+            'campaign_name' => $comment->campaign ? $comment->campaign->name : 'Deleted Campaign',
         ], ['email']);
     }
 }
