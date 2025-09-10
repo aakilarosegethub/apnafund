@@ -64,6 +64,7 @@ Route::middleware('auth')->name('user.')->namespace('User')->group(function () {
             Route::name('gallery.')->group(function () {
                 Route::post('gallery-upload', 'galleryUpload')->name('upload');
                 Route::post('gallery-remove', 'galleryRemove')->name('remove');
+                Route::post('delete-all-gallery/{id}', 'deleteAllGallery')->name('delete-all');
             });
         });
 
@@ -73,7 +74,7 @@ Route::middleware('auth')->name('user.')->namespace('User')->group(function () {
             Route::get('/create', 'create')->name('create');
             Route::post('/store', 'store')->name('store');
             Route::get('/{rewardId}/edit', 'edit')->name('edit');
-            Route::post('/{rewardId}/update', 'update')->name('update');
+            Route::put('/{rewardId}/update', 'update')->name('update');
             Route::delete('/{rewardId}', 'destroy')->name('destroy');
             Route::post('/{rewardId}/toggle-status', 'toggleStatus')->name('toggle.status');
         });
