@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apna Fund - Create Project</title>
+    <link rel="stylesheet" href="assets/css/app.css">
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="shortcut icon" href="assets/images/fav-icon.png" type="image/png">
+    <style>
+        body {
+            background: #ffffff;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #05ce78;
+            margin-bottom: 20px;
+        }
+
+        .step-indicator {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 40px;
+        }
+
+        .main-content {
+            text-align: center;
+        }
+
+        .main-title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .instruction {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .description {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 40px;
+            line-height: 1.5;
+        }
+
+        .category-section {
+            margin-bottom: 40px;
+        }
+
+        .category-row {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .category-select {
+            position: relative;
+            min-width: 200px;
+        }
+
+        .category-select select {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            background: #fff;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+        }
+
+        .category-select::after {
+            content: '▼';
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            pointer-events: none;
+        }
+
+        .category-select select:focus {
+            outline: none;
+            border-color: #05ce78;
+        }
+
+        .next-button {
+            background: #333;
+            color: #fff;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .next-button:hover {
+            background: #555;
+        }
+
+        .next-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 768px) {
+            .category-row {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .category-select {
+                min-width: 250px;
+            }
+
+            .main-title {
+                font-size: 24px;
+            }
+
+            .instruction {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header py-0">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-12">
+                    <div class="logo text-center">
+                        <a href="/">
+                            <img src="assets/images/White Logo.png" alt="Apna Fund Logo" class="logo-img">
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="header">
+            <div class="logo">APNA FUND</div>
+            <div class="step-indicator">1 of 3</div>
+        </div>
+
+        <div class="main-content">
+            <h1 class="main-title">First, let's get you set up.</h1>
+
+            <p class="instruction">Select a primary category and subcategory for your new project.</p>
+
+            <p class="description">These will help backers find your project, and you can change them later if you need
+                to.</p>
+
+            <div class="category-section">
+                <div class="category-row">
+                    <div class="category-select">
+                        <select id="primaryCategory">
+                            <option value="">Food</option>
+                            <option value="technology">Technology</option>
+                            <option value="art">Art</option>
+                            <option value="music">Music</option>
+                            <option value="film">Film & Video</option>
+                            <option value="games">Games</option>
+                            <option value="publishing">Publishing</option>
+                            <option value="fashion">Fashion</option>
+                            <option value="health">Health & Fitness</option>
+                            <option value="education">Education</option>
+                            <option value="environment">Environment</option>
+                            <option value="social">Social Impact</option>
+                        </select>
+                    </div>
+
+                    <div class="category-select">
+                        <select id="subCategory">
+                            <option value="">Small Batch</option>
+                            <option value="beverages">Beverages</option>
+                            <option value="snacks">Snacks</option>
+                            <option value="condiments">Condiments</option>
+                            <option value="baked-goods">Baked Goods</option>
+                            <option value="preserved">Preserved Foods</option>
+                            <option value="spices">Spices & Seasonings</option>
+                            <option value="organic">Organic</option>
+                            <option value="vegan">Vegan</option>
+                            <option value="gluten-free">Gluten-Free</option>
+                            <option value="artisanal">Artisanal</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <button class="next-button" onclick="nextStep()">Next: Additional subcategory</button>
+        </div>
+    </div>
+
+    <script>
+        function nextStep() {
+            const primaryCategory = document.getElementById('primaryCategory').value;
+            const subCategory = document.getElementById('subCategory').value;
+
+            if (primaryCategory && subCategory) {
+                // Here you would typically proceed to the next step
+                alert('Moving to next step...');
+                // You can redirect to the next page or show the next step
+                // window.location.href = '/step2.html';
+            } else {
+                alert('Please select both primary category and subcategory.');
+            }
+        }
+
+        // Enable/disable next button based on selections
+        function updateNextButton() {
+            const primaryCategory = document.getElementById('primaryCategory').value;
+            const subCategory = document.getElementById('subCategory').value;
+            const nextButton = document.querySelector('.next-button');
+
+            if (primaryCategory && subCategory) {
+                nextButton.disabled = false;
+            } else {
+                nextButton.disabled = true;
+            }
+        }
+
+        // Add event listeners
+        document.getElementById('primaryCategory').addEventListener('change', updateNextButton);
+        document.getElementById('subCategory').addEventListener('change', updateNextButton);
+
+        // Initialize button state
+        updateNextButton();
+    </script>
+</body>
+
+</html>

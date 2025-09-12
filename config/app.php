@@ -59,6 +59,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Assets URL
+    |--------------------------------------------------------------------------
+    |
+    | This URL is used for serving static assets like images, CSS, and JS files.
+    | You can set this to your CDN or different domain for assets.
+    |
+    */
+
+    'assets_url' => env('ASSETS_URL', env('APP_URL', 'http://localhost')),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

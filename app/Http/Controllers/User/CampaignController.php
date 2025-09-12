@@ -831,7 +831,7 @@ class CampaignController extends Controller
             }
 
             // Return success response with image URL for TinyMCE
-            $imageUrl = asset('assets/universal/images/campaign/' . $filename);
+            $imageUrl = request()->getSchemeAndHttpHost() . '/assets/universal/images/campaign/' . $filename;
             
             return response()->json([
                 'location' => $imageUrl

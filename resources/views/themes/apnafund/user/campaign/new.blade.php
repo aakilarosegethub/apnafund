@@ -17,7 +17,7 @@
       background: #fff;
       position: relative;
     }
-    /* Editor */
+    /* Editor */ 
     #editor{
       background:#fff;
       height: 400px;
@@ -668,12 +668,6 @@
                                     <div class="d-flex gap-3">
                                         <button type="button" class="btn btn-primary" id="submitBtn" onclick="showEditorContent()">
                                             <i class="fas fa-save me-2"></i>Submit 
-                                        </button>
-                                        <button type="button" class="btn btn-primary" onclick="previewCampign()">
-                                            <i class="fas fa-eye me-2"></i>Preview
-                                        </button>
-                                        <button type="button" class="btn btn-warning" onclick="testToast()">
-                                            <i class="fas fa-bell me-2"></i>Test Toast
                                         </button>
                                         <button type="button" class="btn btn-secondary">
                                             <i class="fas fa-times me-2"></i>Cancel

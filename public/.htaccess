@@ -1,0 +1,17 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # 1) /help (or /help/) ALWAYS goes to Laravel (index.php)
+  RewriteRule ^help/?$ index.php [L]
+
+  # 2) /help/... ke andar AGAR physical file/folder hai to usay serve karo
+  RewriteCond %{REQUEST_URI} ^/help/
+  RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} -f [OR]
+  RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} -d
+  RewriteRule ^ - [L]
+
+  # 3) Baqi sab Laravel ko de do (default Laravel rule)
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^ index.php [L]
+</IfModule>

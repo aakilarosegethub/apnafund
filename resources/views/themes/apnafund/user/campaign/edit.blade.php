@@ -11,7 +11,6 @@
 @section('style')
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet" />
-<link href="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.min.css" rel="stylesheet" />
 
   <style>
     :root { --radius: 24px; --border:#e6e6e6; }
@@ -23,7 +22,7 @@
       background: #fff;
       position: relative;
     }
-    /* Editor */
+    /* Editor */ 
     #editor{
       background:#fff;
       height: 400px;
@@ -179,13 +178,19 @@
       padding: 0.4rem 0.8rem;
     }
     
-    .existing-gallery {
-      background: #f8f9fa;
-      border-radius: 12px;
-      padding: 1.5rem;
-      border: 1px solid #e9ecef;
+    .gallery-help-text {
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      background: #e3f2fd;
+      border-radius: 8px;
+      border-left: 4px solid #2196f3;
     }
     
+    .gallery-help-text i {
+      color: #2196f3;
+    }
+    
+    /* Gallery Image Cards */
     .gallery-image-card {
       background: white;
       border-radius: 8px;
@@ -252,18 +257,80 @@
       box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
     }
     
-    .gallery-help-text {
-      margin-top: 1rem;
-      padding: 0.75rem 1rem;
-      background: #e3f2fd;
+    .gallery-preview {
+      background: #f8f9fa;
       border-radius: 8px;
-      border-left: 4px solid #2196f3;
+      padding: 1rem;
+      border: 1px solid #e9ecef;
     }
     
-    .gallery-help-text i {
-      color: #2196f3;
+    .gallery-preview-title {
+      color: #495057;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
     }
     
+    /* Gallery Upload Area */
+    .gallery-upload-area {
+      border: 2px dashed #dee2e6;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      transition: all 0.3s ease;
+      min-height: 200px;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    
+    .gallery-upload-area:hover {
+      border-color: #0f8e6f;
+      background: linear-gradient(135deg, #e8f5f3 0%, #d1f2eb 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(15, 142, 111, 0.15);
+    }
+    
+    .upload-content {
+      text-align: center;
+      padding: 2rem;
+      margin: 0;
+    }
+    
+    .upload-icon {
+      font-size: 3rem;
+      color: #0f8e6f;
+      margin-bottom: 1rem;
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    .upload-title {
+      color: #2c3e50;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    
+    .upload-subtitle {
+      color: #6c757d;
+      margin-bottom: 1rem;
+    }
+    
+    .upload-info {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    
+    .upload-info .badge {
+      font-size: 0.75rem;
+      padding: 0.4rem 0.8rem;
+    }
     
     /* Required field styling - only for fields with required-field class */
     .required-field .form-label {
@@ -301,6 +368,28 @@
     .form-select[required]:focus {
       border-color: #dc3545;
       box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+    
+    /* Error field styling */
+    .is-invalid {
+      border-color: #dc3545 !important;
+      box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+    }
+    
+    .is-invalid:focus {
+      border-color: #dc3545 !important;
+      box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+    }
+    
+    /* Smooth scroll behavior */
+    html {
+      scroll-behavior: smooth;
+    }
+    
+    /* Toast notification positioning */
+    .toast-top-right {
+      top: 20px;
+      right: 20px;
     }
     
     /* Preview Styles */
@@ -399,103 +488,6 @@
       border-radius: 8px;
     }
     
-    /* Quill Toolbar Icon Fixes */
-    .ql-toolbar .ql-stroke {
-      fill: none;
-      stroke: currentColor;
-    }
-    
-    .ql-toolbar .ql-fill {
-      fill: currentColor;
-      stroke: none;
-    }
-    
-    .ql-toolbar .ql-picker-label {
-      color: #444;
-    }
-    
-    .ql-toolbar .ql-picker-options {
-      background-color: #fff;
-      border: 1px solid #ccc;
-    }
-    
-    /* Ensure Quill icons are visible */
-    .ql-toolbar button {
-      color: #444;
-    }
-    
-    .ql-toolbar button:hover {
-      color: #000;
-    }
-    
-    .ql-toolbar button.ql-active {
-      color: #0f8e6f;
-    }
-    
-    /* Fix for missing icon fonts - Use proper Quill icons */
-    .ql-toolbar .ql-bold:before { content: "B"; font-weight: bold; font-size: 14px; }
-    .ql-toolbar .ql-italic:before { content: "I"; font-style: italic; font-size: 14px; }
-    .ql-toolbar .ql-underline:before { content: "U"; text-decoration: underline; font-size: 14px; }
-    .ql-toolbar .ql-strike:before { content: "S"; text-decoration: line-through; font-size: 14px; }
-    .ql-toolbar .ql-list:before { content: "•"; font-size: 16px; }
-    .ql-toolbar .ql-list[value="ordered"]:before { content: "1."; font-size: 14px; }
-    .ql-toolbar .ql-link:before { content: "🔗"; font-size: 14px; }
-    .ql-toolbar .ql-image:before { content: "🖼"; font-size: 14px; }
-    .ql-toolbar .ql-video:before { content: "🎥"; font-size: 14px; }
-    .ql-toolbar .ql-clean:before { content: "✕"; font-size: 14px; }
-    .ql-toolbar .ql-align:before { content: "≡"; font-size: 14px; }
-    .ql-toolbar .ql-align[value="center"]:before { content: "≡"; font-size: 14px; }
-    .ql-toolbar .ql-align[value="right"]:before { content: "≡"; font-size: 14px; }
-    .ql-toolbar .ql-align[value="justify"]:before { content: "≡"; font-size: 14px; }
-    .ql-toolbar .ql-color:before { content: "A"; font-size: 14px; }
-    .ql-toolbar .ql-background:before { content: "A"; font-size: 14px; }
-    .ql-toolbar .ql-code-block:before { content: "</>"; font-size: 12px; }
-    
-    /* Ensure toolbar buttons are properly styled */
-    .ql-toolbar button {
-      position: relative;
-      display: inline-block;
-      width: 28px;
-      height: 28px;
-      border: 1px solid #ccc;
-      background: #fff;
-      color: #444;
-      cursor: pointer;
-      border-radius: 3px;
-      margin: 0 1px;
-    }
-    
-    .ql-toolbar button:hover {
-      background: #f0f0f0;
-      border-color: #999;
-    }
-    
-    .ql-toolbar button.ql-active {
-      background: #0f8e6f;
-      color: #fff;
-      border-color: #0f8e6f;
-    }
-    
-    /* Fix for Quill icon display */
-    .ql-toolbar .ql-stroke {
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 2;
-    }
-    
-    .ql-toolbar .ql-fill {
-      fill: currentColor;
-      stroke: none;
-    }
-    
-    .ql-toolbar .ql-thin {
-      stroke-width: 1;
-    }
-    
-    .ql-toolbar .ql-thick {
-      stroke-width: 3;
-    }
-    
     /* Responsive adjustments */
     @media (max-width: 768px) {
       .gallery-dropzone {
@@ -508,14 +500,6 @@
       
       .upload-title {
         font-size: 1.1rem;
-      }
-      
-      .image-container {
-        height: 150px;
-      }
-      
-      .existing-gallery {
-        padding: 1rem;
       }
       
       .preview-image {
@@ -628,7 +612,7 @@
                                                 <div id="youtube-validation-message" class="text-danger mt-1" style="display: none;"></div>
                                             </div>
                                         </div>
-                                    </div>
+                                    
 
 
                                     <div class="row">
@@ -659,26 +643,13 @@
                                         <button type="button" class="btn btn-primary" id="submitBtn" onclick="showEditorContent()">
                                             <i class="fas fa-save me-2"></i>Update Campaign 
                                         </button>
-                                        <button type="submit" class="btn btn-success" id="directSubmitBtn">
-                                            <i class="fas fa-save me-2"></i>Save Direct
-                                        </button>
-                                        <button type="button" class="btn btn-primary" onclick="previewGig()">
-                                            <i class="fas fa-eye me-2"></i>Preview
-                                        </button>
-                                        <button type="button" class="btn btn-warning" onclick="testToast()">
-                                            <i class="fas fa-bell me-2"></i>Test Toast
-                                        </button>
-                                        <button type="button" class="btn btn-info" onclick="testEditor()">
-                                            <i class="fas fa-edit me-2"></i>Test Editor
-                                        </button>
                                         <button type="button" class="btn btn-secondary">
                                             <i class="fas fa-times me-2"></i>Cancel
                                         </button>
                                     </div>
                                 </form>
                             </div>
-                        </div>
-                    </div>
+                      </div>
 
                     <div class="col-lg-4">
                             <div class="content-card">
