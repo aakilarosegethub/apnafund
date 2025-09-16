@@ -23,13 +23,15 @@ class AutomatedGatewayController extends Controller
         $globalParameters    = null;
         $hasCurrencies       = false;
         $currencyIndex       = 1;
+        $gatewayCurrency     = null;
 
         if ($gateway->currencies->count()) {
             $globalParameters = json_decode($gateway->currencies->first()->gateway_parameter);
             $hasCurrencies    = true;
+            $gatewayCurrency  = $gateway->currencies->first();
         }
 
-        return view('admin.gateways.automated.edit', compact('pageTitle', 'gateway', 'supportedCurrencies', 'parameters', 'hasCurrencies', 'currencyIndex', 'globalParameters'));
+        return view('admin.gateways.automated.edit', compact('pageTitle', 'gateway', 'supportedCurrencies', 'parameters', 'hasCurrencies', 'currencyIndex', 'globalParameters', 'gatewayCurrency'));
     }
 
     function update($code) {
@@ -40,7 +42,12 @@ class AutomatedGatewayController extends Controller
         $parameters = collect(json_decode($gateway->gateway_parameters));
 
         foreach ($parameters->where('global', true) as $key => $pram) {
-            $parameters[$key]->value = request()->global[$key];
+            if ($key == 'sandbox') {
+                // Handle checkbox - if not present, set to 0
+                $parameters[$key]->value = request()->has('global.' . $key) ? '1' : '0';
+            } else {
+                $parameters[$key]->value = request()->global[$key];
+            }
         }
 
         $gateway->alias = request('alias');
@@ -120,11 +127,15 @@ class AutomatedGatewayController extends Controller
         $supportedCurrencies = collect($gateway->supported_currencies)->flip()->implode(',');
 
         foreach ($paramList->where('global', true) as $key => $pram) {
+            if ($key == 'sandbox') {
+                // Sandbox is optional (checkbox)
+                continue;
+            }
             $validationRule['global.' . $key] = 'required';
             $customAttributes['global.' . $key] = keyToTitle($key);
         }
 
-        if ($request->has('currency')) {
+        if ($request->has('currency') && !empty($request->currency)) {
             foreach ($request->currency as $key => $currency) {
                 $validationRule['currency.' . $key . '.currency']       = 'required|string|in:' . $supportedCurrencies;
                 $validationRule['currency.' . $key . '.symbol']         = 'required|string';

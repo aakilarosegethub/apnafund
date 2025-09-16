@@ -64,10 +64,19 @@
                                 <div class="col-lg-6">
                                     <div class="row align-items-center gy-2">
                                         <div class="col-lg-4">
-                                            <label class="col-form--label required">{{ __(@$param->title) }}</label>
+                                            <label class="col-form--label {{ $key == 'sandbox' ? '' : 'required' }}">{{ __(@$param->title) }}</label>
                                         </div>
                                         <div class="col-lg-8">
-                                            <input type="text" class="form--control" name="global[{{ $key }}]" value="{{ @$param->value }}" required>
+                                            @if($key == 'sandbox')
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" name="global[{{ $key }}]" value="1" id="sandbox_{{ $key }}" {{ @$param->value == '1' ? 'checked' : '' }}>
+                                                    <label class="form-check-label" for="sandbox_{{ $key }}">
+                                                        <span class="sandbox-status">{{ @$param->value == '1' ? 'Enabled (Test Mode)' : 'Disabled (Live Mode)' }}</span>
+                                                    </label>
+                                                </div>
+                                            @else
+                                                <input type="text" class="form--control" name="global[{{ $key }}]" value="{{ @$param->value }}" required>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -299,7 +308,7 @@
                                                 <div class="input--group">
                                                     <span class="input-group-text">1 {{ __($setting->site_cur ) }} =</span>
                                                     <input type="number" step="any" min="0" class="form--control" name="currency[{{ $currencyIndex }}][rate]" disabled required>
-                                                    <span class="input-group-text currency_symbol">{{ __($gatewayCurrency->baseSymbol()) }}</span>
+                                                    <span class="input-group-text currency_symbol">{{ __($gatewayCurrency && method_exists($gatewayCurrency, 'baseSymbol') ? $gatewayCurrency->baseSymbol() : '$') }}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -420,6 +429,32 @@
                 }
             });
         })(jQuery);
+
+        // Sandbox Mode Toggle
+        $(document).ready(function() {
+            $('input[name="global[sandbox]"]').on('change', function() {
+                const statusSpan = $(this).siblings('label').find('.sandbox-status');
+                if ($(this).is(':checked')) {
+                    statusSpan.text('Enabled (Test Mode)').removeClass('text-danger').addClass('text-warning');
+                } else {
+                    statusSpan.text('Disabled (Live Mode)').removeClass('text-warning').addClass('text-success');
+                }
+            });
+        });
     </script>
+
+    <style>
+        .form-check-input:checked {
+            background-color: #ffc107;
+            border-color: #ffc107;
+        }
+        .sandbox-status {
+            font-weight: 500;
+            font-size: 14px;
+        }
+        .form-check-label {
+            cursor: pointer;
+        }
+    </style>
 @endpush
 

@@ -371,6 +371,11 @@
             font-size: 12px;
             font-weight: 600;
         }
+        
+        .payment-logo::before,
+        .payment-logo::after {
+            content: none !important;
+        }
 
         .payment-text {
             font-weight: 500;
@@ -824,7 +829,7 @@
                              data-gateway="{{ json_encode($gatewayCurrency) }}">
                             <div class="payment-radio"></div>
                             <div class="payment-info">
-                                <div class="payment-logo">{{ strtoupper(substr($gatewayCurrency->method->name, 0, 2)) }}</div>
+                                <div class="payment-logo">{{ strtoupper(substr(trim($gatewayCurrency->method->name), 0, 2)) }}</div>
                                 <span class="payment-text">{{ __($gatewayCurrency->method->name) }} ({{ strtoupper($gatewayCurrency->currency) }})</span>
                             </div>
                         </div>
@@ -1340,6 +1345,11 @@
             justify-content: center;
             font-size: 12px;
             font-weight: 600;
+        }
+        
+        .payment-logo::before,
+        .payment-logo::after {
+            content: none !important;
         }
 
         .payment-text {
@@ -2027,7 +2037,7 @@
                     return false;
                 }
                 
-                if (!selectedGateway) {
+                if (selectedGateway === null) {
                     e.preventDefault();
                     alert('@lang("Please select a payment method")');
                     return false;

@@ -19,6 +19,9 @@ class DatabaseSeeder extends Seeder
             FormSeeder::class,
             BusinessResourcesSeeder::class,
             ReportFundraiserSeeder::class,
+            CustomGatewaySeeder::class,
+            CardPaymentGatewaySeeder::class,
+            JazzCashGatewaySeeder::class,
         ]);
     }
 }

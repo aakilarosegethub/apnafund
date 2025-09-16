@@ -264,6 +264,18 @@ function getThumbSize($key) {
     return null;
 }
 
+function custom_asset($path) {
+    $assetsUrl = env('ASSETS_URL', url('/'));
+    
+    // Remove leading slash from path if present
+    $path = ltrim($path, '/');
+    
+    // Ensure assets URL doesn't end with slash
+    $assetsUrl = rtrim($assetsUrl, '/');
+    
+    return $assetsUrl . '/' . $path;
+}
+
 function getImage($image, $size = null, $avatar = false): string {
     $clean = '';
 
@@ -277,21 +289,21 @@ function getImage($image, $size = null, $avatar = false): string {
 
     foreach ($paths as $path) {
         if (file_exists($path) && is_file($path)) {
-            return asset($image) . $clean;
+            return custom_asset($image) . $clean;
         }
     }
 
     // If file not found, try direct asset URL (for live servers)
-    $assetUrl = asset($image);
-    if ($assetUrl && $assetUrl !== asset('assets/universal/images/default.png')) {
+    $assetUrl = custom_asset($image);
+    if ($assetUrl && $assetUrl !== custom_asset('assets/universal/images/default.png')) {
         return $assetUrl . $clean;
     }
 
-    if ($avatar) return asset('assets/universal/images/avatar.png');
+    if ($avatar) return custom_asset('assets/universal/images/avatar.png');
 
     if ($size) return route('placeholder.image', $size);
 
-    return asset('assets/universal/images/default.png');
+    return custom_asset('assets/universal/images/default.png');
 }
 
 function getImageAlt($content, $imageKey, $default = 'image') {

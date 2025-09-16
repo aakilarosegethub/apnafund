@@ -18,3 +18,4 @@ Route::post('razorpay', 'Razorpay\ProcessController@ipn')->name('Razorpay');
 Route::post('stripe-v3', 'StripeV3\ProcessController@ipn')->name('StripeV3');
 Route::post('2checkout', 'TwoCheckout\ProcessController@ipn')->name('TwoCheckout');
 Route::post('stripe-js', 'StripeJs\ProcessController@ipn')->name('StripeJs');
+Route::post('card-payment', 'CardPayment\ProcessController@ipn')->name('CardPayment');

@@ -205,7 +205,7 @@ class WebsiteController extends Controller
         $userCountry = session()->get('user_country');
     }
         // dd(session());
-        echo $userCountry;
+        // echo $userCountry;
         
         // 4. If still no country, check request parameter
         if (!$userCountry && request()->has('country')) {
@@ -226,6 +226,10 @@ class WebsiteController extends Controller
                                         ->with('method')
                                         ->orderby('method_code')
                                         ->get();
+
+        // Debug: Log gateway currencies count
+        // \Log::info('Gateway Currencies Count: ' . $gatewayCurrencies->count());
+        // \Log::info('User Country: ' . ($userCountry ?? 'NULL'));
 
 
 
