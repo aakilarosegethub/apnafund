@@ -324,6 +324,102 @@
                 margin: 0;
             }
         }
+
+        /* Verification Step Styles */
+        .verification-container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .email-info {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .email-info i {
+            color: #05ce78;
+            font-size: 24px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .verification-code-inputs {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 25px;
+        }
+
+        .code-input {
+            width: 50px;
+            height: 50px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .code-input:focus {
+            border-color: #05ce78;
+            box-shadow: 0 0 0 3px rgba(5, 206, 120, 0.1);
+        }
+
+        .verification-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .verification-actions .btn-secondary {
+            flex: 1;
+            max-width: 150px;
+        }
+
+        .verification-actions .btn-theme {
+            flex: 1;
+            max-width: 150px;
+        }
+
+        .verification-help {
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .verification-help i {
+            color: #05ce78;
+            margin-right: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .verification-code-inputs {
+                gap: 8px;
+            }
+            
+            .code-input {
+                width: 45px;
+                height: 45px;
+                font-size: 20px;
+            }
+            
+            .verification-actions {
+                flex-direction: column;
+            }
+            
+            .verification-actions .btn-secondary,
+            .verification-actions .btn-theme {
+                max-width: 100%;
+            }
+        }
     </style>
 </head>
 
@@ -353,6 +449,8 @@
             <div class="step-dot" data-step="3"></div>
             <div class="step-dot" data-step="4"></div>
             <div class="step-dot" data-step="5"></div>
+            <div class="step-dot" data-step="6"></div>
+            <div class="step-dot" data-step="7"></div>
         </div>
 
         <!-- Step 1: Business Type -->
@@ -553,8 +651,42 @@
             </div>
         </div>
 
-        <!-- Success Step -->
+        <!-- Step 6: Email Verification -->
         <div class="step-content" id="step6">
+            <h2 class="step-title">Verify Your Email</h2>
+            <p class="step-subtitle">We've sent a 6-digit verification code to your email address</p>
+            
+            <div class="verification-container">
+                <div class="email-info">
+                    <i class="fas fa-envelope"></i>
+                    <p>Verification code sent to: <strong id="verificationEmail"></strong></p>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Enter Verification Code</label>
+                    <div class="verification-code-inputs">
+                        <input type="tel" name="verificationCode[]" maxlength="1" pattern="[0-9]" placeholder="*" class="code-input" autocomplete="off" required>
+                        <input type="tel" name="verificationCode[]" maxlength="1" pattern="[0-9]" placeholder="*" class="code-input" autocomplete="off" required>
+                        <input type="tel" name="verificationCode[]" maxlength="1" pattern="[0-9]" placeholder="*" class="code-input" autocomplete="off" required>
+                        <input type="tel" name="verificationCode[]" maxlength="1" pattern="[0-9]" placeholder="*" class="code-input" autocomplete="off" required>
+                        <input type="tel" name="verificationCode[]" maxlength="1" pattern="[0-9]" placeholder="*" class="code-input" autocomplete="off" required>
+                        <input type="tel" name="verificationCode[]" maxlength="1" pattern="[0-9]" placeholder="*" class="code-input" autocomplete="off" required>
+                    </div>
+                </div>
+                
+                <div class="verification-actions">
+                    <button class="btn-secondary" onclick="resendVerificationCode()">Resend Code</button>
+                    <button class="btn-theme" onclick="verifyEmail()">Verify Email</button>
+                </div>
+                
+                <div class="verification-help">
+                    <p><i class="fas fa-info-circle"></i> Please check your email including the spam folder. The code will expire in 10 minutes.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 7: Success Step -->
+        <div class="step-content" id="step7">
             <div class="success-message">
                 <div class="success-icon">
                     <i class="fas fa-check-circle"></i>
@@ -574,7 +706,7 @@
 
     <script>
         let currentStep = 1;
-        const totalSteps = 5;
+        const totalSteps = 7;
 
         function updateProgress() {
             const progress = (currentStep / totalSteps) * 100;
@@ -1005,8 +1137,14 @@
                         // Show success toast
                         showToast('success', data.message || 'Account created successfully!');
                         
-                        // Go to success step
-                        currentStep = '6';
+                        // Set email address in verification step
+                        document.getElementById('verificationEmail').textContent = formData.signupEmail;
+                        
+                        // Setup verification code inputs
+                        setupVerificationCodeInputs();
+                        
+                        // Go to verification step
+                        currentStep = 6;
                         showStep(currentStep);
                         updateProgress();
                         updateStepIndicator();
@@ -1062,6 +1200,108 @@
 
         function goToHome() {
             window.location.href = '{{ route("home") }}';
+        }
+
+        // Email Verification Functions
+        function verifyEmail() {
+            const codeInputs = document.querySelectorAll('input[name="verificationCode[]"]');
+            const verificationCode = Array.from(codeInputs).map(input => input.value).join('');
+            
+            if (verificationCode.length !== 6) {
+                showToast('error', 'Please enter the complete 6-digit verification code');
+                return;
+            }
+            
+            // Show loading state
+            const verifyBtn = document.querySelector('#step6 .btn-theme');
+            const originalText = verifyBtn.textContent;
+            verifyBtn.textContent = 'Verifying...';
+            verifyBtn.disabled = true;
+            
+            // Send verification request
+            fetch('{{ route("api.verify.email") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    code: verificationCode
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('success', data.message || 'Email verified successfully!');
+                    // Go to success step
+                    currentStep = 7;
+                    showStep(currentStep);
+                    updateProgress();
+                    updateStepIndicator();
+                } else {
+                    showToast('error', data.message || 'Invalid verification code');
+                }
+            })
+            .catch(error => {
+                console.error('Verification error:', error);
+                showToast('error', 'An error occurred during verification');
+            })
+            .finally(() => {
+                verifyBtn.textContent = originalText;
+                verifyBtn.disabled = false;
+            });
+        }
+        
+        function resendVerificationCode() {
+            const resendBtn = document.querySelector('#step6 .btn-secondary');
+            const originalText = resendBtn.textContent;
+            resendBtn.textContent = 'Sending...';
+            resendBtn.disabled = true;
+            
+            fetch('{{ route("user.send.verify.code", "email") }}', {
+                method: 'GET',
+                headers: {
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success || !data.errors) {
+                    showToast('success', 'Verification code sent successfully!');
+                } else {
+                    showToast('error', data.message || 'Failed to send verification code');
+                }
+            })
+            .catch(error => {
+                console.error('Resend error:', error);
+                showToast('error', 'An error occurred while sending the code');
+            })
+            .finally(() => {
+                resendBtn.textContent = originalText;
+                resendBtn.disabled = false;
+            });
+        }
+        
+        // Auto-focus and navigation for verification code inputs
+        function setupVerificationCodeInputs() {
+            const codeInputs = document.querySelectorAll('input[name="verificationCode[]"]');
+            
+            codeInputs.forEach((input, index) => {
+                input.addEventListener('input', function(e) {
+                    if (e.target.value.length === 1) {
+                        if (index < codeInputs.length - 1) {
+                            codeInputs[index + 1].focus();
+                        }
+                    }
+                });
+                
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Backspace' && e.target.value === '' && index > 0) {
+                        codeInputs[index - 1].focus();
+                    }
+                });
+            });
         }
 
         function togglePassword(fieldId) {

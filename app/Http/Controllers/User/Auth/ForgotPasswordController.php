@@ -98,7 +98,7 @@ class ForgotPasswordController extends Controller
             return to_route('user.password.request.form')->withToasts($toast);
         }
 
-        session()->flash('fpass_email', $email);
+        session()->flash('user_pass_res_email', $email);
 
         $toast[] = ['success','Code matched. You can reset your password'];
         return to_route('user.password.reset.form', $verCode)->withToasts($toast);

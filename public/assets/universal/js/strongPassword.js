@@ -48,7 +48,90 @@ function secure_password(input) {
     }
 }
 
+// Enhanced Strong Password Validation
+function updatePasswordRequirements(password) {
+    // Uppercase check
+    const capital = /[A-Z]/.test(password);
+    updateRequirement('.capital', capital);
+    
+    // Lowercase check
+    const lower = /[a-z]/.test(password);
+    updateRequirement('.lower', lower);
+    
+    // Number check
+    const number = /[0-9]/.test(password);
+    updateRequirement('.number', number);
+    
+    // Special character check
+    const special = /[`!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/.test(password);
+    updateRequirement('.special', special);
+    
+    // Minimum length check
+    const minimum = password.length >= 6;
+    updateRequirement('.minimum', minimum);
+    
+    // Update password strength indicator
+    updatePasswordStrength(password);
+}
+
+function updateRequirement(selector, isValid) {
+    const requirement = $(selector).closest('.password-requirement');
+    const icon = requirement.find('.requirement-icon');
+    
+    if (isValid) {
+        icon.removeClass('error').addClass('success').text('✓');
+        requirement.removeClass('error').addClass('success');
+    } else {
+        icon.removeClass('success').addClass('error').text('✗');
+        requirement.removeClass('success').addClass('error');
+    }
+}
+
+function updatePasswordStrength(password) {
+    let strength = 0;
+    
+    if (password.length >= 6) strength++;
+    if (/[a-z]/.test(password)) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[^A-Za-z0-9]/.test(password)) strength++;
+    
+    const strengthContainer = $('.password-strength');
+    const strengthBar = $('.password-strength-bar');
+    
+    if (strengthContainer.length && strengthBar.length) {
+        strengthContainer.removeClass('password-strength-weak password-strength-fair password-strength-good password-strength-strong');
+        
+        if (strength <= 1) {
+            strengthContainer.addClass('password-strength-weak');
+        } else if (strength <= 2) {
+            strengthContainer.addClass('password-strength-fair');
+        } else if (strength <= 3) {
+            strengthContainer.addClass('password-strength-good');
+        } else {
+            strengthContainer.addClass('password-strength-strong');
+        }
+    }
+}
+
+// Original function for backward compatibility
+function secure_password(input) {
+    var password = input.val();
+    updatePasswordRequirements(password);
+}
+
 (function ($) {
+    // Enhanced event handling
+    $('.secure-password').on('input keyup', function() {
+        updatePasswordRequirements($(this).val());
+    });
+    
+    // Initialize on page load
+    $('.secure-password').each(function() {
+        updatePasswordRequirements($(this).val());
+    });
+    
+    // Original event handling for backward compatibility
     $('.secure-password').on('input', function () {
         secure_password($(this));
     });

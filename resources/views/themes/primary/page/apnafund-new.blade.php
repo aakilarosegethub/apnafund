@@ -5,10 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Apna Fund</title>
-    <link rel="stylesheet" href="{{ asset('apnafund/assets/css/app.css') }}">
-    <link rel="stylesheet" href="{{ asset('apnafund/assets/bootstrap/css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ custom_asset('apnafund/assets/css/app.css') }}">
+    <link rel="stylesheet" href="{{ custom_asset('apnafund/assets/bootstrap/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="shortcut icon" href="{{ asset('apnafund/assets/images/fav-icon.png') }}" type="image/png">
+    <link rel="shortcut icon" href="{{ custom_asset('apnafund/assets/images/fav-icon.png') }}" type="image/png">
 </head>
 
 <body>
@@ -19,7 +19,7 @@
                 <div class="col-md-12">
                     <div class="logo text-center">
                         <a href="/">
-                            <img src="{{ asset('apnafund/assets/images/White Logo.png') }}" alt="Apna Fund Logo" class="logo-img">
+                            <img src="{{ custom_asset('apnafund/assets/images/White Logo.png') }}" alt="Apna Fund Logo" class="logo-img">
                         </a>
                     </div>
                 </div>
@@ -158,7 +158,7 @@
                                         <div class="placeholder-image">
                                             <div class="person-avatar">
                                                 @if(isset($element->data_values->image) && $element->data_values->image)
-                                                    <img src="{{ asset($element->data_values->image) }}" alt="{{ $element->data_values->name ?? 'Success Story' }}" class="avatar-image">
+                                                    <img src="{{ custom_asset($element->data_values->image) }}" alt="{{ $element->data_values->name ?? 'Success Story' }}" class="avatar-image">
                                                 @else
                                                     <div class="avatar-circle">
                                                         <span class="avatar-text">{{ substr($element->data_values->name ?? 'ST', 0, 2) }}</span>
@@ -264,7 +264,7 @@
             <div class="row align-items-center">
                 <div class="col-md-6">
                     <div class="footer-logo">
-                        <img src="{{ asset('apnafund/assets/images/White Logo.png') }}" alt="Apna Fund Logo" class="footer-logo-img">
+                        <img src="{{ custom_asset('apnafund/assets/images/White Logo.png') }}" alt="Apna Fund Logo" class="footer-logo-img">
                         <p class="footer-tagline">Empowering Dreams, Building Futures</p>
                     </div>
                 </div>
@@ -278,7 +278,7 @@
         </div>
     </footer>
 
-    <script src="{{ asset('apnafund/assets/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ custom_asset('apnafund/assets/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
     <script>
         let currentSlide = 0;
         const slides = document.querySelectorAll('.slide');

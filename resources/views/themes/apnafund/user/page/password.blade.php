@@ -27,6 +27,33 @@
                                         <div class="col-sm-12">
                                             <label class="form--label required">@lang('New Password')</label>
                                             <input type="password" class="form--control @if ($setting->strong_pass) secure-password @endif" name="password" required>
+                                            @if ($setting->strong_pass)
+                                                <div class="password-requirements mt-2">
+                                                    <div class="password-requirement">
+                                                        <span class="requirement-icon capital">✗</span>
+                                                        <span class="requirement-text">@lang('At least one uppercase letter')</span>
+                                                    </div>
+                                                    <div class="password-requirement">
+                                                        <span class="requirement-icon lower">✗</span>
+                                                        <span class="requirement-text">@lang('At least one lowercase letter')</span>
+                                                    </div>
+                                                    <div class="password-requirement">
+                                                        <span class="requirement-icon number">✗</span>
+                                                        <span class="requirement-text">@lang('At least one number')</span>
+                                                    </div>
+                                                    <div class="password-requirement">
+                                                        <span class="requirement-icon special">✗</span>
+                                                        <span class="requirement-text">@lang('At least one special character')</span>
+                                                    </div>
+                                                    <div class="password-requirement">
+                                                        <span class="requirement-icon minimum">✗</span>
+                                                        <span class="requirement-text">@lang('At least 6 characters long')</span>
+                                                    </div>
+                                                </div>
+                                                <div class="password-strength">
+                                                    <div class="password-strength-bar"></div>
+                                                </div>
+                                            @endif
                                         </div>
                                         <div class="col-sm-12">
                                             <label class="form--label required">@lang('Confirm Password')</label>

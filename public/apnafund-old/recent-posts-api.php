@@ -164,6 +164,8 @@ function custom_format_post_item( $post ) {
         'image_url'          => $image_url ? esc_url_raw($image_url) : null,
         'short_description'  => html_entity_decode( wp_strip_all_tags($excerpt), ENT_QUOTES ),
         'url'                => esc_url_raw($permalink),
+        'product_url'        => esc_url_raw($permalink), // Product URL added
+        'permalink'          => esc_url_raw($permalink), // Alternative URL field
         'date'               => get_the_date(DATE_ATOM, $post_id),
     ];
 }

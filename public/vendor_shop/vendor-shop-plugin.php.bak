@@ -1,0 +1,331 @@
+<?php
+/**
+ * Plugin Name: Vendor Shop Product Manager
+ * Plugin URI: https://yourdomain.com
+ * Description: Manages vendor shop products with webhook support and URL generation
+ * Version: 1.0.0
+ * Author: ApnaFund
+ * License: GPL v2 or later
+ * Text Domain: vendor-shop
+ */
+
+// Prevent direct access
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+// Define plugin constants
+define('VENDOR_SHOP_VERSION', '1.0.0');
+define('VENDOR_SHOP_PLUGIN_URL', plugin_dir_url(__FILE__));
+define('VENDOR_SHOP_PLUGIN_PATH', plugin_dir_path(__FILE__));
+
+class VendorShopPlugin {
+    
+    public function __construct() {
+        add_action('init', [$this, 'init']);
+        add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts']);
+        add_action('admin_menu', [$this, 'add_admin_menu']);
+        add_action('rest_api_init', [$this, 'register_rest_routes']);
+        add_action('wp_ajax_vendor_shop_webhook', [$this, 'handle_webhook']);
+        add_action('wp_ajax_nopriv_vendor_shop_webhook', [$this, 'handle_webhook']);
+    }
+    
+    public function init() {
+        // Initialize plugin
+        load_plugin_textdomain('vendor-shop', false, dirname(plugin_basename(__FILE__)) . '/languages');
+    }
+    
+    public function enqueue_scripts() {
+        wp_enqueue_script('vendor-shop-js', VENDOR_SHOP_PLUGIN_URL . 'assets/vendor-shop.js', ['jquery'], VENDOR_SHOP_VERSION, true);
+        wp_enqueue_style('vendor-shop-css', VENDOR_SHOP_PLUGIN_URL . 'assets/vendor-shop.css', [], VENDOR_SHOP_VERSION);
+    }
+    
+    public function add_admin_menu() {
+        add_menu_page(
+            'Vendor Shop',
+            'Vendor Shop',
+            'manage_options',
+            'vendor-shop',
+            [$this, 'admin_page'],
+            'dashicons-store',
+            30
+        );
+        
+        add_submenu_page(
+            'vendor-shop',
+            'Products',
+            'Products',
+            'manage_options',
+            'vendor-shop-products',
+            [$this, 'products_page']
+        );
+        
+        add_submenu_page(
+            'vendor-shop',
+            'Webhook Settings',
+            'Webhook Settings',
+            'manage_options',
+            'vendor-shop-webhook',
+            [$this, 'webhook_settings_page']
+        );
+    }
+    
+    public function admin_page() {
+        ?>
+        <div class="wrap">
+            <h1>Vendor Shop Dashboard</h1>
+            <div class="vendor-shop-dashboard">
+                <div class="dashboard-stats">
+                    <div class="stat-box">
+                        <h3>Total Products</h3>
+                        <p><?php echo $this->get_product_count(); ?></p>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Active Products</h3>
+                        <p><?php echo $this->get_active_product_count(); ?></p>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Webhook Status</h3>
+                        <p><?php echo $this->get_webhook_status(); ?></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+    
+    public function products_page() {
+        $products = $this->get_products();
+        ?>
+        <div class="wrap">
+            <h1>Vendor Shop Products</h1>
+            <table class="wp-list-table widefat fixed striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>SKU</th>
+                        <th>Price</th>
+                        <th>Status</th>
+                        <th>URL</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($products as $product): ?>
+                    <tr>
+                        <td><?php echo esc_html($product['id']); ?></td>
+                        <td><?php echo esc_html($product['name']); ?></td>
+                        <td><?php echo esc_html($product['sku']); ?></td>
+                        <td><?php echo esc_html($product['price']); ?></td>
+                        <td><?php echo esc_html($product['status']); ?></td>
+                        <td><a href="<?php echo esc_url($product['url']); ?>" target="_blank">View Product</a></td>
+                        <td>
+                            <a href="<?php echo esc_url($product['edit_url']); ?>" class="button">Edit</a>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php
+    }
+    
+    public function webhook_settings_page() {
+        if (isset($_POST['submit'])) {
+            update_option('vendor_shop_webhook_url', sanitize_url($_POST['webhook_url']));
+            update_option('vendor_shop_webhook_secret', sanitize_text_field($_POST['webhook_secret']));
+            echo '<div class="notice notice-success"><p>Settings saved!</p></div>';
+        }
+        
+        $webhook_url = get_option('vendor_shop_webhook_url', '');
+        $webhook_secret = get_option('vendor_shop_webhook_secret', '');
+        ?>
+        <div class="wrap">
+            <h1>Webhook Settings</h1>
+            <form method="post">
+                <table class="form-table">
+                    <tr>
+                        <th scope="row">Webhook URL</th>
+                        <td>
+                            <input type="url" name="webhook_url" value="<?php echo esc_attr($webhook_url); ?>" class="regular-text" />
+                            <p class="description">Enter the webhook URL for product updates</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Webhook Secret</th>
+                        <td>
+                            <input type="text" name="webhook_secret" value="<?php echo esc_attr($webhook_secret); ?>" class="regular-text" />
+                            <p class="description">Enter the webhook secret for security</p>
+                        </td>
+                    </tr>
+                </table>
+                <?php submit_button(); ?>
+            </form>
+            
+            <h2>Test Webhook</h2>
+            <button id="test-webhook" class="button">Test Webhook</button>
+            <div id="webhook-result"></div>
+        </div>
+        <?php
+    }
+    
+    public function register_rest_routes() {
+        register_rest_route('vendor-shop/v1', '/products', [
+            'methods' => 'GET',
+            'callback' => [$this, 'get_products_api'],
+            'permission_callback' => '__return_true'
+        ]);
+        
+        register_rest_route('vendor-shop/v1', '/products/(?P<id>\d+)', [
+            'methods' => 'GET',
+            'callback' => [$this, 'get_product_api'],
+            'permission_callback' => '__return_true'
+        ]);
+        
+        register_rest_route('vendor-shop/v1', '/webhook', [
+            'methods' => 'POST',
+            'callback' => [$this, 'handle_webhook_api'],
+            'permission_callback' => '__return_true'
+        ]);
+    }
+    
+    public function handle_webhook() {
+        $this->handle_webhook_request();
+    }
+    
+    public function handle_webhook_api($request) {
+        return $this->handle_webhook_request();
+    }
+    
+    private function handle_webhook_request() {
+        // Get JSON input
+        $input = file_get_contents('php://input');
+        $data = json_decode($input, true);
+        
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return new WP_Error('invalid_json', 'Invalid JSON data', ['status' => 400]);
+        }
+        
+        // Validate required fields
+        $required_fields = ['sku', 'name', 'regular_price'];
+        foreach ($required_fields as $field) {
+            if (!isset($data[$field]) || empty($data[$field])) {
+                return new WP_Error('missing_field', "Required field '{$field}' is missing", ['status' => 400]);
+            }
+        }
+        
+        // Process product data
+        $product_data = $this->process_product($data);
+        
+        return new WP_REST_Response([
+            'success' => true,
+            'message' => 'Product processed successfully',
+            'data' => $product_data
+        ], 200);
+    }
+    
+    private function process_product($data) {
+        $sku = sanitize_text_field($data['sku']);
+        $name = sanitize_text_field($data['name']);
+        $regular_price = floatval($data['regular_price']);
+        $description = isset($data['description']) ? sanitize_textarea_field($data['description']) : '';
+        
+        // Generate product slug
+        $slug = sanitize_title($name . '-' . $sku);
+        
+        // Create product URL
+        $product_url = home_url('/product/' . $slug);
+        $admin_url = admin_url('post.php?post=' . $sku . '&action=edit');
+        
+        // Store product data (you can modify this to save to database)
+        $product_data = [
+            'id' => $sku,
+            'name' => $name,
+            'sku' => $sku,
+            'slug' => $slug,
+            'description' => $description,
+            'regular_price' => $regular_price,
+            'sale_price' => isset($data['sale_price']) ? floatval($data['sale_price']) : null,
+            'stock_quantity' => isset($data['stock_quantity']) ? intval($data['stock_quantity']) : null,
+            'category' => isset($data['category']) ? sanitize_text_field($data['category']) : '',
+            'tags' => isset($data['tags']) ? sanitize_text_field($data['tags']) : '',
+            'image_url' => isset($data['image_url']) ? esc_url_raw($data['image_url']) : '',
+            'url' => $product_url,
+            'product_url' => $product_url,
+            'permalink' => $product_url,
+            'admin_url' => $admin_url,
+            'edit_url' => $admin_url,
+            'status' => 'created',
+            'created_at' => date('c'),
+            'updated_at' => date('c')
+        ];
+        
+        // Log the webhook data
+        error_log('Vendor Shop Webhook: ' . json_encode($data));
+        
+        return $product_data;
+    }
+    
+    private function get_products() {
+        // This is a placeholder - implement your product retrieval logic
+        return [];
+    }
+    
+    private function get_product_count() {
+        // This is a placeholder - implement your product count logic
+        return 0;
+    }
+    
+    private function get_active_product_count() {
+        // This is a placeholder - implement your active product count logic
+        return 0;
+    }
+    
+    private function get_webhook_status() {
+        $webhook_url = get_option('vendor_shop_webhook_url', '');
+        return !empty($webhook_url) ? 'Active' : 'Inactive';
+    }
+    
+    public function get_products_api($request) {
+        $products = $this->get_products();
+        return new WP_REST_Response([
+            'success' => true,
+            'data' => $products
+        ], 200);
+    }
+    
+    public function get_product_api($request) {
+        $id = $request['id'];
+        $product = $this->get_product_by_id($id);
+        
+        if (!$product) {
+            return new WP_Error('product_not_found', 'Product not found', ['status' => 404]);
+        }
+        
+        return new WP_REST_Response([
+            'success' => true,
+            'data' => $product
+        ], 200);
+    }
+    
+    private function get_product_by_id($id) {
+        // This is a placeholder - implement your product retrieval logic
+        return null;
+    }
+}
+
+// Initialize the plugin
+new VendorShopPlugin();
+
+// Activation hook
+register_activation_hook(__FILE__, function() {
+    // Create necessary database tables or options
+    add_option('vendor_shop_version', VENDOR_SHOP_VERSION);
+});
+
+// Deactivation hook
+register_deactivation_hook(__FILE__, function() {
+    // Clean up if needed
+});
+?>

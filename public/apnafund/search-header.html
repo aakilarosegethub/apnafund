@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Box - Apna Fund</title>
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Search Box Styles */
+        .search-container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 0 20px;
+        }
+
+        .search-box {
+            position: relative;
+            width: 100%;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 50px 12px 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            font-size: 16px;
+            background: white;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #05ce78;
+            box-shadow: 0 4px 15px rgba(5, 206, 120, 0.2);
+        }
+
+        .search-btn {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #05ce78;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .search-btn:hover {
+            background: #04a85f;
+            transform: translateY(-50%) scale(1.05);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Search Box -->
+    <div class="search-container">
+        <div class="search-box">
+            <input type="text" class="search-input"
+                placeholder="Search projects, creators, and categories..." aria-label="Search">
+            <button class="search-btn" type="button">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+    </div>
+
+    <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+</body>
+
+</html>

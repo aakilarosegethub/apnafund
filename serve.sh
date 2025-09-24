@@ -5,7 +5,7 @@
 
 echo "🚀 Starting ApnaFund Development Server..."
 echo "📁 Project Directory: $(pwd)"
-echo "🌐 Server URL: http://localhost:8000"
+echo "🌐 Server URL: http://0.0.0.0:8000"
 echo "⏰ Started at: $(date)"
 echo "=================================================="
 
@@ -21,4 +21,4 @@ echo "=================================================="
 echo ""
 
 # Start the Laravel development server with XAMPP PHP
-/Applications/XAMPP/xamppfiles/bin/php artisan serve --host=127.0.0.1 --port=8000
+/Applications/XAMPP/xamppfiles/bin/php artisan serve --host=0.0.0.0 --port=8000

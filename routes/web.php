@@ -10,6 +10,9 @@ Route::get('/csrf-token', function () {
     return response()->json(['token' => csrf_token()]);
 })->name('csrf.token');
 
+// API routes for email verification (no CSRF required)
+Route::post('/api/verify-email', 'App\Http\Controllers\User\AuthorizationController@emailVerificationApi')->name('api.verify.email');
+
 Route::controller('WebsiteController')->group(function () {
     Route::get('/', 'home')->name('home');
     Route::get('home-new', 'homeNew')->name('home.new');
@@ -104,4 +107,226 @@ Route::get('/youtube/callback', function(\Illuminate\Http\Request $request) {
         return redirect('/admin/youtube')->with('error', 'YouTube authorization failed: ' . $e->getMessage());
     }
 })->name('youtube.callback');
+
+// JazzCash IPN Callback - Logs all incoming data
+Route::any('/jazzcash/ipn', [App\Http\Controllers\Gateway\JazzCash\IpnController::class, 'handle'])->name('jazzcash.ipn');
+
+// Test route to demonstrate logging functionality
+Route::any('/test-logging', function(\Illuminate\Http\Request $request) {
+    try {
+        // Create a simple log entry without database
+        $logData = [
+            'timestamp' => now()->toDateTimeString(),
+            'endpoint' => 'test-logging',
+            'method' => $request->method(),
+            'request_data' => $request->all(),
+            'headers' => $request->headers->all(),
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'raw_input' => $request->getContent(),
+            'url' => $request->fullUrl()
+        ];
+        
+        // Log to file for testing
+        \Log::info('Data Logging Test', $logData);
+        
+        return response()->json([
+            'message' => 'Data logged successfully',
+            'logged_data' => $logData,
+            'note' => 'Check storage/logs/laravel.log for the logged data'
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'Logging failed: ' . $e->getMessage()
+        ], 500);
+    }
+})->name('test.logging');
+
+// API Routes for Products/Campaigns
+Route::prefix('api')->group(function () {
+    // Get all campaigns/products
+    Route::get('/campaigns', function(\Illuminate\Http\Request $request) {
+        try {
+            $limit = $request->get('limit', 10);
+            $offset = $request->get('offset', 0);
+            $category = $request->get('category');
+            $search = $request->get('search');
+            
+            $campaigns = Campaign::with(['category', 'user'])
+                ->approve()
+                ->when($search, function($query, $search) {
+                    return $query->where('name', 'like', "%{$search}%")
+                               ->orWhere('description', 'like', "%{$search}%");
+                })
+                ->when($category, function($query, $category) {
+                    return $query->whereHas('category', function($q) use ($category) {
+                        $q->where('name', 'like', "%{$category}%")
+                          ->orWhere('id', $category);
+                    });
+                })
+                ->latest()
+                ->limit($limit)
+                ->offset($offset)
+                ->get();
+            
+            $formattedCampaigns = $campaigns->map(function($campaign) {
+                return [
+                    'id' => $campaign->id,
+                    'title' => $campaign->name,
+                    'description' => $campaign->description,
+                    'short_description' => strLimit($campaign->description, 150),
+                    'image_url' => getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')),
+                    'url' => route('campaign.show', $campaign->slug),
+                    'product_url' => route('campaign.show', $campaign->slug),
+                    'permalink' => route('campaign.show', $campaign->slug),
+                    'category' => $campaign->category->name ?? null,
+                    'category_id' => $campaign->category_id,
+                    'user' => $campaign->user->username ?? null,
+                    'user_id' => $campaign->user_id,
+                    'goal_amount' => $campaign->goal_amount,
+                    'raised_amount' => $campaign->raised_amount,
+                    'progress_percentage' => $campaign->goal_amount > 0 ? round(($campaign->raised_amount / $campaign->goal_amount) * 100, 2) : 0,
+                    'status' => $campaign->status,
+                    'featured' => $campaign->featured,
+                    'created_at' => $campaign->created_at->toISOString(),
+                    'updated_at' => $campaign->updated_at->toISOString(),
+                    'end_date' => $campaign->end_date ? $campaign->end_date->toISOString() : null,
+                ];
+            });
+            
+            return response()->json([
+                'success' => true,
+                'data' => $formattedCampaigns,
+                'total' => $campaigns->count(),
+                'limit' => $limit,
+                'offset' => $offset
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching campaigns: ' . $e->getMessage(),
+                'data' => []
+            ], 500);
+        }
+    });
+    
+    // Get single campaign/product by slug
+    Route::get('/campaigns/{slug}', function($slug) {
+        try {
+            $campaign = Campaign::with(['category', 'user', 'rewards'])
+                ->where('slug', $slug)
+                ->approve()
+                ->first();
+            
+            if (!$campaign) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Campaign not found',
+                    'data' => null
+                ], 404);
+            }
+            
+            $formattedCampaign = [
+                'id' => $campaign->id,
+                'title' => $campaign->name,
+                'description' => $campaign->description,
+                'short_description' => strLimit($campaign->description, 150),
+                'image_url' => getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')),
+                'url' => route('campaign.show', $campaign->slug),
+                'product_url' => route('campaign.show', $campaign->slug),
+                'permalink' => route('campaign.show', $campaign->slug),
+                'category' => $campaign->category->name ?? null,
+                'category_id' => $campaign->category_id,
+                'user' => $campaign->user->username ?? null,
+                'user_id' => $campaign->user_id,
+                'goal_amount' => $campaign->goal_amount,
+                'raised_amount' => $campaign->raised_amount,
+                'progress_percentage' => $campaign->goal_amount > 0 ? round(($campaign->raised_amount / $campaign->goal_amount) * 100, 2) : 0,
+                'status' => $campaign->status,
+                'featured' => $campaign->featured,
+                'created_at' => $campaign->created_at->toISOString(),
+                'updated_at' => $campaign->updated_at->toISOString(),
+                'end_date' => $campaign->end_date ? $campaign->end_date->toISOString() : null,
+                'rewards' => $campaign->rewards->map(function($reward) {
+                    return [
+                        'id' => $reward->id,
+                        'title' => $reward->title,
+                        'description' => $reward->description,
+                        'minimum_amount' => $reward->minimum_amount,
+                        'quantity' => $reward->quantity,
+                        'claimed_count' => $reward->claimed_count,
+                        'image_url' => $reward->image_url,
+                        'is_active' => $reward->is_active,
+                    ];
+                })
+            ];
+            
+            return response()->json([
+                'success' => true,
+                'data' => $formattedCampaign
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching campaign: ' . $e->getMessage(),
+                'data' => null
+            ], 500);
+        }
+    });
+    
+    // Get featured campaigns/products
+    Route::get('/campaigns/featured', function(\Illuminate\Http\Request $request) {
+        try {
+            $limit = $request->get('limit', 5);
+            
+            $campaigns = Campaign::with(['category', 'user'])
+                ->approve()
+                ->featured()
+                ->latest()
+                ->limit($limit)
+                ->get();
+            
+            $formattedCampaigns = $campaigns->map(function($campaign) {
+                return [
+                    'id' => $campaign->id,
+                    'title' => $campaign->name,
+                    'description' => $campaign->description,
+                    'short_description' => strLimit($campaign->description, 150),
+                    'image_url' => getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')),
+                    'url' => route('campaign.show', $campaign->slug),
+                    'product_url' => route('campaign.show', $campaign->slug),
+                    'permalink' => route('campaign.show', $campaign->slug),
+                    'category' => $campaign->category->name ?? null,
+                    'category_id' => $campaign->category_id,
+                    'user' => $campaign->user->username ?? null,
+                    'user_id' => $campaign->user_id,
+                    'goal_amount' => $campaign->goal_amount,
+                    'raised_amount' => $campaign->raised_amount,
+                    'progress_percentage' => $campaign->goal_amount > 0 ? round(($campaign->raised_amount / $campaign->goal_amount) * 100, 2) : 0,
+                    'status' => $campaign->status,
+                    'featured' => $campaign->featured,
+                    'created_at' => $campaign->created_at->toISOString(),
+                    'updated_at' => $campaign->updated_at->toISOString(),
+                    'end_date' => $campaign->end_date ? $campaign->end_date->toISOString() : null,
+                ];
+            });
+            
+            return response()->json([
+                'success' => true,
+                'data' => $formattedCampaigns,
+                'total' => $campaigns->count()
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching featured campaigns: ' . $e->getMessage(),
+                'data' => []
+            ], 500);
+        }
+    });
+});
 });

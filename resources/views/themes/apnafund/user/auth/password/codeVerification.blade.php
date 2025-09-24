@@ -432,7 +432,7 @@
         </div>
 
         <!-- Verification Form -->
-        <form action="" method="POST" class="verification-code-form" id="verificationForm">
+        <form action="{{ route('user.password.code.verification.form') }}" method="POST" class="verification-code-form" id="verificationForm">
             @csrf
             <input type="hidden" name="email" value="{{ $email }}">
             

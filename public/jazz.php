@@ -2,6 +2,7 @@
 ini_set('display_errors', '1');
 ini_set('display_startup_errors', '1');
 error_reporting(E_ALL);
+
 // Production/Sandbox Credentials
 $MerchantID = "MC303131"; //Your Merchant from transaction Credentials
 $Password = "tghs3du82x"; //Your Password from transaction Credentials

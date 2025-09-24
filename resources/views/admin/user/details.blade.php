@@ -489,6 +489,56 @@
             </div>
        </div>
     </div>
+
+    <!-- Delete User Modal -->
+    <div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title text-danger" id="deleteUserModalLabel">
+                        <i class="ti ti-alert-triangle"></i> Delete User
+                    </h2>
+                    <button type="button" class="btn btn--sm btn--icon btn-outline--secondary modal-close" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="ti ti-x"></i>
+                    </button>
+                </div>
+                <form action="{{ route('admin.user.delete.selected.users') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="user_ids[]" value="{{ $user->id }}">
+                    <div class="modal-body">
+                        <div class="alert alert-danger">
+                            <h6><i class="ti ti-alert-circle"></i> Warning!</h6>
+                            <p class="mb-2">This will permanently delete the user:</p>
+                            <ul class="mb-0">
+                                <li><strong>Name:</strong> {{ $user->firstname }} {{ $user->lastname }}</li>
+                                <li><strong>Username:</strong> {{ $user->username }}</li>
+                                <li><strong>Email:</strong> {{ $user->email }}</li>
+                            </ul>
+                            <p class="mt-2 mb-0"><strong>This action cannot be undone!</strong></p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form--label required">Type "DELETE USER" to confirm</label>
+                            <input type="text" class="form--control" name="confirmation_text" 
+                                   placeholder="Type: DELETE USER" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form--label required">Admin Password</label>
+                            <input type="password" class="form--control" name="admin_password" 
+                                   placeholder="Enter your admin password" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn--sm btn--secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn--sm btn--danger">
+                            <i class="ti ti-trash"></i> Delete User
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('breadcrumb')
@@ -499,6 +549,12 @@
         <ul class="dropdown-menu">
             <li>
                 <a href="{{route('admin.user.login', $user->id)}}" target="_blank" class="dropdown-item text--info"><span class="dropdown-icon"><i class="ti ti-login-2"></i></span> @lang('Login as User')</a>
+            </li>
+            <li>
+                <a href="{{route('admin.user.send.email', $user->id)}}" class="dropdown-item text--primary"><span class="dropdown-icon"><i class="ti ti-mail"></i></span> @lang('Send Email')</a>
+            </li>
+            <li>
+                <a href="{{route('admin.user.test.welcome.email', $user->id)}}" class="dropdown-item text--info"><span class="dropdown-icon"><i class="ti ti-mail-check"></i></span> @lang('Test Welcome Email')</a>
             </li>
             <li>
                 <button type="button" class="dropdown-item text--success balanceUpdateBtn" data-act="add"><span class="dropdown-icon"><i class="ti ti-circle-plus"></i></span> @lang('Add Balance')</button>
@@ -516,6 +572,11 @@
                         <span class="dropdown-icon"><i class="ti ti-user-check"></i></span> @lang('Unban User')
                     </button>
                 @endif
+            </li>
+            <li>
+                <button type="button" class="dropdown-item text--danger" data-bs-toggle="modal" data-bs-target="#deleteUserModal">
+                    <span class="dropdown-icon"><i class="ti ti-trash"></i></span> @lang('Delete User')
+                </button>
             </li>
         </ul>
     </div>

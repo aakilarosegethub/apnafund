@@ -253,7 +253,7 @@
                             <label for="logoLight" class="upload__img__btn"><i class="ti ti-camera"></i></label>
                             <input type="file" id="logoLight" class="image-upload" name="logo_light" accept=".png">
                             <label for="logoLight" class="upload__img-preview image-preview">
-                                <img src="{{ getImage(getFilePath('logoFavicon').'/logo_light.png') }}" alt="logo">
+                                <img src="{{ getImage(getFilePath('logoFavicon').'/logo_light.png') }}?v={{ time() }}" alt="logo">
                             </label>
                             <button type="button" class="btn btn--sm btn--icon btn--danger custom-file-input-clear d-none"><i class="ti ti-circle-x"></i></button>
                         </div>
@@ -264,7 +264,7 @@
                             <label for="logoDark" class="upload__img__btn"><i class="ti ti-camera"></i></label>
                             <input type="file" id="logoDark" class="image-upload" name="logo_dark" accept=".png">
                             <label for="logoDark" class="upload__img-preview image-preview">
-                                <img src="{{ getImage(getFilePath('logoFavicon').'/logo_dark.png') }}" alt="logo">
+                                <img src="{{ getImage(getFilePath('logoFavicon').'/logo_dark.png') }}?v={{ time() }}" alt="logo">
                             </label>
                             <button type="button" class="btn btn--sm btn--icon btn--danger custom-file-input-clear d-none"><i class="ti ti-circle-x"></i></button>
                         </div>
@@ -275,7 +275,7 @@
                             <label for="favicon" class="upload__img__btn"><i class="ti ti-camera"></i></label>
                             <input type="file" id="favicon" class="image-upload" name="favicon" accept=".png">
                             <label for="favicon" class="upload__img-preview image-preview">
-                                <img src="{{ getImage(getFilePath('logoFavicon').'/favicon.png', getFileSize('favicon')) }}" alt="logo">
+                                <img src="{{ getImage(getFilePath('logoFavicon').'/favicon.png', getFileSize('favicon')) }}?v={{ time() }}" alt="logo">
                             </label>
                             <button type="button" class="btn btn--sm btn--icon btn--danger custom-file-input-clear d-none"><i class="ti ti-circle-x"></i></button>
                         </div>

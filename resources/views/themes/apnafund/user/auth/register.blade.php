@@ -64,6 +64,33 @@
                                         <input type="password" class="form-control form--control @if ($setting->strong_pass) secure-password @endif" name="password" id="your-password" required>
                                         <span class="password-show-hide ti ti-eye toggle-password" id="#your-password"></span>
                                     </div>
+                                    @if ($setting->strong_pass)
+                                        <div class="password-requirements mt-2">
+                                            <div class="password-requirement">
+                                                <span class="requirement-icon capital">✗</span>
+                                                <span class="requirement-text">@lang('At least one uppercase letter')</span>
+                                            </div>
+                                            <div class="password-requirement">
+                                                <span class="requirement-icon lower">✗</span>
+                                                <span class="requirement-text">@lang('At least one lowercase letter')</span>
+                                            </div>
+                                            <div class="password-requirement">
+                                                <span class="requirement-icon number">✗</span>
+                                                <span class="requirement-text">@lang('At least one number')</span>
+                                            </div>
+                                            <div class="password-requirement">
+                                                <span class="requirement-icon special">✗</span>
+                                                <span class="requirement-text">@lang('At least one special character')</span>
+                                            </div>
+                                            <div class="password-requirement">
+                                                <span class="requirement-icon minimum">✗</span>
+                                                <span class="requirement-text">@lang('At least 6 characters long')</span>
+                                            </div>
+                                        </div>
+                                        <div class="password-strength">
+                                            <div class="password-strength-bar"></div>
+                                        </div>
+                                    @endif
                                 </div>
                                 <div class="col-sm-6">
                                     <label class="form--label required">@lang('Confirm Password')</label>
@@ -77,7 +104,7 @@
                                     <div class="col-sm-12">
                                         <div class="form--check">
                                             <input type="checkbox" class="form-check-input" name="agree" id="agree" @checked(old('agree')) required>
-                                            <label for="agree" class="form-check-label">@lang('I agree with') @foreach ($policyPages as $policy) <a href="{{ route('policy.pages', [slug($policy->data_info->title), $policy->id]) }}" target="_blank">{{ __($policy->data_info->title) }}</a>@if (!$loop->last), @endif @endforeach</label>
+                                            <label for="agree" class="form-check-label">@lang('I agree with') @if($policyPages && is_array($policyPages) && count($policyPages) > 0) @foreach ($policyPages as $policy) <a href="{{ route('policy.pages', [slug($policy->data_info->title), $policy->id]) }}" target="_blank">{{ __($policy->data_info->title) }}</a>@if (!$loop->last), @endif @endforeach @else @lang('terms and conditions') @endif</label>
                                         </div>
                                     </div>
                                 @endif

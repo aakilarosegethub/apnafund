@@ -13,7 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Str;
 
 function systemDetails(): array {
-    $system['name']          = 'PnixFund';
+    $system['name']          = 'ApnaCrowdFunding';
     $system['version']       = '1.1';
     $system['build_version'] = '0.0.1';
 
@@ -51,7 +51,7 @@ function bs($fieldName = null) {
     cache()->forget('setting');
     // Cache clear karne ke liye aap command line se yeh command chalaen:
     // php artisan cache:clear
-    $setting = cache()->get('setting');
+    $setting = null;
 
     if (!$setting) {
         $setting = Setting::first();

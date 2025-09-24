@@ -1,13 +1,14 @@
 @php
     if (isset($seoContents) && count($seoContents)) {
         $seoContents     = (object) $seoContents;
-        $socialImageSize = explode('x', $seoContents->image_size);
+        $socialImageSize = isset($seoContents->image_size) ? explode('x', $seoContents->image_size) : ['1200', '630'];
     } elseif ($seo) {
-        $seoContents        = $seo;
+        $seoContents        = (object) $seo;
         $socialImageSize    = explode('x', getFileSize('seo'));
-        $seoContents->image = getImage(getFilePath('seo') . '/' . $seo->image);
+        $seoContents->image = getImage(getFilePath('seo') . '/' . ($seo['image'] ?? ''));
     } else {
         $seoContents = null;
+        $socialImageSize = ['1200', '630'];
     }
 
     // Get dynamic page SEO data
@@ -52,8 +53,8 @@
 <meta name="title" Content="{{ $pageSEO && $pageSEO['meta_title'] ? $pageSEO['meta_title'] : $setting->siteName(__($pageTitle)) }}">
 
 @if($seoContents)
-    <meta name="description" content="{{ $pageSEO && $pageSEO['meta_description'] ? $pageSEO['meta_description'] : $seoContents->description }}">
-    <meta name="keywords" content="{{ $pageSEO && $pageSEO['meta_keywords'] ? $pageSEO['meta_keywords'] : implode(',', $seoContents->keywords) }}">
+    <meta name="description" content="{{ $pageSEO && $pageSEO['meta_description'] ? $pageSEO['meta_description'] : ($seoContents->description ?? '') }}">
+    <meta name="keywords" content="{{ $pageSEO && $pageSEO['meta_keywords'] ? $pageSEO['meta_keywords'] : (isset($seoContents->keywords) ? implode(',', $seoContents->keywords) : '') }}">
     <link rel="shortcut icon" href="{{ getImage(getFilePath('logoFavicon').'/favicon.png') }}" type="image/x-icon">
 
     {{--<!-- Apple Stuff -->--}}
@@ -64,15 +65,15 @@
 
     {{--<!-- Google / Search Engine Tags -->--}}
     <meta itemprop="name" content="{{ $setting->siteName($pageTitle) }}">
-    <meta itemprop="description" content="{{ $seoContents->description }}">
-    <meta itemprop="image" content="{{ $seoContents->image  }}">
+    <meta itemprop="description" content="{{ $seoContents->description ?? '' }}">
+    <meta itemprop="image" content="{{ $seoContents->image ?? '' }}">
 
     {{--<!-- Facebook Meta Tags -->--}}
     <meta property="og:type" content="website">
-    <meta property="og:title" content="{{ $seo->social_title }}">
-    <meta property="og:description" content="{{ $seo->social_description }}">
-    <meta property="og:image" content="{{ $seoContents->image ?: getImage(getFilePath('logoFavicon').'/logo_dark.png') }}"/>
-    <meta property="og:image:type" content="{{ $seoContents->image && pathinfo($seoContents->image, PATHINFO_EXTENSION) ? 'image/' . pathinfo($seoContents->image, PATHINFO_EXTENSION) : 'image/jpeg' }}" />
+    <meta property="og:title" content="{{ $seo->social_title ?? '' }}">
+    <meta property="og:description" content="{{ $seo->social_description ?? '' }}">
+    <meta property="og:image" content="{{ ($seoContents->image ?? '') ?: getImage(getFilePath('logoFavicon').'/logo_dark.png') }}"/>
+    <meta property="og:image:type" content="{{ ($seoContents->image ?? '') && pathinfo($seoContents->image ?? '', PATHINFO_EXTENSION) ? 'image/' . pathinfo($seoContents->image ?? '', PATHINFO_EXTENSION) : 'image/jpeg' }}" />
     <meta property="og:image:width" content="{{ isset($socialImageSize[0]) ? $socialImageSize[0] : '1200' }}" />
     <meta property="og:image:height" content="{{ isset($socialImageSize[1]) ? $socialImageSize[1] : '630' }}" />
     <meta property="og:url" content="{{ url()->current() }}">

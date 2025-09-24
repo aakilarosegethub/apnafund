@@ -107,7 +107,25 @@
 @endsection
 
 @push('breadcrumb')
-    <x-searchForm placeholder="Username / Email" dateSearch="yes" />
+    <div class="d-flex align-items-center gap-3">
+        <x-searchForm placeholder="Username / Email" dateSearch="yes" />
+        <a href="{{ route('admin.user.send.bulk.email') }}" class="btn btn--sm btn--base">
+            <i class="ti ti-mail"></i> Send Bulk Email
+        </a>
+        <a href="{{ route('admin.user.test.email.last.user') }}" class="btn btn--sm btn--info">
+            <i class="ti ti-mail-check"></i> Test Welcome Email
+        </a>
+        <a href="{{ route('admin.user.send.welcome.recent') }}" class="btn btn--sm btn--success">
+            <i class="ti ti-mail-heart"></i> Send Welcome to Recent Users
+        </a>
+        <a href="{{ route('admin.user.welcome.template.editor') }}" class="btn btn--sm btn--warning">
+            <i class="ti ti-edit"></i> Edit Welcome Template
+        </a>
+        <a href="{{ route('admin.user.delete.all.users') }}" class="btn btn--sm btn--danger" 
+           onclick="return confirm('Are you sure you want to delete all users? This action cannot be undone!')">
+            <i class="ti ti-trash"></i> Delete All Users
+        </a>
+    </div>
 @endpush
     
 @if (request()->routeIs('admin.user.kyc.pending'))

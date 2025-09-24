@@ -25,9 +25,13 @@
                                     <img src="{{ getImage(getFilePath('userProfile') . '/' . @$campaign->user->image, getFileSize('userProfile'), true) }}" alt="Image">
                                 </div>
                                 <div class="table-card-with-image__content">
-                                    <p class="fw-semibold">{{ $campaign->user->fullname }}</p>
+                                    <p class="fw-semibold">{{ $campaign->user ? $campaign->user->fullname : 'User Not Found' }}</p>
                                     <p class="fw-semibold">
-                                        <a href="{{ appendQuery('search', @$campaign->user->username) }}"> <small>@</small>{{ $campaign->user->username }}</a>
+                                        @if($campaign->user)
+                                            <a href="{{ appendQuery('search', $campaign->user->username) }}"> <small>@</small>{{ $campaign->user->username }}</a>
+                                        @else
+                                            <span class="text-muted">User Not Found</span>
+                                        @endif
                                     </p>
                                 </div>
                             </div>
@@ -36,7 +40,7 @@
                             <span title="{{ __($campaign->name) }}">{{ __(strLimit($campaign->name, 20)) }}</span>
                         </td>
                         <td>
-                            <span class="fw-bold">{{ __($campaign->category->name) }}</span>
+                            <span class="fw-bold">{{ $campaign->category ? __($campaign->category->name) : 'Category Not Found' }}</span>
                         </td>
                         <td>
                             <div>

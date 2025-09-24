@@ -6,12 +6,12 @@
 
 @section('frontend')
     @php
-        $commonSliderImage = asset($activeThemeTrue . 'images/slider-img-shape-2.png');
-        $commonShapeImage  = asset($activeThemeTrue . 'images/mask-shape-1.png');
+        $commonSliderImage = custom_asset($activeThemeTrue . 'images/slider-img-shape-2.png');
+        $commonShapeImage  = custom_asset($activeThemeTrue . 'images/mask-shape-1.png');
     @endphp
 
 
-    <section class="hero-section" @if(@$heroContent->data_info->hero_background_image) style="background-image: url('{{ asset('assets/images/site/home/' . @$heroContent->data_info->hero_background_image) }}');" @endif>
+    <section class="hero-section" @if(@$heroContent->data_info->hero_background_image) style="background-image: url('{{ custom_asset('assets/images/site/home/' . @$heroContent->data_info->hero_background_image) }}');" @endif>
         <div class="container d-flex align-items-center justify-content-left">
             <div class="row justify-content-center">
                 <div class="col-12">
@@ -121,11 +121,11 @@
 @endsection
 
 @push('page-style-lib')
-    <link rel="stylesheet" href="{{ asset($activeThemeTrue . 'css/odometer.css') }}">
+    <link rel="stylesheet" href="{{ custom_asset($activeThemeTrue . 'css/odometer.css') }}">
 @endpush
 
 @push('page-script-lib')
-    <script src="{{ asset($activeThemeTrue . 'js/odometer.min.js') }}"></script>
+    <script src="{{ custom_asset($activeThemeTrue . 'js/odometer.min.js') }}"></script>
 @endpush
 
 @push('page-script')

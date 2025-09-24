@@ -251,6 +251,19 @@
             </a>
         </li>
         <li class="sidebar-item">
+            <a role="button" class="sidebar-link has-sub {{ navigationActive('admin.store*', 2) }}">
+                <span class="nav-icon"><i class="ti ti-shopping-cart"></i></span>
+                <span class="sidebar-txt">@lang('Store Management')</span>
+            </a>
+            <ul class="sidebar-dropdown-menu">
+                <li class="sidebar-dropdown-item">
+                    <a href="{{ route('admin.store.dashboard') }}" class="sidebar-link {{ navigationActive('admin.store.dashboard', 1) }}">
+                        @lang('Store Dashboard')
+                    </a>
+                </li>
+            </ul>
+        </li>
+        <li class="sidebar-item">
             <a href="{{ route('admin.contact.index') }}"
                class="sidebar-link {{ navigationActive('admin.contact*', 2) }}">
                    <span class="nav-icon">
@@ -283,6 +296,11 @@
                 <li class="sidebar-dropdown-item">
                     <a href="{{ route('admin.home.setting') }}" class="sidebar-link {{ navigationActive('admin.home.setting', 1) }}">
                         @lang('Home Settings')
+                    </a>
+                </li>
+                <li class="sidebar-dropdown-item">
+                    <a href="{{ route('admin.social.login.index') }}" class="sidebar-link {{ navigationActive('admin.social.login*', 1) }}">
+                        @lang('Social Login')
                     </a>
                 </li>
             </ul>
@@ -318,6 +336,13 @@
                     </a>
                 </li>
             </ul>
+        </li>
+        <li class="sidebar-item">
+            <a href="{{ route('admin.email-logs.index') }}"
+               class="sidebar-link {{ navigationActive('admin.email-logs*', 2) }}">
+                <span class="nav-icon"><i class="ti ti-mail-check"></i></span>
+                <span class="sidebar-txt">@lang('Email Logs')</span>
+            </a>
         </li>
         <li class="sidebar-item">
             <a href="{{ route('admin.plugin.setting') }}"

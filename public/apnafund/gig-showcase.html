@@ -18,80 +18,208 @@
             min-height: 100vh;
             line-height: 1.6;
             color: #333;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
         }
 
-        /* Header */
+        /* Touch-friendly improvements */
+        button, 
+        .btn-donate,
+        .btn-share,
+        .btn-share-card,
+        .btn-donate-card,
+        .btn-submit-review,
+        .btn-like-review,
+        .btn-reply-review {
+            min-height: 44px;
+            touch-action: manipulation;
+        }
+
+        /* Prevent horizontal scroll on mobile */
+        html, body {
+            overflow-x: hidden;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        /* Header - GoFundMe Style */
         .main-header {
             background: #05ce78;
-            padding: 20px 0;
+            padding: 0;
             margin: 0;
             border: none;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-bottom: none;
         }
 
         .main-header .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 0 20px;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .main-header .logo {
-            text-align: center;
             margin: 0;
+            flex-shrink: 0;
         }
 
         .main-header .logo-img {
-            height: 40px;
+            height: 32px;
             width: auto;
         }
 
-        /* Navigation */
+        /* Search Section - Hidden on Desktop */
+        .header-center {
+            display: none;
+        }
+
+        /* Hide mobile elements on desktop */
+        .header-left,
+        .header-right {
+            display: none;
+        }
+
+
+        .search-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 50px 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 24px;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: #f9fafb;
+        }
+
+        .search-input:focus {
+            border-color: #05ce78;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(5, 206, 120, 0.1);
+        }
+
+        .search-input::placeholder {
+            color: #9ca3af;
+        }
+
+        .search-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #6b7280;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px;
+            transition: color 0.3s ease;
+        }
+
+        .search-btn:hover {
+            color: #05ce78;
+        }
+
+
+
+
+
+
+        /* Mobile Navigation Toggle */
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        /* Navigation - GoFundMe Style */
         .nav-links {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 20px;
-            margin-top: 10px;
+            padding: 0;
+            margin: 0;
+            gap: 40px;
         }
 
         .nav-left,
         .nav-right {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 24px;
         }
 
         .nav-link {
             color: #fff;
             text-decoration: none;
             font-weight: 500;
-            font-size: 14px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            padding: 8px 0;
+            position: relative;
         }
 
         .nav-link:hover {
             color: #fff;
-            text-decoration: underline;
+            opacity: 0.8;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #fff;
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
         }
 
         .btn-start-fundraiser {
             background: #fff;
             color: #05ce78;
-            padding: 8px 16px;
-            border-radius: 6px;
+            padding: 12px 20px;
+            border-radius: 8px;
             font-weight: 600;
             text-decoration: none;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .btn-start-fundraiser:hover {
-            background: #f0f0f0;
+            background: #f8f9fa;
             color: #05ce78;
             text-decoration: none;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
 
-        /* Main Fundraiser Layout */
+        /* Main Fundraiser Layout - GoFundMe Style */
         .fundraiser-container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 24px 20px;
             display: flex;
             gap: 40px;
             align-items: flex-start;
@@ -100,53 +228,139 @@
         .fundraiser-main {
             flex: 2;
             min-width: 0;
+            order: 1; /* Main content first */
         }
 
         .fundraiser-sidebar {
             flex: 1;
-            max-width: 380px;
+            max-width: 400px;
+            min-width: 300px;
             position: sticky;
-            top: 20px;
+            top: 100px;
+            order: 2; /* Sidebar second */
+        }
+
+        /* Video gets highest priority */
+        .fundraiser-hero {
+            order: -1; /* Video comes first, even before title */
         }
 
         /* Hero Banner */
         .fundraiser-hero {
             position: relative;
-            margin-bottom: 30px;
+            margin-bottom: 24px;
             overflow: hidden;
+        }
+
+        .title-section {
+            margin-bottom: 32px;
         }
 
         .fundraiser-banner {
             width: 100%;
-            height: 400px;
+            height: 0;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
             position: relative;
-            border-radius: 20px;
+            border-radius: 16px;
             overflow: hidden;
+            cursor: pointer;
+            background: #000;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
         }
 
-        .banner-overlay {
+        .video-container {
             position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
             width: 100%;
             height: 100%;
+            background: #000;
+            border-radius: inherit;
+            overflow: hidden;
         }
 
-        .banner-overlay img {
+        .fundraiser-banner video {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            border-radius: 20px;
+            border-radius: inherit;
+        }
+
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.1) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            transition: opacity 0.3s ease;
+        }
+
+        .video-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .play-button {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .play-button:hover {
+            transform: scale(1.1);
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .play-button i {
+            color: #05ce78;
+            font-size: 28px;
+            margin-left: 4px;
+        }
+
+        .video-info {
+            position: absolute;
+            bottom: 16px;
+            left: 16px;
+            right: 16px;
+            color: white;
+            z-index: 3;
+        }
+
+        .video-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .video-duration {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
 
         .banner-title {
-            font-size: 2rem;
+            font-size: 2.25rem;
             font-weight: 700;
-            margin: 0 0 13px 0;
-            color: #333;
+            margin: 0 0 24px 0;
+            color: #2c2c2c;
             text-align: left;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
         }
 
         /* Organizer Section */
@@ -289,41 +503,56 @@
             text-decoration: none;
         }
 
-        /* Sidebar */
+        /* Sidebar - GoFundMe Style */
         .sidebar-card {
             background: #fff;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-            margin-bottom: 20px;
-            border: 1px solid #f0f0f0;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            margin-bottom: 24px;
+            border: 1px solid #e5e7eb;
         }
 
         .progress-section {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 30px;
+            margin-bottom: 32px;
         }
 
         .progress-text {
-            flex: 1;
+            width: 100%;
         }
 
         .progress-title {
-            font-size: 1.3rem;
+            font-size: 2rem;
             font-weight: 700;
-            color: #333;
+            color: #1f2937;
             margin-bottom: 8px;
-            line-height: 1.2;
+            line-height: 1.1;
         }
 
         .progress-subtitle {
-            font-size: 0.95rem;
-            color: #666;
+            font-size: 1rem;
+            color: #6b7280;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: #05ce78;
+            width: 29%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
         }
 
         .progress-circle {
@@ -368,46 +597,53 @@
         .action-buttons {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            margin-bottom: 25px;
+            gap: 16px;
+            margin-bottom: 32px;
         }
 
         .btn-share-card {
-            background: #333;
-            color: #fff;
-            border: none;
-            padding: 14px 24px;
-            border-radius: 12px;
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+            padding: 16px 24px;
+            border-radius: 8px;
             text-decoration: none;
             font-weight: 600;
             text-align: center;
             transition: all 0.3s ease;
             font-size: 1rem;
+            order: 2;
         }
 
         .btn-share-card:hover {
-            background: #444;
-            color: #fff;
+            background: #e5e7eb;
+            color: #374151;
             text-decoration: none;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
         .btn-donate-card {
             background: #05ce78;
             color: #fff;
             border: none;
-            padding: 14px 24px;
-            border-radius: 12px;
+            padding: 18px 24px;
+            border-radius: 8px;
             text-decoration: none;
-            font-weight: 600;
+            font-weight: 700;
             text-align: center;
             transition: all 0.3s ease;
-            font-size: 1rem;
+            font-size: 1.1rem;
+            order: 1;
+            box-shadow: 0 2px 4px rgba(5, 206, 120, 0.2);
         }
 
         .btn-donate-card:hover {
-            background: #05ce78;
+            background: #04b368;
             color: #fff;
             text-decoration: none;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(5, 206, 120, 0.3);
         }
 
         .donation-stats {
@@ -1194,29 +1430,283 @@
         }
 
         /* Responsive Design */
-        @media (max-width: 768px) {
+        /* Tablet and small desktop */
+        @media (max-width: 992px) {
             .fundraiser-container {
-                flex-direction: column;
+                gap: 20px;
+                padding: 15px;
+            }
+            
+            .fundraiser-sidebar {
+                min-width: 250px;
+                order: 2; /* Keep sidebar after main content */
             }
 
-            .fundraiser-sidebar {
+            .fundraiser-main {
+                order: 1;
+            }
+
+            .fundraiser-hero {
+                order: 0; /* Video stays at top */
+            }
+            
+            .banner-title {
+                font-size: 1.6rem;
+            }
+        }
+
+        /* GoFundMe Mobile Layout */
+        @media (max-width: 768px) {
+            .main-header {
+                padding: 0;
+                background: #05ce78;
+            }
+            
+            .main-header .container {
+                padding: 12px 16px;
+                position: relative;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            /* Mobile Search Icon - Left */
+            .header-left {
+                flex: 0 0 auto;
+                display: flex;
+            }
+
+            .search-icon-btn {
+                background: none;
+                border: none;
+                color: #fff;
+                font-size: 18px;
+                cursor: pointer;
+                padding: 6px;
+                border-radius: 6px;
+                transition: all 0.3s ease;
+            }
+
+            .search-icon-btn:hover {
+                background: rgba(255, 255, 255, 0.1);
+                color: #fff;
+            }
+
+            /* Mobile Logo - Center */
+            .main-header .logo {
+                position: absolute;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+
+            .main-header .logo-img {
+                height: 28px;
+            }
+
+            /* Mobile Hamburger - Right */
+            .header-right {
+                flex: 0 0 auto;
+                display: flex;
+            }
+
+            .nav-toggle {
+                display: block;
+                font-size: 18px;
+                padding: 6px;
+            }
+
+            /* Hide original search section on mobile */
+            .header-center {
+                display: none;
+            }
+
+
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: #05ce78;
+                flex-direction: column;
+                padding: 20px 16px;
+                gap: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                z-index: 1000;
+                border-top: none;
+            }
+
+            .nav-links.active {
+                display: flex;
+            }
+
+            .nav-left,
+            .nav-right {
+                flex-direction: column;
+                gap: 8px;
+                width: 100%;
+            }
+
+            .nav-link {
+                padding: 12px 16px;
+                border-radius: 8px;
+                font-size: 16px;
+                width: 100%;
+                text-align: left;
+                color: #fff;
+            }
+
+            .nav-link:hover {
+                background: rgba(255, 255, 255, 0.1);
+                color: #fff;
+            }
+
+            .btn-start-fundraiser {
+                padding: 14px 20px;
+                width: 100%;
+                text-align: center;
+                margin-top: 8px;
+            }
+
+
+            .search-container {
                 max-width: 100%;
             }
 
+            .search-input {
+                padding: 14px 45px 14px 16px;
+                font-size: 16px;
+            }
+
+            .search-btn {
+                right: 12px;
+                font-size: 16px;
+            }
+
+            .search-close {
+                top: 16px;
+                right: 16px;
+                font-size: 18px;
+            }
+
+            /* GoFundMe Mobile Container */
+            .fundraiser-container {
+                flex-direction: column;
+                padding: 0;
+                gap: 0;
+                max-width: 100%;
+            }
+
+            /* Mobile Main Content - First (with video inside) */
+            .fundraiser-main {
+                order: 0; /* Main content first (contains video) */
+                padding: 0; /* No padding for main container */
+                background: #fff;
+            }
+
+            /* Mobile Hero Section - Inside Main Content */
+            .fundraiser-hero {
+                margin-bottom: 0;
+                padding: 0;
+            }
+
+            .fundraiser-banner {
+                border-radius: 0;
+                margin-bottom: 0;
+            }
+
+            .title-section {
+                padding: 20px;
+                margin-bottom: 0;
+            }
+
+            .organizer-section,
+            .fundraiser-description,
+            .support-section,
+            .reviews-section {
+                padding: 0 20px 20px 20px;
+            }
+
+            /* Mobile Sidebar - After Main Content (after video) */
+            .fundraiser-sidebar {
+                order: 1; /* Progress card after main content */
+                max-width: 100%;
+                min-width: auto;
+                position: static;
+                top: auto;
+                padding: 20px;
+                background: #f8f9fa;
+                border-top: 1px solid #e5e7eb;
+            }
+
+            /* GoFundMe Mobile Video */
+            .fundraiser-banner {
+                padding-bottom: 56.25%; /* Standard 16:9 like GoFundMe */
+                border-radius: 0; /* No border radius on mobile like GoFundMe */
+                box-shadow: none;
+            }
+
             .banner-title {
-                font-size: 2rem;
+                font-size: 1.75rem;
+                font-weight: 700;
+                margin-bottom: 16px;
+                padding: 0;
+                line-height: 1.3;
+                color: #1a1a1a;
+            }
+
+            .play-button {
+                width: 72px;
+                height: 72px;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(10px);
+            }
+
+            .play-button i {
+                font-size: 24px;
+                color: #05ce78;
+            }
+
+            .video-info {
+                bottom: 16px;
+                left: 16px;
+                right: 16px;
+            }
+
+            .video-title {
+                font-size: 1rem;
+                font-weight: 600;
+            }
+
+            .video-duration {
+                font-size: 0.9rem;
+                margin-top: 4px;
             }
 
             .fundraiser-actions {
                 flex-direction: column;
+                gap: 12px;
+            }
+
+            .btn-donate,
+            .btn-share {
+                text-align: center;
+                padding: 14px 20px;
+            }
+
+            .engagement-section {
+                flex-wrap: wrap;
+                gap: 15px;
             }
 
             .features-grid {
                 grid-template-columns: 1fr;
+                gap: 20px;
             }
 
             .related-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 20px;
             }
 
             .reviews-header {
@@ -1228,21 +1718,22 @@
             .review-header {
                 flex-direction: column;
                 gap: 10px;
+                align-items: flex-start;
             }
 
             .review-actions {
                 flex-wrap: wrap;
+                gap: 10px;
             }
 
-            /* News Modal Responsive */
             .news-modal-content {
                 width: 95%;
                 max-height: 90vh;
-                margin: 20px;
+                margin: 10px;
             }
 
             .news-modal-header {
-                padding: 20px;
+                padding: 20px 15px;
             }
 
             .news-modal-header h3 {
@@ -1250,7 +1741,7 @@
             }
 
             .news-modal-body {
-                padding: 20px;
+                padding: 0 15px 20px;
             }
 
             .news-card {
@@ -1268,6 +1759,457 @@
                 align-items: flex-start;
                 gap: 5px;
             }
+
+            /* GoFundMe Mobile Sidebar */
+            .sidebar-card {
+                padding: 24px 20px;
+                margin-bottom: 0;
+                border-radius: 0;
+                border: none;
+                box-shadow: none;
+                background: #f8f9fa;
+            }
+
+            .progress-section {
+                margin-bottom: 24px;
+            }
+
+            .progress-title {
+                font-size: 2rem;
+                font-weight: 700;
+                color: #1a1a1a;
+                margin-bottom: 8px;
+            }
+
+            .progress-subtitle {
+                font-size: 1rem;
+                color: #6b7280;
+                margin-bottom: 16px;
+            }
+
+            .progress-bar-container {
+                height: 6px;
+                background: #e5e7eb;
+                border-radius: 3px;
+                margin-bottom: 20px;
+            }
+
+            .progress-bar-fill {
+                height: 100%;
+                background: #05ce78;
+                border-radius: 3px;
+            }
+
+            .btn-donate-card {
+                padding: 18px 24px;
+                font-size: 1.1rem;
+                font-weight: 700;
+                background: #05ce78;
+                border-radius: 8px;
+                margin-bottom: 12px;
+            }
+
+            .btn-share-card {
+                padding: 16px 24px;
+                font-size: 1rem;
+                font-weight: 600;
+                background: #f3f4f6;
+                color: #374151;
+                border: 1px solid #d1d5db;
+                border-radius: 8px;
+            }
+        }
+
+        /* GoFundMe Mobile Small Screens */
+        @media (max-width: 576px) {
+            .main-header .container {
+                padding: 8px 12px;
+            }
+
+            .main-header .logo-img {
+                height: 24px;
+            }
+
+            .header-center {
+                margin: 12px 0 0 0;
+            }
+
+            .search-input {
+                padding: 8px 40px 8px 12px;
+                font-size: 14px;
+                border-radius: 18px;
+            }
+
+            .search-btn {
+                right: 10px;
+                font-size: 14px;
+            }
+
+            .nav-links {
+                padding: 16px 12px;
+            }
+
+            .nav-link {
+                padding: 10px 12px;
+                font-size: 15px;
+            }
+
+            .btn-start-fundraiser {
+                padding: 12px 16px;
+                font-size: 15px;
+            }
+
+            /* Mobile Search Icon - Smaller Screens */
+            .search-icon-btn {
+                font-size: 16px;
+                padding: 4px;
+            }
+
+
+            .fundraiser-container {
+                padding: 0;
+                gap: 0;
+            }
+
+            .fundraiser-main {
+                order: 0; /* Main content first (contains video) */
+                padding: 0;
+            }
+
+            .fundraiser-sidebar {
+                order: 1; /* Progress card after main content */
+                padding: 16px;
+            }
+
+            .title-section {
+                padding: 16px;
+            }
+
+            .organizer-section,
+            .fundraiser-description,
+            .support-section,
+            .reviews-section {
+                padding: 0 16px 16px 16px;
+            }
+
+            .fundraiser-banner {
+                padding-bottom: 56.25%; /* Keep 16:9 like GoFundMe */
+                border-radius: 0;
+            }
+
+            .banner-title {
+                font-size: 1.5rem;
+                font-weight: 700;
+                margin-bottom: 12px;
+                letter-spacing: -0.01em;
+                line-height: 1.2;
+            }
+
+            .play-button {
+                width: 64px;
+                height: 64px;
+            }
+
+            .play-button i {
+                font-size: 22px;
+            }
+
+            .video-info {
+                bottom: 12px;
+                left: 12px;
+                right: 12px;
+            }
+
+            .video-title {
+                font-size: 0.95rem;
+                font-weight: 600;
+            }
+
+            .video-duration {
+                font-size: 0.85rem;
+            }
+
+            .organizer-info {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .organizer-avatar {
+                width: 40px;
+                height: 40px;
+                font-size: 0.9rem;
+            }
+
+            .fundraiser-description {
+                font-size: 1rem;
+                line-height: 1.6;
+            }
+
+            .btn-donate,
+            .btn-share {
+                padding: 12px 16px;
+                font-size: 0.9rem;
+            }
+
+            .sidebar-card {
+                padding: 20px;
+                border-radius: 12px;
+                margin-bottom: 16px;
+            }
+
+            .progress-title {
+                font-size: 1.5rem;
+            }
+
+            .progress-subtitle {
+                font-size: 0.9rem;
+            }
+
+            .action-buttons {
+                gap: 12px;
+                margin-bottom: 24px;
+            }
+
+            .btn-share-card,
+            .btn-donate-card {
+                padding: 14px 20px;
+                font-size: 1rem;
+                border-radius: 6px;
+            }
+
+            .recent-donations {
+                margin-top: 15px;
+            }
+
+            .donation-item {
+                padding: 10px 0;
+            }
+
+            .donation-avatar {
+                width: 28px;
+                height: 28px;
+                font-size: 0.75rem;
+            }
+
+            .donation-name,
+            .donation-amount {
+                font-size: 0.85rem;
+            }
+
+            .donation-type {
+                font-size: 0.75rem;
+            }
+
+            .features-section {
+                padding: 30px 0;
+                margin: 30px 0;
+            }
+
+            .feature-card {
+                padding: 20px 15px;
+            }
+
+            .feature-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+                margin-bottom: 15px;
+            }
+
+            .feature-title {
+                font-size: 1.1rem;
+            }
+
+            .feature-description {
+                font-size: 0.9rem;
+                line-height: 1.5;
+            }
+
+            .related-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .related-card {
+                border-radius: 10px;
+            }
+
+            .related-content {
+                padding: 15px;
+            }
+
+            .related-title {
+                font-size: 1rem;
+                margin-bottom: 8px;
+            }
+
+            .related-organizer {
+                font-size: 0.85rem;
+                margin-bottom: 8px;
+            }
+
+            .review-form-container {
+                padding: 20px 15px;
+                border-radius: 10px;
+            }
+
+            .form-group input,
+            .form-group textarea {
+                padding: 10px 12px;
+                font-size: 0.9rem;
+            }
+
+            .btn-submit-review {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+
+            .review-item {
+                padding: 15px;
+                border-radius: 10px;
+            }
+
+            .reviewer-avatar {
+                width: 35px;
+                height: 35px;
+                font-size: 0.85rem;
+            }
+
+            .reviewer-name {
+                font-size: 0.9rem;
+            }
+
+            .review-title {
+                font-size: 0.95rem;
+            }
+
+            .review-content {
+                font-size: 0.9rem;
+            }
+
+            .news-modal-content {
+                width: 95%;
+                margin: 5px;
+                border-radius: 12px;
+            }
+
+            .news-modal-header {
+                padding: 15px;
+            }
+
+            .news-modal-header h3 {
+                font-size: 1.1rem;
+            }
+
+            .news-modal-body {
+                padding: 0 15px 15px;
+            }
+
+            .news-card {
+                padding: 12px;
+                border-radius: 8px;
+            }
+
+            .news-title {
+                font-size: 1rem;
+            }
+
+            .news-content {
+                font-size: 0.9rem;
+                line-height: 1.5;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .footer-section h4 {
+                margin-bottom: 10px;
+                font-size: 1rem;
+            }
+
+            .footer-section ul li {
+                margin-bottom: 6px;
+            }
+
+            .footer-section ul li a {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Extra small mobile */
+        @media (max-width: 375px) {
+            .fundraiser-container {
+                padding: 8px;
+            }
+
+            .banner-title {
+                font-size: 1.1rem;
+            }
+
+            .fundraiser-banner {
+                padding-bottom: 70%; /* Extra tall on very small screens */
+            }
+
+            .play-button {
+                width: 50px;
+                height: 50px;
+            }
+
+            .play-button i {
+                font-size: 18px;
+            }
+
+            .video-info {
+                bottom: 8px;
+                left: 8px;
+                right: 8px;
+            }
+
+            .video-title {
+                font-size: 0.85rem;
+            }
+
+            .video-duration {
+                font-size: 0.75rem;
+            }
+
+            .sidebar-card {
+                padding: 12px;
+            }
+
+            .progress-title {
+                font-size: 1rem;
+            }
+
+            .progress-circle {
+                width: 60px;
+                height: 60px;
+            }
+
+            .progress-percentage {
+                font-size: 1rem;
+            }
+
+            .feature-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.3rem;
+            }
+
+            .related-content {
+                padding: 12px;
+            }
+
+            .review-form-container {
+                padding: 15px 12px;
+            }
+
+            .review-item {
+                padding: 12px;
+            }
         }
     </style>
 </head>
@@ -1276,32 +2218,88 @@
     <!-- Header -->
     <header class="main-header">
         <div class="container">
-            <div class="row align-items-center">
-                <div class="col-md-12">
-                    <div class="logo text-center">
-                        <a href="/">
-                            <img src="assets/images/White Logo.png" alt="Apna Fund Logo" class="logo-img">
-                        </a>
-                    </div>
+            <!-- Left Section - Search Icon (Mobile Only) -->
+            <div class="header-left">
+                <button class="search-icon-btn" id="searchToggle">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            
+            <!-- Center - Logo -->
+            <div class="logo">
+                <a href="/">
+                    <img src="assets/images/White Logo.png" alt="Apna Fund Logo" class="logo-img">
+                </a>
+            </div>
+            
+            <!-- Right Section - Navigation -->
+            <div class="header-right">
+                <button class="nav-toggle" id="navToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            
+            <!-- Hidden Search Section (Desktop) -->
+            <div class="header-center">
+                <div class="search-container">
+                    <input type="text" class="search-input" placeholder="Find fundraisers by person's name, location, title, or keyword">
+                    <button class="search-btn" type="button">
+                        <i class="fas fa-search"></i>
+                    </button>
                 </div>
             </div>
+            
+            <nav class="nav-links" id="navLinks">
+                <div class="nav-left">
+                    <a href="#" class="nav-link">Discover</a>
+                    <a href="#" class="nav-link">Categories</a>
+                    <a href="#" class="nav-link">How it works</a>
+                </div>
+                <div class="nav-right">
+                    <a href="#" class="nav-link">Sign in</a>
+                    <a href="#" class="btn-start-fundraiser">Start a fundraiser</a>
+                </div>
+            </nav>
         </div>
+        
     </header>
 
     <!-- Main Fundraiser Section -->
     <div class="fundraiser-container mt-4">
         <!-- Main Content -->
         <div class="fundraiser-main">
-            <!-- Hero Banner -->
+            <!-- Video Section First -->
             <div class="fundraiser-hero">
-                <h1 class="banner-title">PLAY IT FORWARD: THE RON HOLLOWAY FUND</h1>
                 <div class="fundraiser-banner">
-                    <div class="banner-overlay">
-                        <!-- Banner image content can go here if needed -->
-                        <img src="assets/images/gig.png"
-                            alt="">
+                    <div class="video-container">
+                        <!-- Video Element -->
+                        <video id="mainVideo" poster="assets/images/gig.png" preload="metadata">
+                            <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4">
+                            <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        
+                        <!-- Video Overlay with Play Button -->
+                        <div class="video-overlay" id="videoOverlay">
+                            <div class="play-button" id="playButton">
+                                <i class="fas fa-play"></i>
+                            </div>
+                        </div>
+                        
+                        <!-- Video Info -->
+                        <div class="video-info">
+                            <div class="video-title">Play It Forward: The Ron Holloway Fund</div>
+                            <div class="video-duration">
+                                <i class="fas fa-play-circle"></i> 0:00 / 9:56
+                            </div>
+                        </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Title Section -->
+            <div class="title-section">
+                <h1 class="banner-title">PLAY IT FORWARD: THE RON HOLLOWAY FUND</h1>
             </div>
 
             <!-- Organizer Section -->
@@ -1557,21 +2555,20 @@
         <!-- Sidebar -->
         <div class="fundraiser-sidebar">
             <!-- Progress Card -->
-            <div class="sidebar-card mt-5">
+            <div class="sidebar-card">
                 <div class="progress-section">
                     <div class="progress-text">
-                        <h3 class="progress-title">$58,572 USD raised</h3>
-                        <div class="progress-subtitle align-items-center">
-                            <span>29% of goal</span>
-                            <span>200K goal</span>
+                        <h3 class="progress-title">$58,572 raised</h3>
+                        <div class="progress-subtitle">
+                            <span>of $200,000 goal</span>
+                            <span>29%</span>
                         </div>
-                    </div>
-                    <div class="progress-circle">
-                        <svg viewBox="0 0 100 100">
-                            <circle class="progress-circle-bg" cx="50" cy="50" r="45"></circle>
-                            <circle class="progress-circle-fill" cx="50" cy="50" r="45"></circle>
-                        </svg>
-                        <span class="progress-percentage">29%</span>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill"></div>
+                        </div>
+                        <div style="color: #6b7280; font-size: 0.9rem; margin-bottom: 8px;">
+                            <strong>1.6K</strong> donations
+                        </div>
                     </div>
                 </div>
 
@@ -1694,6 +2691,8 @@
         </div>
     </div>
 
+
+
     <!-- Features Section -->
     <div class="features-section">
         <div class="features-container">
@@ -1724,6 +2723,7 @@
             </div>
         </div>
     </div>
+    
 
     <!-- Related Fundraisers -->
     <div class="related-fundraisers">
@@ -1837,6 +2837,152 @@
     <!-- Reviews and Comments JavaScript -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Video Player Functionality
+            const video = document.getElementById('mainVideo');
+            const playButton = document.getElementById('playButton');
+            const videoOverlay = document.getElementById('videoOverlay');
+            
+            if (video && playButton && videoOverlay) {
+                // Play button click handler
+                playButton.addEventListener('click', function() {
+                    video.play();
+                    videoOverlay.classList.add('hidden');
+                });
+
+                // Video click handler
+                video.addEventListener('click', function() {
+                    if (video.paused) {
+                        video.play();
+                        videoOverlay.classList.add('hidden');
+                    } else {
+                        video.pause();
+                        videoOverlay.classList.remove('hidden');
+                    }
+                });
+
+                // Show overlay when video ends
+                video.addEventListener('ended', function() {
+                    videoOverlay.classList.remove('hidden');
+                });
+
+                // Hide overlay when video starts playing
+                video.addEventListener('play', function() {
+                    videoOverlay.classList.add('hidden');
+                });
+
+                // Show overlay when video is paused
+                video.addEventListener('pause', function() {
+                    videoOverlay.classList.remove('hidden');
+                });
+
+                // Update duration display
+                video.addEventListener('loadedmetadata', function() {
+                    const duration = formatTime(video.duration);
+                    const durationDisplay = document.querySelector('.video-duration');
+                    if (durationDisplay) {
+                        durationDisplay.innerHTML = `<i class="fas fa-play-circle"></i> 0:00 / ${duration}`;
+                    }
+                });
+
+                // Update current time during playback
+                video.addEventListener('timeupdate', function() {
+                    const currentTime = formatTime(video.currentTime);
+                    const duration = formatTime(video.duration);
+                    const durationDisplay = document.querySelector('.video-duration');
+                    if (durationDisplay) {
+                        durationDisplay.innerHTML = `<i class="fas fa-play-circle"></i> ${currentTime} / ${duration}`;
+                    }
+                });
+
+                // Format time function
+                function formatTime(seconds) {
+                    const minutes = Math.floor(seconds / 60);
+                    const remainingSeconds = Math.floor(seconds % 60);
+                    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+                }
+            }
+
+            // Search functionality
+            const searchInput = document.querySelector('.search-input');
+            const searchBtn = document.querySelector('.search-btn');
+            const searchToggle = document.getElementById('searchToggle');
+            
+            if (searchInput && searchBtn) {
+                // Search button click handler
+                searchBtn.addEventListener('click', function() {
+                    performSearch();
+                });
+
+                // Search on Enter key press
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        performSearch();
+                    }
+                });
+
+                // Add search suggestions (placeholder functionality)
+                searchInput.addEventListener('focus', function() {
+                    this.style.borderColor = '#05ce78';
+                });
+
+                searchInput.addEventListener('blur', function() {
+                    this.style.borderColor = '#e5e7eb';
+                });
+
+                function performSearch() {
+                    const query = searchInput.value.trim();
+                    if (query) {
+                        // Placeholder search functionality
+                        console.log('Searching for:', query);
+                        // Here you would typically redirect to search results or filter content
+                        showNotification(`Searching for "${query}"...`, 'success');
+                    }
+                }
+            }
+
+
+            // Mobile Navigation Toggle
+            const navToggle = document.getElementById('navToggle');
+            const navLinks = document.getElementById('navLinks');
+            
+            if (navToggle && navLinks) {
+                navToggle.addEventListener('click', function() {
+                    navLinks.classList.toggle('active');
+                    const icon = navToggle.querySelector('i');
+                    if (navLinks.classList.contains('active')) {
+                        icon.classList.remove('fa-bars');
+                        icon.classList.add('fa-times');
+                    } else {
+                        icon.classList.remove('fa-times');
+                        icon.classList.add('fa-bars');
+                    }
+                });
+
+                // Close mobile menu when clicking on a link
+                const navLinksItems = navLinks.querySelectorAll('.nav-link, .btn-start-fundraiser');
+                navLinksItems.forEach(link => {
+                    link.addEventListener('click', function() {
+                        if (navLinks.classList.contains('active')) {
+                            navLinks.classList.remove('active');
+                            const icon = navToggle.querySelector('i');
+                            icon.classList.remove('fa-times');
+                            icon.classList.add('fa-bars');
+                        }
+                    });
+                });
+
+                // Close mobile menu when clicking outside
+                document.addEventListener('click', function(event) {
+                    if (!navToggle.contains(event.target) && !navLinks.contains(event.target)) {
+                        if (navLinks.classList.contains('active')) {
+                            navLinks.classList.remove('active');
+                            const icon = navToggle.querySelector('i');
+                            icon.classList.remove('fa-times');
+                            icon.classList.add('fa-bars');
+                        }
+                    }
+                });
+            }
             // Review form submission
             const reviewForm = document.getElementById('reviewForm');
             const reviewsList = document.getElementById('reviewsList');
@@ -2105,6 +3251,9 @@
                     document.body.style.overflow = '';
                 }
             });
+
+
+
         });
     </script>
 </body>

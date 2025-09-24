@@ -2,10 +2,10 @@
     <div class="header__container">
         <div class="header__logo">
             <div class="header__logo__big">
-                <a href="{{ route('admin.dashboard') }}"><img src="{{ getImage(getFilePath('logoFavicon').'/logo_dark.png') }}" alt="Logo"></a>
+                <a href="{{ route('admin.dashboard') }}"><img src="{{ getImage(getFilePath('logoFavicon').'/logo_dark.png') }}?v={{ time() }}" alt="Logo"></a>
             </div>
             <div class="header__logo__small">
-                <a href="{{ route('admin.dashboard') }}"><img src="{{ getImage(getFilePath('logoFavicon').'/favicon.png') }}" alt="Logo"></a>
+                <a href="{{ route('admin.dashboard') }}"><img src="{{ getImage(getFilePath('logoFavicon').'/favicon.png') }}?v={{ time() }}" alt="Logo"></a>
             </div>
         </div>
         <div class="header__nav">

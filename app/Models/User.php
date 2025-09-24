@@ -19,7 +19,7 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
-        'name', 'email', 'password', 'firstname', 'lastname', 'username', 'mobile', 'country_code', 'country_name', 'address', 'business_type', 'business_name', 'business_description', 'industry', 'funding_amount', 'fund_usage', 'campaign_duration', 'phone'
+        'name', 'email', 'password', 'firstname', 'lastname', 'username', 'mobile', 'country_code', 'country_name', 'address', 'business_type', 'business_name', 'business_description', 'industry', 'funding_amount', 'fund_usage', 'campaign_duration', 'phone', 'phone_verified_at', 'last_login_at', 'provider', 'provider_id', 'avatar', 'status', 'ec', 'sc', 'tc'
     ];
 
     /**
@@ -41,7 +41,9 @@ class User extends Authenticatable
         'password'          => 'hashed',
         'address'           => 'object',
         'kyc_data'          => 'object',
-        'ver_code_send_at'  => 'datetime'
+        'ver_code_send_at'  => 'datetime',
+        'phone_verified_at' => 'datetime',
+        'last_login_at'     => 'datetime'
     ];
 
     /**
@@ -114,5 +116,19 @@ class User extends Authenticatable
     public function scopeKycPending($query)
     {
         return $query->where('kc', ManageStatus::PENDING);
+    }
+
+    public function scopePhoneVerified($query)
+    {
+        return $query->whereNotNull('phone_verified_at');
+    }
+
+    /**
+     * Send email verification notification.
+     */
+    public function sendEmailVerificationNotification()
+    {
+        // Send welcome email to user
+        $this->notify(new \App\Notifications\WelcomeNotification($this));
     }
 }

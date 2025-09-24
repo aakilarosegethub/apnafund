@@ -12,6 +12,6 @@ class SiteData extends Model
     ];
 
     protected $casts = [
-        'data_info' => 'object'
+        'data_info' => 'array'
     ];
 }

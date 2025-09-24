@@ -63,7 +63,12 @@ class CampaignController extends Controller
         if ($scope) $campaigns = Campaign::$scope();
         else $campaigns = Campaign::query();
 
-        return $campaigns->with(['user', 'category'])->searchable(['name', 'category:name', 'user:username'])->latest()->paginate(getPaginate());
+        return $campaigns->with(['user', 'category'])
+            ->leftJoin('users', 'campaigns.user_id', '=', 'users.id')
+            ->leftJoin('categories', 'campaigns.category_id', '=', 'categories.id')
+            ->searchable(['name', 'category:name', 'user:username'])
+            ->latest('campaigns.created_at')
+            ->paginate(getPaginate());
     }
 
     function details($id) {

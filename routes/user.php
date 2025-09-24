@@ -19,6 +19,23 @@ Route::namespace('User\Auth')->name('user.')->group(function () {
         Route::post('check-user', 'checkUser')->name('check.user');
     });
 
+    // OTP Authentication Process
+    Route::controller('OTPController')->group(function () {
+        Route::get('otp-login', 'showOTPForm')->name('otp.login');
+        Route::post('otp/send', 'sendOTP')->name('otp.send');
+        Route::post('otp/verify', 'verifyOTP')->name('otp.verify');
+        Route::post('otp/resend', 'resendOTP')->name('otp.resend');
+        Route::post('otp/check-phone', 'checkPhoneNumber')->name('otp.check.phone');
+    });
+
+    // Social Login
+    Route::controller('SocialLoginController')->prefix('auth')->name('social.')->group(function() {
+        Route::get('facebook', 'redirectToFacebook')->name('facebook');
+        Route::get('facebook/callback', 'handleFacebookCallback')->name('facebook.callback');
+        Route::get('google', 'redirectToGoogle')->name('google');
+        Route::get('google/callback', 'handleGoogleCallback')->name('google.callback');
+    });
+
     // Forgot Password
     Route::controller('ForgotPasswordController')->prefix('password')->name('password.')->group(function () {
         Route::get('forgot', 'requestForm')->name('request.form');
@@ -82,8 +99,8 @@ Route::middleware('auth')->name('user.')->namespace('User')->group(function () {
         // User Operation
         Route::controller('UserController')->group(function () {
             // KYC Dashboard
-            Route::get('dashboard', 'home')->name('home');
             Route::get('dashboard', 'home')->name('dashboard');
+            Route::get('home', 'home')->name('home');
 
             // KYC Check
             Route::prefix('kyc')->name('kyc.')->group(function () {

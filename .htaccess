@@ -1,0 +1,29 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /apnafund/
+
+    # Handle Laravel asset compilation and serving
+    RewriteRule ^assets/(.*)$ public/assets/$1 [L]
+    
+    # Handle admin assets specifically
+    RewriteRule ^admin/assets/(.*)$ public/assets/$1 [L]
+    
+    # Handle storage files
+    RewriteRule ^storage/(.*)$ public/storage/$1 [L]
+
+    # Admin routes - direct to Laravel
+    RewriteRule ^admin(.*)$ public/index.php [L,QSA]
+
+    # User routes - direct to Laravel
+    RewriteRule ^user(.*)$ public/index.php [L,QSA]
+
+    # IPN routes - direct to Laravel
+    RewriteRule ^ipn(.*)$ public/index.php [L,QSA]
+
+    # Everything else goes to Laravel
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ public/index.php [L]
+</IfModule>
+
+Options -Indexes

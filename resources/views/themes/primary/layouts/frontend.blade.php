@@ -251,19 +251,25 @@
                         </div>
                     </div>
 
-                    @php $policyPages = getSiteData('policy_pages.element', false, null, true); @endphp
+                    @php $policyPages = getSiteData('policy_pages.element', false, null, true) ?? []; @endphp
 
                     <div class="col-xl-2 col-sm-6 col-xsm-6">
                         <div class="footer-item">
                             <h5 class="footer-item__title">@lang('Useful Links')</h5>
                             <ul class="footer-menu">
-                                @foreach ($policyPages as $policyPage)
+                                @if($policyPages && is_array($policyPages) && count($policyPages) > 0)
+                                    @foreach ($policyPages as $policyPage)
+                                        <li class="footer-menu__item">
+                                            <a href="{{ route('policy.pages', [slug($policyPage->data_info->title), $policyPage->id]) }}" class="footer-menu__link">
+                                                {{ __($policyPage->data_info->title) }}
+                                            </a>
+                                        </li>
+                                    @endforeach
+                                @else
                                     <li class="footer-menu__item">
-                                        <a href="{{ route('policy.pages', [slug($policyPage->data_info->title), $policyPage->id]) }}" class="footer-menu__link">
-                                            {{ __($policyPage->data_info->title) }}
-                                        </a>
+                                        <span class="footer-menu__link">@lang('No policy pages available')</span>
                                     </li>
-                                @endforeach
+                                @endif
                             </ul>
                         </div>
                     </div>
@@ -271,7 +277,7 @@
                         <div class="footer-item">
                             <h5 class="footer-item__title">@lang('Categories')</h5>
 
-                            @if (count($campCategories))
+                            @if (count($campCategories ?? []))
                                 <ul class="footer-menu">
                                     @foreach ($campCategories as $campCategory)
                                         <li class="footer-menu__item">

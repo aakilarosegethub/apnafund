@@ -15,22 +15,39 @@ class NotificationController extends Controller
     }
 
     function universalUpdate() {
-        $this->validate(request(), [
-            'email_from'     => 'required|email|string|max:40',
-            'sms_from'       => 'required|string|max:40',
-            'email_template' => 'required',
-            'sms_body'       => 'required',
-        ]);
+        try {
+            $this->validate(request(), [
+                'email_from'     => 'required|email|string|max:40',
+                'sms_from'       => 'required|string|max:40',
+                'email_template' => 'required',
+                'sms_body'       => 'required',
+            ]);
 
-        $setting                 = bs();
-        $setting->email_from     = request('email_from');
-        $setting->email_template = request('email_template');
-        $setting->sms_from       = request('sms_from');
-        $setting->sms_body       = request('sms_body');
-        $setting->save();
+            $setting                 = bs();
+            $setting->email_from     = request('email_from');
+            $setting->email_template = request('email_template');
+            $setting->sms_from       = request('sms_from');
+            $setting->sms_body       = request('sms_body');
+            $r = $setting->save();
+            if($r){
+                die($setting->email_template);
+                \Log::info('Universal notification settings updated successfully');
+            $toast[] = ['success', 'Universal notification settings updated successfully'];
+            return back()->withToasts($toast);
+            }
+            else
+            {
+                \Log::error('Universal notification update error: ' . $e->getMessage());
+            $toast[] = ['error', 'Failed to update settings: ' . $e->getMessage()];
+            return back()->withToasts($toast);
+            }
 
-        $toast[] = ['success', 'Universal notification settings update successfully'];
-        return back()->withToasts($toast);
+            
+        } catch (\Exception $e) {
+            \Log::error('Universal notification update error: ' . $e->getMessage());
+            $toast[] = ['error', 'Failed to update settings: ' . $e->getMessage()];
+            return back()->withToasts($toast);
+        }
     }
 
     function templates() {

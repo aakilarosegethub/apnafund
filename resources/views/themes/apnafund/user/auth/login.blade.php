@@ -306,6 +306,82 @@
         text-decoration: underline;
     }
 
+    /* Social Login Styles */
+    .social-login-section {
+        margin: 30px 0;
+    }
+
+    .divider {
+        text-align: center;
+        margin: 20px 0;
+        position: relative;
+    }
+
+    .divider::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    .divider span {
+        background: linear-gradient(135deg, #e8f5e8 0%, #05ce78 50%, #04a85f 100%);
+        padding: 0 20px;
+        color: #666;
+        font-size: 14px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .social-login-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .social-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 12px 24px;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 50px;
+        text-decoration: none;
+        color: white;
+        font-weight: 500;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.1);
+        min-width: 140px;
+    }
+
+    .social-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        color: white;
+        text-decoration: none;
+    }
+
+    .facebook-btn:hover {
+        background: #1877f2;
+        border-color: #1877f2;
+    }
+
+    .google-btn:hover {
+        background: #db4437;
+        border-color: #db4437;
+    }
+
+    .social-btn i {
+        font-size: 18px;
+    }
+
     /* Alert Styles */
     .alert {
         border-radius: 10px;
@@ -490,6 +566,37 @@
                 <span id="loginBtnText">{{ __(@$loginContent->data_info->submit_button_text) ?: 'Log In' }}</span>
             </button>
         </form>
+
+        <!-- Social Login Section -->
+        @php
+            $socialLoginSettings = \App\Models\SiteData::where('data_key', 'social_login.data')->first();
+            $facebookEnabled = $socialLoginSettings && @$socialLoginSettings->data_info['facebook']['status'] && !empty(config('services.facebook.client_id')) && config('services.facebook.client_id') !== 'disabled';
+            $googleEnabled = $socialLoginSettings && @$socialLoginSettings->data_info['google']['status'] && !empty(config('services.google.client_id')) && config('services.google.client_id') !== 'disabled';
+        @endphp
+
+        @if($facebookEnabled || $googleEnabled)
+        <div class="social-login-section">
+            <div class="divider">
+                <span>@lang('Or continue with')</span>
+            </div>
+            
+            <div class="social-login-buttons">
+                @if($facebookEnabled)
+                <a href="{{ route('user.social.facebook') }}" class="social-btn facebook-btn">
+                    <i class="fab fa-facebook-f"></i>
+                    <span>@lang('Facebook')</span>
+                </a>
+                @endif
+                
+                @if($googleEnabled)
+                <a href="{{ route('user.social.google') }}" class="social-btn google-btn">
+                    <i class="fab fa-google"></i>
+                    <span>@lang('Google')</span>
+                </a>
+                @endif
+            </div>
+        </div>
+        @endif
 
         <div class="login-footer">
             <p>@lang('Don\'t have any account?') <a href="{{ route('user.register') }}">@lang('Create Account')</a></p>

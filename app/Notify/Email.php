@@ -9,6 +9,7 @@ use Mailjet\Resources;
 use SendGrid\Mail\Mail;
 use App\Notify\Notifiable;
 use App\Notify\NotifyProcess;
+use App\Services\EmailLoggingService;
 use PHPMailer\PHPMailer\PHPMailer;
 
 class Email extends NotifyProcess implements Notifiable
@@ -19,6 +20,13 @@ class Email extends NotifyProcess implements Notifiable
 	 * @var string
 	 */
 	public $email;
+
+	/**
+	 * Email service response for debugging
+	 *
+	 * @var array
+	 */
+	public $response;
 
 	/**
 	 * Assign value to properties
@@ -50,9 +58,16 @@ class Email extends NotifyProcess implements Notifiable
 
 			try {
 				$this->$method();
+				
+				// Log successful email
+				$this->logEmailToDatabase('sent');
+				
 			} catch (Exception $e) {
 				$this->createErrorLog($e->getMessage());
 				session()->flash('mail_error', $e->getMessage());
+				
+				// Log failed email
+				$this->logEmailToDatabase('failed', $e->getMessage());
 			}
 		}
 	}
@@ -131,6 +146,13 @@ class Email extends NotifyProcess implements Notifiable
 		$sendgrid = new SendGrid($setting->mail_config->appkey);
 		$response = $sendgrid->send($sendgridMail);
 
+		// Store response for debugging
+		$this->response = [
+			'status_code' => $response->statusCode(),
+			'headers' => $response->headers(),
+			'body' => $response->body()
+		];
+
 		if ($response->statusCode() != 202) {
 			throw new Exception(json_decode($response->body())->errors[0]->message);
 		}
@@ -161,6 +183,74 @@ class Email extends NotifyProcess implements Notifiable
 		];
 
 		$mj->post(Resources::$Email, ['body' => $body]);
+	}
+
+	/**
+	 * Log email to database
+	 *
+	 * @param string $status
+	 * @param string|null $errorMessage
+	 * @return void
+	 */
+	protected function logEmailToDatabase(string $status, string $errorMessage = null)
+	{
+		try {
+			$emailData = [
+				'to_email' => $this->email,
+				'to_name' => $this->receiverName ?? null,
+				'from_email' => $this->setting->email_from,
+				'from_name' => $this->setting->site_name,
+				'subject' => $this->subject,
+				'body' => $this->finalMessage ?? $this->message,
+				'template_name' => $this->templateName ?? null,
+				'email_type' => $this->getEmailType(),
+				'status' => $status,
+				'provider' => $this->setting->mail_config->name ?? 'unknown',
+				'provider_response' => $this->response ?? null,
+				'error_message' => $errorMessage,
+				'user_id' => $this->user->id ?? null,
+				'sent_at' => $status === 'sent' ? now() : null,
+			];
+
+			EmailLoggingService::logEmail($emailData);
+		} catch (Exception $e) {
+			// Don't let logging errors break email sending
+			\Log::error('Failed to log email to database: ' . $e->getMessage());
+		}
+	}
+
+	/**
+	 * Determine email type based on template or context
+	 *
+	 * @return string
+	 */
+	protected function getEmailType(): string
+	{
+		if ($this->templateName) {
+			return match($this->templateName) {
+				'WELCOME' => 'welcome',
+				'EVER_CODE' => 'verification',
+				'PASS_RESET_CODE' => 'password_reset',
+				default => 'notification'
+			};
+		}
+
+		// Check if it's a welcome email by subject
+		if (str_contains($this->subject, 'Welcome') || str_contains($this->subject, 'welcome')) {
+			return 'welcome';
+		}
+
+		// Check if it's verification email
+		if (str_contains($this->subject, 'verification') || str_contains($this->subject, 'verify')) {
+			return 'verification';
+		}
+
+		// Check if it's password reset
+		if (str_contains($this->subject, 'password') || str_contains($this->subject, 'reset')) {
+			return 'password_reset';
+		}
+
+		return 'general';
 	}
 
 	/**

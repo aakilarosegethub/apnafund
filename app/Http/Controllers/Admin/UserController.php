@@ -271,6 +271,230 @@ class UserController extends Controller
         return back()->withToasts($toast);
     }
 
+    function sendEmail($id) {
+        $user = User::findOrFail($id);
+        $pageTitle = 'Send Email to ' . $user->username;
+        
+        return view('admin.user.send-email', compact('pageTitle', 'user'));
+    }
+
+    function sendEmailToUser($id) {
+        $this->validate(request(), [
+            'subject' => 'required|string|max:255',
+            'message' => 'required|string',
+        ]);
+
+        $user = User::findOrFail($id);
+        
+        // Send email using the notify function
+        notify($user, 'DEFAULT', [
+            'subject' => request('subject'),
+            'message' => request('message'),
+        ], ['email']);
+
+        $toast[] = ['success', 'Email sent to ' . $user->email . ' successfully'];
+        return back()->withToasts($toast);
+    }
+
+    function sendBulkEmail() {
+        $pageTitle = 'Send Bulk Email to Users';
+        $users = User::where('status', ManageStatus::ACTIVE)->get(['id', 'username', 'email', 'firstname', 'lastname']);
+        
+        return view('admin.user.send-bulk-email', compact('pageTitle', 'users'));
+    }
+
+    function sendBulkEmailToUsers() {
+        $this->validate(request(), [
+            'user_ids' => 'required|array|min:1',
+            'subject' => 'required|string|max:255',
+            'message' => 'required|string',
+        ]);
+
+        $userIds = request('user_ids');
+        $users = User::whereIn('id', $userIds)->get();
+        
+        $sentCount = 0;
+        foreach ($users as $user) {
+            try {
+                notify($user, 'DEFAULT', [
+                    'subject' => request('subject'),
+                    'message' => request('message'),
+                ], ['email']);
+                $sentCount++;
+            } catch (\Exception $e) {
+                \Log::error('Failed to send email to user ' . $user->id . ': ' . $e->getMessage());
+            }
+        }
+
+        $toast[] = ['success', 'Email sent to ' . $sentCount . ' users successfully'];
+        return back()->withToasts($toast);
+    }
+
+    function deleteAllUsers() {
+        $pageTitle = 'Delete All Users';
+        $userCount = User::count();
+        
+        return view('admin.user.delete-all-users', compact('pageTitle', 'userCount'));
+    }
+
+    function confirmDeleteAllUsers() {
+        try {
+            // Get count before deletion for logging
+            $userCount = User::count();
+            $admin = auth()->guard('admin')->user();
+            
+            // Delete all users and related data
+            User::query()->delete();
+            
+            // Log the action
+            \Log::info('All users deleted by admin: ' . $admin->username . ' at ' . now());
+            
+            $toast[] = ['success', 'All ' . $userCount . ' users have been deleted successfully'];
+            return redirect()->route('admin.user.index')->withToasts($toast);
+            
+        } catch (\Exception $e) {
+            \Log::error('Failed to delete all users: ' . $e->getMessage());
+            $toast[] = ['error', 'Failed to delete users: ' . $e->getMessage()];
+            return back()->withToasts($toast);
+        }
+    }
+
+    function deleteSelectedUsers() {
+        $this->validate(request(), [
+            'user_ids' => 'required|array|min:1',
+            'confirmation_text' => 'required|in:DELETE SELECTED USERS',
+        ]);
+
+        try {
+            $userIds = request('user_ids');
+            $userCount = User::whereIn('id', $userIds)->count();
+            $admin = auth()->guard('admin')->user();
+            
+            // Delete selected users
+            User::whereIn('id', $userIds)->delete();
+            
+            // Log the action
+            \Log::info('Selected users deleted by admin: ' . $admin->username . ' at ' . now() . '. Deleted count: ' . $userCount);
+            
+            $toast[] = ['success', $userCount . ' users have been deleted successfully'];
+            return redirect()->route('admin.user.index')->withToasts($toast);
+            
+        } catch (\Exception $e) {
+            \Log::error('Failed to delete selected users: ' . $e->getMessage());
+            $toast[] = ['error', 'Failed to delete users: ' . $e->getMessage()];
+            return back()->withToasts($toast);
+        }
+    }
+
+    function testWelcomeEmail($id) {
+        $user = User::findOrFail($id);
+        dd($user);
+        
+        try {
+            // Send welcome email using the same method as registration
+            $user->sendEmailVerificationNotification();
+            
+            $toast[] = ['success', 'Welcome email sent successfully to ' . $user->email];
+            return back()->withToasts($toast);
+            
+        } catch (\Exception $e) {
+            \Log::error('Failed to send welcome email to user ' . $user->id . ': ' . $e->getMessage());
+            $toast[] = ['error', 'Failed to send welcome email: ' . $e->getMessage()];
+            return back()->withToasts($toast);
+        }
+    }
+
+    function testEmailToLastUser() {
+        $lastUser = User::latest()->first();
+        
+        if (!$lastUser) {
+            $toast[] = ['error', 'No users found in database'];
+            return back()->withToasts($toast);
+        }
+        
+        try {
+            // Send welcome email to the last user
+            $lastUser->sendEmailVerificationNotification();
+            
+            $toast[] = ['success', 'Welcome email sent successfully to last user: ' . $lastUser->email . ' (' . $lastUser->firstname . ' ' . $lastUser->lastname . ')'];
+            return back()->withToasts($toast);
+            
+        } catch (\Exception $e) {
+            \Log::error('Failed to send welcome email to last user ' . $lastUser->id . ': ' . $e->getMessage());
+            $toast[] = ['error', 'Failed to send welcome email: ' . $e->getMessage()];
+            return back()->withToasts($toast);
+        }
+    }
+
+    function sendWelcomeToRecentUsers() {
+        $pageTitle = 'Send Welcome Emails to Recent Users';
+        
+        // Get users created in the last 7 days
+        $recentUsers = User::where('created_at', '>=', now()->subDays(7))
+            ->where('status', ManageStatus::ACTIVE)
+            ->orderBy('created_at', 'desc')
+            ->get(['id', 'username', 'email', 'firstname', 'lastname', 'created_at']);
+        
+        $totalUsers = $recentUsers->count();
+        
+        return view('admin.user.send-welcome-recent', compact('pageTitle', 'recentUsers', 'totalUsers'));
+    }
+
+    function sendWelcomeToRecentUsersPost() {
+        $this->validate(request(), [
+            'user_ids' => 'required|array|min:1',
+        ]);
+
+        $userIds = request('user_ids');
+        $users = User::whereIn('id', $userIds)->get();
+        
+        $sentCount = 0;
+        $failedCount = 0;
+        
+        foreach ($users as $user) {
+            try {
+                // Send welcome email using the same method as registration
+                $user->sendEmailVerificationNotification();
+                $sentCount++;
+                
+                \Log::info('Welcome email sent successfully to: ' . $user->email);
+                
+            } catch (\Exception $e) {
+                $failedCount++;
+                \Log::error('Failed to send welcome email to user ' . $user->id . ' (' . $user->email . '): ' . $e->getMessage());
+            }
+        }
+
+        $toast = [];
+        if ($sentCount > 0) {
+            $toast[] = ['success', 'Welcome emails sent successfully to ' . $sentCount . ' users'];
+        }
+        if ($failedCount > 0) {
+            $toast[] = ['error', 'Failed to send welcome emails to ' . $failedCount . ' users'];
+        }
+        
+        return back()->withToasts($toast);
+    }
+
+    function welcomeTemplateEditor() {
+        $pageTitle = 'Welcome Email Template Editor';
+        return view('admin.notification.welcome-template-editor', compact('pageTitle'));
+    }
+
+    function welcomeTemplateUpdate() {
+        $this->validate(request(), [
+            'subject' => 'required|string|max:255',
+            'content' => 'required|string',
+        ]);
+
+        // For now, we'll just show a success message
+        // In a real implementation, you'd save this to a database or config file
+        $toast[] = ['success', 'Welcome email template updated successfully!'];
+        $toast[] = ['info', 'Note: This is a demo. In production, you would save the template to database or config file.'];
+        
+        return back()->withToasts($toast);
+    }
+
     protected function userData($scope = null) {
         if ($scope) $users = User::$scope();
         else $users = User::query();

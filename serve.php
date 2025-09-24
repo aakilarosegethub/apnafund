@@ -6,7 +6,7 @@
 
 echo "🚀 Starting ApnaFund Development Server...\n";
 echo "📁 Project Directory: " . __DIR__ . "\n";
-echo "🌐 Server URL: http://127.0.0.1:8000\n";
+echo "🌐 Server URL: http://0.0.0.0:8000\n";
 echo "⏰ Started at: " . date('Y-m-d H:i:s') . "\n";
 echo "=" . str_repeat("=", 50) . "\n";
 
@@ -23,8 +23,8 @@ if (!file_exists('artisan')) {
 $phpPath = '/Applications/XAMPP/xamppfiles/bin/php';
 
 // Start the Laravel development server
-echo "🔄 Executing: {$phpPath} artisan serve --host=127.0.0.1 --port=8000\n";
+echo "🔄 Executing: {$phpPath} artisan serve --host=0.0.0.0 --port=8000\n";
 echo "=" . str_repeat("=", 50) . "\n";
 
 // Execute the artisan serve command with XAMPP PHP
-passthru("{$phpPath} artisan serve --host=127.0.0.1 --port=8000");
+passthru("{$phpPath} artisan serve --host=0.0.0.0 --port=8000");

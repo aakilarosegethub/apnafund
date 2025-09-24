@@ -34,7 +34,8 @@ class SettingController extends Controller
             'time_region'    => 'required',
         ]);
 
-        $setting                 = bs();
+        // This function is called in the basicUpdate() method of SettingController
+        $setting = bs();
         $setting->site_name      = request('site_name');
         $setting->site_cur       = request('site_cur');
         $setting->cur_sym        = request('cur_sym');
@@ -43,7 +44,7 @@ class SettingController extends Controller
         $setting->date_format    = request('date_format');
         $setting->first_color    = str_replace('#', '', request('first_color'));
         $setting->second_color   = str_replace('#', '', request('second_color'));
-        $setting->save();
+        $result = $setting->save();
 
         $timeRegionFile = config_path('timeRegion.php');
         $setTimeRegion  = '<?php $timeRegion = '.request('time_region').' ?>';

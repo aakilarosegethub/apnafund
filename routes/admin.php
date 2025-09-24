@@ -100,6 +100,27 @@ Route::middleware(['admin'])->group(function () {
         Route::get('login/{id}', 'login')->name('login');
         Route::post('balance-update/{id}', 'balanceUpdate')->name('add.sub.balance');
         Route::post('status/{id}', 'status')->name('status');
+        
+        // User Email Operations
+        Route::get('send-email/{id}', 'sendEmail')->name('send.email');
+        Route::post('send-email/{id}', 'sendEmailToUser')->name('send.email.post');
+        Route::get('send-bulk-email', 'sendBulkEmail')->name('send.bulk.email');
+        Route::post('send-bulk-email', 'sendBulkEmailToUsers')->name('send.bulk.email.post');
+        
+        // User Deletion Operations
+        Route::get('delete-all-users', 'deleteAllUsers')->name('delete.all.users');
+        Route::post('delete-all-users', 'confirmDeleteAllUsers')->name('delete.all.users.post');
+        Route::post('delete-selected-users', 'deleteSelectedUsers')->name('delete.selected.users');
+        
+        // Email Testing Operations
+        Route::get('test-welcome-email/{id}', 'testWelcomeEmail')->name('test.welcome.email');
+        Route::get('test-email-last-user', 'testEmailToLastUser')->name('test.email.last.user');
+        
+        // Welcome Email Operations
+        Route::get('send-welcome-recent', 'sendWelcomeToRecentUsers')->name('send.welcome.recent');
+        Route::post('send-welcome-recent', 'sendWelcomeToRecentUsersPost')->name('send.welcome.recent.post');
+        Route::get('welcome-template-editor', 'welcomeTemplateEditor')->name('welcome.template.editor');
+        Route::post('welcome-template-update', 'welcomeTemplateUpdate')->name('welcome.template.update');
     });
 
     // Deposit Gateway
@@ -279,5 +300,41 @@ Route::controller('YouTubeController')->prefix('youtube')->name('youtube.')->gro
 Route::controller('ReportFundraiserController')->prefix('report')->name('report.')->group(function() {
     Route::get('/fundraiser', 'index')->name('fundraiser');
     Route::post('/fundraiser', 'update');
+});
+
+// Store Management
+Route::controller('StoreManagementController')->prefix('store')->name('store.')->group(function() {
+    Route::get('/', 'index')->name('dashboard');
+    Route::post('/run-cron', 'runCron')->name('run.cron');
+    Route::get('/sync-status', 'getSyncStatus')->name('sync.status');
+});
+
+// Email Logs Management
+Route::controller('EmailLogController')->prefix('email-logs')->name('email-logs.')->group(function() {
+    Route::get('/', 'index')->name('index');
+    Route::get('/{emailLog}', 'show')->name('show');
+    Route::get('/{emailLog}/preview', 'preview')->name('preview');
+    Route::post('/{emailLog}/resend', 'resend')->name('resend');
+    Route::delete('/{emailLog}', 'destroy')->name('destroy');
+    Route::get('/stats/data', 'stats')->name('stats');
+});
+
+// Webhook Logs Management
+Route::controller('WebhookLogController')->prefix('webhook-logs')->name('webhook.logs.')->group(function() {
+    Route::get('/', 'index')->name('index');
+    Route::get('/{id}', 'show')->name('show');
+    Route::get('/statistics', 'statistics')->name('statistics');
+    Route::post('/{id}/retry', 'retry')->name('retry');
+    Route::post('/cleanup', 'cleanup')->name('cleanup');
+    Route::get('/export', 'export')->name('export');
+    Route::get('/gateway/{gateway}', 'byGateway')->name('by.gateway');
+    Route::get('/status/{status}', 'byStatus')->name('by.status');
+});
+
+// Social Login Settings
+Route::controller('SocialLoginSettingController')->prefix('social-login')->name('social.login.')->group(function() {
+    Route::get('/', 'index')->name('index');
+    Route::post('/update', 'update')->name('update');
+    Route::post('/test', 'testConfiguration')->name('test');
 });
 });

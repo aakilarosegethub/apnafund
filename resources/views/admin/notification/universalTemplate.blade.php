@@ -7,7 +7,7 @@
                 <h3 class="title">@lang('Basic Configuration')</h3>
             </div>
             <div class="card-body">
-                <form class="row g-lg-4 g-3"  action="" method="POST">
+                <form class="row g-lg-4 g-3" action="{{ route('admin.notification.universal') }}" method="POST">
                     @csrf
 
                     <div class="col-lg-6 col-sm-6">

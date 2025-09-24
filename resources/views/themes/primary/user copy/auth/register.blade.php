@@ -77,7 +77,7 @@
                                     <div class="col-sm-12">
                                         <div class="form--check">
                                             <input type="checkbox" class="form-check-input" name="agree" id="agree" @checked(old('agree')) required>
-                                            <label for="agree" class="form-check-label">@lang('I agree with') @foreach ($policyPages as $policy) <a href="{{ route('policy.pages', [slug($policy->data_info->title), $policy->id]) }}" target="_blank">{{ __($policy->data_info->title) }}</a>@if (!$loop->last), @endif @endforeach</label>
+                                            <label for="agree" class="form-check-label">@lang('I agree with') @if($policyPages && is_array($policyPages) && count($policyPages) > 0) @foreach ($policyPages as $policy) <a href="{{ route('policy.pages', [slug($policy->data_info->title), $policy->id]) }}" target="_blank">{{ __($policy->data_info->title) }}</a>@if (!$loop->last), @endif @endforeach @else @lang('terms and conditions') @endif</label>
                                         </div>
                                     </div>
                                 @endif

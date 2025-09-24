@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Managing - Apna Fund</title>
+    <link rel="stylesheet" href="assets/css/app.css">
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="shortcut icon" href="assets/images/fav-icon.png" type="image/png">
+    <style>
+        /* Managing Page Styles */
+        .breadcrumb {
+            background: none;
+            padding: 0;
+            margin-bottom: 20px;
+        }
+        
+        .breadcrumb-item a {
+            color: #05ce78;
+            text-decoration: none;
+        }
+        
+        .breadcrumb-item a:hover {
+            text-decoration: underline;
+        }
+        
+        .breadcrumb-item.active {
+            color: #6c757d;
+        }
+        
+        .page-title {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .page-subtitle {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 0;
+        }
+        
+        .articles-container {
+            background: white;
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid #e9ecef;
+        }
+        
+        .article-item {
+            border-bottom: 1px solid #f1f3f4;
+        }
+        
+        .article-item:last-child {
+            border-bottom: none;
+        }
+        
+        .article-link {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            text-decoration: none;
+            color: inherit;
+            transition: background 0.2s ease;
+        }
+        
+        .article-link:hover {
+            background: #f8f9fa;
+            color: inherit;
+            text-decoration: none;
+        }
+        
+        .article-content {
+            flex: 1;
+            margin-right: 20px;
+        }
+        
+        .article-title {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+        
+        .article-link:hover .article-title {
+            color: #05ce78;
+        }
+        
+        .article-description {
+            font-size: 0.85rem;
+            color: #777;
+            margin-bottom: 0;
+            line-height: 1.4;
+        }
+        
+        .article-meta {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: #999;
+        }
+        
+        .article-date {
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+        
+        .article-meta i {
+            font-size: 0.8rem;
+            color: #ccc;
+        }
+        
+        .article-link:hover .article-meta i {
+            color: #05ce78;
+        }
+        
+        .back-to-help {
+            text-align: center;
+        }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            color: #05ce78;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 10px 20px;
+            border: 2px solid #05ce78;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+        
+        .back-link:hover {
+            background: #05ce78;
+            color: white;
+            text-decoration: none;
+        }
+        
+        /* Header adjustments */
+        .header {
+            background: #05ce78;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        /* Footer adjustments */
+        .footer {
+            background: #343a40;
+            color: white;
+        }
+        
+        .footer-tagline {
+            color: #adb5bd;
+        }
+        
+        .copyright {
+            color: #adb5bd;
+        }
+        
+        .email {
+            color: white;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 2rem;
+            }
+            
+            .article-link {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 15px 20px;
+            }
+            
+            .article-content {
+                margin-right: 0;
+                margin-bottom: 10px;
+                width: 100%;
+            }
+            
+            .article-meta {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="row align-items-center justify-content-between">
+                <!-- Left: Logo -->
+                <div class="col-12 col-md-2 text-center text-md-start">
+                    <a href="/">
+                        <img src="assets/images/White Logo.png" alt="Apna Fund Logo" class="logo-img"
+                            style="max-height:50px;">
+                    </a>
+                </div>
+
+                <!-- Center: Search Bar -->
+                <div class="col-12 col-md-8">
+                    <div class="search-container">
+                        <div class="search-box">
+                            <input type="text" class="search-input"
+                                placeholder="Search projects, creators, and categories..." aria-label="Search">
+                            <button class="search-btn" type="button">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Buttons -->
+                <div class="col-12 col-md-2 text-center text-md-end">
+                    <a href="creator.html" class="btn btn-outline-light me-2">Creator</a>
+                    <a href="login.html" class="btn text-white">Login</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area - Managing your pledge -->
+    <main style="min-height: 70vh; padding: 60px 0; background: #f8f9fa;">
+        <div class="container">
+            <!-- Page Header -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="help.html">ApnaFund Support</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Managing your pledge</li>
+                        </ol>
+                    </nav>
+                    <h1 class="page-title">Managing your pledge</h1>
+                    <p class="page-subtitle">Learn how to manage, modify, and track your pledges on ApnaFund</p>
+                </div>
+            </div>
+
+            <!-- Articles List -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="articles-container">
+                        <!-- Article Item -->
+                        <div class="article-item">
+                            <a href="#" class="article-link">
+                                <div class="article-content">
+                                    <h3 class="article-title">Where can I keep track of my pledges?</h3>
+                                    <p class="article-description">Learn how to view and monitor all your current and past pledges in your account dashboard.</p>
+                                </div>
+                                <div class="article-meta">
+                                    <span class="article-date">Updated 2 months ago</span>
+                                    <i class="fas fa-chevron-right"></i>
+                                </div>
+                            </a>
+                        </div>
+
+                        <!-- Article Item -->
+                        <div class="article-item">
+                            <a href="#" class="article-link">
+                                <div class="article-content">
+                                    <h3 class="article-title">Can I change or cancel my pledge?</h3>
+                                    <p class="article-description">Find out how to modify your pledge amount or cancel your backing before the campaign ends.</p>
+                                </div>
+                                <div class="article-meta">
+                                    <span class="article-date">Updated 1 month ago</span>
+                                    <i class="fas fa-chevron-right"></i>
+                                </div>
+                            </a>
+                        </div>
+
+                        <!-- Article Item -->
+                        <div class="article-item">
+                            <a href="#" class="article-link">
+                                <div class="article-content">
+                                    <h3 class="article-title">When will my payment method be charged?</h3>
+                                    <p class="article-description">Understand when and how your payment will be processed for successful campaigns.</p>
+                                </div>
+                                <div class="article-meta">
+                                    <span class="article-date">Updated 3 weeks ago</span>
+                                    <i class="fas fa-chevron-right"></i>
+                                </div>
+                            </a>
+                        </div>
+
+                        <!-- Article Item -->
+                        <div class="article-item">
+                            <a href="#" class="article-link">
+                                <div class="article-content">
+                                    <h3 class="article-title">How do I update my payment method?</h3>
+                                    <p class="article-description">Step-by-step guide to change your payment information for existing pledges.</p>
+                                </div>
+                                <div class="article-meta">
+                                    <span class="article-date">Updated 2 weeks ago</span>
+                                    <i class="fas fa-chevron-right"></i>
+                                </div>
+                            </a>
+                        </div>
+
+                        <!-- Article Item -->
+                        <div class="article-item">
+                            <a href="#" class="article-link">
+                                <div class="article-content">
+                                    <h3 class="article-title">What happens if my payment fails?</h3>
+                                    <p class="article-description">Learn about payment failures and how to resolve them to secure your pledge.</p>
+                                </div>
+                                <div class="article-meta">
+                                    <span class="article-date">Updated 1 week ago</span>
+                                    <i class="fas fa-chevron-right"></i>
+                                </div>
+                            </a>
+                        </div>
+
+                        <!-- Article Item -->
+                        <div class="article-item">
+                            <a href="#" class="article-link">
+                                <div class="article-content">
+                                    <h3 class="article-title">How do I contact the project creator?</h3>
+                                    <p class="article-description">Find out different ways to reach out to project creators for questions or concerns.</p>
+                                </div>
+                                <div class="article-meta">
+                                    <span class="article-date">Updated 5 days ago</span>
+                                    <i class="fas fa-chevron-right"></i>
+                                </div>
+                            </a>
+                        </div>
+
+                        <!-- Article Item -->
+                        <div class="article-item">
+                            <a href="#" class="article-link">
+                                <div class="article-content">
+                                    <h3 class="article-title">Understanding pledge rewards and delivery</h3>
+                                    <p class="article-description">Everything you need to know about receiving your rewards after a successful campaign.</p>
+                                </div>
+                                <div class="article-meta">
+                                    <span class="article-date">Updated 3 days ago</span>
+                                    <i class="fas fa-chevron-right"></i>
+                                </div>
+                            </a>
+                        </div>
+
+                        <!-- Article Item -->
+                        <div class="article-item">
+                            <a href="#" class="article-link">
+                                <div class="article-content">
+                                    <h3 class="article-title">What if I didn't receive my reward?</h3>
+                                    <p class="article-description">Steps to take when you haven't received your reward from a completed project.</p>
+                                </div>
+                                <div class="article-meta">
+                                    <span class="article-date">Updated 1 day ago</span>
+                                    <i class="fas fa-chevron-right"></i>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Back to Help Center -->
+                    <div class="back-to-help mt-5">
+                        <a href="help.html" class="back-link">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Back to ApnaFund Support
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="footer-logo">
+                        <img src="assets/images/White Logo.png" alt="Apna Fund Logo" class="footer-logo-img">
+                        <p class="footer-tagline">Empowering Dreams, Building Futures</p>
+                    </div>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="footer-info">
+                        <p class="copyright">© 2024 Apna Fund. All rights reserved.</p>
+                        <p class="email">contact@apnafund.com</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+</body>
+
+</html>

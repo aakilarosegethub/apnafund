@@ -27,7 +27,7 @@ class RegisterController extends Controller
         $mobileCode      = @implode(',', $info['code']);
         $countries       = json_decode(file_get_contents(resource_path('views/partials/country.json')));
         $registerContent = getSiteData('register.content', true);
-        $policyPages     = getSiteData('policy_pages.element', false, null, true);
+        $policyPages     = getSiteData('policy_pages.element', false, null, true) ?? [];
 
         return view('user.auth.register-business', compact('pageTitle', 'mobileCode', 'countries', 'registerContent', 'policyPages'));
     }
@@ -102,6 +102,51 @@ class RegisterController extends Controller
 
         event(new Registered($user = $this->create(request()->all())));
 
+        // Send emails based on verification status
+        \Log::info('User EC status: ' . $user->ec . ' (UNVERIFIED = ' . ManageStatus::UNVERIFIED . ')');
+        
+        if ($user->ec == ManageStatus::UNVERIFIED) {
+            \Log::info('Sending verification code for unverified user');
+            
+            // Send verification code
+            try {
+                // Generate verification code
+                $user->ver_code = verificationCode(6);
+                $user->ver_code_send_at = now();
+                $user->save();
+
+                // Send verification email
+                notify($user, 'EVER_CODE', [
+                    'code' => $user->ver_code
+                ], ['email']);
+
+                \Log::info('Email verification code sent to: ' . $user->email);
+            } catch (\Exception $e) {
+                \Log::error('Failed to send verification code to: ' . $user->email . ' - Error: ' . $e->getMessage());
+            }
+        } else {
+            \Log::info('Sending welcome email for verified user');
+            // Set the 'ec' column (email confirmation) to 1 (VERIFIED) before sending welcome email
+            $user->ec = ManageStatus::VERIFIED;
+            $user->save();
+            // Send welcome email if email verification is not required
+            try {
+                notify($user, 'WELCOME_EMAIL', [
+                    'name' => $user->firstname . ' ' . $user->lastname,
+                    'username' => $user->username,
+                    'email' => $user->email,
+                    'mobile' => $user->mobile ?? 'Not provided',
+                    'business_name' => $user->business_name ?? '',
+                    'business_type' => $user->business_type ?? '',
+                    'industry' => $user->industry ?? '',
+                    'login_url' => route('login'),
+                ], ['email']);
+                \Log::info('Welcome email sent successfully to: ' . $user->email);
+            } catch (\Exception $e) {
+                \Log::error('Failed to send welcome email to: ' . $user->email . ' - Error: ' . $e->getMessage());
+            }
+        }
+
         $this->guard()->login($user);
 
         return $this->registered(request(), $user) ? : redirect($this->redirectPath());
@@ -130,8 +175,8 @@ class RegisterController extends Controller
         $user->country_name = isset($data['country']) ? $data['country'] : null;
         $user->mobile       = $data['mobile_code'].$data['mobile'];
         $user->kc           = $setting->kc ? ManageStatus::NO : ManageStatus::YES;
-        $user->ec           = $setting->ec ? ManageStatus::NO : ManageStatus::YES;
-        $user->sc           = $setting->sc ? ManageStatus::NO : ManageStatus::YES;
+        $user->ec           = $setting->ec ? ManageStatus::UNVERIFIED : ManageStatus::VERIFIED;
+        $user->sc           = $setting->sc ? ManageStatus::UNVERIFIED : ManageStatus::VERIFIED;
         $user->ts           = ManageStatus::NO;
         $user->tc           = ManageStatus::YES;
         $user->save();
@@ -248,6 +293,70 @@ class RegisterController extends Controller
             // Create user without event for now
             $user = $this->createBusinessUser($mappedData);
             
+            // Send emails based on verification status
+            \Log::info('Business registration - User EC status: ' . $user->ec . ' (UNVERIFIED = ' . ManageStatus::UNVERIFIED . ')');
+            
+            if ($user->ec == ManageStatus::UNVERIFIED) {
+                \Log::info('Business registration - Sending verification code and welcome email for unverified user');
+                
+                // Send verification code first
+                try {
+                    // Generate verification code
+                    $user->ver_code = verificationCode(6);
+                    $user->ver_code_send_at = now();
+                    $user->save();
+
+                    // Send verification email
+                    notify($user, 'EVER_CODE', [
+                        'code' => $user->ver_code
+                    ], ['email']);
+
+                    \Log::info('Business registration - Email verification code sent to: ' . $user->email);
+                } catch (\Exception $e) {
+                    \Log::error('Business registration - Failed to send verification code to: ' . $user->email . ' - Error: ' . $e->getMessage());
+                }
+                
+                // Also send welcome email after verification code
+                try {
+                    \Log::info('Business registration - Attempting to send welcome email to: ' . $user->email);
+                    notify($user, 'WELCOME_EMAIL', [
+                        'name' => $user->firstname . ' ' . $user->lastname,
+                        'username' => $user->username,
+                        'email' => $user->email,
+                        'mobile' => $user->mobile ?? 'Not provided',
+                        'business_name' => $user->business_name ?? '',
+                        'business_type' => $user->business_type ?? '',
+                        'industry' => $user->industry ?? '',
+                        'login_url' => route('login'),
+                    ], ['email']);
+                    \Log::info('Business registration - Welcome email sent successfully to: ' . $user->email);
+                } catch (\Exception $e) {
+                    \Log::error('Business registration - Failed to send welcome email to: ' . $user->email . ' - Error: ' . $e->getMessage());
+                    \Log::error('Business registration - Welcome email error details: ' . $e->getTraceAsString());
+                }
+            } else {
+                \Log::info('Business registration - Sending welcome email for verified user');
+                // Send welcome email if email verification is not required
+                try {
+                    notify($user, 'WELCOME_EMAIL', [
+                        'name' => $user->firstname . ' ' . $user->lastname,
+                        'username' => $user->username,
+                        'email' => $user->email,
+                        'mobile' => $user->mobile ?? 'Not provided',
+                        'business_name' => $user->business_name ?? '',
+                        'business_type' => $user->business_type ?? '',
+                        'industry' => $user->industry ?? '',
+                        'login_url' => route('login'),
+                    ], ['email']);
+                    
+                    \Log::info('Business registration - Welcome email sent successfully to: ' . $user->email);
+                    
+                } catch (\Exception $e) {
+                    \Log::error('Business registration - Failed to send welcome email to: ' . $user->email . ' - Error: ' . $e->getMessage());
+                    // Continue with registration even if email fails
+                }
+            }
+            
             // Login user
             $this->guard()->login($user);
 
@@ -292,8 +401,8 @@ class RegisterController extends Controller
             $user->country_name = isset($data['country']) ? $data['country'] : null;
             $user->mobile       = $data['mobile_code'].$data['mobile'];
             $user->kc           = $setting->kc ? ManageStatus::NO : ManageStatus::YES;
-            $user->ec           = $setting->ec ? ManageStatus::NO : ManageStatus::YES;
-            $user->sc           = $setting->sc ? ManageStatus::NO : ManageStatus::YES;
+            $user->ec           = $setting->ec ? ManageStatus::UNVERIFIED : ManageStatus::VERIFIED;
+            $user->sc           = $setting->sc ? ManageStatus::UNVERIFIED : ManageStatus::VERIFIED;
             $user->ts           = ManageStatus::NO;
             $user->tc           = ManageStatus::YES;
             
