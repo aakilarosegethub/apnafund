@@ -99,7 +99,7 @@ class Campaign extends Model
      */
     public function scopePending($query): void
     {
-        $query->where('status', ManageStatus::CAMPAIGN_PENDING);
+        $query->where('campaigns.status', ManageStatus::CAMPAIGN_PENDING);
     }
 
     /**
@@ -107,7 +107,7 @@ class Campaign extends Model
      */
     public function scopeApprove($query): void
     {
-        $query->where('status', ManageStatus::CAMPAIGN_APPROVED);
+        $query->where('campaigns.status', ManageStatus::CAMPAIGN_APPROVED);
     }
 
     /**
@@ -115,7 +115,7 @@ class Campaign extends Model
      */
     public function scopeReject($query): void
     {
-        $query->where('status', ManageStatus::CAMPAIGN_REJECTED);
+        $query->where('campaigns.status', ManageStatus::CAMPAIGN_REJECTED);
     }
 
     public function scopeRunning($query): void

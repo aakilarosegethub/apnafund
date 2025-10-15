@@ -490,7 +490,9 @@
             </div>
             
             <div class="illustration-content">
-                <h1 class="illustration-title">ApnaFund</h1>
+                <a href="{{ url('/') }}">
+                    <img src="{{ getImage(getFilePath('logoFavicon') . '/logo_light.png', getFileSize('logoFavicon')) }}" alt="Apna Fund Logo" class="logo-img">
+                </a>
                 <p class="illustration-subtitle">Secure & Easy Fundraising Platform</p>
                 <div style="font-size: 4rem; margin-top: 20px;">
                     <i class="fas fa-handshake" style="color: rgba(255,255,255,0.8);"></i>

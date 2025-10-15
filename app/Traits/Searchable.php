@@ -84,7 +84,7 @@ trait Searchable
     private function relationSearch($query, $relation, $columns, $search) {
         foreach (explode(',', $columns) as $column) {
             $query->orWhereHas($relation, function ($q) use ($column, $search) {
-                $q->where($column, 'like', $search);
+                $q->where($column, 'LIKE', $search);
             });
         }
 

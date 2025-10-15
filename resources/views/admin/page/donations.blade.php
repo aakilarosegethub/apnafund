@@ -81,7 +81,7 @@
                                     @endif
                                 </div>
                                 <div class="table-card-with-image__content">
-                                    <p class="fw-semibold">{{ __($deposit->donorName) }}</p>
+                                    <p class="fw-semibold"></p>
 
                                     @if($deposit->user && $deposit->donor_type)
                                         <p class="fw-semibold">
@@ -167,10 +167,6 @@
                                    data-admin_feedback = "{{ $deposit->admin_feedback }}"
                                    data-user_type      = "{{ $deposit->user_id }}"
                                    data-donation_type  = "{{ $deposit->donor_type }}"
-                                   data-donor_name     = "{{ $deposit->donorName }}"
-                                   data-donor_email    = "{{ $deposit->donorEmail }}"
-                                   data-donor_phone    = "{{ $deposit->donorPhone }}"
-                                   data-donor_country  = "{{ $deposit->donorCountry }}"
                                    data-campaign_name  = "{{ $deposit->campaign ? $deposit->campaign->name : 'N/A' }}"
                                    data-campaign_id    = "{{ $deposit->campaign ? $deposit->campaign->id : '' }}"
                                    data-url            = "{{ route('admin.file.download', ['filePath' => 'verify']) }}"

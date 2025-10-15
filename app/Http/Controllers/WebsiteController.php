@@ -160,6 +160,15 @@ class WebsiteController extends Controller
         $pageTitle        = 'Make a Contribution';
         $campaignData     = Campaign::where('slug', $slug)->approve()->firstOrFail();
         $authUser         = auth()->user();
+        if(!$authUser)
+        {
+            $country = session()->get('user_country');
+            if(!$country)
+            {
+                $country = getUserCountryByIP();
+            }
+            $authUser = (object)array('country_name' => $country);
+        }
 
         // Check if campaign is expired
         if ($campaignData->isExpired()) {
@@ -179,7 +188,7 @@ class WebsiteController extends Controller
         
         // Get user's country - prioritize IP detection for better UX
         
-        $userCountry = null;
+        $userCountry = session()->get('user_country');
 
         if(!session()->get('user_country'))
         {
@@ -202,8 +211,15 @@ class WebsiteController extends Controller
         session()->put('user_country', $userCountry);
     }
     else{
+
         $userCountry = session()->get('user_country');
     }
+        if($authUser && !isset($authUser->country_name) && !$authUser->country_name)
+        {
+            $authUser->country_name = $userCountry;
+            
+        }
+
         // dd(session());
         // echo $userCountry;
         
@@ -230,7 +246,6 @@ class WebsiteController extends Controller
         // Debug: Log gateway currencies count
         // \Log::info('Gateway Currencies Count: ' . $gatewayCurrencies->count());
         // \Log::info('User Country: ' . ($userCountry ?? 'NULL'));
-
 
 
         return view($this->activeTheme . 'page.campaignDonate', compact('pageTitle', 'campaignData', 'seoContents', 'authUser', 'countries', 'gatewayCurrencies'));

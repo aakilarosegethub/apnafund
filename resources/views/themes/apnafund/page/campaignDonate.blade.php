@@ -858,15 +858,15 @@
                                     <div class="row g-3 mb-4">
                     <div class="col-lg-3 col-md-6">
                                             <label class="form--label required">@lang('Full Name')</label>
-                                            @if ($authUser)
-                                                <input type="text" class="form--control" name="full_name" value="{{ old('full_name', @$authUser->fullname) }}" placeholder="@lang('Enter your full name')" @readonly(@$authUser) required>
+                                            @if (isset($authUser->fullname) && $authUser->fullname)
+                                                <input type="text" class="form--control" name="full_name" value="{{ old('full_name', @$authUser->fullname) }}" placeholder="@lang('Enter your full name')" @readonly(@$authUser->fullname) required>
                                             @else
                                                 <input type="text" class="form--control" name="full_name" value="{{ old('full_name') }}" placeholder="@lang('Enter your full name')" required>
                                             @endif
                                         </div>
                     <div class="col-lg-3 col-md-6">
                                             <label class="form--label required">@lang('Email')</label>
-                                            @if ($authUser)
+                                            @if (isset($authUser->email) && $authUser->email)
                                                 <input type="email" class="form--control" name="email" value="{{ old('email', @$authUser->email) }}" placeholder="@lang('Enter your email')" @readonly(@$authUser) required>
                                             @else
                                                 <input type="email" class="form--control" name="email" value="{{ old('email') }}" placeholder="@lang('Enter your email')" required>
@@ -876,7 +876,7 @@
                                             <label class="form--label required">@lang('Phone')</label>
                                             <input type="hidden" name="mobile_code">
                                             
-                                            @if ($authUser)
+                                            @if (isset($authUser->mobile) && $authUser->mobile)
                                                 <input type="text" class="form--control" name="phone" value="{{ old('phone', @$authUser->mobile) }}" placeholder="@lang('+0123 456 789')" @readonly(@$authUser) required>
                                             @else
                             @php

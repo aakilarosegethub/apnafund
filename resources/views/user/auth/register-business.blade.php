@@ -424,14 +424,12 @@
 </head>
 
 <body>
-    <!-- Main Header -->
-    <header class="main-header">
-        <div class="container">
-            <div class="logo">
-                <a href="/"><img src="{{ asset('apnafund/assets/images/White Logo.png') }}" alt="Apna Fund Logo" class="logo-img"></a>
-            </div>
-        </div>
-    </header>
+@php
+    $activeTheme = 'themes.apnafund.';
+    $activeThemeTrue = 'themes.apnafund.';
+
+@endphp
+@include($activeTheme.'partials.header')
 
     <!-- Registration Form -->
     <div class="registration-container">

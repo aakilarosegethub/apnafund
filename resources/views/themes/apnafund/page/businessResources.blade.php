@@ -168,14 +168,17 @@
             <h2 class="featured-title">@lang('What\'s happening around Apnafund')</h2>
             <div class="row">
                 @forelse($successElements->take(3) as $index => $story)
+                @php
+                $story->data_info = (object) $story->data_info;
+                @endphp 
                     <div class="col-md-4 mb-4">
                         <div class="campaign-card">
-                            <img src="{{ getImage('assets/images/site/success_story/thumb_' . $story->data_info->image, '415x230') }}" 
-                                 alt="{{ $story->data_info->title }}" 
+                            <img src="{{ getImage('assets/images/site/success_story/thumb_' . $story->data_info['image'], '415x230') }}" 
+                                 alt="{{ $story->data_info['title'] }}" 
                                  class="campaign-card-img">
                             <div class="campaign-card-body">
-                                <h3 class="campaign-card-title">{{ $story->data_info->title }}</h3>
-                                <p class="campaign-card-text">{{ strLimit($story->data_info->details, 80) }}</p>
+                                <h3 class="campaign-card-title">{{ $story->data_info['title'] }}</h3>
+                                <p class="campaign-card-text">{{ strLimit($story->data_info['details'], 80) }}</p>
                                 <a href="{{ route('stories.show', $story->id) }}" class="campaign-card-link">@lang('Read more') <i class="fas fa-arrow-right"></i></a>
                             </div>
                         </div>
