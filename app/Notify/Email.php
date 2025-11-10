@@ -231,6 +231,10 @@ class Email extends NotifyProcess implements Notifiable
 				'WELCOME' => 'welcome',
 				'EVER_CODE' => 'verification',
 				'PASS_RESET_CODE' => 'password_reset',
+				'USER_PAYMENT_SUCCESS' => 'payment_success',
+				'ADMIN_PAYMENT_SUCCESS' => 'payment_success',
+				'DONATION_COMPLETE' => 'payment_success',
+				'DONATION_APPROVE' => 'payment_success',
 				default => 'notification'
 			};
 		}
@@ -248,6 +252,12 @@ class Email extends NotifyProcess implements Notifiable
 		// Check if it's password reset
 		if (str_contains($this->subject, 'password') || str_contains($this->subject, 'reset')) {
 			return 'password_reset';
+		}
+
+		// Check if it's payment success email
+		if (str_contains($this->subject, 'Payment Successful') || 
+			str_contains($this->subject, 'payment') && str_contains($this->subject, 'success')) {
+			return 'payment_success';
 		}
 
 		return 'general';
