@@ -59,6 +59,14 @@ Route::middleware(['admin'])->group(function () {
         Route::post('status/{id}', 'status')->name('status');
     });
 
+    // Subcategory Management
+    Route::controller('SubCategoryController')->prefix('subcategories')->name('subcategories.')->group(function () {
+        Route::get('index', 'index')->name('index');
+        Route::post('store/{id?}', 'store')->name('store');
+        Route::post('status/{id}', 'status')->name('status');
+        Route::post('delete/{id}', 'delete')->name('delete');
+    });
+
     // Campaign
     Route::controller('CampaignController')->prefix('campaigns')->name('campaigns.')->group(function () {
         Route::get('index', 'index')->name('index');

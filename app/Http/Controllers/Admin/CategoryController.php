@@ -4,8 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
-use Exception;
-use Illuminate\Validation\Rules\File;
 
 class CategoryController extends Controller
 {
@@ -17,10 +15,7 @@ class CategoryController extends Controller
     }
 
     function store($id = 0) {
-        $imageValidation = $id ? 'nullable' : 'required';
-
         $this->validate(request(), [
-            'image' => [$imageValidation, File::types(['png', 'jpg', 'jpeg'])],
             'name'  => 'required|string|max:40|unique:categories,name,' . $id,
         ]);
 
@@ -30,16 +25,6 @@ class CategoryController extends Controller
         } else {
             $category = new Category();
             $message  = 'Category successfully added';
-        }
-
-        if (request()->hasFile('image')) {
-            try {
-                $category->image = fileUploader(request('image'), getFilePath('category'), getFileSize('category'), @$category->image);
-            } catch (Exception) {
-                $toast[] = ['error', 'Image uploading process has failed'];
-
-                return back()->withToasts($toast);
-            }
         }
 
         $category->name = request('name');

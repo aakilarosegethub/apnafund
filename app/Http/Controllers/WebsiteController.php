@@ -518,6 +518,33 @@ class WebsiteController extends Controller
         ));
     }
 
+    function startProject() {
+        $pageTitle = 'Start Your Project';
+        
+        // Get categories for campaign creation
+        $categories = Category::active()->orderBy('name')->get();
+        
+        // Get subcategories (if table exists)
+        $subcategories = collect([]);
+        if (\Schema::hasTable('sub_categories')) {
+            $subcategories = \App\Models\Admins\SubCategory::orderBy('name')->get();
+        }
+        
+        // Get site settings
+        $setting = bs();
+        
+        // Get page SEO
+        $pageSEO = getPageSEO('start_project');
+        
+        return view($this->activeTheme . 'page.startProject', compact(
+            'pageTitle',
+            'categories',
+            'subcategories',
+            'setting',
+            'pageSEO'
+        ));
+    }
+
     function contact() {
         $pageTitle       = 'Contact';
         $user            = auth()->user();

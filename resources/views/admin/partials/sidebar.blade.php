@@ -18,6 +18,12 @@
             </a>
         </li>
         <li class="sidebar-item">
+            <a href="{{ route('admin.subcategories.index') }}" class="sidebar-link {{ navigationActive('admin.subcategories.index', 2) }}">
+                <span class="nav-icon"><i class="ti ti-category-2"></i></span>
+                <span class="sidebar-txt">@lang('Subcategories')</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
             <a role="button" class="sidebar-link has-sub {{ navigationActive('admin.campaigns*', 2) }}">
                 <span class="nav-icon">
                     <i class="ti ti-speakerphone"></i>

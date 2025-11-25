@@ -166,17 +166,22 @@ class CampaignController extends Controller
         ]);
         
         try {
+            // Set default values if not provided (for quick campaign creation)
+            $goalAmount = request('goal_amount', 1000);
+            $startDate = request('start_date', date('Y-m-d'));
+            $endDate = request('end_date', date('Y-m-d', strtotime('+30 days')));
+            
             $this->validate(request(), [
                 'category_id'         => 'required|integer|gt:0',
-                'image'               => ['required', File::types(['png', 'jpg', 'jpeg'])],
+                'image'               => ['nullable', File::types(['png', 'jpg', 'jpeg'])], // Made optional for draft creation
                 'video'               => ['nullable', File::types(['mp4', 'avi', 'mov', 'wmv', 'flv', '3gp']), 'max:512000'], // 500MB max
                 'youtube_url'         => 'nullable|url',
                 'location'            => 'nullable|string|max:255',
                 'name'                => 'required|string|max:190|unique:campaigns,name',
                 'description'         => 'required|min:30',
-                'goal_amount'         => 'required|numeric|gt:0',
-                'start_date'          => 'required|date_format:Y-m-d|after_or_equal:today',
-                'end_date'            => 'required|date_format:Y-m-d|after:start_date',
+                'goal_amount'         => 'nullable|numeric|gt:0',
+                'start_date'          => 'nullable|date_format:Y-m-d|after_or_equal:today',
+                'end_date'            => 'nullable|date_format:Y-m-d|after:start_date',
             ], [
                 'category_id.required' => 'The category field is required.',
                 'category_id.integer'  => 'The category must be an integer.',
@@ -255,18 +260,23 @@ class CampaignController extends Controller
             $campaign->user_id     = auth()->id();
             $campaign->category_id = request('category_id');
 
-            // Upload main image
-            try {
-                $campaign->image = fileUploader(request('image'), getFilePath('campaign'), getFileSize('campaign'), null, getThumbSize('campaign'));
-            } catch (Exception) {
-                $toast[] = ['error', 'Image uploading process has failed'];
-                if (request()->ajax()) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Image uploading process has failed'
-                    ], 400);
+            // Upload main image (optional - can be added later in edit)
+            if (request()->hasFile('image')) {
+                try {
+                    $campaign->image = fileUploader(request('image'), getFilePath('campaign'), getFileSize('campaign'), null, getThumbSize('campaign'));
+                } catch (Exception) {
+                    $toast[] = ['error', 'Image uploading process has failed'];
+                    if (request()->ajax()) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Image uploading process has failed'
+                        ], 400);
+                    }
+                    return back()->withToasts($toast);
                 }
-                return back()->withToasts($toast);
+            } else {
+                // Set a placeholder or null - can be added in edit page
+                $campaign->image = null;
             }
 
             // Handle video upload or YouTube URL
@@ -330,9 +340,9 @@ class CampaignController extends Controller
             $purifier              = new HTMLPurifier();
             $campaign->description = request('description');
 
-            $campaign->goal_amount     = request('goal_amount');
-            $campaign->start_date        = Carbon::parse(request('start_date'));
-            $campaign->end_date          = Carbon::parse(request('end_date'));
+            $campaign->goal_amount     = $goalAmount;
+            $campaign->start_date        = Carbon::parse($startDate);
+            $campaign->end_date          = Carbon::parse($endDate);
             $campaign->save();
             
             // Debug logging
@@ -364,11 +374,11 @@ class CampaignController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Campaign successfully created',
-                    'redirect' => route('user.campaign.index')
+                    'redirect' => route('user.campaign.edit', $campaign->slug)
                 ]);
             }
 
-            return to_route('user.campaign.index')->withToasts($toast);
+            return to_route('user.campaign.edit', $campaign->slug)->withToasts($toast);
             
         } catch (\Illuminate\Validation\ValidationException $e) {
             \Log::error('Validation failed', [
