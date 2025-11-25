@@ -19,3 +19,5 @@ yarn-error.log
 /.idea
 /.vscode
 Archive 2.zip
+vendor.zip
+*.zip
