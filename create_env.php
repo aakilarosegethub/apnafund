@@ -1,0 +1,114 @@
+<?php
+/**
+ * Create .env file for ApnaFund
+ */
+
+$envContent = <<<'ENV'
+APP_NAME=ApnaFund
+APP_ENV=local
+APP_KEY=
+APP_DEBUG=true
+APP_TIMEZONE=UTC
+APP_URL=http://localhost/apnafund
+
+APP_LOCALE=en
+APP_FALLBACK_LOCALE=en
+APP_FAKER_LOCALE=en_US
+
+APP_MAINTENANCE_DRIVER=file
+APP_MAINTENANCE_STORE=database
+
+BCRYPT_ROUNDS=12
+
+LOG_CHANNEL=stack
+LOG_STACK=single
+LOG_DEPRECATIONS_CHANNEL=null
+LOG_LEVEL=debug
+
+DB_CONNECTION=sqlite
+DB_DATABASE=/Applications/XAMPP/xamppfiles/htdocs/apnafund/database/database.sqlite
+
+SESSION_DRIVER=database
+SESSION_LIFETIME=120
+SESSION_ENCRYPT=false
+SESSION_PATH=/
+SESSION_DOMAIN=null
+
+BROADCAST_CONNECTION=log
+FILESYSTEM_DISK=local
+QUEUE_CONNECTION=database
+
+CACHE_STORE=database
+CACHE_PREFIX=
+
+ASSETS_URL=http://localhost/apnafund
+
+# Mail Configuration
+MAIL_MAILER=log
+MAIL_HOST=127.0.0.1
+MAIL_PORT=2525
+MAIL_USERNAME=null
+MAIL_PASSWORD=null
+MAIL_ENCRYPTION=null
+MAIL_FROM_ADDRESS="hello@example.com"
+MAIL_FROM_NAME="${APP_NAME}"
+
+# Firebase (Optional)
+FIREBASE_PROJECT_ID=
+FIREBASE_WEB_API_KEY=
+FIREBASE_PRIVATE_KEY_ID=
+FIREBASE_PRIVATE_KEY=
+FIREBASE_CLIENT_EMAIL=
+FIREBASE_CLIENT_ID=
+FIREBASE_CLIENT_CERT_URL=
+FIREBASE_VERIFY_PHONE_NUMBER=true
+FIREBASE_PHONE_AUTH_TIMEOUT=60
+FIREBASE_MAX_OTP_ATTEMPTS=3
+FIREBASE_DATABASE_ID=(default)
+
+# Social Login (Optional)
+FACEBOOK_CLIENT_ID=
+FACEBOOK_CLIENT_SECRET=
+FACEBOOK_REDIRECT_URI=http://localhost/apnafund/user/auth/facebook/callback
+
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REDIRECT_URI=http://localhost/apnafund/user/auth/google/callback
+GOOGLE_MAPS_API_KEY=
+
+# YouTube (Optional)
+YOUTUBE_CLIENT_ID=
+YOUTUBE_CLIENT_SECRET=
+YOUTUBE_REDIRECT_URI=http://localhost/apnafund/youtube/callback
+YOUTUBE_CREDENTIALS_PATH=/Applications/XAMPP/xamppfiles/htdocs/apnafund/storage/app/youtube-credentials.json
+YOUTUBE_ACCESS_TOKEN=
+YOUTUBE_REFRESH_TOKEN=
+
+# CKEditor (Optional)
+CKEDITOR_LICENSE_KEY=
+ENV;
+
+$envFile = __DIR__ . '/.env';
+
+if (file_exists($envFile)) {
+    echo "⚠️  .env file already exists!\n";
+    echo "Do you want to overwrite it? (y/n): ";
+    $handle = fopen("php://stdin", "r");
+    $line = fgets($handle);
+    if (trim($line) !== 'y') {
+        echo "❌ Cancelled. .env file not created.\n";
+        exit(1);
+    }
+}
+
+if (file_put_contents($envFile, $envContent)) {
+    echo "✅ .env file created successfully!\n";
+    echo "📁 Location: $envFile\n\n";
+    echo "⚠️  IMPORTANT: Run this command to generate APP_KEY:\n";
+    echo "   /Applications/XAMPP/xamppfiles/bin/php artisan key:generate\n";
+} else {
+    echo "❌ Error: Could not create .env file!\n";
+    echo "Please check file permissions.\n";
+    exit(1);
+}
+

@@ -1,0 +1,105 @@
+/* Lazy Loading Styles */
+.lazyload, .lazyloading {
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.lazyloaded {
+    opacity: 1;
+}
+
+.lazy-placeholder {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lazy-placeholder::before {
+    content: "Loading...";
+    color: #999;
+    font-size: 14px;
+}
+
+@keyframes loading {
+    0% { 
+        background-position: 200% 0; 
+    }
+    100% { 
+        background-position: -200% 0; 
+    }
+}
+
+/* Product grid specific styles */
+.c-product-grid_thumb.lazyload,
+.c-product-grid_thumb.lazyloading {
+    min-height: 250px;
+}
+
+.single-product-section .product-image img.lazyload,
+.single-product-section .product-image img.lazyloading {
+    min-height: 200px;
+}
+
+/* Product detail page styles */
+#mainProductImage.lazyload,
+#mainProductImage.lazyloading {
+    min-height: 400px;
+}
+
+.single-page-product-image-section img.lazyload,
+.single-page-product-image-section img.lazyloading {
+    min-height: 80px;
+}
+
+/* Carousel specific styles */
+.carousel-item img.lazyload,
+.carousel-item img.lazyloading {
+    min-height: 300px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .lazy-placeholder {
+        min-height: 150px;
+    }
+    
+    .c-product-grid_thumb.lazyload,
+    .c-product-grid_thumb.lazyloading {
+        min-height: 200px;
+    }
+    
+    #mainProductImage.lazyload,
+    #mainProductImage.lazyloading {
+        min-height: 250px;
+    }
+}
+
+/* Fade in animation for loaded images */
+.lazyloaded {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Error state for failed images */
+.lazyload-error {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+}
+
+.lazyload-error::before {
+    content: "Image not available";
+    color: #6c757d;
+    font-size: 14px;
+}
