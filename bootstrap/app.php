@@ -5,6 +5,15 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Support\Facades\Route;
 
+// Suppress deprecation warnings if not in debug mode (E_STRICT deprecated in PHP 8.4+)
+if (!env('APP_DEBUG', false)) {
+    if (defined('E_STRICT') && PHP_VERSION_ID < 80400) {
+        error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT);
+    } else {
+        error_reporting(E_ALL & ~E_DEPRECATED);
+    }
+}
+
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         using: function() {

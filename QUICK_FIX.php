@@ -3,9 +3,6 @@
  * QUICK FIX SCRIPT - Fix all common 500 errors
  */
 
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
 echo "<h1>🔧 Quick Fix Script</h1>";
 echo "<pre>";
 

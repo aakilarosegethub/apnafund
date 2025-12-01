@@ -3,10 +3,6 @@
  * Error Test Script - Check what's causing 500 error
  */
 
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-
 echo "<h1>Error Test Script</h1>";
 echo "<pre>";
 

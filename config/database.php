@@ -2,6 +2,15 @@
 
 use Illuminate\Support\Str;
 
+// Get SSL CA constant based on PHP version (PHP 8.1+ uses Pdo\Mysql, older versions use PDO)
+$mysqlSslCaConstant = null;
+if (class_exists('Pdo\Mysql')) {
+    $mysqlSslCaConstant = \Pdo\Mysql::ATTR_SSL_CA;
+} elseif (PHP_VERSION_ID < 80500) {
+    // Only use deprecated constant on PHP < 8.5
+    $mysqlSslCaConstant = PDO::MYSQL_ATTR_SSL_CA;
+}
+
 return [
 
     /*
@@ -54,9 +63,9 @@ return [
             'prefix_indexes' => true,
             'strict' => false,
             'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
+            'options' => extension_loaded('pdo_mysql') && env('MYSQL_ATTR_SSL_CA') && $mysqlSslCaConstant !== null ? [
+                $mysqlSslCaConstant => env('MYSQL_ATTR_SSL_CA'),
+            ] : [],
         ],
 
         'mariadb' => [
@@ -74,9 +83,9 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
+            'options' => extension_loaded('pdo_mysql') && env('MYSQL_ATTR_SSL_CA') && $mysqlSslCaConstant !== null ? [
+                $mysqlSslCaConstant => env('MYSQL_ATTR_SSL_CA'),
+            ] : [],
         ],
 
         'pgsql' => [

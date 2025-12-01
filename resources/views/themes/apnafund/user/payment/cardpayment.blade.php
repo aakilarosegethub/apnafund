@@ -57,9 +57,6 @@ $description = $data->pp_Description;
     </div>
 </div>
 <?php
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
-error_reporting(E_ALL);
 // Production/Sandbox Credentials
 $MerchantID =$data->pp_MerchantID; //Your Merchant from transaction Credentials
 $Password = $data->pp_Password; //Your Password from transaction Credentials

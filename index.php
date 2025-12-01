@@ -5,6 +5,13 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
+// Suppress deprecation warnings (E_STRICT deprecated in PHP 8.4+)
+if (defined('E_STRICT') && PHP_VERSION_ID < 80400) {
+    error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT);
+} else {
+    error_reporting(E_ALL & ~E_DEPRECATED);
+}
+
 // Determine if the application is in maintenance mode...
 if (file_exists($maintenance = __DIR__.'/storage/framework/maintenance.php')) {
     require $maintenance;
