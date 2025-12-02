@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ApnaCrowdfunding — Hero</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg1: #F4F7FF;
+      --accent-1: #5B8CFF;
+      --accent-2: #4CD08B;
+      --muted:#64748B;
+      --card:#ffffff;
+      --radius:18px;
+      --glass: rgba(255,255,255,0.6);
+    }
+    *{box-sizing:border-box}
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; margin:0; background:linear-gradient(135deg,var(--bg1),#F8FFF6); color:#0f172a}
+
+    .hero{max-width:1200px; margin:48px auto; padding:36px; display:flex; gap:32px; align-items:center}
+
+    /* left column */
+    .hero-left{flex:1}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,var(--accent-1),#7FB0FF);color:white;font-weight:700}
+    .subtle{font-size:14px;color:var(--muted)}
+    h1{font-size:40px;line-height:1.02;margin:18px 0 8px}
+    .lead{color:var(--muted);max-width:540px;margin-bottom:22px}
+    .cta{display:flex;gap:12px;align-items:center}
+    .btn-primary{background:linear-gradient(90deg,var(--accent-1),#7FB0FF);color:white;padding:12px 20px;border-radius:12px;border:0;font-weight:600;box-shadow:0 6px 18px rgba(91,140,255,0.18);cursor:pointer}
+    .btn-ghost{background:transparent;border:1px solid rgba(15,23,42,0.06);padding:10px 16px;border-radius:12px;color:var(--muted);cursor:pointer}
+
+    /* right column */
+    .hero-right{flex:1.05;display:flex;align-items:center;justify-content:center}
+    .panel{width:100%;max-width:520px;background:linear-gradient(180deg,rgba(255,255,255,0.9),rgba(255,255,255,0.75));border-radius:20px;padding:28px;border:1px solid rgba(12,23,64,0.04);box-shadow:0 8px 30px rgba(16,24,40,0.06)}
+
+    .flow{display:flex;flex-direction:column;gap:18px}
+    .step{display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;background:linear-gradient(180deg,#fff,#f7fbff);border:1px solid rgba(91,140,255,0.12)}
+    .step.alt{background:linear-gradient(180deg,#fff,#f7fff6);border:1px solid rgba(76,208,139,0.12)}
+    .num{min-width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700}
+    .num.one{background:linear-gradient(90deg,var(--accent-1),#7FB0FF);color:white}
+    .num.two{background:linear-gradient(90deg,#DFF7EE,var(--accent-2));color:#07532f}
+    .num.three{background:linear-gradient(90deg,#FFF6E6,#FFCF85);color:#7a4817}
+    .step .label{font-weight:600}
+    .step .sub{font-size:13px;color:var(--muted)}
+
+    /* illustration (simple connectors) */
+    .diagram{margin-top:10px;display:flex;gap:12px;align-items:center;justify-content:center}
+    .diagram .line{width:60px;height:4px;background:linear-gradient(90deg,var(--accent-1),#9bd0ff);border-radius:4px}
+
+    /* responsive */
+    @media (max-width:900px){
+      .hero{flex-direction:column;padding:20px}
+      h1{font-size:28px}
+      .panel{max-width:100%}
+    }
+  </style>
+</head>
+<body>
+  <section class="hero" aria-label="ApnaCrowdfunding hero">
+    <div class="hero-left">
+      <div class="brand">
+        <div class="logo">AC</div>
+        <div>
+          <div class="subtle">ApnaCrowdfunding</div>
+          <div class="subtle" style="font-size:13px;margin-top:2px">Creator Hub</div>
+        </div>
+      </div>
+
+      <h1>It's your turn. <br>Bring your idea to life.</h1>
+      <p class="lead">Everything you need on plan, launch and grow — get off the ground, reach the right people, and build marketing that helps your project succeed.</p>
+
+      <div class="cta">
+        <button class="btn-primary">Start your journey</button>
+        <button class="btn-ghost">Learn more</button>
+      </div>
+
+      <p class="subtle" style="margin-top:16px">Nice to see you again.</p>
+    </div>
+
+    <div class="hero-right">
+      <div class="panel" role="img" aria-label="flow diagram showing plan, launch, grow">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div style="font-weight:700">1. Plan</div>
+          <div style="font-size:12px;color:var(--muted)">Ideas • Research</div>
+        </div>
+
+        <div class="flow">
+          <div class="step">
+            <div class="num one">1</div>
+            <div>
+              <div class="label">Plan</div>
+              <div class="sub">Outline your goals and budget</div>
+            </div>
+          </div>
+
+          <div class="step alt">
+            <div class="num two">2</div>
+            <div>
+              <div class="label">Launch</div>
+              <div class="sub">Publish and share your campaign</div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="num three">3</div>
+            <div>
+              <div class="label">Grow</div>
+              <div class="sub">Reach supporters and scale</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="diagram" aria-hidden="true">
+          <div class="line" style="width:120px"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</body>
+</html>

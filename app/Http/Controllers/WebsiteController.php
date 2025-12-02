@@ -519,6 +519,12 @@ class WebsiteController extends Controller
     }
 
     function startProject() {
+        // Check if user is authenticated
+        if (!auth()->check()) {
+            $toast[] = ['error', 'Login required to start a project'];
+            return redirect()->route('user.login.form')->withToasts($toast);
+        }
+
         $pageTitle = 'Start Your Project';
         
         // Get categories for campaign creation
@@ -543,6 +549,150 @@ class WebsiteController extends Controller
             'setting',
             'pageSEO'
         ));
+    }
+
+    function saveProjectCategories(\Illuminate\Http\Request $request) {
+        // Check if user is authenticated
+        if (!auth()->check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Login required',
+                'redirect_url' => route('user.login.form')
+            ], 401);
+        }
+
+        $request->validate([
+            'category_id' => 'required|exists:categories,id',
+            'subcategory_id' => 'required|exists:sub_categories,id'
+        ]);
+
+        // Save category and subcategory in session
+        session([
+            'project_category_id' => $request->category_id,
+            'project_subcategory_id' => $request->subcategory_id
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Categories saved successfully',
+            'redirect_url' => route('start.project.location')
+        ]);
+    }
+
+    function projectLocation() {
+        // Check if user is authenticated
+        if (!auth()->check()) {
+            $toast[] = ['error', 'Login required to start a project'];
+            return redirect()->route('user.login.form')->withToasts($toast);
+        }
+
+        $pageTitle = 'Set Project Location';
+        
+        // Check if category and subcategory are set in session
+        if (!session('project_category_id') || !session('project_subcategory_id')) {
+            return redirect()->route('start.project')->with('error', 'Please select category and subcategory first.');
+        }
+
+        return view($this->activeTheme . 'page.projectLocation', compact('pageTitle'));
+    }
+
+    function saveProjectLocation(\Illuminate\Http\Request $request) {
+        // Check if user is authenticated
+        if (!auth()->check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Login required',
+                'redirect_url' => route('user.login.form')
+            ], 401);
+        }
+
+        $request->validate([
+            'country' => 'required|string|max:255'
+        ]);
+
+        // Save country in session
+        session(['project_country' => $request->country]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Location saved successfully',
+            'redirect_url' => route('start.project.terms')
+        ]);
+    }
+
+    function projectTerms() {
+        // Check if user is authenticated
+        if (!auth()->check()) {
+            $toast[] = ['error', 'Login required to start a project'];
+            return redirect()->route('user.login.form')->withToasts($toast);
+        }
+
+        $pageTitle = 'Terms & Conditions';
+        
+        // Check if all required data is set in session
+        if (!session('project_category_id') || !session('project_subcategory_id') || !session('project_country')) {
+            return redirect()->route('start.project')->with('error', 'Please complete all steps first.');
+        }
+
+        return view($this->activeTheme . 'page.projectTerms', compact('pageTitle'));
+    }
+
+    function createCampaignFromSession(\Illuminate\Http\Request $request) {
+        // Check if user is authenticated
+        if (!auth()->check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please login to create a campaign'
+            ], 401);
+        }
+
+        // Validate that all required session data exists
+        if (!session('project_category_id') || !session('project_subcategory_id') || !session('project_country')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Missing required information. Please complete all steps.'
+            ], 400);
+        }
+
+        try {
+            // Create a basic campaign with session data
+            $campaign = new Campaign();
+            $campaign->user_id = auth()->id();
+            $campaign->category_id = session('project_category_id');
+            $campaign->name = 'My New Campaign ' . time(); // Temporary name, user will edit
+            $campaign->slug = slug($campaign->name);
+            $campaign->description = 'Campaign description will be added here.'; // Temporary description
+            $campaign->location = session('project_country');
+            $campaign->goal_amount = 1000; // Default goal amount
+            $campaign->raised_amount = 0;
+            $campaign->start_date = Carbon::today();
+            $campaign->end_date = Carbon::today()->addDays(30);
+            $campaign->status = 'pending'; // Will need admin approval
+            $campaign->save();
+
+            // Clear session data
+            session()->forget(['project_category_id', 'project_subcategory_id', 'project_country']);
+
+            // Create admin notification
+            $adminNotification = new AdminNotification();
+            $adminNotification->user_id = auth()->id();
+            $adminNotification->title = 'New campaign created by ' . auth()->user()->fullname;
+            $adminNotification->click_url = urlPath('admin.campaigns.index');
+            $adminNotification->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Campaign created successfully',
+                'redirect_url' => route('user.campaign.edit', $campaign->slug)
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error creating campaign from session: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error creating campaign: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     function contact() {

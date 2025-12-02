@@ -40,7 +40,7 @@
             <div class="col-md-8">
                 <h2>@lang('Ready to get started?')</h2>
                 <p>@lang('Take the first step toward launching your campaign and bringing your idea to life')</p>
-                 <a href="{{ route('user.register.business') }}" class="btn-theme">@lang('Start a project')</a> 
+                 <a href="{{ route('start.project') }}" class="btn-theme">@lang('Start a project')</a> 
             </div>
             <div class="col-md-4 text-center">
                 <img src="{{ getImage(getFilePath('logoFavicon') . '/lightbulb.png', getFileSize('logoFavicon')) }}" 

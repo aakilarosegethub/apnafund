@@ -42,6 +42,14 @@ Route::controller('WebsiteController')->group(function () {
     // Business Resources
     Route::get('business-resources', 'businessResources')->name('business.resources');
 
+    // Start Project
+    Route::get('start-project', 'startProject')->name('start.project');
+    Route::post('start-project/save-categories', 'saveProjectCategories')->name('start.project.save.categories');
+    Route::get('start-project/location', 'projectLocation')->name('start.project.location');
+    Route::post('start-project/save-location', 'saveProjectLocation')->name('start.project.save.location');
+    Route::get('start-project/terms', 'projectTerms')->name('start.project.terms');
+    Route::post('start-project/create-campaign', 'createCampaignFromSession')->name('start.project.create.campaign');
+
     // Subscriber
     Route::post('subscriber/store', 'subscriberStore')->name('subscriber.store');;
 
@@ -324,6 +332,45 @@ Route::prefix('api')->group(function () {
             return response()->json([
                 'success' => false,
                 'message' => 'Error fetching featured campaigns: ' . $e->getMessage(),
+                'data' => []
+            ], 500);
+        }
+    });
+
+    // Get all categories
+    Route::get('/categories', function() {
+        try {
+            $categories = Category::active()->orderBy('name')->get(['id', 'name', 'slug']);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $categories
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching categories: ' . $e->getMessage(),
+                'data' => []
+            ], 500);
+        }
+    });
+
+    // Get subcategories by category ID
+    Route::get('/subcategories/{categoryId}', function($categoryId) {
+        try {
+            $subcategories = \App\Models\Admins\SubCategory::where('category_id', $categoryId)
+                ->where('status', 'active')
+                ->orderBy('name')
+                ->get(['id', 'name', 'slug', 'category_id']);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $subcategories
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching subcategories: ' . $e->getMessage(),
                 'data' => []
             ], 500);
         }

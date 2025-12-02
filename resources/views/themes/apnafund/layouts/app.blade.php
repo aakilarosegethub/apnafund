@@ -404,6 +404,7 @@
 
         @stack('page-script-lib')
         @stack('page-script')
+        @yield('script')
         
         <!-- Custom Footer Code -->
         {!! getCustomCode('footer') !!}

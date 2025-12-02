@@ -388,7 +388,6 @@ class UserController extends Controller
 
     function testWelcomeEmail($id) {
         $user = User::findOrFail($id);
-        dd($user);
         
         try {
             // Send welcome email using the same method as registration

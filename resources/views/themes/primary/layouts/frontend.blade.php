@@ -199,9 +199,12 @@
     </header>
 
     @if (!request()->routeIs('home'))
-        @php $breadcrumbContent = getSiteData('breadcrumb.content', true); @endphp
+        @php 
+            $breadcrumbContent = getSiteData('breadcrumb.content', true);
+            $breadcrumbDataInfo = $breadcrumbContent ? (is_array($breadcrumbContent->data_info) ? $breadcrumbContent->data_info : (array) $breadcrumbContent->data_info) : [];
+        @endphp
 
-        <section class="breadcrumb bg-img" data-background-image="{{ getImage('assets/images/site/breadcrumb/' . @$breadcrumbContent->data_info->background_image, '1920x700') }}" title="{{ getImageAlt($breadcrumbContent, 'background_image', 'Breadcrumb background') }}">
+        <section class="breadcrumb bg-img" data-background-image="{{ getImage('assets/images/site/breadcrumb/' . (@$breadcrumbDataInfo['background_image'] ?? ''), '1920x700') }}" title="{{ getImageAlt($breadcrumbContent, 'background_image', 'Breadcrumb background') }}">
             <div class="breadcrumb__bg bg-img" data-background-image="{{ asset($activeThemeTrue . 'images/breadcrumb-vector.png') }}"></div>
             <div class="container">
                 <div class="row justify-content-center">
@@ -224,6 +227,7 @@
         $footerContent = getSiteData('footer.content', true);
         $footerElements = getSiteData('footer.element', false, null, true);
         $footerContactElements = getSiteData('contact_us.element', false, null, true);
+        $footerDataInfo = $footerContent ? (is_array($footerContent->data_info) ? $footerContent->data_info : (array) $footerContent->data_info) : [];
     @endphp
 
     <footer class="footer-area">
@@ -238,12 +242,15 @@
                                     <img src="{{ getImage(getFilePath('logoFavicon') . '/logo_light.png') }}" alt="footer logo">
                                 </a>
                             </div>
-                            <p class="footer-item__desc">{{ __(@$footerContent->data_info->footer_text) }}</p>
+                            <p class="footer-item__desc">{{ __(@$footerDataInfo['footer_text'] ?? '') }}</p>
                             <ul class="social-list">
                                 @foreach ($footerElements as $socialInfo)
+                                    @php 
+                                        $socialDataInfo = is_array($socialInfo->data_info) ? $socialInfo->data_info : (array) $socialInfo->data_info;
+                                    @endphp
                                     <li class="social-list__item">
-                                        <a href="{{ @$socialInfo->data_info->url }}" class="social-list__link flex-center" target="_blank">
-                                            @php echo @$socialInfo->data_info->social_icon @endphp
+                                        <a href="{{ @$socialDataInfo['url'] ?? '#' }}" class="social-list__link flex-center" target="_blank">
+                                            {{ @$socialDataInfo['social_icon'] ?? '' }}
                                         </a>
                                     </li>
                                 @endforeach
@@ -259,9 +266,12 @@
                             <ul class="footer-menu">
                                 @if($policyPages && is_array($policyPages) && count($policyPages) > 0)
                                     @foreach ($policyPages as $policyPage)
+                                        @php 
+                                            $policyDataInfo = is_array($policyPage->data_info) ? $policyPage->data_info : (array) $policyPage->data_info;
+                                        @endphp
                                         <li class="footer-menu__item">
-                                            <a href="{{ route('policy.pages', [slug($policyPage->data_info->title), $policyPage->id]) }}" class="footer-menu__link">
-                                                {{ __($policyPage->data_info->title) }}
+                                            <a href="{{ route('policy.pages', [slug(@$policyDataInfo['title'] ?? ''), $policyPage->id]) }}" class="footer-menu__link">
+                                                {{ __(@$policyDataInfo['title'] ?? '') }}
                                             </a>
                                         </li>
                                     @endforeach
@@ -295,12 +305,15 @@
                             <h5 class="footer-item__title">@lang('Contact With Us')</h5>
                             <ul class="footer-contact-menu">
                                 @foreach ($footerContactElements as $footerContact)
+                                    @php 
+                                        $dataInfo = is_array($footerContact->data_info) ? $footerContact->data_info : (array) $footerContact->data_info;
+                                    @endphp
                                     <li class="footer-contact-menu__item">
                                         <div class="footer-contact-menu__item-icon">
-                                            @php echo $footerContact->data_info->icon @endphp
+                                            {{ $dataInfo['icon'] ?? '' }}
                                         </div>
                                         <div class="footer-contact-menu__item-content">
-                                            <p>{{ __(@$footerContact->data_info->data) }}</p>
+                                            <p>{{ __(@$dataInfo['data'] ?? '') }}</p>
                                         </div>
                                     </li>
                                 @endforeach
@@ -316,7 +329,7 @@
         <div class="bottom-footer py-3">
             <div class="container">
                 <div class="text-center">
-                    <p class="bottom-footer__text">{{ __(@$footerContent->data_info->copyright_text) }}</p>
+                    <p class="bottom-footer__text">{{ __(@$footerDataInfo['copyright_text'] ?? '') }}</p>
                 </div>
             </div>
         </div>
@@ -324,16 +337,17 @@
 
     @php
         $cookie = App\Models\SiteData::where('data_key', 'cookie.data')->first();
+        $cookieDataInfo = $cookie ? (is_array($cookie->data_info) ? $cookie->data_info : (array) $cookie->data_info) : [];
     @endphp
 
-    @if ($cookie->data_info->status == ManageStatus::ACTIVE && !\Cookie::get('gdpr_cookie'))
+    @if ($cookie && isset($cookieDataInfo['status']) && $cookieDataInfo['status'] == ManageStatus::ACTIVE && !\Cookie::get('gdpr_cookie'))
         <!-- cookies dark version start -->
         <div class="cookies-card text-center hide">
             <div class="cookies-card__icon">
                 <img src="{{ getImage('assets/images/cookie.png') }}" alt="cookies">
             </div>
 
-            <p class="mt-4 cookies-card__content">{{ $cookie->data_info->short_details }}</p>
+            <p class="mt-4 cookies-card__content">{{ $cookieDataInfo['short_details'] ?? '' }}</p>
 
             <div class="cookies-card__btn mt-4">
                 <button type="button" class="btn btn--base px-5 policy">@lang('Allow')</button>

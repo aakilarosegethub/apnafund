@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Places Project</title>
+</head>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #fafafa;
+        margin: 0;
+        padding: 0;
+        transition: all 0.3s ease-in-out;
+    }
+
+    /* ------------ CENTER BOX WRAPPER ------------ */
+    .centerWrapper {
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+
+    .centerWrapper.hidden {
+        opacity: 0;
+        visibility: hidden;
+        height: 0;
+    }
+
+    /* ------------ RULE BOX ------------ */
+    .rulesBox {
+        width: 650px;
+        border: 1px solid #dcdcdc;
+        padding: 50px;
+        text-align: center;
+        border-radius: 6px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        background: #fff;
+    }
+
+    .topIcon img {
+        width: 42px;
+        margin-bottom: 18px;
+    }
+
+    .mainHeading {
+        font-size: 26px;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .subHeading {
+        color: #444;
+        margin-bottom: 40px;
+        font-size: 15px;
+    }
+
+    .ruleLine {
+        display: flex;
+        align-items: center;
+        margin: 25px 0;
+        text-align: left;
+    }
+
+    .lineNumber {
+        font-size: 28px;
+        width: 50px;
+        color: #c6c6c6;
+    }
+
+    .lineText a {
+        color: #0b6f3c;
+        text-decoration: none;
+        font-weight: bold;
+    }
+
+    .dividerLine {
+        width: 100%;
+        height: 1px;
+        background: #ececec;
+        margin-top: 10px;
+    }
+
+    .actionBtn button {
+        margin-top: 30px;
+        padding: 12px 35px;
+        font-size: 16px;
+        border: none;
+        background-color: #1c8e50;
+        color: #fff;
+        border-radius: 3px;
+        cursor: pointer;
+    }
+
+    .footerText a {
+        color: #0b6f3c;
+        text-decoration: none;
+    }
+
+    /* ------------ BELOW PROJECT CONTENT ------------ */
+
+    .container {
+        width: 70%;
+        margin: auto;
+        padding: 30px 0;
+        opacity: 0;
+        transition: opacity 0.6s ease;
+    }
+
+    .container.visible {
+        opacity: 1;
+        margin-top: 40px;
+    }
+
+    .project-title {
+        font-size: 36px;
+        margin-bottom: 5px;
+    }
+
+    .byline {
+        color: #555;
+        font-size: 16px;
+    }
+
+    .preview {
+        margin-top: 20px;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        color: #444;
+    }
+
+    .eye {
+        margin-right: 5px;
+        font-size: 18px;
+    }
+
+    .overview-heading {
+        margin-top: 40px;
+        font-size: 22px;
+        color: #333;
+    }
+
+    .section {
+        background: #fff;
+        border: 1px solid #e5e5e5;
+        padding: 20px;
+        margin-top: 20px;
+        display: flex;
+        border-radius: 5px;
+    }
+
+    .icon-check {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        border: 2px solid #dcdcdc;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-right: 15px;
+        font-size: 16px;
+        color: #0c9d63;
+    }
+
+    .section-text h3 {
+        margin: 0;
+        font-size: 18px;
+    }
+
+    .section-text p {
+        margin: 5px 0 0;
+        color: #666;
+        font-size: 14px;
+    }
+</style>
+
+<body>
+
+<!-- =================== CENTER BOX =================== -->
+<div class="centerWrapper" id="ruleBox">
+    <div class="rulesBox">
+
+        <div class="topIcon">
+            <img src="Pic.png" alt="Icon">
+        </div>
+
+        <div class="mainHeading">Take a moment to review our rules</div>
+        <div class="subHeading">Here are five rules every Kickstarter project must follow.</div>
+
+        <div class="ruleLine">
+            <div class="lineNumber">1</div>
+            <div class="lineText">
+                Projects must <a href="#">create something to share</a> with others.
+            </div>
+        </div>
+        <div class="dividerLine"></div>
+
+        <div class="ruleLine">
+            <div class="lineNumber">2</div>
+            <div class="lineText">
+                Projects must be <a href="#">honest and clearly presented</a>.
+            </div>
+        </div>
+        <div class="dividerLine"></div>
+
+        <div class="ruleLine">
+            <div class="lineNumber">3</div>
+            <div class="lineText">Projects can't fundraise for charity.</div>
+        </div>
+        <div class="dividerLine"></div>
+
+        <div class="ruleLine">
+            <div class="lineNumber">4</div>
+            <div class="lineText">Projects can't offer equity.</div>
+        </div>
+        <div class="dividerLine"></div>
+
+        <div class="ruleLine">
+            <div class="lineNumber">5</div>
+            <div class="lineText">Projects can't involve <a href="#">prohibited items</a>.</div>
+        </div>
+
+        <div class="actionBtn">
+            <button onclick="hideRules()">Got it</button>
+        </div>
+
+        <div class="footerText" style="margin-top: 20px;">
+            <a href="#">Read more</a> about our rules.
+        </div>
+
+    </div>
+</div>
+
+<!-- =================== PROJECT CONTENT =================== -->
+<div class="container" id="projectBox">
+
+    <h1 class="project-title">Places Project</h1>
+    <p class="byline">by Diyan</p>
+
+    <div class="preview">
+        <span class="eye">👁</span> Preview
+    </div>
+
+    <hr>
+
+    <h2 class="overview-heading">Project overview</h2>
+
+    <div class="section">
+        <div class="icon-check">✔</div>
+        <div class="section-text">
+            <h3>Basics</h3>
+            <p>Name your project, upload an image or video, and establish your campaign details.</p>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="icon-check">✔</div>
+        <div class="section-text">
+            <h3>Rewards</h3>
+            <p>Set your rewards and shipping costs.</p>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="icon-check">✔</div>
+        <div class="section-text">
+            <h3>Story</h3>
+            <p>Add a detailed project description and convey your risks and challenges.</p>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function hideRules() {
+    document.getElementById("ruleBox").classList.add("hidden");
+    document.getElementById("projectBox").classList.add("visible");
+}
+</script>
+
+</body>
+</html>

@@ -405,12 +405,56 @@ document.addEventListener('DOMContentLoaded', function() {
     const forgotBtnText = document.getElementById('forgotBtnText');
     const loadingSpinner = document.getElementById('loadingSpinner');
 
-    // Handle form submission
+    // Function to refresh CSRF token
+    function refreshCsrfToken() {
+        return fetch('/csrf-token', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Update meta tag
+            const metaTag = document.querySelector('meta[name="csrf-token"]');
+            if (metaTag) {
+                metaTag.setAttribute('content', data.token);
+            }
+            // Update form CSRF token
+            const csrfInput = forgotForm.querySelector('input[name="_token"]');
+            if (csrfInput) {
+                csrfInput.value = data.token;
+            }
+            return data.token;
+        })
+        .catch(error => {
+            console.error('Error refreshing CSRF token:', error);
+            return null;
+        });
+    }
+
+    // Refresh CSRF token on page load and periodically
+    refreshCsrfToken();
+    setInterval(refreshCsrfToken, 5 * 60 * 1000); // Refresh every 5 minutes
+
+    // Handle form submission with CSRF token refresh
     forgotForm.addEventListener('submit', function(e) {
+        e.preventDefault(); // Prevent default submission
+        
         // Show loading state
         forgotBtn.disabled = true;
         forgotBtnText.style.display = 'none';
         loadingSpinner.style.display = 'inline-block';
+        
+        // Refresh CSRF token before submitting
+        refreshCsrfToken().then(() => {
+            // Submit form after token is refreshed
+            forgotForm.submit();
+        }).catch(() => {
+            // If refresh fails, submit anyway (might work if token is still valid)
+            forgotForm.submit();
+        });
     });
 
     // Add interactive effects
