@@ -48,24 +48,38 @@ function navigationActive($routeName, $type = null, $param = null) {
 }
 
 function bs($fieldName = null) {
-    cache()->forget('setting');
-    // Cache clear karne ke liye aap command line se yeh command chalaen:
-    // php artisan cache:clear
-    $setting = null;
+    try {
+        cache()->forget('setting');
+        // Cache clear karne ke liye aap command line se yeh command chalaen:
+        // php artisan cache:clear
+        $setting = null;
 
-    if (!$setting) {
-        $setting = Setting::first();
-        cache()->put('setting', $setting);
+        if (!$setting) {
+            $setting = Setting::first();
+            if ($setting) {
+                cache()->put('setting', $setting);
+            }
+        }
+
+        if ($fieldName) return @$setting->$fieldName;
+
+        return $setting;
+    } catch (\Exception $e) {
+        // Database connection failed, return null
+        \Log::error('Database connection failed in bs() function: ' . $e->getMessage());
+        return null;
     }
-
-    if ($fieldName) return @$setting->$fieldName;
-
-    return $setting;
 }
 
 function fileUploader($file, $location, $size = null, $old = null, $thumb = null): string {
     $fileManager        = new FileManager($file);
+    // Convert relative path to full public path if needed
+    $publicPath = public_path();
+    if (strpos($location, $publicPath) !== 0 && strpos($location, '/') !== 0 && !file_exists($location)) {
+        $fileManager->path  = public_path($location);
+    } else {
     $fileManager->path  = $location;
+    }
     $fileManager->size  = $size;
     $fileManager->old   = $old;
     $fileManager->thumb = $thumb;

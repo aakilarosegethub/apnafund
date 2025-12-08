@@ -36,7 +36,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 99999;
+
 }
 
 .yellow-shape {
@@ -334,7 +334,7 @@
 /* Box wrapper */
 .conf-box {
     background: #ffffff;
-    padding: 30px;
+    padding: 7px;
     border-radius: 25px;
     text-align: left;
     border: 2px solid transparent;
@@ -506,6 +506,10 @@
     @php
         $commonSliderImage = custom_asset($activeThemeTrue . 'images/slider-img-shape-2.png');
         $commonShapeImage  = custom_asset($activeThemeTrue . 'images/mask-shape-1.png');
+        $imgBaseUrl = rtrim(env('IMG_URL', url('/')), '/');
+        $picImageUrl = $imgBaseUrl . '/apnacroudfunding/Pic.png';
+        $starImageUrl = $imgBaseUrl . '/apnacroudfunding/Star.png';
+        $brushImageUrl = $imgBaseUrl . '/apnacroudfunding/Brush.png';
     @endphp
     <section class="kickstarter-cta">
         <div class="container-fluid">
@@ -513,7 +517,7 @@
                 <!-- Left Side - Yellow Shape with Person -->
                 <div class="left-section">
                     <div class="yellow-shape">
-                        <img src="{{ $imgs_path }}Pic.png" alt="Yellow Shape">
+                        <img src="{{ $picImageUrl }}" alt="Yellow Shape">
 
                     </div>
                     <div class="person-image">
@@ -525,7 +529,7 @@
                 <div class="center-content">
                     <!-- Orange Star Shape -->
                     <div class="orange-star">
-                       <img src="{{ $imgs_path }}Star.png" alt="Yellow Shape">
+                       <img src="{{ $starImageUrl }}" alt="Yellow Shape">
                     </div>
                     
                     
@@ -552,7 +556,7 @@
                 <!-- Right Side - Green Shapes with Person -->
                 <div class="right-section">
                     <div class="green-shapes">
-                        <img src="{{ $imgs_path }}Brush.png" alt="Yellow Shape">
+                        <img src="{{ $brushImageUrl }}" alt="Yellow Shape">
                     </div>
                   
                 </div>

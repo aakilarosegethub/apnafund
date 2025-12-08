@@ -78,6 +78,7 @@ Route::controller('WebsiteController')->group(function () {
 
     // Update user country in session
     Route::post('/update-user-country', [App\Http\Controllers\WebsiteController::class, 'updateUserCountry'])->name('update.user.country');
+});
 
 // Test route for IP detection
 Route::get('/test-ip-detection', function() {
@@ -374,6 +375,5 @@ Route::prefix('api')->group(function () {
                 'data' => []
             ], 500);
         }
-    });
 });
 });

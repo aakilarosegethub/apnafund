@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kickstarter Basics</title>
+
+    <!-- Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background: #fff;
+        }
+
+        /* TOP TABS */
+        .top-tabs {
+            display: flex;
+            border-bottom: 1px solid #e6e6e6;
+            background: #fafafa;
+            padding: 15px 40px;
+            gap: 32px;
+            font-size: 15px;
+            font-weight: 500;
+            flex-wrap: wrap;
+        }
+
+        .top-tabs a {
+            text-decoration: none;
+            color: #777;
+        }
+
+        .top-tabs a.active {
+            color: #000;
+            font-weight: 600;
+        }
+
+        /* MAIN AREA */
+        .main {
+            display: flex;
+            width: 100%;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content:center;
+        }
+
+        /* LEFT SIDEBAR */
+        .sidebar {
+            width: 220px;
+            border-right: 1px solid #e6e6e6;
+            padding: 20px 25px;
+            height: auto;
+            flex-shrink: 0;
+        }
+
+        .sidebar a {
+            display: block;
+            margin-bottom: 14px;
+            text-decoration: none;
+            color: #333;
+            font-size: 15px;
+        }
+
+        .sidebar a.active {
+            font-weight: 600;
+        }
+
+        /* CONTENT AREA */
+        .content {
+            padding: 30px 40px;
+            width: calc(100% - 220px);
+            max-width: 750px;
+        }
+
+        h1 {
+            font-size: 36px;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .box {
+            border: 1px solid #e3e3e3;
+            border-radius: 10px;
+            padding: 22px;
+            margin-bottom: 25px;
+        }
+
+        label {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 14px;
+            border-radius: 8px;
+            border: 1px solid #d9d9d9;
+            font-size: 15px;
+        }
+
+        textarea {
+            height: 130px;
+        }
+
+        .note {
+            font-size: 13px;
+            margin-top: 5px;
+            color: #777;
+        }
+
+        .next-btn {
+            background: #028858;
+            color: #fff;
+            padding: 14px 34px;
+            border-radius: 40px;
+            border: none;
+            cursor: pointer;
+            opacity: 0.6;
+            font-size: 15px;
+            margin-top: 25px;
+            pointer-events: none;
+        }
+
+        .next-btn.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* UPLOAD BOX */
+        .upload-box {
+            border: 2px dashed #d9d9d9;
+            border-radius: 12px;
+            padding: 45px 20px;
+            text-align: center;
+            margin-top: 25px;
+            position: relative;
+        }
+
+        .upload-btn {
+            padding: 12px 26px;
+            border-radius: 6px;
+            background: white;
+            border: 1px solid #bcbcbc;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .preview-img {
+            max-width: 100%;
+            max-height: 250px;
+            margin-top: 15px;
+            border-radius: 10px;
+            display: none;
+            object-fit: cover;
+        }
+
+        /* Launch Date Grid */
+        .date-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 15px;
+            margin-top: 15px;
+            max-width: 400px;
+        }
+
+        .date-grid input {
+            text-align: center;
+        }
+
+        .calendar-btn {
+            width: 50px;
+            height: 48px;
+            border: 1px solid #d9d9d9;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background: #fff;
+        }
+
+        .calendar-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .small-note {
+            font-size: 14px;
+            margin-top: 10px;
+            color: #028858;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .small-note img {
+            width: 18px;
+        }
+
+        /* Campaign Duration Notes */
+        .radio-option {
+            margin-bottom: 14px;
+            font-size: 16px;
+        }
+
+        .green-note {
+            color: #028858;
+            font-size: 14px;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        /* SHIPPING SECTION — NOW BOX STYLE */
+        .shipping-container {
+            border: 1px solid #e3e3e3;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        .shipping-left {
+            width: 40%;
+        }
+
+        .shipping-left h2 {
+            font-size: 26px;
+            margin: 0 0 10px;
+        }
+
+        .shipping-left p {
+            font-size: 15px;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .shipping-left a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .shipping-right {
+            width: 60%;
+        }
+
+        .shipping-box {
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .ship-option {
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border: 1px solid transparent;
+            cursor: pointer;
+        }
+
+        .ship-option.active {
+            border: 1px solid #000;
+            background: #fafafa;
+        }
+
+        .ship-option input {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+
+        .ship-description {
+            font-size: 14px;
+            color: #666;
+            margin-left: 28px;
+            margin-top: 6px;
+        }
+
+        /* POST CAMPAIGN SECTION — NOW BOX STYLE */
+        .post-container {
+            border: 1px solid #e3e3e3;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        .post-left {
+            width: 40%;
+        }
+
+        .post-left h2 {
+            font-size: 26px;
+            margin-bottom: 10px;
+        }
+
+        .post-left p {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #555;
+        }
+
+        .post-left a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .post-right {
+            width: 60%;
+        }
+
+        .post-box {
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .post-option {
+            padding: 16px;
+            border-radius: 10px;
+            border: 1px solid transparent;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+
+        .post-option.active {
+            border: 1px solid #000;
+            background: #fafafa;
+        }
+
+        .post-option input {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+
+        .recommended-tag {
+            background: #d1f5d8;
+            color: #028858;
+            padding: 3px 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-left: 10px;
+        }
+
+        @media (max-width: 1024px) {
+            .content {
+                width: 100%;
+                max-width: 100%;
+                padding: 20px;
+            }
+
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #e6e6e6;
+                display: flex;
+                overflow-x: auto;
+                padding: 10px 15px;
+                height: auto;
+            }
+
+            .sidebar a {
+                margin-right: 20px;
+            }
+
+            .shipping-left, .shipping-right,
+            .post-left, .post-right {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- TOP TABS -->
+    <div class="top-tabs">
+        <a href="#" class="active">Basics</a>
+        <a href="reward.html">Rewards</a>
+
+        <a href="#">Story</a>
+        <a href="#">People</a>
+        <a href="#">Payment</a>
+        <a href="#">Boost</a>
+    </div>
+    <div class="main">
+
+        <!-- LEFT SIDEBAR -->
+  
+
+        <!-- RIGHT CONTENT -->
+        <div class="content">
+
+            <h1>Basics</h1>
+            <p class="subtitle">Get started with the essential information about your project.</p>
+
+            <!-- PROJECT TITLE -->
+            <div class="box">
+                <label>Project Title</label>
+                <input type="text" placeholder="Enter your project title...">
+                <p class="note">Write a clear title so people understand what you are creating.</p>
+            </div>
+
+            <!-- SHORT DESCRIPTION -->
+            <div class="box">
+                <label>Short Description</label>
+                <textarea placeholder="Describe your project in one or two sentences..."></textarea>
+                <p class="note">This will show on your project card.</p>
+            </div>
+
+            <!-- CATEGORY -->
+            <div class="box">
+                <label>Project Category</label>
+                <select>
+                    <option>Select category</option>
+                    <option>Technology</option>
+                    <option>Art</option>
+                    <option>Film & Video</option>
+                    <option>Design</option>
+                    <option>Fashion</option>
+                </select>
+            </div>
+
+            <!-- LOCATION -->
+            <div class="box">
+                <label>Location</label>
+                <input type="text" placeholder="City, Country">
+            </div>
+
+            <!-- PROJECT IMAGE -->
+            <div class="box">
+                <h2 style="margin-top:0; font-size:22px;">Project image</h2>
+
+                <p style="color:#555; line-height:1.6; font-size:15px;">
+                    Add an image that clearly represents your project...
+                </p>
+
+                <div class="upload-box">
+                    <label for="projectImage" class="upload-btn">Upload an image</label>
+                    <input type="file" id="projectImage" accept="image/*">
+                    <img id="preview" class="preview-img" alt="Image Preview">
+                    <p style="margin-top: 12px; font-size: 14px; color:#666;">
+                        Drop an image here, or select a file.<br>Must be JPG, PNG, GIF, or WEBP under 50 MB.
+                    </p>
+                </div>
+            </div>
+
+            <!-- FUNDING GOAL -->
+            <div class="box">
+                <h2 style="margin-top:0; font-size:22px;">Funding goal</h2>
+
+                <p style="font-size:15px; color:#555;">
+                    Set an achievable goal that covers what you need to complete your project.
+                </p>
+
+                <label>Goal amount</label>
+                <input type="text" value="€ 0">
+
+                <div style="margin-top:18px; border-top:1px solid #eee; padding-top:18px;">
+                    <img src="https://cdn-icons-png.flaticon.com/512/992/992651.png"
+                         style="width:40px; vertical-align:middle; margin-right:10px;">
+                    <a href="#" class="calc-link">Use our calculator</a>
+                    to estimate total costs.
+                </div>
+            </div>
+
+            <!-- TARGET LAUNCH DATE -->
+            <div class="box">
+                <h2 style="margin-top:0; font-size:22px;">Target launch date <span style="color:#777;">(optional)</span></h2>
+
+                <p style="font-size:15px; color:#555;">
+                    We’ll provide you with recommendations on when to complete steps that may take a few days to process.
+                    You can edit this date up until the moment you launch your project, which must always be done manually.
+                </p>
+
+                <div class="date-grid">
+                    <input type="text" placeholder="DD">
+                    <input type="text" placeholder="MM">
+                    <input type="text" placeholder="YYYY">
+                    <div class="calendar-btn">📅</div>
+                </div>
+
+                <ul style="margin-top:15px; color:#444; font-size:15px; line-height:1.7;">
+                    <li>Confirm your identity and provide payment details</li>
+                    <li>Submit your project for review</li>
+                </ul>
+
+                <div class="small-note">
+                    <img src="https://cdn-icons-png.flaticon.com/512/1828/1828643.png">
+                    Setting a target date won’t automatically launch your project.
+                </div>
+            </div>
+
+            <!-- CAMPAIGN DURATION -->
+            <div class="box">
+                <h2 style="margin-top:0; font-size:22px;">Campaign duration</h2>
+                <p style="font-size:15px; color:#555;">
+                    Set a time limit for your campaign. You won’t be able to change this after you launch.
+                </p>
+
+                <div class="radio-option">
+                    <input type="radio" name="duration"> Fixed number of days (1–60)
+                </div>
+
+                <div class="radio-option">
+                    <input type="radio" name="duration"> End on a specific date & time
+                </div>
+
+                <div class="green-note">✔ Campaigns that last 30 days or less are more likely to be successful.</div>
+                <div class="green-note">✔ Pledge Over Time won’t be available for Late Pledge backers.</div>
+            </div>
+
+            <!-- SHIPPING SECTION -->
+            <div class="shipping-container">
+
+                <div class="shipping-left">
+                    <h2>Shipping</h2>
+                    <p>Choose when backers pay shipping costs.</p>
+                    <p>
+                        Decide whether charging shipping at pledge, or post-campaign through a pledge manager,
+                        works best for your project.
+                    </p>
+                    <a href="#">Learn more</a>
+                </div>
+
+                <div class="shipping-right">
+                    <div class="shipping-box">
+                        
+                        <div class="ship-option active">
+                            <input type="radio" name="ship" checked>
+                            Charge shipping at pledge
+                            <div class="ship-description">
+                                Set actual shipping costs when adding rewards and add-ons. Backers will pay their
+                                pledge total, including any applicable shipping costs, when your campaign ends successfully.
+                            </div>
+                        </div>
+
+                        <div class="ship-option">
+                            <input type="radio" name="ship">
+                            Charge shipping post-campaign
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- POST-CAMPAIGN SECTION -->
+            <div class="post-container">
+
+                <div class="post-left">
+                    <h2>Post-campaign</h2>
+                    <p>Set up what is next for your project, after your campaign ends successfully.</p>
+
+                    <p>
+                        <strong>Late Pledges:</strong> Keep the momentum going and continue collecting pledges after your
+                        campaign ends. Learn how to maximize funding with this feature in our
+                        <a href="#">Late Pledges guide</a>.
+                    </p>
+
+                    <p>
+                        <strong>Pledge Manager:</strong> The all-in-one toolkit for all your post-campaign needs. Discover more
+                        about the <a href="#">Kickstarter Pledge Manager</a>.
+                    </p>
+                </div>
+
+                <div class="post-right">
+                    <div class="post-box">
+
+                        <div class="post-option">
+                            <input type="radio" name="latePledge">
+                            Yes, enable Late Pledges
+                            <span class="recommended-tag">Recommended</span>
+                        </div>
+
+                        <div class="post-option active">
+                            <input type="radio" name="latePledge" checked>
+                            No, don't enable Late Pledges
+                            <div class="ship-description">
+                                Backers will only be able to pledge to your project until it reaches its deadline.
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <button class="next-btn" id="nextBtn">Next: Additional subcategory</button>
+
+        </div>
+    </div>
+
+    <!-- JS -->
+    <script>
+        const fields = document.querySelectorAll("input[type=text], textarea, select");
+        const nextBtn = document.getElementById("nextBtn");
+
+        fields.forEach(field => {
+            field.addEventListener("input", () => {
+                let allFilled = true;
+                fields.forEach(f => {
+                    if (f.value.trim() === "") allFilled = false;
+                });
+                if (allFilled) nextBtn.classList.add("active");
+                else nextBtn.classList.remove("active");
+            });
+        });
+
+        const projectImage = document.getElementById("projectImage");
+        const preview = document.getElementById("preview");
+
+        projectImage.addEventListener("change", function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    preview.src = e.target.result;
+                    preview.style.display = "block";
+                }
+                reader.readAsDataURL(file);
+            } else {
+                preview.src = "";
+                preview.style.display = "none";
+            }
+        });
+
+        const shipOptions = document.querySelectorAll(".ship-option");
+
+        shipOptions.forEach(option => {
+            option.addEventListener("click", () => {
+                shipOptions.forEach(o => o.classList.remove("active"));
+                option.classList.add("active");
+                option.querySelector("input").checked = true;
+            });
+        });
+
+        const postOptions = document.querySelectorAll(".post-option");
+
+        postOptions.forEach(option => {
+            option.addEventListener("click", () => {
+                postOptions.forEach(o => o.classList.remove("active"));
+                option.classList.add("active");
+                option.querySelector("input").checked = true;
+            });
+        });
+
+    </script>
+
+</body>
+</html>

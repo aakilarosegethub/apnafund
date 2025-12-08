@@ -3,1761 +3,1244 @@
     $activeThemeTrue = 'themes.apnafund.';
     
     // Check if campaign belongs to current user
-    if ($campaign->user_id !== auth()->id()) {
+    if (isset($campaign) && $campaign->user_id !== auth()->id()) {
         abort(403, 'Unauthorized access to this campaign.');
     }
+    
+    // Set default section if not provided
+    $section = $section ?? 'basics';
 @endphp
-@extends($activeTheme . 'layouts.dashboard')
+@extends($activeTheme . 'layouts.frontend')
 @section('style')
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet" />
+<style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background: #fff;
+        }
 
-  <style>
-    :root { --radius: 24px; --border:#e6e6e6; }
-    .editor-shell{
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      overflow:hidden;
-      box-shadow:0 1px 0 rgba(0,0,0,.02);
-      background: #fff;
-      position: relative;
-    }
-    /* Editor */ 
-    #editor{
-      background:#fff;
-      height: 400px;
-      min-height: 400px;
-    }
-    .ql-container.ql-snow{
-      border:none;
-      font-size: 16px;
-    }
-    .ql-editor{
-      font-size:22px;
-      color:#404040;
-      min-height: 350px;
-      padding: 20px;
-    }
-    .ql-editor p {
-      margin-bottom: 1em;
-    }
-    .ql-editor.ql-blank::before{
-      color:#9aa0a6; /* placeholder color */
-      left:32px; right:32px;
-    }
-    /* Toolbar placed at the bottom */
-    .ql-toolbar{
-      border-top:1px solid var(--border) !important;
-      border-bottom:none !important;
-      border-left:none !important;
-      border-right:none !important;
-      padding:10px 16px !important;
-      display:flex !important;
-      gap:8px;
-      justify-content:flex-start;
-      background:#fff !important;
-      min-height: 50px;
-    }
-    .ql-snow .ql-picker, .ql-snow .ql-stroke{color:#111;stroke:#111}
-    .ql-snow .ql-fill{fill:#111}
-    .ql-snow .ql-active .ql-stroke{stroke:#0f8e6f}
-    .ql-snow .ql-active .ql-fill{fill:#0f8e6f}
-    /* Make buttons a bit larger, like the screenshot */
-    .ql-toolbar button{
-      width:36px;height:36px;border-radius:10px;
-      border: 1px solid #ddd;
-      background: #fff;
-    }
-    .ql-toolbar button:hover {
-      background: #f5f5f5;
-    }
-    .ql-toolbar .ql-picker {
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      background: #fff;
-    }
-    .hidden-input{ display:none; }
-    
-    /* Ensure Quill editor is visible */
-    .ql-container {
-      display: block !important;
-      visibility: visible !important;
-    }
-    .ql-editor {
-      display: block !important;
-      visibility: visible !important;
-    }
-    .ql-toolbar {
-      display: flex !important;
-      visibility: visible !important;
-    }
-    
-    /* YouTube iframe styling in editor */
-    .ql-editor iframe {
-      max-width: 100%;
-      height: auto;
-      border-radius: 8px;
-      margin: 10px 0;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    
-    /* Responsive iframe */
-    .ql-editor iframe[src*="youtube.com/embed/"] {
-      width: 100%;
-      height: 315px;
-      max-width: 560px;
-    }
-    
-    @media (max-width: 768px) {
-      .ql-editor iframe[src*="youtube.com/embed/"] {
-        height: 200px;
-      }
-    }
-    
-    /* Gallery UI Styles */
-    .gallery-section {
-      margin-bottom: 2rem;
-    }
-    
-    .gallery-dropzone {
-      border: 2px dashed #dee2e6;
-      border-radius: 12px;
-      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-      transition: all 0.3s ease;
-      min-height: 200px;
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .gallery-dropzone:hover {
-      border-color: #0f8e6f;
-      background: linear-gradient(135deg, #e8f5f3 0%, #d1f2eb 100%);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(15, 142, 111, 0.15);
-    }
-    
-    .gallery-dropzone .dz-message {
-      text-align: center;
-      padding: 2rem;
-      margin: 0;
-    }
-    
-    .upload-icon {
-      font-size: 3rem;
-      color: #0f8e6f;
-      margin-bottom: 1rem;
-      animation: float 3s ease-in-out infinite;
-    }
-    
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-10px); }
-    }
-    
-    .upload-title {
-      color: #2c3e50;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-    }
-    
-    .upload-subtitle {
-      color: #6c757d;
-      margin-bottom: 1rem;
-    }
-    
-    .upload-info {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-    }
-    
-    .upload-info .badge {
-      font-size: 0.75rem;
-      padding: 0.4rem 0.8rem;
-    }
-    
-    .gallery-help-text {
-      margin-top: 1rem;
-      padding: 0.75rem 1rem;
-      background: #e3f2fd;
-      border-radius: 8px;
-      border-left: 4px solid #2196f3;
-    }
-    
-    .gallery-help-text i {
-      color: #2196f3;
-    }
-    
-    /* Gallery Image Cards */
-    .gallery-image-card {
-      background: white;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      transition: all 0.3s ease;
-      height: 100%;
-    }
-    
-    .gallery-image-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-    
-    .image-container {
-      position: relative;
-      width: 100%;
-      height: 180px;
-      overflow: hidden;
-    }
-    
-    .gallery-image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform 0.3s ease;
-    }
-    
-    .gallery-image-card:hover .gallery-image {
-      transform: scale(1.05);
-    }
-    
-    .image-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.7);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-    
-    .gallery-image-card:hover .image-overlay {
-      opacity: 1;
-    }
-    
-    .remove-btn {
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: none;
-      box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
-    }
-    
-    .remove-btn:hover {
-      transform: scale(1.1);
-      box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
-    }
-    
-    .gallery-preview {
-      background: #f8f9fa;
-      border-radius: 8px;
-      padding: 1rem;
-      border: 1px solid #e9ecef;
-    }
-    
-    .gallery-preview-title {
-      color: #495057;
-      font-size: 0.9rem;
-      font-weight: 600;
-      margin-bottom: 0.75rem;
-    }
-    
-    /* Gallery Upload Area */
-    .gallery-upload-area {
-      border: 2px dashed #dee2e6;
-      border-radius: 12px;
-      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-      transition: all 0.3s ease;
-      min-height: 200px;
-      position: relative;
-      overflow: hidden;
-      cursor: pointer;
-    }
-    
-    .gallery-upload-area:hover {
-      border-color: #0f8e6f;
-      background: linear-gradient(135deg, #e8f5f3 0%, #d1f2eb 100%);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(15, 142, 111, 0.15);
-    }
-    
-    .upload-content {
-      text-align: center;
-      padding: 2rem;
-      margin: 0;
-    }
-    
-    .upload-icon {
-      font-size: 3rem;
-      color: #0f8e6f;
-      margin-bottom: 1rem;
-      animation: float 3s ease-in-out infinite;
-    }
-    
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-10px); }
-    }
-    
-    .upload-title {
-      color: #2c3e50;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-    }
-    
-    .upload-subtitle {
-      color: #6c757d;
-      margin-bottom: 1rem;
-    }
-    
-    .upload-info {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-    }
-    
-    .upload-info .badge {
-      font-size: 0.75rem;
-      padding: 0.4rem 0.8rem;
-    }
-    
-    /* Required field styling - only for fields with required-field class */
-    .required-field .form-label {
-      color: #dc3545 !important;
-      font-weight: 600;
-    }
-    
-    .required-field .form-label:after {
-      content: " *";
-      color: #dc3545;
-      font-weight: bold;
-    }
-    
-    /* Make entire label red for required fields */
-    .required-field .form-label {
-      color: #dc3545 !important;
-      font-weight: 600;
-    }
-    
-    /* Required input styling */
-    .form-control[required] {
-      border-left: 3px solid #dc3545;
-    }
-    
-    .form-control[required]:focus {
-      border-color: #dc3545;
-      box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
-    }
-    
-    /* Required select styling */
-    .form-select[required] {
-      border-left: 3px solid #dc3545;
-    }
-    
-    .form-select[required]:focus {
-      border-color: #dc3545;
-      box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
-    }
-    
-    /* Error field styling */
-    .is-invalid {
-      border-color: #dc3545 !important;
-      box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
-    }
-    
-    .is-invalid:focus {
-      border-color: #dc3545 !important;
-      box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
-    }
-    
-    /* Smooth scroll behavior */
-    html {
-      scroll-behavior: smooth;
-    }
-    
-    /* Toast notification positioning */
-    .toast-top-right {
-      top: 20px;
-      right: 20px;
-    }
-    
-    /* Preview Styles */
-    .preview-card {
-      border: 1px solid #e9ecef;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      transition: all 0.3s ease;
-    }
-    
-    .preview-card:hover {
-      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-    }
-    
-    .preview-image {
-      height: 200px;
-      background: #f8f9fa;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .preview-content {
-      padding: 1.5rem;
-    }
-    
-    .preview-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: #2c3e50;
-      margin-bottom: 0.75rem;
-      line-height: 1.3;
-    }
-    
-    .preview-description {
-      color: #6c757d;
-      font-size: 0.9rem;
-      line-height: 1.5;
-      margin-bottom: 1rem;
-      min-height: 2.5rem;
-    }
-    
-    .preview-meta {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-    }
-    
-    .preview-category {
-      background: #e3f2fd;
-      color: #1976d2;
-      padding: 0.25rem 0.75rem;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      font-weight: 500;
-    }
-    
-    .preview-amount {
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: #0f8e6f;
-    }
-    
-    .preview-progress {
-      margin-top: 1rem;
-    }
-    
-    .preview-gallery, .preview-video {
-      background: #f8f9fa;
-      border-radius: 8px;
-      padding: 1rem;
-      border: 1px solid #e9ecef;
-    }
-    
-    .preview-gallery-title, .preview-video-title {
-      color: #495057;
-      font-size: 0.9rem;
-      font-weight: 600;
-      margin-bottom: 0.75rem;
-    }
-    
-    .preview-gallery-images img {
-      border-radius: 6px;
-      transition: transform 0.2s ease;
-    }
-    
-    .preview-gallery-images img:hover {
-      transform: scale(1.05);
-    }
-    
-    .preview-video-container iframe {
-      border-radius: 8px;
-    }
-    
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-      .gallery-dropzone {
-        min-height: 150px;
-      }
-      
-      .upload-icon {
-        font-size: 2rem;
-      }
-      
-      .upload-title {
-        font-size: 1.1rem;
-      }
-      
-      .preview-image {
-        height: 150px;
-      }
-      
-      .preview-content {
-        padding: 1rem;
-      }
-      
-      .preview-title {
-        font-size: 1.1rem;
-      }
-    }
-  </style>
+        /* TOP TABS */
+        .top-tabs {
+            display: flex;
+            border-bottom: 1px solid #e6e6e6;
+            background: #fafafa;
+            padding: 15px 40px;
+            gap: 32px;
+            font-size: 15px;
+            font-weight: 500;
+            flex-wrap: wrap;
+        }
+
+        .top-tabs a {
+            text-decoration: none;
+            color: #777;
+        }
+
+        .top-tabs a.active {
+            color: #000;
+            font-weight: 600;
+        }
+
+        /* MAIN AREA */
+        .main {
+            display: flex;
+            width: 100%;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content:center;
+        }
+
+        /* LEFT SIDEBAR */
+        .sidebar {
+            width: 220px;
+            border-right: 1px solid #e6e6e6;
+            padding: 20px 25px;
+            height: auto;
+            flex-shrink: 0;
+        }
+
+        .sidebar a {
+            display: block;
+            margin-bottom: 14px;
+            text-decoration: none;
+            color: #333;
+            font-size: 15px;
+        }
+
+        .sidebar a.active {
+            font-weight: 600;
+        }
+
+        /* CONTENT AREA */
+        .content {
+            padding: 30px 40px;
+            width: calc(100% - 220px);
+            max-width: 750px;
+        }
+
+        h1 {
+            font-size: 36px;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .box {
+            border: 1px solid #e3e3e3;
+            border-radius: 10px;
+            padding: 22px;
+            margin-bottom: 25px;
+        }
+
+        label {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 14px;
+            border-radius: 8px;
+            border: 1px solid #d9d9d9;
+            font-size: 15px;
+        }
+
+        textarea {
+            height: 130px;
+        }
+
+        .note {
+            font-size: 13px;
+            margin-top: 5px;
+            color: #777;
+        }
+
+        .next-btn {
+            background: #028858;
+            color: #fff;
+            padding: 14px 34px;
+            border-radius: 40px;
+            border: none;
+            cursor: pointer;
+            opacity: 0.6;
+            font-size: 15px;
+            margin-top: 25px;
+            pointer-events: none;
+        }
+
+        .next-btn.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        #topActionButtons {
+            display: none;
+            gap: 10px;
+            align-items: center;
+        }
+
+        #topActionButtons.visible {
+            display: flex;
+        }
+
+        #topExitBtn {
+            background: #666 !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+
+        #topExitBtn:hover {
+            background: #555 !important;
+        }
+
+        /* UPLOAD BOX */
+        .upload-box {
+            border: 2px dashed #d9d9d9;
+            border-radius: 12px;
+            padding: 45px 20px;
+            text-align: center;
+            margin-top: 25px;
+            position: relative;
+        }
+
+        .upload-btn {
+            padding: 12px 26px;
+            border-radius: 6px;
+            background: white;
+            border: 1px solid #bcbcbc;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .preview-img {
+            max-width: 100%;
+            max-height: 250px;
+            margin-top: 15px;
+            border-radius: 10px;
+            display: none;
+            object-fit: cover;
+        }
+
+        /* Launch Date Grid */
+        .date-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 15px;
+            margin-top: 15px;
+            max-width: 400px;
+        }
+
+        .date-grid input {
+            text-align: center;
+        }
+
+        .calendar-btn {
+            width: 50px;
+            height: 48px;
+            border: 1px solid #d9d9d9;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background: #fff;
+        }
+
+        .calendar-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .small-note {
+            font-size: 14px;
+            margin-top: 10px;
+            color: #028858;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .small-note img {
+            width: 18px;
+        }
+
+        /* Campaign Duration Notes */
+        .radio-option {
+            margin-bottom: 14px;
+            font-size: 16px;
+        }
+
+        .green-note {
+            color: #028858;
+            font-size: 14px;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        /* SHIPPING SECTION — NOW BOX STYLE */
+        .shipping-container {
+            border: 1px solid #e3e3e3;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        .shipping-left {
+            width: 40%;
+        }
+
+        .shipping-left h2 {
+            font-size: 26px;
+            margin: 0 0 10px;
+        }
+
+        .shipping-left p {
+            font-size: 15px;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .shipping-left a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .shipping-right {
+            width: 60%;
+        }
+
+        .shipping-box {
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .ship-option {
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border: 1px solid transparent;
+            cursor: pointer;
+        }
+
+        .ship-option.active {
+            border: 1px solid #000;
+            background: #fafafa;
+        }
+
+        .ship-option input {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+
+        .ship-description {
+            font-size: 14px;
+            color: #666;
+            margin-left: 28px;
+            margin-top: 6px;
+        }
+
+        /* POST CAMPAIGN SECTION — NOW BOX STYLE */
+        .post-container {
+            border: 1px solid #e3e3e3;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        .post-left {
+            width: 40%;
+        }
+
+        .post-left h2 {
+            font-size: 26px;
+            margin-bottom: 10px;
+        }
+
+        .post-left p {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #555;
+        }
+
+        .post-left a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .post-right {
+            width: 60%;
+        }
+
+        .post-box {
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .post-option {
+            padding: 16px;
+            border-radius: 10px;
+            border: 1px solid transparent;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+
+        .post-option.active {
+            border: 1px solid #000;
+            background: #fafafa;
+        }
+
+        .post-option input {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+
+        .recommended-tag {
+            background: #d1f5d8;
+            color: #028858;
+            padding: 3px 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-left: 10px;
+        }
+
+        @media (max-width: 1024px) {
+            .content {
+                width: 100%;
+                max-width: 100%;
+                padding: 20px;
+            }
+
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #e6e6e6;
+                display: flex;
+                overflow-x: auto;
+                padding: 10px 15px;
+                height: auto;
+            }
+
+            .sidebar a {
+                margin-right: 20px;
+            }
+
+            .shipping-left, .shipping-right,
+            .post-left, .post-right {
+                width: 100%;
+            }
+        }
+    </style>
 @endsection
 @section('frontend')
-                <div class="tab-pane fade active show" id="create" role="tabpanel">
-                    <div class="row">
-                        <div class="col-lg-8">
-                            <div class="content-card">
-                                <h4 class="mb-4">Edit Contribution Campaign</h4>
-                                
-                                <form action="{{ route('user.campaign.update', $campaign->id) }}" method="POST" id="editGigForm" enctype="multipart/form-data" novalidate>
-                                    @csrf
-                                    <input type="hidden" name="campaign_id" value="{{ $campaign->id }}">
-                                    <div class="row">
-                                        <div class="col-md-8">
-                                            <div class="form-group required-field">
-                                                <label for="gigTitle" class="form-label">Gig Title  </label>
-                                                <input type="text" class="form-control" id="gigTitle" name="name" placeholder="Enter a compelling title for your gig" value="{{ $campaign->name }}" required>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="form-group required-field">
-                                                <label for="gigCategory" class="form-label">Category  </label>
-                                                <select class="form--control form-select" name="category_id" id="gigCategory" required>
-                                                    <option value="">@lang('Select Category')</option>
-                                                    @foreach ($categories as $category)
-                                                        <option value="{{ $category->id }}" @selected($campaign->category_id == $category->id)>
-                                                            {{ __(@$category->name) }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group required-field">
-                                        <label for="gigDescription" class="form-label">Story  </label>
-                                        <div class="editor-shell">
-      <!-- The editor -->
-      <div id="editor" placeholder="Hi, my name is Jane and I'm fundraising for…"></div>
-
-      <!-- Toolbar at the bottom -->
-      <div id="toolbar">
-        <span class="ql-formats">
-          <select class="ql-header">
-            <option value="1">Heading 1</option>
-            <option value="2">Heading 2</option>
-            <option value="3">Heading 3</option>
-            <option value="4">Heading 4</option>
-            <option value="5">Heading 5</option>
-            <option value="6">Heading 6</option>
-            <option selected>Normal</option>
-          </select>
-        </span>
-        <span class="ql-formats">
-          <button class="ql-bold"></button>
-          <button class="ql-italic"></button>
-          <button class="ql-underline"></button>
-          <button class="ql-strike"></button>
-        </span>
-        <span class="ql-formats">
-          <button class="ql-list" value="ordered"></button>
-          <button class="ql-list" value="bullet"></button>
-        </span>
-        <span class="ql-formats">
-          <button class="ql-link"></button>
-          <button class="ql-image"></button>
-          <button class="ql-video"></button>
-          <button class="ql-clean"></button>
-        </span>
-      </div>
-                                        </div>
-                                        <textarea id="gigDescription" name="description" style="visibility: hidden;" required>{{ $campaign->description }}</textarea>
-                                    </div>
-
-                                    <!-- Main Campaign Image -->
-                                    <div class="form-group">
-                                        <label for="mainImage" class="form-label">Main Campaign Image</label>
-                                        <input type="file" class="form-control" id="mainImage" name="image" accept="image/*">
-                                        <small class="text-muted">Upload a new image to replace the current one, or leave empty to keep existing image</small>
-                                        @if($campaign->image)
-                                            <div class="mt-2">
-                                                <small class="text-info">Current image: {{ $campaign->image }}</small>
-                                            </div>
-                                        @endif
-                                    </div>
-
-                                    <!-- YouTube Video URL --> 
-                                        <label class="form-label">Campaign Video (YouTube URL)</label>
-                                        
-                                        <!-- YouTube URL Section -->
-                                        <div id="youtube_url_section_new">
-                                            <input type="url" class="form-control mb-2" name="youtube_url" id="youtube_url_new" placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ" value="{{ $campaign->youtube_url }}">
-                                            <small class="text-muted">Enter YouTube video URL for better streaming performance - Optional</small>
-                                            <div class="mt-2">
-                                                <div class="youtube-preview-new"></div>
-                                                <div id="youtube-validation-message" class="text-danger mt-1" style="display: none;"></div>
-                                            </div>
-                                        </div>
-                                    
 
 
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="form-group required-field">
-                                                <label for="targetAmount" class="form-label">Target Amount ({{ $setting->cur_sym }})  </label>
-                                                <input type="number" name="goal_amount" class="form-control" id="targetAmount" placeholder="5000" min="1" step="0.01" value="{{ $campaign->goal_amount }}" required>
-                                            </div>
-                                        </div>
-                                    </div>
+    <!-- TOP TABS -->
+    <div class="top-tabs">
+        <div style="display: flex; align-items: center; gap: 32px; flex: 1;">
+            <a href="{{ route('user.campaign.edit.basics', $campaign->slug) }}" class="{{ ($section ?? 'basics') == 'basics' ? 'active' : '' }}">Basics</a>
+            <a href="{{ route('user.campaign.edit.reward', $campaign->slug) }}" class="{{ ($section ?? 'basics') == 'reward' ? 'active' : '' }}">Rewards</a>
+            <a href="{{ route('user.campaign.edit.story', $campaign->slug) }}" class="{{ ($section ?? 'basics') == 'story' ? 'active' : '' }}">Story</a>
+            <a href="{{ route('user.campaign.edit.people', $campaign->slug) }}" class="{{ ($section ?? 'basics') == 'people' ? 'active' : '' }}">People</a>
+            <a href="{{ route('user.campaign.edit.payment', $campaign->slug) }}" class="{{ ($section ?? 'basics') == 'payment' ? 'active' : '' }}">Payment</a>
+            <a href="{{ route('user.campaign.edit.boost', $campaign->slug) }}" class="{{ ($section ?? 'basics') == 'boost' ? 'active' : '' }}">Boost</a>
+        </div>
+        <div id="topActionButtons" style="display: none; gap: 10px; align-items: center;">
+            <button type="button" id="topExitBtn" class="next-btn" style="margin: 0; padding: 8px 20px; font-size: 14px; background: #666;">Exit</button>
+            <button type="button" id="topSaveBtn" class="next-btn active" style="margin: 0; padding: 8px 20px; font-size: 14px;">Save</button>
+        </div>
+        <button type="button" id="topEditBtn" class="d-none next-btn active" style="margin: 0; padding: 8px 20px; font-size: 14px;">Edit</button>
+    </div>
+    <div class="main">
+        
 
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="form-group required-field">
-                                                <label for="startDate" class="form-label">Start Date  </label>
-                                                <input type="date" name="start_date" class="form-control" id="startDate" value="{{ $campaign->start_date->format('Y-m-d') }}" required>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-12">
-                                            <div class="form-group required-field">
-                                                <label for="endDate" class="form-label">End Date  </label>
-                                                <input type="date" name="end_date" class="form-control" id="endDate" value="{{ $campaign->end_date->format('Y-m-d') }}" required>
-                                            </div>
-                                        </div>
-                                    </div>
+        <!-- LEFT SIDEBAR -->
+  
 
-                                    <div class="d-flex gap-3">
-                                        <button type="button" class="btn btn-primary" id="submitBtn" onclick="showEditorContent()">
-                                            <i class="fas fa-save me-2"></i>Update Campaign 
-                                        </button>
-                                        <button type="button" class="btn btn-secondary">
-                                            <i class="fas fa-times me-2"></i>Cancel
-                                        </button>
-                                    </div>
-                                </form>
+        <!-- RIGHT CONTENT -->
+        <div class="content">
+            @php
+                $currentSection = $section ?? 'basics';
+            @endphp
+
+            @if(session('toasts'))
+                <div class="alert alert-success" style="background: #d1f5d8; color: #028858; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    @foreach(session('toasts') as $toast)
+                        {{ $toast[1] ?? $toast }}
+                    @endforeach
+                </div>
+            @endif
+
+            @if($errors->any())
+                <div class="alert alert-danger" style="background: #fee; color: #c33; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <ul style="margin: 0; padding-left: 20px;">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            @if($currentSection == 'basics')
+            <form action="{{ route('user.campaign.update', $campaign->id) }}" method="POST" enctype="multipart/form-data" id="basicsForm">
+                @csrf
+                <input type="hidden" name="section" value="basics">
+            <h1>Basics</h1>
+            <p class="subtitle">Get started with the essential information about your project.</p>
+
+            <!-- PROJECT TITLE -->
+            <div class="box">
+                    <label>Project Title *</label>
+                    <input type="text" name="name" value="{{ old('name', $campaign->name) }}" placeholder="Enter your project title..." required>
+                <p class="note">Write a clear title so people understand what you are creating.</p>
+                    @error('name')
+                        <p class="note" style="color: red;">{{ $message }}</p>
+                    @enderror
+            </div>
+
+            <!-- SHORT DESCRIPTION -->
+            <div class="box">
+                    <label>Short Description *</label>
+                    <textarea name="description" placeholder="Describe your project in one or two sentences..." required>{{ old('description', $campaign->description) }}</textarea>
+                <p class="note">This will show on your project card.</p>
+                    @error('description')
+                        <p class="note" style="color: red;">{{ $message }}</p>
+                    @enderror
+            </div>
+
+            <!-- CATEGORY -->
+            <div class="box">
+                    <label>Project Category *</label>
+                    <select name="category_id" required>
+                        <option value="">Select category</option>
+                        @foreach($categories as $category)
+                            <option value="{{ $category->id }}" {{ old('category_id', $campaign->category_id) == $category->id ? 'selected' : '' }}>
+                                {{ $category->name }}
+                            </option>
+                        @endforeach
+                </select>
+                    @error('category_id')
+                        <p class="note" style="color: red;">{{ $message }}</p>
+                    @enderror
+            </div>
+
+            <!-- LOCATION -->
+            <div class="box">
+                <label>Location</label>
+                    <input type="text" name="location" value="{{ old('location', $campaign->location) }}" placeholder="City, Country">
+                    @error('location')
+                        <p class="note" style="color: red;">{{ $message }}</p>
+                    @enderror
+            </div>
+
+            <!-- PROJECT IMAGE -->
+            <div class="box">
+                <h2 style="margin-top:0; font-size:22px;">Project image</h2>
+
+                <p style="color:#555; line-height:1.6; font-size:15px;">
+                    Add an image that clearly represents your project...
+                </p>
+
+                @if($campaign->image)
+                    <div style="margin-bottom: 15px;">
+                        <img src="{{ getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')) }}" 
+                             alt="Current Image" 
+                             style="max-width: 300px; max-height: 200px; border-radius: 8px; border: 1px solid #ddd;">
+                    </div>
+                @endif
+
+                <div class="upload-box">
+                    <label for="projectImage" class="upload-btn">Upload an image</label>
+                    <input type="file" id="projectImage" name="image" accept="image/*">
+                    <img id="preview" class="preview-img" alt="Image Preview" 
+                         @if($campaign->image) 
+                             src="{{ getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')) }}" 
+                             style="display: block;"
+                         @endif>
+                    <p style="margin-top: 12px; font-size: 14px; color:#666;">
+                        Drop an image here, or select a file.<br>Must be JPG, PNG, GIF, or WEBP under 50 MB.
+                    </p>
+                    @error('image')
+                        <p class="note" style="color: red;">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
+
+            <!-- FUNDING GOAL -->
+            <div class="box">
+                <h2 style="margin-top:0; font-size:22px;">Funding goal</h2>
+
+                <p style="font-size:15px; color:#555;">
+                    Set an achievable goal that covers what you need to complete your project.
+                </p>
+
+                <label>Goal amount *</label>
+                <input type="number" name="goal_amount" step="0.01" min="0" value="{{ old('goal_amount', $campaign->goal_amount) }}" placeholder="0.00" required>
+                @error('goal_amount')
+                    <p class="note" style="color: red;">{{ $message }}</p>
+                @enderror
+
+                <div style="margin-top:18px; border-top:1px solid #eee; padding-top:18px;">
+                    <img src="https://cdn-icons-png.flaticon.com/512/992/992651.png"
+                         style="width:40px; vertical-align:middle; margin-right:10px;">
+                    <a href="#" class="calc-link">Use our calculator</a>
+                    to estimate total costs.
+                </div>
+            </div>
+
+            <!-- CAMPAIGN DURATION -->
+            <div class="box">
+                <h2 style="margin-top:0; font-size:22px;">Campaign duration *</h2>
+                <p style="font-size:15px; color:#555;">
+                    Set a time limit for your campaign. You won't be able to change this after you launch.
+                </p>
+
+                <label>Start Date *</label>
+                <input type="date" name="start_date" value="{{ old('start_date', $campaign->start_date ? $campaign->start_date->format('Y-m-d') : '') }}" required>
+                @error('start_date')
+                    <p class="note" style="color: red;">{{ $message }}</p>
+                @enderror
+
+                <label style="margin-top: 15px;">End Date *</label>
+                <input type="date" name="end_date" value="{{ old('end_date', $campaign->end_date ? $campaign->end_date->format('Y-m-d') : '') }}" required>
+                @error('end_date')
+                    <p class="note" style="color: red;">{{ $message }}</p>
+                @enderror
+
+                <div class="green-note" style="margin-top: 15px;">✔ Campaigns that last 30 days or less are more likely to be successful.</div>
+                <div class="green-note">✔ Pledge Over Time won't be available for Late Pledge backers.</div>
+            </div>
+
+            <!-- SHIPPING SECTION -->
+            <div class="shipping-container">
+
+                <div class="shipping-left">
+                    <h2>Shipping</h2>
+                    <p>Choose when backers pay shipping costs.</p>
+                    <p>
+                        Decide whether charging shipping at pledge, or post-campaign through a pledge manager,
+                        works best for your project.
+                    </p>
+                    <a href="#">Learn more</a>
+                </div>
+
+                <div class="shipping-right">
+                    <div class="shipping-box">
+                        
+                        <div class="ship-option active">
+                            <input type="radio" name="ship" checked>
+                            Charge shipping at pledge
+                            <div class="ship-description">
+                                Set actual shipping costs when adding rewards and add-ons. Backers will pay their
+                                pledge total, including any applicable shipping costs, when your campaign ends successfully.
                             </div>
-                      </div>
+                        </div>
 
-                    <div class="col-lg-4">
-                            <div class="content-card">
-                                <div class="d-flex align-items-center justify-content-between mb-3">
-                                    <h5 class="mb-0">
-                                        <i class="fas fa-eye me-2"></i>Live Preview
-                                    </h5>
-                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="refreshPreview()">
-                                        <i class="fas fa-sync-alt"></i>
-                                    </button>
+                        <div class="ship-option">
+                            <input type="radio" name="ship">
+                            Charge shipping post-campaign
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- POST-CAMPAIGN SECTION -->
+            <div class="post-container">
+
+                <div class="post-left">
+                    <h2>Post-campaign</h2>
+                    <p>Set up what is next for your project, after your campaign ends successfully.</p>
+
+                    <p>
+                        <strong>Late Pledges:</strong> Keep the momentum going and continue collecting pledges after your
+                        campaign ends. Learn how to maximize funding with this feature in our
+                        <a href="#">Late Pledges guide</a>.
+                    </p>
+
+                    <p>
+                        <strong>Pledge Manager:</strong> The all-in-one toolkit for all your post-campaign needs. Discover more
+                        about the <a href="#">Kickstarter Pledge Manager</a>.
+                    </p>
+                </div>
+
+                <div class="post-right">
+                    <div class="post-box">
+
+                        <div class="post-option">
+                            <input type="radio" name="latePledge">
+                            Yes, enable Late Pledges
+                            <span class="recommended-tag">Recommended</span>
+                        </div>
+
+                        <div class="post-option active">
+                            <input type="radio" name="latePledge" checked>
+                            No, don't enable Late Pledges
+                            <div class="ship-description">
+                                Backers will only be able to pledge to your project until it reaches its deadline.
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            </form>
+            @endif
+
+            @if($currentSection == 'reward')
+            @php
+                $rewards = $rewards ?? $campaign->rewards()->orderBy('minimum_amount')->get();
+            @endphp
+            
+            <!-- MAIN CONTENT -->
+            <div id="rewardsMainContent">
+                <h1>Create your rewards</h1>
+                
+                <div class="tabs" style="display: flex; gap: 30px; margin-bottom: 10px;">
+                    <button class="tab active" data-tab="items" style="font-size: 16px; color: #555; padding-bottom: 8px; cursor: pointer; border: none; background: none; font-weight: 600; color: #000;">Items</button>
+                    <button class="tab" data-tab="tiers" style="font-size: 16px; color: #555; padding-bottom: 8px; cursor: pointer; border: none; background: none;">Reward tiers</button>
+                    <button class="tab" data-tab="addons" style="font-size: 16px; color: #555; padding-bottom: 8px; cursor: pointer; border: none; background: none;">Add-ons</button>
+                </div>
+                
+                <div class="underline" style="width: 50px; height: 3px; background: black; margin-top: -6px; margin-bottom: 20px;"></div>
+                
+                <p class="desc" style="width: 70%; color: #444; line-height: 1.5; font-size: 15px;">
+                    Including items in your rewards and add-ons makes it easy for backers to understand and 
+                    compare your offerings. An item can be anything you plan to offer your backers. Some 
+                    examples include playing cards, a digital copy of a book, a ticket to a play, or even a 
+                    thank-you in your documentary.
+                </p>
+                
+                <a href="#" class="learn" style="color: #009b5b; text-decoration: none; font-size: 15px;">Learn about creating items</a>
+                
+                <button class="new-item" id="newItemBtn" style="float: right; background: black; color: white; border: none; padding: 10px 18px; font-size: 15px; border-radius: 5px; cursor: pointer; margin-top: -60px;">+ New item</button>
+                
+                <div class="table-head" style="display: grid; grid-template-columns: 1fr 1fr 1fr; margin-top: 90px; font-size: 15px; color: #555; padding: 15px 0; border-bottom: 1px solid #ddd; font-weight: 600;">
+                    <span>Details</span>
+                    <span>Included in</span>
+                    <span>Image</span>
+                </div>
+
+                <!-- REWARDS LIST -->
+                <div id="rewardsList">
+                    @forelse($rewards as $reward)
+                    <div class="reward-item" data-reward-id="{{ $reward->id }}" style="display: grid; grid-template-columns: 1fr 1fr 1fr; padding: 20px 0; border-bottom: 1px solid #eee; align-items: center;">
+                        <div class="reward-details" style="display: flex; align-items: center; gap: 15px;">
+                            @if($reward->image)
+                                <img src="{{ getImage(getFilePath('reward') . '/' . $reward->image, getThumbSize('reward')) }}" 
+                                     alt="{{ $reward->title }}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 5px; border: 1px solid #ddd;">
+                            @else
+                                <div style="width: 60px; height: 60px; background: #f0f0f0; border-radius: 5px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-gift" style="color: #999;"></i>
                                 </div>
-                                <div id="gigPreview">
-                                    <div class="preview-card">
-                                        <div class="preview-image" id="previewMainImage">
-                                            <i class="fas fa-image" id="previewImageIcon" style="{{ $campaign->image ? 'display: none;' : '' }}"></i>
-                                            <img id="previewImage" src="{{ $campaign->image ? getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')) : '' }}" alt="Preview" style="{{ $campaign->image ? 'display: block;' : 'display: none;' }} width: 100%; height: 100%; object-fit: cover; border-radius: 10px 10px 0 0;">
-                                        </div>
-                                        <div class="preview-content">
-                                            <div class="preview-title" id="previewTitle">{{ $campaign->name ?: 'Your Campaign Title' }}</div>
-                                            <div class="preview-description" id="previewDescription">{{ $campaign->description ? strip_tags(Str::limit($campaign->description, 100)) : 'Your campaign description will appear here...' }}</div>
-                                            <div class="preview-meta">
-                                                <span class="preview-category" id="previewCategory">{{ $campaign->category->name ?? 'Category' }}</span>
-                                                <span class="preview-amount" id="previewAmount">{{ $setting->cur_sym }}{{ number_format($campaign->goal_amount, 2) }}</span>
-                                            </div>
-                                            <div class="preview-progress">
-                                                <div class="progress">
-                                                    <div class="progress-bar" style="width: 0%"></div>
-                                                </div>
-                                                <small class="text-muted">0% of <span id="previewGoalAmount">{{ $setting->cur_sym }}{{ number_format($campaign->goal_amount, 2) }}</span> goal</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    
-                                    <!-- YouTube Video Preview -->
-                                    <div class="preview-video mt-3" id="previewVideo" style="display: none;">
-                                        <h6 class="preview-video-title">
-                                            <i class="fab fa-youtube me-2"></i>Video Preview
-                                        </h6>
-                                        <div class="preview-video-container" id="previewVideoContainer">
-                                            <!-- YouTube video will be embedded here -->
-                                        </div>
-                                    </div>
-                                </div>
+                            @endif
+                            <div class="reward-info">
+                                <h3 style="margin: 0; font-size: 16px; font-weight: 600; margin-bottom: 5px;">{{ $reward->title }}</h3>
+                                <p style="margin: 0; font-size: 14px; color: #666;">{{ strLimit($reward->description, 60) }}</p>
+                            </div>
+                        </div>
+                        <div class="reward-included" style="font-size: 14px; color: #555;">
+                            {{ $setting->cur_sym }}{{ showAmount($reward->minimum_amount) }} minimum
+                        </div>
+                        <div class="reward-actions" style="display: flex; gap: 10px; align-items: center;">
+                            <img src="{{ $reward->image ? getImage(getFilePath('reward') . '/' . $reward->image, getThumbSize('reward')) : asset('assets/images/default-reward.png') }}" 
+                                 alt="{{ $reward->title }}" 
+                                 style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px; border: 1px solid #ddd;">
+                            <button class="btn-edit" onclick="editReward({{ $reward->id }})" style="padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; background: #007bff; color: white;">Edit</button>
+                            <button class="btn-delete" onclick="deleteReward({{ $reward->id }})" style="padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; background: #dc3545; color: white;">Delete</button>
+                        </div>
+                    </div>
+                    @empty
+                    <div class="empty-state" style="text-align: center; padding: 60px 20px; color: #888;">
+                        <i class="fas fa-gift" style="font-size: 48px; margin-bottom: 15px; opacity: 0.5;"></i>
+                        <p>No rewards found. Create your first reward to get started.</p>
+                    </div>
+                    @endforelse
+                </div>
+            </div>
+
+            <!-- ADD/EDIT NEW ITEM SECTION -->
+            <div class="item-box" id="itemForm" style="margin-top: 50px; border: 1px solid #ddd; border-radius: 8px; padding: 25px; display: none;">
+                <div class="section-title" id="formTitle" style="font-size: 22px; font-weight: 600; margin-bottom: 20px;">Add a new item</div>
+                
+                <form id="rewardForm" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <input type="hidden" id="rewardId" name="reward_id">
+                    <input type="hidden" id="formAction" name="form_action" value="create">
+                    
+                    <div class="input-group" style="margin-bottom: 25px;">
+                        <label style="font-size: 15px; font-weight: 600; display: block; margin-bottom: 8px;">Item title *</label>
+                        <input type="text" name="title" id="itemTitle" placeholder="Digital photo" class="item-input" style="width: 100%; padding: 12px; font-size: 15px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;" required>
+                        <div class="note" style="font-size: 13px; color: #777; margin-top: 5px;">Add a title that quickly and clearly describes this item</div>
+                    </div>
+
+                    <div class="input-group" style="margin-bottom: 25px;">
+                        <label style="font-size: 15px; font-weight: 600; display: block; margin-bottom: 8px;">Description *</label>
+                        <textarea name="description" id="itemDescription" placeholder="Describe your item..." class="item-textarea" style="width: 100%; padding: 12px; font-size: 15px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; min-height: 100px; resize: vertical;" required></textarea>
+                        <div class="note" style="font-size: 13px; color: #777; margin-top: 5px;">Provide a detailed description of this item</div>
+                    </div>
+
+                    <div class="input-group" style="margin-bottom: 25px;">
+                        <label style="font-size: 15px; font-weight: 600; display: block; margin-bottom: 8px;">Minimum Amount *</label>
+                        <input type="number" name="minimum_amount" id="itemAmount" step="0.01" min="0" placeholder="0.00" class="item-input" style="width: 100%; padding: 12px; font-size: 15px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;" required>
+                        <div class="note" style="font-size: 13px; color: #777; margin-top: 5px;">Minimum pledge amount required for this reward</div>
+                    </div>
+
+                    <div class="input-group" style="margin-bottom: 25px;">
+                        <label style="font-size: 15px; font-weight: 600; display: block; margin-bottom: 8px;">Quantity (optional)</label>
+                        <input type="number" name="quantity" id="itemQuantity" min="1" placeholder="Leave empty for unlimited" class="item-input" style="width: 100%; padding: 12px; font-size: 15px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;">
+                        <div class="note" style="font-size: 13px; color: #777; margin-top: 5px;">Leave empty if you have unlimited quantity</div>
+                    </div>
+
+                    <div class="input-group" style="margin-bottom: 25px;">
+                        <label style="font-size: 15px; font-weight: 600; display: block; margin-bottom: 8px;">Item image (optional)</label>
+                        <div class="note" style="font-size: 13px; color: #777; margin-top: 5px;">Add a picture of your item to help backers understand exactly what comes with their rewards.</div>
+                        <div class="upload-box" style="border: 2px dashed #ccc; border-radius: 10px; padding: 40px; text-align: center; margin-top: 15px;">
+                            <input type="file" id="fileInput" name="image" accept="image/*" style="display:none">
+                            <button type="button" class="upload-btn" onclick="document.getElementById('fileInput').click();" style="background: #efefef; border: 1px solid #bbb; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-size: 14px;">
+                                Upload a file
+                            </button>
+                            <div id="fileName" class="file-name" style="font-size: 14px; margin-top: 12px; color: #444; font-weight: 600;"></div>
+                            <div id="imagePreview"></div>
+                            <div class="upload-info" style="font-size: 13px; color: #888; margin-top: 15px;">
+                                Image specifications: JPG, PNG, GIF, or WEBP, 3:2 ratio, 348 × 232 pixels, 50 MB maximum
                             </div>
                         </div>
                     </div>
-                </div>
+
+                    <div class="form-actions" style="display: flex; gap: 10px; margin-top: 25px;">
+                        <button type="submit" class="btn-save" id="saveBtn" style="padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 15px; background: #009b5b; color: white;">Save</button>
+                        <button type="button" class="btn-cancel" onclick="cancelRewardForm()" style="padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 15px; background: #666; color: white;">Cancel</button>
+                    </div>
+                </form>
+            </div>
+
+            <script>
+                // SHOW/HIDE LOGIC
+                const newItemBtn = document.getElementById('newItemBtn');
+                const rewardsMainContent = document.getElementById('rewardsMainContent');
+                const itemForm = document.getElementById('itemForm');
+                const rewardForm = document.getElementById('rewardForm');
+                const formTitle = document.getElementById('formTitle');
+                const formAction = document.getElementById('formAction');
+                const rewardId = document.getElementById('rewardId');
+
+                newItemBtn.addEventListener('click', function () {
+                    resetRewardForm();
+                    rewardsMainContent.style.display = "none";
+                    itemForm.style.display = "block";
+                    formTitle.textContent = "Add a new item";
+                    formAction.value = "create";
+                });
+
+                function cancelRewardForm() {
+                    rewardsMainContent.style.display = "block";
+                    itemForm.style.display = "none";
+                    resetRewardForm();
+                }
+
+                function resetRewardForm() {
+                    rewardForm.reset();
+                    document.getElementById('fileName').textContent = '';
+                    document.getElementById('imagePreview').innerHTML = '';
+                    rewardId.value = '';
+                }
+
+                // UPLOAD FILE NAME DISPLAY & PREVIEW
+                const fileInput = document.getElementById('fileInput');
+                const fileName = document.getElementById('fileName');
+                const imagePreview = document.getElementById('imagePreview');
+
+                fileInput.addEventListener('change', function () {
+                    if (this.files.length > 0) {
+                        fileName.textContent = "Selected file: " + this.files[0].name;
+                        
+                        // Show preview
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            imagePreview.innerHTML = '<img src="' + e.target.result + '" style="max-width: 200px; max-height: 200px; margin-top: 15px; border-radius: 5px; border: 1px solid #ddd;" alt="Preview">';
+                        };
+                        reader.readAsDataURL(this.files[0]);
+                    } else {
+                        fileName.textContent = '';
+                        imagePreview.innerHTML = '';
+                    }
+                });
+
+                // FORM SUBMISSION
+                rewardForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const formData = new FormData(this);
+                    const action = formAction.value;
+                    const saveBtn = document.getElementById('saveBtn');
+                    const originalText = saveBtn.textContent;
+                    
+                    saveBtn.disabled = true;
+                    saveBtn.textContent = "Saving...";
+                    
+                    let url;
+                    if (action === 'create') {
+                        url = "{{ route('user.rewards.store', $campaign->slug) }}";
+                    } else {
+                        url = "{{ route('user.rewards.update', [$campaign->slug, ':id']) }}".replace(':id', rewardId.value);
+                    }
+                    
+                    fetch(url, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert(data.message || 'An error occurred');
+                            saveBtn.disabled = false;
+                            saveBtn.textContent = originalText;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred. Please try again.');
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = originalText;
+                    });
+                });
+
+                // EDIT REWARD
+                function editReward(id) {
+                    fetch("{{ route('user.rewards.edit', [$campaign->slug, ':id']) }}".replace(':id', id), {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const reward = data.reward;
+                            document.getElementById('itemTitle').value = reward.title || '';
+                            document.getElementById('itemDescription').value = reward.description || '';
+                            document.getElementById('itemAmount').value = reward.minimum_amount || '';
+                            document.getElementById('itemQuantity').value = reward.quantity || '';
+                            document.getElementById('rewardId').value = reward.id;
+                            formAction.value = 'edit';
+                            formTitle.textContent = "Edit item";
+                            
+                            // Clear file input
+                            document.getElementById('fileInput').value = '';
+                            document.getElementById('fileName').textContent = '';
+                            
+                            // Show existing image if available
+                            if (reward.image_url) {
+                                imagePreview.innerHTML = '<img src="' + reward.image_url + '" style="max-width: 200px; max-height: 200px; margin-top: 15px; border-radius: 5px; border: 1px solid #ddd;" alt="Preview"><br><small style="color: #666; margin-top: 5px; display: block;">Current image</small>';
+                            } else {
+                                imagePreview.innerHTML = '';
+                            }
+                            
+                            rewardsMainContent.style.display = "none";
+                            itemForm.style.display = "block";
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Failed to load reward data');
+                    });
+                }
+
+                // DELETE REWARD
+                function deleteReward(id) {
+                    if (!confirm('Are you sure you want to delete this reward?')) {
+                        return;
+                    }
+                    
+                    fetch("{{ route('user.rewards.destroy', [$campaign->slug, ':id']) }}".replace(':id', id), {
+                        method: 'DELETE',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || document.querySelector('input[name="_token"]').value
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert(data.message || 'Failed to delete reward');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred. Please try again.');
+                    });
+                }
+            </script>
+            @endif
+
+            @if($currentSection == 'story')
+            <form action="{{ route('user.campaign.update', $campaign->id) }}" method="POST" enctype="multipart/form-data" id="storyForm">
+                @csrf
+                <input type="hidden" name="section" value="story">
+            <h1>Story</h1>
+            <p class="subtitle">Tell your project's story and connect with backers.</p>
+            
+            <div class="box">
+                <label>Project Story *</label>
+                <textarea name="description" placeholder="Tell your story..." required>{{ old('description', $campaign->description ?? '') }}</textarea>
+                <p class="note">Share the story behind your project and why it matters.</p>
+                @error('description')
+                    <p class="note" style="color: red;">{{ $message }}</p>
+                @enderror
+            </div>
+
+            </form>
+            @endif
+
+            @if($currentSection == 'people')
+            <h1>People</h1>
+            <p class="subtitle">Manage team members and collaborators.</p>
+            
+            <div class="box">
+                <p>People section content will be here. You can manage team members for your campaign.</p>
+            </div>
+            @endif
+
+            @if($currentSection == 'payment')
+            <h1>Payment</h1>
+            <p class="subtitle">Configure payment settings for your campaign.</p>
+            
+            <div class="box">
+                <p>Payment section content will be here. Configure how you'll receive payments.</p>
+            </div>
+            @endif
+
+            @if($currentSection == 'boost')
+            <h1>Boost</h1>
+            <p class="subtitle">Promote and boost your campaign visibility.</p>
+            
+            <div class="box">
+                <p>Boost section content will be here. Promote your campaign to reach more backers.</p>
+            </div>
+            @endif
+
+        </div>
+    </div>
+
+    <!-- JS -->
+    <script>
+        // Top Edit Button Handler - Works for all sections
+        (function() {
+            const topEditBtn = document.getElementById("topEditBtn");
+            const topActionButtons = document.getElementById("topActionButtons");
+            const topSaveBtn = document.getElementById("topSaveBtn");
+            const topExitBtn = document.getElementById("topExitBtn");
+            const currentSection = "{{ $currentSection }}";
+            
+            // Function to show action buttons
+            function showActionButtons() {
+                if (topEditBtn && topActionButtons) {
+                    topEditBtn.style.display = 'none';
+                    topActionButtons.style.display = 'flex';
+                }
+            }
+
+            // Edit button click handler
+            if (topEditBtn && topActionButtons) {
+                topEditBtn.addEventListener('click', function() {
+                    showActionButtons();
+                });
+            }
+
+            // Top Save Button - Submit form based on section
+            if (topSaveBtn) {
+                topSaveBtn.addEventListener('click', function() {
+                    if (currentSection === 'basics') {
+                        const basicsForm = document.getElementById("basicsForm");
+                        if (basicsForm) {
+                            basicsForm.submit();
+                        }
+                    } else if (currentSection === 'story') {
+                        const storyForm = document.getElementById("storyForm");
+                        if (storyForm) {
+                            storyForm.submit();
+                        }
+                    }
+                });
+            }
+
+            // Top Exit Button
+            if (topExitBtn) {
+                topExitBtn.addEventListener('click', function() {
+                    if (confirm('Are you sure you want to exit?')) {
+                        window.location.href = "{{ route('user.campaign.index') }}";
+                    }
+                });
+            }
+
+            // Make showActionButtons available globally
+            window.showActionButtons = showActionButtons;
+        })();
+
+        @if($currentSection == 'basics')
+        // Basics form handling
+        (function() {
+            const basicsForm = document.getElementById("basicsForm");
+            let initialValues = {};
+            
+            if (basicsForm) {
+                // Capture initial form values
+                const allFields = basicsForm.querySelectorAll('input, textarea, select');
+                allFields.forEach(field => {
+                    if (field.name) {
+                        if (field.type === 'file') {
+                            initialValues[field.name] = null;
+                        } else {
+                            initialValues[field.name] = field.value || '';
+                        }
+                    }
+                });
+
+                // Function to check if form has changed
+                function checkFormChanges() {
+                    let formChanged = false;
+                    
+                    const allFields = basicsForm.querySelectorAll('input, textarea, select');
+                    allFields.forEach(field => {
+                        if (!field.name) return;
+                        
+                        const fieldName = field.name;
+                        let currentValue = '';
+                        
+                        if (field.type === 'file') {
+                            if (field.files && field.files.length > 0) {
+                                formChanged = true;
+                                return;
+                            }
+                        } else if (field.type === 'checkbox' || field.type === 'radio') {
+                            currentValue = field.checked ? field.value : '';
+                        } else {
+                            currentValue = field.value || '';
+                        }
+                        
+                        const initialValue = initialValues[fieldName] || '';
+                        
+                        if (currentValue !== initialValue) {
+                            formChanged = true;
+                        }
+                    });
+
+                    // Show buttons if form changed
+                    if (formChanged && typeof window.showActionButtons === 'function') {
+                        window.showActionButtons();
+                    }
+                }
+
+                // Add event listeners to all form fields
+                const formFields = basicsForm.querySelectorAll('input, textarea, select');
+                formFields.forEach(field => {
+                    field.addEventListener('input', checkFormChanges);
+                    field.addEventListener('change', checkFormChanges);
+                    field.addEventListener('keyup', checkFormChanges);
+                });
+
+                // Form submission handling
+                basicsForm.addEventListener("submit", function(e) {
+                    const topSaveBtn = document.getElementById("topSaveBtn");
+                    if (topSaveBtn) {
+                        topSaveBtn.disabled = true;
+                        topSaveBtn.textContent = "Saving...";
+                    }
+                });
+            }
+
+            // Image preview functionality
+            const projectImage = document.getElementById("projectImage");
+            const preview = document.getElementById("preview");
+
+            if (projectImage) {
+                projectImage.addEventListener("change", function() {
+                    const file = this.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = e => {
+                            preview.src = e.target.result;
+                            preview.style.display = "block";
+                        }
+                        reader.readAsDataURL(file);
+                        // Show buttons when image is selected
+                        if (typeof window.showActionButtons === 'function') {
+                            window.showActionButtons();
+                        }
+                    } else {
+                        if (!preview.src || preview.src === '') {
+                            preview.style.display = "none";
+                        }
+                    }
+                });
+            }
+        })();
+        @endif
+
+        @if($currentSection == 'story')
+        // Story form handling
+        (function() {
+            const storyForm = document.getElementById("storyForm");
+            let initialDescription = '';
+            
+            if (storyForm) {
+                // Capture initial description value
+                const descriptionField = storyForm.querySelector('textarea[name="description"]');
+                if (descriptionField) {
+                    initialDescription = descriptionField.value || '';
+                }
+
+                // Function to check if description has changed
+                function checkFormChanges() {
+                    if (descriptionField) {
+                        const currentDescription = descriptionField.value || '';
+                        if (currentDescription !== initialDescription) {
+                            // Show buttons if description changed
+                            if (typeof window.showActionButtons === 'function') {
+                                window.showActionButtons();
+                            }
+                        }
+                    }
+                }
+
+                // Add event listeners to description field
+                if (descriptionField) {
+                    descriptionField.addEventListener('input', checkFormChanges);
+                    descriptionField.addEventListener('change', checkFormChanges);
+                    descriptionField.addEventListener('keyup', checkFormChanges);
+                }
+
+                // Form submission handling
+                storyForm.addEventListener("submit", function(e) {
+                    const topSaveBtn = document.getElementById("topSaveBtn");
+                    if (topSaveBtn) {
+                        topSaveBtn.disabled = true;
+                        topSaveBtn.textContent = "Saving...";
+                    }
+                });
+            }
+        })();
+        @endif
+
+        // Shipping options
+        const shipOptions = document.querySelectorAll(".ship-option");
+        shipOptions.forEach(option => {
+            option.addEventListener("click", () => {
+                shipOptions.forEach(o => o.classList.remove("active"));
+                option.classList.add("active");
+                const input = option.querySelector("input");
+                if (input) input.checked = true;
+            });
+        });
+
+        // Post campaign options
+        const postOptions = document.querySelectorAll(".post-option");
+        postOptions.forEach(option => {
+            option.addEventListener("click", () => {
+                postOptions.forEach(o => o.classList.remove("active"));
+                option.classList.add("active");
+                const input = option.querySelector("input");
+                if (input) input.checked = true;
+            });
+        });
+    </script>
+
 @endsection
 
 @include($activeTheme . 'user.campaign.commonStyleScript')
 
 @push('page-style-lib')
-    <link rel="stylesheet" href="{{ asset('assets/universal/css/datepicker.css') }}">
-    <!-- Load Dropzone CSS from CDN for reliability -->
-    <link rel="stylesheet" href="https://unpkg.com/dropzone@6.0.0-beta.2/dist/dropzone.css">
 @endpush
 
 @push('page-script-lib')
-<script src="{{ asset('assets/universal/js/datepicker.js') }}"></script>
-<script src="{{ asset('assets/universal/js/datepicker.en.js') }}"></script>
-    <!-- Load Dropzone from CDN for reliability -->
-    <script src="https://unpkg.com/dropzone@6.0.0-beta.2/dist/dropzone-min.js"></script>
-    <!-- Quill.js JS - Use stable version -->
-    <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
 @endpush
 
 
 
-@section('page-script')
-  <!-- Hidden file input for image uploads -->
-  <input type="file" id="imageInput" accept="image/*" class="hidden-input" />
 
-<!-- Quill JS already loaded in page-script-lib -->
-
-<script>
-        // Wait for iziToast to load and then configure it
-        document.addEventListener('DOMContentLoaded', function() {
-            // Configure iziToast after it's loaded
-            if (typeof iziToast !== 'undefined') {
-                // iziToast is already configured globally, just log success
-                console.log('iziToast configured successfully');
-            } else {
-                console.error('iziToast library not loaded');
-            }
-        });
-</script>
-    <script>
-  // Define handlers before initializing Quill
-  function customImageHandler() {
-    const input = document.getElementById('imageInput');
-    input.click();
-
-    input.onchange = function() {
-      const file = input.files[0];
-      if (file) {
-        // Create FormData for file upload
-        const formData = new FormData();
-        formData.append('files', file);
-        formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
-
-        // Upload file via AJAX
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', '/user/campaign/upload-image');
-        xhr.onload = function() {
-          if (xhr.status === 200) {
-            try {
-              const response = JSON.parse(xhr.responseText);
-              console.log('Upload response:', response);
-              
-              if (response.location) {
-                console.log('Inserting image:', response.location);
-                // Insert the uploaded image at current cursor position
-                const range = quill.getSelection();
-                if (range) {
-                  quill.insertEmbed(range.index, 'image', response.location);
-                  quill.setSelection(range.index + 1, 0);
-                } else {
-                  // If no selection, insert at the end
-                  const length = quill.getLength();
-                  quill.insertEmbed(length - 1, 'image', response.location);
-                  quill.setSelection(length, 0);
-                }
-                console.log('Image inserted successfully');
-              } else {
-                console.error('No location in response:', response);
-                alert('Upload failed: No image URL returned');
-              }
-            } catch (e) {
-              console.error('JSON parse error:', e);
-              console.log('Raw response:', xhr.responseText);
-              alert('Upload failed: Invalid response format');
-            }
-          } else {
-            console.error('Upload failed with status:', xhr.status);
-            console.log('Response:', xhr.responseText);
-            alert('Upload failed: Server error ' + xhr.status);
-          }
-        };
-        xhr.onerror = function() {
-          console.error('Network error during upload');
-          alert('Upload failed: Network error');
-        };
-        xhr.send(formData);
-      }
-    };
-  }
-
-  function customVideoHandler() {
-    const url = prompt('Paste video URL (YouTube, Vimeo, MP4, etc.)');
-    if (!url) return;
-    
-    // Convert YouTube URL to embeddable format
-    let embedUrl = url;
-    if (url.includes('youtube.com/watch?v=')) {
-      const videoId = url.split('v=')[1].split('&')[0];
-      embedUrl = `https://www.youtube.com/embed/${videoId}`;
-    } else if (url.includes('youtu.be/')) {
-      const videoId = url.split('youtu.be/')[1].split('?')[0];
-      embedUrl = `https://www.youtube.com/embed/${videoId}`;
-    }
-    
-    const range = quill.getSelection(true);
-    if (range) {
-      // Create iframe element for YouTube videos
-      if (embedUrl.includes('youtube.com/embed/')) {
-        const iframe = document.createElement('iframe');
-        iframe.src = embedUrl;
-        iframe.width = '560';
-        iframe.height = '315';
-        iframe.frameBorder = '0';
-        iframe.allowFullscreen = true;
-        iframe.style.border = 'none';
-        iframe.style.borderRadius = '8px';
-        iframe.style.margin = '10px 0';
-        
-        // Insert the iframe
-        quill.clipboard.dangerouslyPasteHTML(range.index, iframe.outerHTML);
-        quill.setSelection(range.index + 1, 0);
-      } else {
-        // For other video URLs, use the standard video embed
-        quill.insertEmbed(range.index, 'video', url, 'user');
-        quill.setSelection(range.index + 1, 0);
-      }
-    }
-  }
-
-  // Initialize Quill editor after DOM is loaded
-  let quill;
-  
-  function initializeQuill() {
-    // Check if editor element exists
-    const editorElement = document.getElementById('editor');
-    if (!editorElement) {
-      console.error('Editor element not found');
-      return false;
-    }
-    
-    // Check if Quill is available
-    if (typeof Quill === 'undefined') {
-      console.error('Quill library not loaded');
-      return false;
-    }
-    
-    try {
-      // Initialize Quill with custom toolbar container
-      quill = new Quill('#editor', {
-        theme: 'snow',
-        placeholder: 'Hi, my name is Jane and I\'m fundraising for…',
-        modules: {
-          toolbar: {
-            container: '#toolbar',
-            handlers: {
-              'image': customImageHandler,
-              'video': customVideoHandler
-            }
-          }
-        }
-      });
-      
-      console.log('Quill editor initialized successfully');
-      
-      // Make quill globally available for debugging
-      window.quill = quill;
-      return true;
-      
-    } catch (error) {
-      console.error('Error initializing Quill editor:', error);
-      return false;
-    }
-  }
-
-  // Wait for both DOM and Quill library to be ready
-  function waitForQuillAndInitialize() {
-    if (typeof Quill !== 'undefined' && document.getElementById('editor')) {
-      console.log('DOM loaded, initializing Quill editor...');
-      
-      // Initialize Quill first
-      const success = initializeQuill();
-      
-      if (success) {
-        // Wait a bit for Quill to be fully initialized
-        setTimeout(function() {
-          const existingContent = document.getElementById('gigDescription').value;
-          console.log('Existing content from textarea:', existingContent);
-          
-          if (existingContent && existingContent.trim() !== '') {
-            console.log('Loading content into Quill editor...');
-            quill.root.innerHTML = existingContent;
-            console.log('Content loaded successfully');
-            
-            // Also update the editor's internal state
-            quill.update();
-          } else {
-            console.log('No existing content found');
-          }
-        }, 100);
-      }
-    } else {
-      // Retry after a short delay
-      setTimeout(waitForQuillAndInitialize, 100);
-    }
-  }
-
-  // Start the initialization process
-  document.addEventListener('DOMContentLoaded', waitForQuillAndInitialize);
-
-  // Function to validate form fields one by one
-  function validateForm() {
-    const errors = [];
-    const form = document.getElementById('editGigForm');
-    
-    // Clear previous error styling
-    clearErrorStyling();
-    
-    // Validate Campaign Title
-    const titleField = document.getElementById('gigTitle');
-    if (!titleField.value.trim()) {
-      errors.push({
-        field: titleField,
-        message: 'Campaign title is required'
-      });
-    }
-    
-    // Validate Category
-    const categoryField = document.getElementById('gigCategory');
-    if (!categoryField.value) {
-      errors.push({
-        field: categoryField,
-        message: 'Please select a category'
-      });
-    }
-    
-    // Validate Description (Quill Editor)
-    let descriptionValid = false;
-            if (quill) {
-                const editorContent = quill.root.innerHTML;
-                const textContent = quill.getText();
-      const hasContent = editorContent && 
-                        editorContent.trim() !== '<p><br></p>' && 
-                        editorContent.trim() !== '<p></p>' &&
-                        textContent.trim() !== '';
-      descriptionValid = hasContent;
-    }
-    
-    if (!descriptionValid) {
-      errors.push({
-        field: document.getElementById('gigDescription'),
-        message: 'Campaign description is required'
-      });
-    }
-    
-    // Validate Target Amount
-    const amountField = document.getElementById('targetAmount');
-    if (!amountField.value || parseFloat(amountField.value) <= 0) {
-      errors.push({
-        field: amountField,
-        message: 'Please enter a valid target amount'
-      });
-    }
-    
-    // Validate Start Date
-    const startDateField = document.getElementById('startDate');
-    if (!startDateField.value) {
-      errors.push({
-        field: startDateField,
-        message: 'Start date is required'
-      });
-    }
-    
-    // Validate End Date
-    const endDateField = document.getElementById('endDate');
-    if (!endDateField.value) {
-      errors.push({
-        field: endDateField,
-        message: 'End date is required'
-      });
-    }
-    
-    // Check if end date is after start date
-    if (startDateField.value && endDateField.value) {
-      const startDate = new Date(startDateField.value);
-      const endDate = new Date(endDateField.value);
-      if (endDate <= startDate) {
-        errors.push({
-          field: endDateField,
-          message: 'End date must be after start date'
-        });
-      }
-    }
-    
-    // Validate YouTube URL if provided
-    const youtubeField = document.getElementById('youtube_url_new');
-    if (youtubeField.value.trim()) {
-      const validation = validateYouTubeUrl(youtubeField.value);
-      if (!validation.valid) {
-        errors.push({
-          field: youtubeField,
-          message: validation.message
-        });
-      }
-    }
-    
-    return errors;
-  }
-  
-  // Function to clear error styling
-  function clearErrorStyling() {
-    const errorFields = document.querySelectorAll('.is-invalid');
-    errorFields.forEach(field => {
-      field.classList.remove('is-invalid');
-      field.style.borderColor = '';
-    });
-  }
-  
-  // Function to scroll to field and focus
-  function scrollToField(field) {
-    field.scrollIntoView({ 
-      behavior: 'smooth', 
-      block: 'center' 
-    });
-    setTimeout(() => {
-      field.focus();
-    }, 500);
-  }
-  
-  // Function to show validation errors
-  function showValidationErrors(errors) {
-    console.log('showValidationErrors called with errors:', errors);
-    
-    if (errors.length === 0) return;
-    
-    // Check if iziToast is available
-    if (typeof iziToast === 'undefined') {
-      console.error('iziToast not available, falling back to alert');
-      alert('Validation Error: ' + errors[0].message);
-      return;
-    }
-    
-    // Show first error with toast
-    const firstError = errors[0];
-    console.log('Showing error toast:', firstError.message);
-    iziToast.error({
-      message: firstError.message,
-      position: "topRight"
-    });
-    
-    // Add error styling to all error fields
-    errors.forEach(error => {
-      error.field.classList.add('is-invalid');
-      error.field.style.borderColor = '#dc3545';
-    });
-    
-    // Scroll to first error field
-    scrollToField(firstError.field);
-    
-    // Show additional errors as info toasts
-    if (errors.length > 1) {
-      setTimeout(() => {
-        console.log('Showing additional errors toast');
-        iziToast.info({
-          message: `Please fix ${errors.length - 1} more field(s)`,
-          position: "topRight"
-        });
-      }, 1000);
-    }
-  }
-  
-  // Test function to check if toast notifications are working
-  function testToast() {
-    console.log('Testing toast notifications...');
-    
-    if (typeof iziToast !== 'undefined') {
-      console.log('iziToast is available, showing test notifications');
-      iziToast.success({
-        message: 'Success toast is working!',
-        position: "topRight"
-      });
-      setTimeout(() => {
-        iziToast.error({
-          message: 'Error toast is working!',
-          position: "topRight"
-        });
-      }, 1000);
-      setTimeout(() => {
-        iziToast.info({
-          message: 'Info toast is working!',
-          position: "topRight"
-        });
-      }, 2000);
-    } else {
-      console.error('iziToast is not available');
-      alert('iziToast library is not loaded. Please check the console for errors.');
-    }
-  }
-
-  // Test function to check if Quill editor is working
-  function testEditor() {
-    console.log('Testing Quill editor...');
-    
-    if (typeof quill !== 'undefined' && quill) {
-      console.log('Quill editor is available and working');
-      
-      // Editor is ready for use
-      console.log('Editor is ready for content editing');
-      
-      if (typeof iziToast !== 'undefined') {
-        iziToast.success({
-          message: 'Quill editor is working! Test content inserted.',
-          position: "topRight"
-        });
-      } else {
-        alert('Quill editor is working! Test content inserted.');
-      }
-    } else {
-      console.error('Quill editor is not available');
-      
-      if (typeof iziToast !== 'undefined') {
-        iziToast.error({
-          message: 'Quill editor is not working. Check console for errors.',
-          position: "topRight"
-        });
-      } else {
-        alert('Quill editor is not working. Check console for errors.');
-      }
-    }
-  }
-
-  // Function to save editor content and submit form
-  function showEditorContent() {
-    console.log('showEditorContent called');
-    
-    // Copy Quill content to textarea first
-    if (quill) {
-      const editorContent = quill.root.innerHTML;
-      const textarea = document.getElementById('gigDescription');
-      if (textarea) {
-        textarea.value = editorContent;
-      }
-    }
-    
-    // Validate form
-    console.log('Starting form validation...');
-    const errors = validateForm();
-    console.log('Validation completed. Errors found:', errors.length);
-    
-    if (errors.length > 0) {
-      console.log('Validation failed, showing errors');
-      showValidationErrors(errors);
-      return false;
-    }
-    
-    // If validation passes, show success message and submit
-    console.log('Validation passed, showing success message');
-    if (typeof iziToast !== 'undefined') {
-      iziToast.success({
-        message: 'All fields validated successfully!',
-        position: "topRight"
-      });
-    } else {
-      alert('All fields validated successfully!');
-    }
-    
-    setTimeout(() => {
-      const form = document.getElementById('editGigForm');
-      if (form) {
-        console.log('Submitting form...');
-        form.submit();
-      }
-    }, 1000);
-        }
-
-        // Handle form submission - copy Quill content to hidden textarea
-        function setupFormSubmissionHandler() {
-            const form = document.getElementById('editGigForm');
-            const textarea = document.getElementById('gigDescription');
-            
-            console.log('Form found:', !!form);
-            console.log('Textarea found:', !!textarea);
-            console.log('Quill instance:', !!quill);
-            
-            if (form) {
-                form.addEventListener('submit', function(e) {
-                    console.log('Form submit event triggered');
-                    
-                    // First, copy Quill content to textarea
-                    if (quill) {
-                        const editorContent = quill.root.innerHTML;
-                        console.log('Editor content:', editorContent);
-                        
-                        if (textarea) {
-                            textarea.value = editorContent;
-                            console.log('Textarea value set to:', textarea.value);
-                        } else {
-                            console.error('Textarea not found!');
-                        }
-                    } else {
-                        console.error('Quill instance not found!');
-                    }
-                });
-                console.log('Form submission handler set up successfully');
-            } else {
-                console.error('Form not found!');
-                // Retry after a short delay
-                setTimeout(setupFormSubmissionHandler, 100);
-            }
-        }
-
-        // Set up form submission handler after DOM is loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, setting up form submission handler');
-            // Wait a bit for all elements to be ready
-            setTimeout(setupFormSubmissionHandler, 200);
-        });
-    </script>
-    <script>
-        // YouTube URL Validation
-        function validateYouTubeUrl(url) {
-            if (!url || url.trim() === '') {
-                return { valid: true, message: '' }; // Empty is allowed (optional field)
-            }
-            
-            const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/|v\/)|youtu\.be\/)[\w\-]+/i;
-            
-            if (!youtubeRegex.test(url)) {
-                return { 
-                    valid: false, 
-                    message: 'Please enter a valid YouTube URL (e.g., https://www.youtube.com/watch?v=VIDEO_ID or https://youtu.be/VIDEO_ID)' 
-                };
-            }
-            
-            return { valid: true, message: '' };
-        }
-
-        // Handle YouTube URL validation
-        function handleYouTubeValidation() {
-            const youtubeInput = document.getElementById('youtube_url_new');
-            const validationMessage = document.getElementById('youtube-validation-message');
-            
-            if (youtubeInput && validationMessage) {
-                youtubeInput.addEventListener('blur', function() {
-                    const url = this.value.trim();
-                    const validation = validateYouTubeUrl(url);
-                    
-                    if (!validation.valid) {
-                        validationMessage.textContent = validation.message;
-                        validationMessage.style.display = 'block';
-                        this.classList.add('is-invalid');
-                                } else {
-                        validationMessage.style.display = 'none';
-                        this.classList.remove('is-invalid');
-                    }
-                });
-                
-                youtubeInput.addEventListener('input', function() {
-                    if (this.classList.contains('is-invalid')) {
-                        const url = this.value.trim();
-                        const validation = validateYouTubeUrl(url);
-                        
-                        if (validation.valid) {
-                            validationMessage.style.display = 'none';
-                            this.classList.remove('is-invalid');
-                        }
-                    }
-                });
-            }
-        }
-
-        // Set initial state based on existing data
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize YouTube URL validation
-            handleYouTubeValidation();
-            
-            // Wait for Quill to be initialized before setting up preview
-            function waitForQuillAndSetupPreview() {
-                if (typeof quill !== 'undefined' && quill) {
-                    console.log('Quill is ready, setting up preview...');
-                    // Add real-time preview event listeners
-                    setupRealTimePreview();
-                    
-                    // Setup gallery upload
-                    setupGalleryUpload();
-                } else {
-                    // Retry after a short delay
-                    setTimeout(waitForQuillAndSetupPreview, 100);
-                }
-            }
-            
-            // Start waiting for Quill
-            setTimeout(waitForQuillAndSetupPreview, 200);
-        });
-        
-        function setupRealTimePreview() {
-            console.log('Setting up real-time preview...');
-            
-            try {
-                // Title input
-                const titleInput = document.getElementById('gigTitle');
-                if (titleInput) {
-                    titleInput.addEventListener('input', updatePreview);
-                    console.log('Title input listener added');
-                } else {
-                    console.warn('Title input not found');
-                }
-                
-                // Category select
-                const categorySelect = document.getElementById('gigCategory');
-                if (categorySelect) {
-                    categorySelect.addEventListener('change', updatePreview);
-                    console.log('Category select listener added');
-                } else {
-                    console.warn('Category select not found');
-                }
-                
-                // Target amount input
-                const amountInput = document.getElementById('targetAmount');
-                if (amountInput) {
-                    amountInput.addEventListener('input', updatePreview);
-                    console.log('Amount input listener added');
-                } else {
-                    console.warn('Amount input not found');
-                }
-                
-                // YouTube URL input
-                const youtubeInput = document.getElementById('youtube_url_new');
-                if (youtubeInput) {
-                    youtubeInput.addEventListener('input', updatePreview);
-                    console.log('YouTube input listener added');
-                } else {
-                    console.warn('YouTube input not found');
-                }
-                
-                // Main image input
-                const mainImageInput = document.getElementById('mainImage');
-                if (mainImageInput) {
-                    mainImageInput.addEventListener('change', function(e) {
-                        const file = e.target.files[0];
-                        if (file) {
-                            const reader = new FileReader();
-                            reader.onload = function(e) {
-                                const previewImage = document.getElementById('previewImage');
-                                const previewImageIcon = document.getElementById('previewImageIcon');
-                                if (previewImage && previewImageIcon) {
-                                    previewImage.src = e.target.result;
-                                    previewImage.style.display = 'block';
-                                    previewImageIcon.style.display = 'none';
-                                }
-                            };
-                            reader.readAsDataURL(file);
-                        }
-                    });
-                    console.log('Main image input listener added');
-                } else {
-                    console.warn('Main image input not found');
-                }
-                
-                // Quill editor content changes
-                if (quill) {
-                    quill.on('text-change', function() {
-                        updatePreview();
-                    });
-                    console.log('Quill text-change listener added');
-                } else {
-                    console.warn('Quill instance not available for preview');
-                }
-                
-                // Gallery dropzone changes
-                const galleryDropzone = document.getElementById('galleryDropzone');
-                if (galleryDropzone) {
-                    // Listen for new uploads
-                    galleryDropzone.addEventListener('drop', function() {
-                        setTimeout(updatePreview, 1000); // Wait for upload to complete
-                    });
-                    console.log('Gallery dropzone listener added');
-                } else {
-                    console.log('Gallery dropzone not found (optional)');
-                }
-                
-                // Initial preview update
-                updatePreview();
-                console.log('Real-time preview setup completed');
-            } catch (error) {
-                console.error('Error in setupRealTimePreview:', error);
-            }
-        }
-
-        // Real-time preview functionality
-        function updatePreview() {
-            try {
-                // Update title
-                const titleInput = document.getElementById('gigTitle');
-                const title = titleInput ? titleInput.value || 'Your Campaign Title' : 'Your Campaign Title';
-                const titleElement = document.getElementById('previewTitle');
-                if (titleElement) titleElement.textContent = title;
-                
-                // Update description from Quill editor
-                let description = 'Your campaign description will appear here...';
-                if (quill) {
-                    const editorContent = quill.getText();
-                    description = editorContent || 'Your campaign description will appear here...';
-                } else {
-                    const descTextarea = document.getElementById('gigDescription');
-                    description = descTextarea ? descTextarea.value || 'Your campaign description will appear here...' : 'Your campaign description will appear here...';
-                }
-                const descElement = document.getElementById('previewDescription');
-                if (descElement) descElement.textContent = description;
-                
-                // Update category
-                const categorySelect = document.getElementById('gigCategory');
-                const category = categorySelect ? categorySelect.options[categorySelect.selectedIndex].text : 'Category';
-                const categoryElement = document.getElementById('previewCategory');
-                if (categoryElement) categoryElement.textContent = category;
-                
-                // Update amount
-                const amountInput = document.getElementById('targetAmount');
-                const amount = amountInput ? amountInput.value || '0' : '0';
-                const currencySymbol = '{{ $setting->cur_sym }}';
-                const amountElement = document.getElementById('previewAmount');
-                const goalAmountElement = document.getElementById('previewGoalAmount');
-                if (amountElement) amountElement.textContent = currencySymbol + parseFloat(amount).toLocaleString();
-                if (goalAmountElement) goalAmountElement.textContent = currencySymbol + parseFloat(amount).toLocaleString();
-                
-                // Update YouTube video preview
-                updateVideoPreview();
-                
-                // Update gallery preview
-                updateGalleryPreview();
-            } catch (error) {
-                console.error('Error in updatePreview:', error);
-            }
-        }
-        
-        function updateVideoPreview() {
-            try {
-                const youtubeInput = document.getElementById('youtube_url_new');
-                const youtubeUrl = youtubeInput ? youtubeInput.value : '';
-                const videoPreview = document.getElementById('previewVideo');
-                const videoContainer = document.getElementById('previewVideoContainer');
-                
-                if (youtubeUrl && youtubeUrl.trim() !== '') {
-                    // Convert YouTube URL to embed format
-                    let embedUrl = youtubeUrl;
-                    if (youtubeUrl.includes('youtube.com/watch?v=')) {
-                        const videoId = youtubeUrl.split('v=')[1].split('&')[0];
-                        embedUrl = `https://www.youtube.com/embed/${videoId}`;
-                    } else if (youtubeUrl.includes('youtu.be/')) {
-                        const videoId = youtubeUrl.split('youtu.be/')[1].split('?')[0];
-                        embedUrl = `https://www.youtube.com/embed/${videoId}`;
-                    }
-                    
-                    if (videoContainer) {
-                        videoContainer.innerHTML = `
-                            <div class="ratio ratio-16x9">
-                                <iframe src="${embedUrl}" 
-                                        title="YouTube video player" 
-                                        frameborder="0" 
-                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                        allowfullscreen>
-                                </iframe>
-                            </div>
-                        `;
-                    }
-                    if (videoPreview) videoPreview.style.display = 'block';
-                } else {
-                    if (videoPreview) videoPreview.style.display = 'none';
-                }
-            } catch (error) {
-                console.error('Error in updateVideoPreview:', error);
-            }
-        }
-        
-        function updateGalleryPreview() {
-            const galleryPreview = document.getElementById('previewGallery');
-            const galleryImages = document.getElementById('previewGalleryImages');
-            
-            // Get existing gallery images
-            const existingImages = document.querySelectorAll('.existing-image-item');
-            
-            if (existingImages.length > 0) {
-                let galleryHTML = '<div class="row g-2">';
-                
-                // Add existing images
-                existingImages.forEach(img => {
-                    const imgElement = img.querySelector('img');
-                    if (imgElement) {
-                        const imgSrc = imgElement.src;
-                        galleryHTML += `
-                            <div class="col-6">
-                                <img src="${imgSrc}" class="img-fluid rounded" style="width: 100%; height: 80px; object-fit: cover;">
-                            </div>
-                        `;
-                    }
-                });
-                
-                galleryHTML += '</div>';
-                
-                if (galleryImages) galleryImages.innerHTML = galleryHTML;
-                if (galleryPreview) galleryPreview.style.display = 'block';
-            } else {
-                if (galleryPreview) galleryPreview.style.display = 'none';
-            }
-        }
-        
-        function refreshPreview() {
-            updatePreview();
-        }
-        
-        // Legacy preview function for compatibility
-        function previewGig() {
-            updatePreview();
-        }
-
-
-        // Image preview functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const mainImageInput = document.getElementById('mainImage');
-            const previewImage = document.getElementById('previewImage');
-            const previewImageIcon = document.getElementById('previewImageIcon');
-
-            if (mainImageInput && previewImage && previewImageIcon) {
-                mainImageInput.addEventListener('change', function(e) {
-                    const file = e.target.files[0];
-                    if (file) {
-                        const reader = new FileReader();
-                        reader.onload = function(e) {
-                            previewImage.src = e.target.result;
-                            previewImage.style.display = 'block';
-                            previewImageIcon.style.display = 'none';
-                        };
-                        reader.readAsDataURL(file);
-                    }
-                });
-            }
-        });
-
-        // Function to remove existing gallery images
-        function removeExistingImage(imageName, campaignId) {
-            if (!confirm('Are you sure you want to remove this image?')) {
-                return;
-            }
-
-            // Make AJAX request to remove image
-            fetch('{{ route("user.campaign.image.remove", ":id") }}'.replace(':id', campaignId), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({ image: imageName })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    // Remove the image element from DOM
-                    const imageElement = document.querySelector(`[data-image="${imageName}"]`);
-                    if (imageElement) {
-                        imageElement.remove();
-                    }
-                    
-                    // Update preview
-                    updateGalleryPreview();
-                    
-                    // Show success message
-                    alert('Image removed successfully');
-                } else {
-                    alert('Error: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error removing image');
-            });
-        }
-        
-        // Function to delete all gallery images
-        function deleteAllImages(campaignId) {
-            if (!confirm('Are you sure you want to delete ALL gallery images? This action cannot be undone.')) {
-                return;
-            }
-
-            // Make AJAX request to delete all images
-            fetch('{{ route("user.campaign.gallery.delete-all", ":id") }}'.replace(':id', campaignId), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    // Remove all gallery images from DOM
-                    const existingGallery = document.getElementById('existingGalleryImages');
-                    if (existingGallery) {
-                        existingGallery.innerHTML = '';
-                    }
-                    
-                    // Hide the existing gallery section
-                    const existingGallerySection = document.querySelector('.existing-gallery');
-                    if (existingGallerySection) {
-                        existingGallerySection.style.display = 'none';
-                    }
-                    
-                    // Update preview
-                    updateGalleryPreview();
-                    
-                    // Show success message
-                    alert('All gallery images deleted successfully');
-                } else {
-                    alert('Error: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error deleting images');
-            });
-        }
-        
-        // Gallery upload functionality
-        function setupGalleryUpload() {
-            const galleryInput = document.getElementById('galleryImages');
-            const uploadProgress = document.getElementById('uploadProgress');
-            
-            if (galleryInput) {
-                galleryInput.addEventListener('change', function(e) {
-                    const files = Array.from(e.target.files);
-                    
-                    if (files.length === 0) return;
-                    
-                    // Validate file sizes (5MB max)
-                    const validFiles = files.filter(file => {
-                        if (file.size > 5 * 1024 * 1024) {
-                            alert(`File ${file.name} is too large. Maximum size is 5MB.`);
-                            return false;
-                        }
-                        return true;
-                    });
-                    
-                    if (validFiles.length === 0) return;
-                    
-                    // Show progress bar
-                    if (uploadProgress) {
-                        uploadProgress.style.display = 'block';
-                    }
-                    
-                    // Upload files one by one
-                    uploadFilesSequentially(validFiles, 0);
-                });
-            }
-        }
-        
-        function uploadFilesSequentially(files, index) {
-            if (index >= files.length) {
-                // All files uploaded
-                const uploadProgress = document.getElementById('uploadProgress');
-                if (uploadProgress) {
-                    uploadProgress.style.display = 'none';
-                }
-                updateGalleryPreview();
-                return;
-            }
-            
-            const file = files[index];
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
-            
-            // Upload file via AJAX
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', '{{ route("user.campaign.gallery.upload") }}');
-            
-            xhr.onload = function() {
-                if (xhr.status === 200) {
-                    try {
-                        const response = JSON.parse(xhr.responseText);
-                        if (response.image) {
-                            // Add image to existing gallery
-                            addImageToGallery(response.image);
-                        }
-                    } catch (e) {
-                        console.error('JSON parse error:', e);
-                        alert('Upload failed: Invalid response format');
-                    }
-                } else {
-                    console.error('Upload failed with status:', xhr.status);
-                    alert('Upload failed: Server error ' + xhr.status);
-                }
-                
-                // Upload next file
-                uploadFilesSequentially(files, index + 1);
-            };
-            
-            xhr.onerror = function() {
-                console.error('Network error during upload');
-                alert('Upload failed: Network error');
-                uploadFilesSequentially(files, index + 1);
-            };
-            
-            xhr.send(formData);
-        }
-        
-        function addImageToGallery(imageName) {
-            const existingGallery = document.getElementById('existingGalleryImages');
-            if (!existingGallery) return;
-            
-            const imageUrl = `{{ getFilePath('campaign') }}/${imageName}`;
-            const campaignId = {{ $campaign->id }};
-            
-            const imageHTML = `
-                <div class="col-lg-3 col-md-4 col-sm-6 existing-image-item" data-image="${imageName}">
-                    <div class="gallery-image-card">
-                        <div class="image-container">
-                            <img src="${imageUrl}" 
-                                 alt="Gallery Image" 
-                                 class="gallery-image">
-                            <div class="image-overlay">
-                                <button type="button" 
-                                        class="btn btn-danger btn-sm remove-btn" 
-                                        onclick="removeExistingImage('${imageName}', ${campaignId})"
-                                        title="Remove Image">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            existingGallery.insertAdjacentHTML('beforeend', imageHTML);
-            
-            // Show existing gallery section if it was hidden
-            const existingGallerySection = document.querySelector('.existing-gallery');
-            if (existingGallerySection) {
-                existingGallerySection.style.display = 'block';
-            }
-            
-            // Update the gallery count
-            updateGalleryCount();
-        }
-        
-        function updateGalleryCount() {
-            const existingImages = document.querySelectorAll('.existing-image-item');
-            const countBadge = document.querySelector('.existing-gallery .badge');
-            if (countBadge) {
-                countBadge.textContent = existingImages.length;
-            }
-        }
-    </script>
-    
-    
-@endsection

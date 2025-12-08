@@ -1,17 +1,21 @@
 <IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
   RewriteEngine On
 
-  # 1) /help (or /help/) ALWAYS goes to Laravel (index.php)
-  RewriteRule ^help/?$ index.php [L]
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
-  # 2) /help/... ke andar AGAR physical file/folder hai to usay serve karo
-  RewriteCond %{REQUEST_URI} ^/help/
-  RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} -f [OR]
-  RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} -d
-  RewriteRule ^ - [L]
+    # Redirect Trailing Slashes If Not A Folder...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
 
-  # 3) Baqi sab Laravel ko de do (default Laravel rule)
+    # Send Requests To Front Controller...
+    RewriteCond %{REQUEST_FILENAME} !-d
   RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteCond %{REQUEST_FILENAME} !-d
   RewriteRule ^ index.php [L]
 </IfModule>

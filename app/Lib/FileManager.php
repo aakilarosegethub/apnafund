@@ -181,9 +181,24 @@ class FileManager
     function makeDirectory($location = null): bool|string
     {
         if (!$location) $location = $this->path;
-        if (file_exists($location)) return true;
+        if (file_exists($location)) {
+            // Check if writable, if not try to fix permissions
+            if (!is_writable($location)) {
+                @chmod($location, 0775);
+                // If still not writable, try 0777
+                if (!is_writable($location)) {
+                    @chmod($location, 0777);
+                }
+            }
+            return true;
+        }
 
-        return mkdir($location, 0755, true);
+        $result = mkdir($location, 0775, true);
+        // If creation successful, ensure it's writable
+        if ($result && file_exists($location)) {
+            @chmod($location, 0775);
+        }
+        return $result;
     }
 
     /**

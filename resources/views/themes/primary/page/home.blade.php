@@ -9,7 +9,11 @@
     <section class="banner-section">
         <div class="banner-slider">
             @foreach ($bannerElements as $banner)
-                <div class="banner-slider__slide bg-img" data-background-image="{{ getImage('assets/images/site/banner/' . @$banner->data_info->background_image, '1920x1080') }}" title="{{ getImageAlt($banner, 'background_image', 'Banner background') }}">
+                @php
+                    $bannerImagePath = 'assets/images/site/banner/' . @$banner->data_info->background_image;
+                    $bannerImageUrl = rtrim(env('IMG_URL', url('/')), '/') . '/' . ltrim($bannerImagePath, '/');
+                @endphp
+                <div class="banner-slider__slide bg-img" data-background-image="{{ $bannerImageUrl }}" title="{{ getImageAlt($banner, 'background_image', 'Banner background') }}">
                     <div class="container">
                         <div class="row align-items-center justify-content-center">
                             <div class="col-lg-6 col-md-7">
@@ -29,7 +33,7 @@
                             </div>
                             <div class="col-lg-6 col-md-5 col-sm-10">
                                 <div class="banner-img">
-                                    <img class="bg-img" data-background-image="{{ $commonSliderImage }}" data-mask-image="{{ $commonSliderImage }}" src="{{ getImage('assets/images/site/banner/' . @$banner->data_info->background_image, '1920x1080') }}" alt="image">
+                                    <img class="bg-img" data-background-image="{{ $commonSliderImage }}" data-mask-image="{{ $commonSliderImage }}" src="{{ $bannerImageUrl }}" alt="image">
                                     <span class="banner-img__mask" data-mask-image="{{ $commonSliderImage }}"></span>
                                 </div>
                             </div>
@@ -79,10 +83,14 @@
             </div>
             <div class="cause-category__slider" data-aos="fade-up" data-aos-duration="1500">
                 @foreach ($campaignCategories as $category)
+                    @php
+                        $categoryImagePath = getFilePath('category') . '/' . $category->image;
+                        $categoryImageUrl = rtrim(env('IMG_URL', url('/')), '/') . '/' . ltrim($categoryImagePath, '/');
+                    @endphp
                     <div class="cause-category__slide">
                         <div class="cause-category__img">
                             <a href="{{ route('campaign', ['category' => $category->slug]) }}">
-                                <img class="bg-img" data-background-image="{{ $commonShapeImage }}" data-mask-image="{{ $commonShapeImage }}" src="{{ getImage(getFilePath('category') . '/' . $category->image, getFileSize('category')) }}" alt="{{ $category->name }}">
+                                <img class="bg-img" data-background-image="{{ $commonShapeImage }}" data-mask-image="{{ $commonShapeImage }}" src="{{ $categoryImageUrl }}" alt="{{ $category->name }}">
                             </a>
                         </div>
                         <h3 class="cause-category__title">
@@ -165,7 +173,11 @@
     <div class="subscribe">
         <div class="container">
             <div class="subscribe__bg" data-aos="fade-up" data-aos-duration="1500">
-                <div class="subscribe__vector bg-img" data-background-image="{{ getImage('assets/images/site/subscribe/' . @$subscribeContent->data_info->background_image, '1920x1280') }}"></div>
+                @php
+                    $subscribeImagePath = 'assets/images/site/subscribe/' . @$subscribeContent->data_info->background_image;
+                    $subscribeImageUrl = rtrim(env('IMG_URL', url('/')), '/') . '/' . ltrim($subscribeImagePath, '/');
+                @endphp
+                <div class="subscribe__vector bg-img" data-background-image="{{ $subscribeImageUrl }}"></div>
                 <div class="section-heading section-heading-light text-center">
                     <h2 class="section-heading__title text-light">{{ __(@$subscribeContent->data_info->section_heading) }}</h2>
                     <p class="section-heading__desc">{{ __(@$subscribeContent->data_info->description) }}</p>

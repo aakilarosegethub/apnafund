@@ -414,9 +414,12 @@ class CampaignController extends Controller
     }
 
     function edit($slug) {
+        // Redirect to basics section by default
+        return redirect()->route('user.campaign.edit.basics', $slug);
+    }
 
+    function editSection($slug) {
         try {
-            
             // Delete previously unused gallery images if exist
             $this->removePreviousGallery();
 
@@ -439,7 +442,31 @@ class CampaignController extends Controller
                 return back()->withToasts($toast);
             }
 
-            return view('themes.apnafund.user.campaign.edit', compact('pageTitle', 'categories', 'campaign'));
+            // Get section from route name
+            $routeName = request()->route()->getName();
+            if (strpos($routeName, 'basics') !== false) {
+                $section = 'basics';
+            } elseif (strpos($routeName, 'reward') !== false) {
+                $section = 'reward';
+            } elseif (strpos($routeName, 'story') !== false) {
+                $section = 'story';
+            } elseif (strpos($routeName, 'people') !== false) {
+                $section = 'people';
+            } elseif (strpos($routeName, 'payment') !== false) {
+                $section = 'payment';
+            } elseif (strpos($routeName, 'boost') !== false) {
+                $section = 'boost';
+            } else {
+                $section = 'basics';
+            }
+
+            // Load rewards if reward section
+            $rewards = null;
+            if ($section == 'reward') {
+                $rewards = $campaign->rewards()->orderBy('minimum_amount')->get();
+            }
+
+            return view('themes.apnafund.user.campaign.edit', compact('pageTitle', 'categories', 'campaign', 'section', 'rewards'));
         } catch (\Exception $e) {
             $toast[] = ['error', 'Error loading campaign: ' . $e->getMessage()];
             return back()->withToasts($toast);
@@ -511,25 +538,44 @@ class CampaignController extends Controller
         ]);
         
         try {
-            $this->validate(request(), [
-                'category_id'         => 'required|integer|gt:0',
-                'image'               => ['nullable', File::types(['png', 'jpg', 'jpeg'])],
-                'video'               => ['nullable', File::types(['mp4', 'avi', 'mov', 'wmv', 'flv', '3gp']), 'max:512000'], // 500MB max
-                'youtube_url'         => 'nullable|url',
-                'location'            => 'nullable|string|max:255',
-                'name'                => 'required|string|max:190|unique:campaigns,name,' . $id,
-                'description'         => 'required|min:30',
-                'goal_amount'         => 'required|numeric|gt:0',
-                'start_date'          => 'required|date_format:Y-m-d',
-                'end_date'            => 'required|date_format:Y-m-d|after:start_date',
-                'document'            => ['nullable', File::types('pdf')],
-            ], [
-                'category_id.required' => 'The category field is required.',
-                'category_id.integer'  => 'The category must be an integer.',
-                'video.max'           => 'Video file size must be less than 500MB.',
-                'youtube_url.url'     => 'YouTube URL must be a valid URL.',
-                'youtube_url.regex'   => 'Please enter a valid YouTube URL.',
-            ]);
+            // Detect which section is being updated based on request
+            $section = request('section', 'basics');
+            
+            // Different validation rules based on section
+            if ($section == 'story') {
+                // Story section - only description required
+                $this->validate(request(), [
+                    'description' => 'required|min:30',
+                ], [
+                    'description.required' => 'The story description field is required.',
+                    'description.min' => 'The story description must be at least 30 characters.',
+                ]);
+            } else {
+                // Basics section - all fields required
+                $this->validate(request(), [
+                    'category_id'         => 'required|integer|gt:0',
+                    'image'               => ['nullable', File::types(['png', 'jpg', 'jpeg'])],
+                    'video'               => ['nullable', File::types(['mp4', 'avi', 'mov', 'wmv', 'flv', '3gp']), 'max:512000'], // 500MB max
+                    'youtube_url'         => 'nullable|url',
+                    'location'            => 'nullable|string|max:255',
+                    'name'                => 'required|string|max:190|unique:campaigns,name,' . $id,
+                    'description'         => 'required|min:30',
+                    'goal_amount'         => 'required|numeric|gt:0',
+                    'start_date'          => 'required|date_format:Y-m-d',
+                    'end_date'            => 'required|date_format:Y-m-d|after:start_date',
+                    'document'            => ['nullable', File::types('pdf')],
+                ], [
+                    'category_id.required' => 'The category field is required.',
+                    'category_id.integer'  => 'The category must be an integer.',
+                    'name.required' => 'The name field is required.',
+                    'goal_amount.required' => 'The goal amount field is required.',
+                    'start_date.required' => 'The start date field is required.',
+                    'end_date.required' => 'The end date field is required.',
+                    'video.max'           => 'Video file size must be less than 500MB.',
+                    'youtube_url.url'     => 'YouTube URL must be a valid URL.',
+                    'youtube_url.regex'   => 'Please enter a valid YouTube URL.',
+                ]);
+            }
 
             // Custom YouTube URL validation
             if (request('youtube_url')) {
@@ -570,40 +616,125 @@ class CampaignController extends Controller
                 return back()->withToasts($toast);
             }
 
-            $category = Category::where('id', request('category_id'))->active()->first();
+            // Update campaign data based on section
+            if ($section == 'story') {
+                // Story section - only update description
+                $purifier = new HTMLPurifier();
+                $campaign->description = request('description');
+            } else {
+                // Basics section - update all fields
+                $category = Category::where('id', request('category_id'))->active()->first();
 
-            if (!$category) {
-                $toast[] = ['error', 'Selected category not found or inactive'];
-                if (request()->ajax()) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Selected category not found or inactive'
-                    ], 400);
-                }
-                return back()->withToasts($toast);
-            }
-
-            // Update campaign data
-            $campaign->category_id = request('category_id');
-            $campaign->name        = request('name');
-            $campaign->slug        = slug(request('name'));
-            $campaign->location    = request('location');
-            $purifier              = new HTMLPurifier();
-            $campaign->description = request('description');
-            $campaign->goal_amount = request('goal_amount');
-            $campaign->start_date  = Carbon::parse(request('start_date'));
-            $campaign->end_date    = Carbon::parse(request('end_date'));
-
-            // Upload new main image
-            if (request()->hasFile('image')) {
-                try {
-                    $campaign->image = fileUploader(request('image'), getFilePath('campaign'), getFileSize('campaign'), @$campaign->image, getThumbSize('campaign'));
-                } catch (Exception) {
-                    $toast[] = ['error', 'Image uploading process has failed'];
+                if (!$category) {
+                    $toast[] = ['error', 'Selected category not found or inactive'];
                     if (request()->ajax()) {
                         return response()->json([
                             'success' => false,
-                            'message' => 'Image uploading process has failed'
+                            'message' => 'Selected category not found or inactive'
+                        ], 400);
+                    }
+                    return back()->withToasts($toast);
+                }
+
+                $campaign->category_id = request('category_id');
+                $campaign->name        = request('name');
+                $campaign->slug        = slug(request('name'));
+                $campaign->location    = request('location');
+                $purifier              = new HTMLPurifier();
+                $campaign->description = request('description');
+                $campaign->goal_amount = request('goal_amount');
+                $campaign->start_date  = Carbon::parse(request('start_date'));
+                $campaign->end_date    = Carbon::parse(request('end_date'));
+            }
+
+            // Upload new main image (only for basics section)
+            if ($section == 'basics' && request()->hasFile('image')) {
+                try {
+                    // Validate image file
+                    $imageFile = request('image');
+                    $maxSize = 5120; // 5MB in KB
+                    
+                    if ($imageFile->getSize() > $maxSize * 1024) {
+                        throw new Exception('Image size must be less than 5MB');
+                    }
+                    
+                    $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                    if (!in_array($imageFile->getMimeType(), $allowedTypes)) {
+                        throw new Exception('Invalid image type. Only JPG, PNG, GIF, and WEBP are allowed.');
+                    }
+                    
+                    // Get file path and ensure directory exists
+                    $filePath = getFilePath('campaign');
+                    $fullPath = public_path($filePath);
+                    
+                    // Create directory if it doesn't exist
+                    if (!file_exists($fullPath)) {
+                        if (!mkdir($fullPath, 0775, true)) {
+                            throw new Exception('Failed to create upload directory. Please check permissions.');
+                        }
+                    }
+                    
+                    // Check if directory is writable, if not try to fix permissions automatically
+                    if (!is_writable($fullPath)) {
+                        // Try to make it writable - recursively fix all parent directories
+                        $currentPath = $fullPath;
+                        $pathsToFix = [];
+                        
+                        // Collect all parent paths that need fixing
+                        while ($currentPath != public_path() && $currentPath != '/' && $currentPath != '') {
+                            $pathsToFix[] = $currentPath;
+                            $currentPath = dirname($currentPath);
+                        }
+                        
+                        // Fix permissions for all paths (from parent to child)
+                        $pathsToFix = array_reverse($pathsToFix);
+                        foreach ($pathsToFix as $path) {
+                            if (file_exists($path)) {
+                                @chmod($path, 0775);
+                                // Also try to change ownership if possible (for web server)
+                                if (function_exists('posix_getpwuid') && function_exists('posix_geteuid')) {
+                                    $webServerUser = posix_getpwuid(posix_geteuid());
+                                    if ($webServerUser && isset($webServerUser['name'])) {
+                                        @chown($path, $webServerUser['name']);
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Check again after trying to fix
+                        if (!is_writable($fullPath)) {
+                            // Last attempt - try 0777 if 0775 doesn't work
+                            @chmod($fullPath, 0777);
+                            if (!is_writable($fullPath)) {
+                                throw new Exception('Upload directory is not writable. Please check permissions. Path: ' . $fullPath);
+                            }
+                        }
+                    }
+                    
+                    $campaign->image = fileUploader(request('image'), getFilePath('campaign'), getFileSize('campaign'), @$campaign->image, getThumbSize('campaign'));
+                } catch (Exception $e) {
+                    \Log::error('Image upload failed', [
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString(),
+                        'file_size' => request()->hasFile('image') ? request('image')->getSize() : null,
+                        'file_type' => request()->hasFile('image') ? request('image')->getMimeType() : null,
+                        'campaign_path' => getFilePath('campaign'),
+                        'full_path' => public_path(getFilePath('campaign')),
+                        'path_exists' => file_exists(public_path(getFilePath('campaign'))),
+                        'path_writable' => is_writable(public_path(getFilePath('campaign'))),
+                        'campaign_id' => $campaign->id
+                    ]);
+                    
+                    $errorMessage = 'Image uploading process has failed';
+                    if (config('app.debug')) {
+                        $errorMessage .= ': ' . $e->getMessage();
+                    }
+                    
+                    $toast[] = ['error', $errorMessage];
+                    if (request()->ajax()) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => $errorMessage
                         ], 400);
                     }
                     return back()->withToasts($toast);
@@ -656,10 +787,18 @@ class CampaignController extends Controller
 
             $campaign->save();
             
+            // Redirect based on section
+            if ($section == 'story') {
+                $redirectRoute = 'user.campaign.edit.story';
+            } else {
+                $redirectRoute = 'user.campaign.edit.basics';
+            }
+            
             // Debug logging
             \Log::info('Campaign updated successfully', [
                 'campaign_id' => $campaign->id,
                 'user_id' => $campaign->user_id,
+                'section' => $section,
                 'name' => $campaign->name,
                 'goal_amount' => $campaign->goal_amount
             ]);
@@ -671,11 +810,11 @@ class CampaignController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Campaign successfully updated',
-                    'redirect' => route('user.campaign.edit', $id)
+                    'redirect' => route($redirectRoute, $campaign->slug)
                 ]);
             }
             
-            return redirect()->route('user.campaign.edit', $id)->withToasts($toast);
+            return redirect()->route($redirectRoute, $campaign->slug)->withToasts($toast);
             
         } catch (\Illuminate\Validation\ValidationException $e) {
             \Log::error('Validation failed in update', [

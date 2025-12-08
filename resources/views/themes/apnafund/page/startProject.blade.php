@@ -278,6 +278,7 @@
 @endsection
 @section('script')
     <script>
+        const appUrl = '{{ env('APP_URL') }}';
         const primaryCategory = document.getElementById('primaryCategory');
         const subcategory = document.getElementById('subcategory');
         const nextBtn = document.getElementById('nextBtn');
@@ -291,7 +292,7 @@
             
             if (categoryId) {
                 // AJAX request to fetch subcategories
-                const url = `/api/subcategories/${categoryId}`;
+                const url = `${appUrl}/api/subcategories/${categoryId}`;
                 console.log('Fetching subcategories from:', url);
                 
                 fetch(url, {

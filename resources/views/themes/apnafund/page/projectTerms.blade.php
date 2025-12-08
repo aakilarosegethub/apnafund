@@ -16,17 +16,19 @@
 
     /* ------------ CENTER BOX WRAPPER ------------ */
     .centerWrapper {
-        height: 100vh;
+        min-height: calc(100vh - 100px);
         display: flex;
         justify-content: center;
         align-items: center;
         transition: opacity 0.5s ease, visibility 0.5s ease;
+        padding-top: 100px;
     }
 
     .centerWrapper.hidden {
         opacity: 0;
         visibility: hidden;
         height: 0;
+        padding-top: 0;
     }
 
     /* ------------ RULE BOX ------------ */
@@ -132,11 +134,13 @@
         padding: 30px 0;
         opacity: 0;
         transition: opacity 0.6s ease;
+        padding-top: 120px;
     }
 
     .container.visible {
         opacity: 1;
         margin-top: 40px;
+        padding-top: 40px;
     }
 
     .project-title {

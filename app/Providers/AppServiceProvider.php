@@ -33,7 +33,11 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        $setting                        = bs();
+        try {
+            $setting                        = bs();
+        } catch (\Exception $e) {
+            $setting = null;
+        }
         $activeTheme                    = $setting ? activeTheme() : 'themes.primary.';
         $shareToView['setting']         = $setting;
         $shareToView['activeTheme']     = $activeTheme;

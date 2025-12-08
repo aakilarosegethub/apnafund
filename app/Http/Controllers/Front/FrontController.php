@@ -1658,46 +1658,45 @@ return redirect()->back()->with([
     public function scategory_detail($slug)
     {
         $Slider=Slider::all();
-        $categories=SubCategory::all();
-        $best =Product::where('status',1)->select('products.*')->orderBy('view','DESC')->limit(3)->get();
+        $categories=Category::all();
+        $best =Product::select('products.*')->orderBy('view','DESC')->limit(3)->get();
 
         $category_id = SubCategory::where(['slug'=>$slug ])->first();
         if($category_id)
         {
-        $pcategory = Category::where(['id'=>$category_id->category_id ])->first();
-        $cateid = $category_id->id;
-         if(isset($category_id->name))
-        {
-         Session::put('title',$category_id->name);
-        }
-        
+            $pcategory = Category::where(['id'=>$category_id->category_id ])->first();
+            $cateid = $category_id->id;
+            $sub_cat = $category_id;
+            
+            if(isset($category_id->name))
+            {
+                Session::put('title',$category_id->name);
+            }
 
-        $meta = DB::table('categories_to_meta')
-            ->where('cid', '=', $category_id->id)
-            ->first();
+            $meta = array(); 
             if($meta)
             {
                 $meta->url = url('/category/').'/'.$slug;
                 $setting = DB::table('setting')
-            ->where('id', '=', '1')
-            ->first();
+                    ->where('id', '=', '1')
+                    ->first();
                 $sch = array (
-  '@context' => 'https://schema.org',
-  '@type' => 'Organization',
-  'url' => url('/'),
-  'logo' => asset('').$setting->logo,
-);
+                    '@context' => 'https://schema.org',
+                    '@type' => 'Organization',
+                    'url' => url('/'),
+                    'logo' => asset('').$setting->logo,
+                );
                 $meta->scheme = $sch;
-                            }
-                            $category = 1;
-        
-         $products=Product::where(['subcategory_id'=>$cateid , 'status'=>1])->paginate(20);
-         $seo =  CategoriesToMeta::where('scid','=',$cateid)->first();
-       
-       
-        $meta_file  = 'meta.categoy';
-        $sub_cat = 1;
-        return view('front.scategory_detail',compact('meta','products','category_id','best','meta_file','seo','category','sub_cat','pcategory'));
+            }
+            
+            $category = 1;
+            $perPage = env('PRODUCTS_PER_PAGE', 12); // Default to 12, configurable via env
+            $products=Product::where('status',1)->where(['subcategory_id'=>$cateid , 'status'=>1])->paginate($perPage);
+            $seo = array();
+            
+            $meta_file = 'meta.categoy';
+            $page = 'Test';
+            return $this->view('list',array('page'=>$page,'products'=>$products,'title'=> 'Shop','meta_file'=>$meta_file,'meta'=>$meta,'category_id'=>$category_id,'best'=>$best,'seo'=>$seo,'category'=>$category,'sub_cat'=>$sub_cat,'pcategory'=>$pcategory));
         }
         else
         {
@@ -1714,38 +1713,86 @@ return redirect()->back()->with([
         $best =Product::select('products.*')->orderBy('view','DESC')->limit(3)->get();
      
         $category_id = Category::where(['slug'=>$slug ])->first();
+        
+        // If category not found, check for subcategory
+        if(!$category_id) {
+            $subcategory_id = SubCategory::where('slug', $slug)->first();
+            
+            if($subcategory_id) {
+                // Handle subcategory
+                $cateid = $subcategory_id->id;
+                $pcategory = Category::where(['id'=>$subcategory_id->category_id ])->first();
+                $sub_cat = $subcategory_id;
+                
+                if(isset($subcategory_id->name))
+                {
+                    Session::put('title',$subcategory_id->name);
+                }
+
+                $meta = DB::table('categories_to_meta')
+                    ->where('scid', '=', $subcategory_id->id)
+                    ->first();
+                if($meta)
+                {
+                    $meta->url = url('/category/').'/'.$slug;
+                    $setting = DB::table('setting')
+                        ->where('id', '=', '1')
+                        ->first();
+                    $sch = array (
+                        '@context' => 'https://schema.org',
+                        '@type' => 'Organization',
+                        'url' => url('/'),
+                        'logo' => asset('').$setting->logo,
+                    );
+                    $meta->scheme = $sch;
+                }
+                
+                $category = 1;
+                $perPage = env('PRODUCTS_PER_PAGE', 12); // Default to 12, configurable via env
+                $products=Product::where('status',1)->where(['subcategory_id'=>$cateid , 'status'=>1])->paginate($perPage);
+                $seo = CategoriesToMeta::where('scid','=',$cateid)->first();
+                
+                $meta_file = 'meta.categoy';
+                $page = 'Test';
+                return $this->view('list',array('page'=>$page,'products'=>$products,'title'=> 'Shop','meta_file'=>$meta_file,'meta'=>$meta,'category_id'=>$subcategory_id,'best'=>$best,'seo'=>$seo,'category'=>$category,'sub_cat'=>$sub_cat,'pcategory'=>$pcategory));
+            } else {
+                // Neither category nor subcategory found
+                return abort(404);
+            }
+        }
+        
+        // Handle category (existing logic)
         $cateid = $category_id->id;
         $sub_cat = DB::table('sub_categories')->where('category_id', $cateid)->first();
        
-         if(isset($category_id->name))
+        if(isset($category_id->name))
         {
-         Session::put('title',$category_id->name);
+            Session::put('title',$category_id->name);
         }
 
         $meta = DB::table('categories_to_meta')
             ->where('cid', '=', $category_id->id)
             ->first();
-            if($meta)
-            {
-                $meta->url = url('/category/').'/'.$slug;
-                $setting = DB::table('setting')
-            ->where('id', '=', '1')
-            ->first();
-                $sch = array (
-  '@context' => 'https://schema.org',
-  '@type' => 'Organization',
-  'url' => url('/'),
-  'logo' => asset('').$setting->logo,
-);
-                $meta->scheme = $sch;
-                            }
-                            $category = 1;
-         $perPage = env('PRODUCTS_PER_PAGE', 12); // Default to 12, configurable via env
-         $products=Product::where('status',1)->where(['category_id'=>$cateid , 'status'=>1])->paginate($perPage);
-         $seo =  CategoriesToMeta::where('cid','=',$cateid)->first();
+        if($meta)
+        {
+            $meta->url = url('/category/').'/'.$slug;
+            $setting = DB::table('setting')
+                ->where('id', '=', '1')
+                ->first();
+            $sch = array (
+                '@context' => 'https://schema.org',
+                '@type' => 'Organization',
+                'url' => url('/'),
+                'logo' => asset('').$setting->logo,
+            );
+            $meta->scheme = $sch;
+        }
+        $category = 1;
+        $perPage = env('PRODUCTS_PER_PAGE', 12); // Default to 12, configurable via env
+        $products=Product::where('status',1)->where(['category_id'=>$cateid , 'status'=>1])->paginate($perPage);
+        $seo = CategoriesToMeta::where('cid','=',$cateid)->first();
        
-       
-        $meta_file  = 'meta.categoy';
+        $meta_file = 'meta.categoy';
         $page = 'Test';
         return $this->view('list',array('page'=>$page,'products'=>$products,'title'=> 'Shop','meta_file'=>$meta_file,'meta'=>$meta,'category_id'=>$category_id,'best'=>$best,'seo'=>$seo,'category'=>$category,'sub_cat'=>$sub_cat));
 
@@ -1859,9 +1906,14 @@ return redirect()->back()->with([
 
     public function find($slug)
     {
-        $pages = Pages::where(['slug'=>$slug])->first();
-        $product = DB::table('products')->where('slug', $slug)->first();
-        $cat = DB::table('categories')->where('slug', $slug)->first();
+        // Exclude admin routes
+        if(strpos($slug, 'admin') === 0) {
+            return abort(404);
+        }
+        
+        $pages = Pages::where(['slug'=>$slug, 'status'=>1])->first();
+        $product = DB::table('products')->where('slug', $slug)->where('status', 1)->first();
+        $cat = DB::table('categories')->where('slug', $slug)->where('status', 1)->first();
         $scat = DB::table('sub_categories')->where('slug', $slug)->first();
         if(isset($product->slug) && $product->slug == $slug)
         { 
@@ -1889,7 +1941,7 @@ return redirect()->back()->with([
         $colors = Colors::all();
         $shap = Shap::all();
         $meta_file  = 'meta.page';
-       $pages = Pages::where(['slug'=>$slug])->get();
+       $pages = Pages::where(['slug'=>$slug, 'status'=>1])->get();
       
         $title = ''; 
         
@@ -1917,8 +1969,8 @@ return redirect()->back()->with([
         $colors = Colors::all();
         $shap = Shap::all();
         $meta = '';
-         Session::put('title','About us');
-        return view('front.about',compact('Slider','meta','size','colors','shap','products','categories'));
+        Session::put('title','About us');
+        return $this->view('about',compact('Slider','meta','size','colors','shap','products','categories'));
     }
     public function learn(Request $request)
     {

@@ -20,6 +20,9 @@
     # IPN routes - direct to Laravel
     RewriteRule ^ipn(.*)$ public/index.php [L,QSA]
 
+    # API routes - direct to Laravel
+    RewriteRule ^api/(.*)$ public/index.php [L,QSA]
+
     # Everything else goes to Laravel
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d

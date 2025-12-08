@@ -72,6 +72,12 @@ Route::middleware('auth')->name('user.')->namespace('User')->group(function () {
             Route::post('store', 'store')->name('store');
             Route::get('test', function() { return response()->json(['message' => 'Test route working']); })->name('test');
             Route::get('edit/{slug}', 'edit')->name('edit');
+            Route::get('edit/{slug}/basics', 'editSection')->name('edit.basics');
+            Route::get('edit/{slug}/reward', 'editSection')->name('edit.reward');
+            Route::get('edit/{slug}/story', 'editSection')->name('edit.story');
+            Route::get('edit/{slug}/people', 'editSection')->name('edit.people');
+            Route::get('edit/{slug}/payment', 'editSection')->name('edit.payment');
+            Route::get('edit/{slug}/boost', 'editSection')->name('edit.boost');
             Route::post('image-remove/{id}', 'removeImage')->name('image.remove');
             Route::post('upload-image', 'uploadImage')->name('upload-image');
             Route::post('update/{id}', 'update')->name('update');
