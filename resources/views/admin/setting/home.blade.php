@@ -98,7 +98,7 @@
                     </div>
                     <div class="col-lg-6 col-sm-6">
                         <label class="form--label">@lang('Stories Title')</label>
-                        <input type="text" class="form--control" name="home_stories_title" value="{{ $setting->home_stories_title ?? 'Creators are the stars of Apna Fund' }}" placeholder="@lang('Creators are the stars of Apna Fund')">
+                        <input type="text" class="form--control" name="home_stories_title" value="{{ $setting->home_stories_title ?? 'Creators are the stars of Apna Crowdfunding' }}" placeholder="@lang('Creators are the stars of Apna Crowdfunding')">
                     </div>
                     <div class="col-lg-6 col-sm-6">
                         <label class="form--label">@lang('Stories Subtitle')</label>
@@ -115,7 +115,7 @@
                     </div>
                     <div class="col-lg-6 col-sm-6">
                         <label class="form--label">@lang('FAQ Subtitle')</label>
-                        <textarea class="form--control" name="home_faq_subtitle" rows="2" placeholder="@lang('Everything you need to know about Apna Fund and crowdfunding')">{{ $setting->home_faq_subtitle ?? 'Everything you need to know about Apna Fund and crowdfunding' }}</textarea>
+                        <textarea class="form--control" name="home_faq_subtitle" rows="2" placeholder="@lang('Everything you need to know about Apna Crowdfunding and crowdfunding')">{{ $setting->home_faq_subtitle ?? 'Everything you need to know about Apna Crowdfunding and crowdfunding' }}</textarea>
                     </div>
 
                     <!-- Community Section -->

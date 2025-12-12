@@ -13,7 +13,7 @@ use PHPMailer\PHPMailer\Exception;
 echo "<!DOCTYPE html>
 <html>
 <head>
-    <title>SMTP Email Test - ApnaFund</title>
+    <title>SMTP Email Test - ApnaCrowdfunding</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
         .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
@@ -39,7 +39,7 @@ echo "<!DOCTYPE html>
 <body>
 <div class='container'>";
 
-echo "<h1>📧 SMTP Email Test - ApnaFund</h1>";
+echo "<h1>📧 SMTP Email Test - ApnaCrowdfunding</h1>";
 
 // Get current settings
 $setting = Setting::first();
@@ -181,13 +181,13 @@ if (empty($errors) && $emailMethod === 'smtp') {
         
         // Content
         $mail->isHTML(true);
-        $mail->Subject = 'SMTP Test Email - ApnaFund';
+        $mail->Subject = 'SMTP Test Email - ApnaCrowdfunding';
         $mail->Body = '
         <html>
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
             <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
                 <h2 style="color: #007bff;">✅ SMTP Email Test Successful!</h2>
-                <p>This is a test email sent from <strong>ApnaFund</strong> using SMTP configuration.</p>
+                <p>This is a test email sent from <strong>ApnaCrowdfunding</strong> using SMTP configuration.</p>
                 <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
                 <h3>Email Configuration Details:</h3>
                 <ul>

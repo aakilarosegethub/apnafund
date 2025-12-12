@@ -1,7 +1,7 @@
-# 🎥 YouTube Automatic Upload Setup Guide - ApnaFund
+# 🎥 YouTube Automatic Upload Setup Guide - ApnaCrowdfunding
 
 ## 📋 Overview
-This guide will help you set up **YouTube automatic video upload** functionality in your ApnaFund application. When users upload videos during campaign creation, they will be automatically uploaded to YouTube for better streaming performance.
+This guide will help you set up **YouTube automatic video upload** functionality in your ApnaCrowdfunding application. When users upload videos during campaign creation, they will be automatically uploaded to YouTube for better streaming performance.
 
 ## 🚀 Features
 
@@ -20,7 +20,7 @@ This guide will help you set up **YouTube automatic video upload** functionality
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Sign in with your Google account
 3. Click "Select a project" → "New Project"
-4. **Project Name:** `ApnaFund YouTube Integration`
+4. **Project Name:** `ApnaCrowdfunding YouTube Integration`
 5. Click "Create"
 
 #### 1.2 Enable YouTube Data API
@@ -34,7 +34,7 @@ This guide will help you set up **YouTube automatic video upload** functionality
 2. Click "**Create Credentials**" → "**OAuth 2.0 Client IDs**"
 3. If prompted, configure the OAuth consent screen:
    - **User Type:** External
-   - **App Name:** ApnaFund YouTube Upload
+   - **App Name:** ApnaCrowdfunding YouTube Upload
    - **User Support Email:** Your email
    - **Developer Contact:** Your email
    - Click "Save and Continue"
@@ -44,7 +44,7 @@ This guide will help you set up **YouTube automatic video upload** functionality
    - Click "Save and Continue" (skip test users for now)
 
 4. **Application Type:** Web application
-5. **Name:** `ApnaFund YouTube Upload`
+5. **Name:** `ApnaCrowdfunding YouTube Upload`
 6. **Authorized redirect URIs:** 
    ```
    https://yourdomain.com/youtube/callback
@@ -62,12 +62,12 @@ This guide will help you set up **YouTube automatic video upload** functionality
 #### 2.1 Upload Credentials File
 ```bash
 # Copy the downloaded file to your project
-cp youtube-credentials.json /Applications/XAMPP/xamppfiles/htdocs/apnafund/storage/app/
+cp youtube-credentials.json /Applications/XAMPP/xamppfiles/htdocs/apnacrowdfunding/storage/app/
 ```
 
 #### 2.2 Set File Permissions
 ```bash
-chmod 644 /Applications/XAMPP/xamppfiles/htdocs/apnafund/storage/app/youtube-credentials.json
+chmod 644 /Applications/XAMPP/xamppfiles/htdocs/apnacrowdfunding/storage/app/youtube-credentials.json
 ```
 
 ### **Step 3: Environment Configuration**
@@ -80,7 +80,7 @@ Add these variables to your `.env` file:
 YOUTUBE_CLIENT_ID=your_client_id_here
 YOUTUBE_CLIENT_SECRET=your_client_secret_here
 YOUTUBE_REDIRECT_URI=https://yourdomain.com/youtube/callback
-YOUTUBE_CREDENTIALS_PATH=/Applications/XAMPP/xamppfiles/htdocs/apnafund/storage/app/youtube-credentials.json
+YOUTUBE_CREDENTIALS_PATH=/Applications/XAMPP/xamppfiles/htdocs/apnacrowdfunding/storage/app/youtube-credentials.json
 
 # YouTube OAuth Tokens (will be set after authorization)
 YOUTUBE_ACCESS_TOKEN=
@@ -128,7 +128,7 @@ User Upload → Temporary Storage → YouTube API → YouTube Channel → Databa
 ## 📁 File Structure
 
 ```
-apnafund/
+apnacrowdfunding/
 ├── app/
 │   ├── Services/
 │   │   └── YouTubeUploadService.php     # Main YouTube service
@@ -141,7 +141,7 @@ apnafund/
 │   └── youtube-credentials.json         # Google OAuth credentials
 ├── resources/views/
 │   ├── admin/youtube/index.blade.php    # Admin configuration page
-│   └── themes/apnafund/user/campaign/
+│   └── themes/apnacrowdfunding/user/campaign/
 │       ├── new.blade.php                # Campaign creation form
 │       └── edit.blade.php               # Campaign edit form
 └── YOUTUBE_SETUP_GUIDE.md               # This documentation
@@ -231,8 +231,8 @@ Edit `app/Services/YouTubeUploadService.php` to customize:
 
 ### **Form Styling:**
 Modify the checkbox styling in:
-- `resources/views/themes/apnafund/user/campaign/new.blade.php`
-- `resources/views/themes/apnafund/user/campaign/edit.blade.php`
+- `resources/views/themes/apnacrowdfunding/user/campaign/new.blade.php`
+- `resources/views/themes/apnacrowdfunding/user/campaign/edit.blade.php`
 
 ## 📈 Performance Benefits
 
@@ -280,7 +280,7 @@ Modify the checkbox styling in:
 
 ## 🎉 Congratulations!
 
-Your ApnaFund application now has **professional YouTube integration**! Users can upload videos that automatically go to YouTube for better performance and unlimited storage.
+Your ApnaCrowdfunding application now has **professional YouTube integration**! Users can upload videos that automatically go to YouTube for better performance and unlimited storage.
 
 ### **Next Steps:**
 1. Follow the configuration steps above

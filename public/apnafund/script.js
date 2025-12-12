@@ -1,4 +1,4 @@
-// Custom JavaScript for Apna Fund
+// Custom JavaScript for Apna Crowdfunding
 
 document.addEventListener('DOMContentLoaded', function() {
     
@@ -400,5 +400,5 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    console.log('Apna Fund website loaded successfully! ❤️');
+    console.log('Apna Crowdfunding website loaded successfully! ❤️');
 }); 

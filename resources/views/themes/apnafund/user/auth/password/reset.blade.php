@@ -441,7 +441,7 @@
                     </div>
             
             <div class="illustration-content">
-                <h1 class="illustration-title">ApnaFund</h1>
+                <h1 class="illustration-title">ApnaCrowdfunding</h1>
                 <p class="illustration-subtitle">Reset Your Password</p>
                 <div style="font-size: 4rem; margin-top: 20px;">
                     <i class="fas fa-key" style="color: rgba(255,255,255,0.8);"></i>

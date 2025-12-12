@@ -98,7 +98,7 @@ class WebhookLoggerService
         }
 
         if (!isset($headers['User-Agent'])) {
-            $headers['User-Agent'] = 'ApnaFund-Webhook/1.0';
+            $headers['User-Agent'] = 'ApnaCrowdfunding-Webhook/1.0';
         }
 
         // Make the request

@@ -83,7 +83,7 @@ class AppServiceProvider extends ServiceProvider
                 ]);
             });
 
-            // Footer composer for apnafund theme
+            // Footer composer for apnacrowdfunding theme
             view()->composer($activeTheme . 'partials.footer', function ($view) {
                 $view->with([
                     'categories' => Category::active()->latest()->get(),

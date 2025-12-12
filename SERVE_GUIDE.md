@@ -1,7 +1,7 @@
-# ApnaFund Application - Complete Serving Guide
+# ApnaCrowdfunding Application - Complete Serving Guide
 
 ## Overview
-This guide provides step-by-step instructions to serve your ApnaFund Laravel application. Follow these instructions every time you want to start the application.
+This guide provides step-by-step instructions to serve your ApnaCrowdfunding Laravel application. Follow these instructions every time you want to start the application.
 
 ## Prerequisites
 - XAMPP installed and running
@@ -13,14 +13,14 @@ This guide provides step-by-step instructions to serve your ApnaFund Laravel app
 
 ### Option 1: Using the existing serve script
 ```bash
-cd /Applications/XAMPP/xamppfiles/htdocs/apnafund
+cd /Applications/XAMPP/xamppfiles/htdocs/apnacrowdfunding
 chmod +x serve
 ./serve
 ```
 
 ### Option 2: Direct Laravel serve command
 ```bash
-cd /Applications/XAMPP/xamppfiles/htdocs/apnafund
+cd /Applications/XAMPP/xamppfiles/htdocs/apnacrowdfunding
 /Applications/XAMPP/xamppfiles/bin/php artisan serve --host=0.0.0.0 --port=8000
 ```
 
@@ -33,7 +33,7 @@ cd /Applications/XAMPP/xamppfiles/htdocs/apnafund
 
 ### Step 2: Navigate to Project Directory
 ```bash
-cd /Applications/XAMPP/xamppfiles/htdocs/apnafund
+cd /Applications/XAMPP/xamppfiles/htdocs/apnacrowdfunding
 ```
 
 ### Step 3: Install Dependencies (if not already installed)
@@ -91,8 +91,8 @@ npm run build
 - **URL**: http://0.0.0.0:8000/admin
 
 ### Public Assets
-- **URL**: http://localhost:8000/public/apnafund/
-- **URL**: http://0.0.0.0:8000/public/apnafund/
+- **URL**: http://localhost:8000/public/apnacrowdfunding/
+- **URL**: http://0.0.0.0:8000/public/apnacrowdfunding/
 
 ## Development vs Production
 
@@ -155,7 +155,7 @@ npm run build
 ## File Structure Reference
 
 ```
-apnafund/
+apnacrowdfunding/
 ├── serve                 # Main serve script
 ├── serve.sh             # Alternative serve script
 ├── serve.bat            # Windows serve script
@@ -166,7 +166,7 @@ apnafund/
 ├── .env                 # Environment configuration
 ├── public/              # Web root
 │   ├── index.php        # Entry point
-│   └── apnafund/        # Public assets
+│   └── apnacrowdfunding/        # Public assets
 ├── app/                 # Application code
 ├── resources/           # Views, assets
 ├── routes/              # Route definitions
@@ -177,7 +177,7 @@ apnafund/
 
 ```bash
 # Navigate to project
-cd /Applications/XAMPP/xamppfiles/htdocs/apnafund
+cd /Applications/XAMPP/xamppfiles/htdocs/apnacrowdfunding
 
 # Quick serve (recommended)
 ./serve
@@ -207,5 +207,5 @@ If you encounter any issues, check:
 
 ---
 **Last Updated**: $(date)
-**Application**: ApnaFund Laravel Application
+**Application**: ApnaCrowdfunding Laravel Application
 **Version**: Laravel 11.x 

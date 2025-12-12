@@ -4,7 +4,7 @@
             <div class="row align-items-center">
                 <div class="col-md-6">
                     <div class="d-flex align-items-center">
-                       <a href="/"> <img src="assets/images/White Logo.png" alt="Apna Fund Logo" class="logo-img me-3"></a>
+                       <a href="/"> <img src="assets/images/White Logo.png" alt="Apna Crowdfunding Logo" class="logo-img me-3"></a>
                         
                     </div>
                 </div>

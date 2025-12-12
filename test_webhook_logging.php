@@ -50,7 +50,7 @@ echo "=== Webhook Logging Test Script ===\n\n";
 
 // Test 1: JazzCash IPN Test
 echo "1. Testing JazzCash IPN Webhook...\n";
-$jazzCashUrl = 'http://localhost/apnafund/jazzcash/ipn';
+$jazzCashUrl = 'http://localhost/apnacrowdfunding/jazzcash/ipn';
 $jazzCashResult = testWebhook($jazzCashUrl, $testData, 'POST');
 echo "JazzCash Result: " . ($jazzCashResult ? "SUCCESS" : "FAILED") . "\n\n";
 

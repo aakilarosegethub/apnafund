@@ -26,6 +26,14 @@ class RegisterController extends Controller
         $info            = json_decode(json_encode(getIpInfo()), true);
         $mobileCode      = @implode(',', $info['code']);
         $countries       = json_decode(file_get_contents(resource_path('views/partials/country.json')));
+        
+        // Sort countries alphabetically by country name
+        $countriesArray = (array) $countries;
+        uasort($countriesArray, function($a, $b) {
+            return strcmp($a->country, $b->country);
+        });
+        $countries = (object) $countriesArray;
+        
         $registerContent = getSiteData('register.content', true);
         $policyPages     = getSiteData('policy_pages.element', false, null, true) ?? [];
 
@@ -40,7 +48,21 @@ class RegisterController extends Controller
         }
         
         $pageTitle = 'Register Your Business';
-        return view('user.auth.register-business', compact('pageTitle'));
+        $info            = json_decode(json_encode(getIpInfo()), true);
+        $mobileCode      = @implode(',', $info['code']);
+        $countries       = json_decode(file_get_contents(resource_path('views/partials/country.json')));
+        
+        // Sort countries alphabetically by country name
+        $countriesArray = (array) $countries;
+        uasort($countriesArray, function($a, $b) {
+            return strcmp($a->country, $b->country);
+        });
+        $countries = (object) $countriesArray;
+        
+        $registerContent = getSiteData('register.content', true);
+        $policyPages     = getSiteData('policy_pages.element', false, null, true) ?? [];
+        
+        return view('user.auth.register-business', compact('pageTitle', 'mobileCode', 'countries', 'registerContent', 'policyPages'));
     }
 
     protected function validator(array $data) {

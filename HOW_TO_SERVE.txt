@@ -1,12 +1,12 @@
 ═══════════════════════════════════════════════════════
-  APNAFUND SERVER START KARNE KE LIYE
+  APNACROWDFUNDING SERVER START KARNE KE LIYE
 ═══════════════════════════════════════════════════════
 
 METHOD 1: Terminal Mein Direct Command
 ─────────────────────────────────────────
 Terminal kholo aur yeh command copy-paste karo:
 
-cd /Applications/XAMPP/xamppfiles/htdocs/apnafund
+cd /Applications/XAMPP/xamppfiles/htdocs/apnacrowdfunding
 /Applications/XAMPP/xamppfiles/bin/php artisan serve --host=0.0.0.0 --port=8000
 
 
@@ -14,7 +14,7 @@ METHOD 2: Script File Use Karke
 ─────────────────────────────────
 Terminal mein:
 
-cd /Applications/XAMPP/xamppfiles/htdocs/apnafund
+cd /Applications/XAMPP/xamppfiles/htdocs/apnacrowdfunding
 chmod +x serve.sh
 ./serve.sh
 
@@ -28,7 +28,7 @@ METHOD 4: PHP Script Se
 ───────────────────────
 Terminal mein:
 
-cd /Applications/XAMPP/xamppfiles/htdocs/apnafund
+cd /Applications/XAMPP/xamppfiles/htdocs/apnacrowdfunding
 /Applications/XAMPP/xamppfiles/bin/php serve.php
 
 

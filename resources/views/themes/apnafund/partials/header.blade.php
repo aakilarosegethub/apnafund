@@ -419,7 +419,7 @@
             <!-- Left: Logo -->
             <div class="col-12 col-md-2 text-center text-md-start">
                 <a href="{{ url('/') }}">
-                    <img src="{{ getImage(getFilePath('logoFavicon') . '/logo_light.png', getFileSize('logoFavicon')) }}" alt="Apna Fund Logo" class="logo-img">
+                    <img src="{{ getImage(getFilePath('logoFavicon') . '/logo_light.png', getFileSize('logoFavicon')) }}" alt="Apna Crowdfunding Logo" class="logo-img">
                 </a>
             </div>
 
@@ -479,7 +479,7 @@
         <div class="mobile-menu" id="mobileMenu">
             <div class="mobile-menu-header">
                 <div class="mobile-logo">
-                    <img src="{{ getImage(getFilePath('logoFavicon') . '/logo_light.png', getFileSize('logoFavicon')) }}" alt="Apna Fund Logo" class="mobile-logo-img">
+                    <img src="{{ getImage(getFilePath('logoFavicon') . '/logo_light.png', getFileSize('logoFavicon')) }}" alt="Apna Crowdfunding Logo" class="mobile-logo-img">
                 </div>
                 <button class="mobile-close" id="mobileClose">
                     <i class="fas fa-times"></i>

@@ -3,14 +3,14 @@
 ## Quick Start Command:
 
 ```bash
-cd /Applications/XAMPP/xamppfiles/htdocs/apnafund
+cd /Applications/XAMPP/xamppfiles/htdocs/apnacrowdfunding
 /Applications/XAMPP/xamppfiles/bin/php artisan serve --host=0.0.0.0 --port=8000
 ```
 
 ## Ya Phir Script Use Karo:
 
 ```bash
-cd /Applications/XAMPP/xamppfiles/htdocs/apnafund
+cd /Applications/XAMPP/xamppfiles/htdocs/apnacrowdfunding
 chmod +x serve.sh
 ./serve.sh
 ```
@@ -23,7 +23,7 @@ chmod +x serve.sh
 ## Background Mein Run Karne Ke Liye:
 
 ```bash
-cd /Applications/XAMPP/xamppfiles/htdocs/apnafund
+cd /Applications/XAMPP/xamppfiles/htdocs/apnacrowdfunding
 nohup /Applications/XAMPP/xamppfiles/bin/php artisan serve --host=0.0.0.0 --port=8000 > server.log 2>&1 &
 ```
 

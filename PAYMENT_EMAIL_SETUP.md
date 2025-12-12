@@ -29,7 +29,7 @@ This implementation adds email notifications for successful payments, sending em
 ## Email Templates Created
 
 ### 1. Admin Payment Success Template (`ADMIN_PAYMENT_SUCCESS`)
-- **Subject**: "New Successful Payment Received - ApnaFund"
+- **Subject**: "New Successful Payment Received - ApnaCrowdfunding"
 - **Recipient**: Admin email (from site settings)
 - **Content**: Detailed payment information including donor details, amount, campaign, transaction ID, etc.
 
@@ -51,8 +51,8 @@ Both templates support the following shortcodes:
 | `{{method_name}}` | Payment method | "Credit Card" |
 | `{{trx}}` | Transaction ID | "TXN123456789" |
 | `{{date}}` | Payment date | "Dec 19, 2024 10:30 AM" |
-| `{{admin_url}}` | Admin panel URL | "https://admin.apnafund.com/donations" |
-| `{{campaign_url}}` | Campaign URL | "https://apnafund.com/campaign/test" |
+| `{{admin_url}}` | Admin panel URL | "https://admin.apnacrowdfunding.com/donations" |
+| `{{campaign_url}}` | Campaign URL | "https://apnacrowdfunding.com/campaign/test" |
 | `{{currency_symbol}}` | Currency symbol | "$" |
 
 ## How It Works

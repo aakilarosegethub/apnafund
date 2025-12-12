@@ -20,7 +20,7 @@ if (!file_exists($envFile)) {
         echo "✅ Created .env from template\n";
     } else {
         // Create basic .env
-        $basicEnv = "APP_NAME=ApnaFund\nAPP_ENV=local\nAPP_KEY=\nAPP_DEBUG=true\nAPP_URL=http://localhost/apnafund\n\nDB_CONNECTION=sqlite\nDB_DATABASE={$basePath}/database/database.sqlite\n";
+        $basicEnv = "APP_NAME=ApnaCrowdfunding\nAPP_ENV=local\nAPP_KEY=\nAPP_DEBUG=true\nAPP_URL=http://localhost/apnacrowdfunding\n\nDB_CONNECTION=sqlite\nDB_DATABASE={$basePath}/database/database.sqlite\n";
         file_put_contents($envFile, $basicEnv);
         echo "✅ Created basic .env file\n";
     }
@@ -108,7 +108,7 @@ try {
     echo "✅ Bootstrap OK\n";
     
     echo "\n✅✅✅ All checks passed! ✅✅✅\n";
-    echo "\nNow try accessing: http://localhost/apnafund/\n";
+    echo "\nNow try accessing: http://localhost/apnacrowdfunding/\n";
     
 } catch (Exception $e) {
     echo "❌ ERROR: " . $e->getMessage() . "\n";

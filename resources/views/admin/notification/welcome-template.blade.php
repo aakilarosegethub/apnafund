@@ -12,7 +12,7 @@
 
                     <div class="col-lg-6 col-sm-6">
                         <label class="form--label required">Email Subject</label>
-                        <input type="text" class="form--control" name="email_subject" value="Welcome to ApnaFund - Account Created Successfully!" required>
+                        <input type="text" class="form--control" name="email_subject" value="Welcome to ApnaCrowdfunding - Account Created Successfully!" required>
                     </div>
                     
                     <div class="col-12">
@@ -20,9 +20,9 @@
                             <div class="col-xl-6 col-lg-12 col-md-6">
                                 <label class="form--label required">Email Body</label>
                                 <textarea class="form--control email-body-html" name="email_body" required>
-                                    <h1>Welcome to ApnaFund!</h1>
+                                    <h1>Welcome to ApnaCrowdfunding!</h1>
                                     <p>Dear {{firstname}} {{lastname}},</p>
-                                    <p>Welcome to ApnaFund! Your account has been created successfully.</p>
+                                    <p>Welcome to ApnaCrowdfunding! Your account has been created successfully.</p>
                                     <p>Here are your account details:</p>
                                     <ul>
                                         <li><strong>Username:</strong> {{username}}</li>
@@ -31,7 +31,7 @@
                                     </ul>
                                     <p>Thank you for joining our crowdfunding platform!</p>
                                     <p>If you have any questions, feel free to contact our support team.</p>
-                                    <p>Best regards,<br>ApnaFund Team</p>
+                                    <p>Best regards,<br>ApnaCrowdfunding Team</p>
                                 </textarea>
                             </div>
                             <div class="col-xl-6 col-lg-12 col-md-6">

@@ -1,6 +1,6 @@
-# 🔐 Social Login Setup Guide - ApnaFund
+# 🔐 Social Login Setup Guide - ApnaCrowdfunding
 
-Complete guide for setting up Facebook and Google social login in your ApnaFund application.
+Complete guide for setting up Facebook and Google social login in your ApnaCrowdfunding application.
 
 ## 📋 Table of Contents
 
@@ -16,14 +16,14 @@ Complete guide for setting up Facebook and Google social login in your ApnaFund 
 
 ## 🎯 Overview
 
-This guide will help you set up social login functionality for Facebook and Google in your ApnaFund application. Users will be able to login using their social media accounts instead of creating new accounts.
+This guide will help you set up social login functionality for Facebook and Google in your ApnaCrowdfunding application. Users will be able to login using their social media accounts instead of creating new accounts.
 
 ## ✅ Prerequisites
 
 - Laravel 11.x
 - PHP 8.2+
 - Composer
-- Admin access to your ApnaFund application
+- Admin access to your ApnaCrowdfunding application
 - Facebook Developer Account
 - Google Cloud Console Account
 
@@ -72,7 +72,7 @@ php artisan cache:clear
 
 2. **Choose App Type**
    - Select "Consumer" or "Business"
-   - Enter App Name: "ApnaFund Social Login"
+   - Enter App Name: "ApnaCrowdfunding Social Login"
    - Enter Contact Email
    - Click "Create App"
 
@@ -114,7 +114,7 @@ php artisan cache:clear
    - Click "Select a project" → "New Project"
 
 2. **Create Project**
-   - Project Name: "ApnaFund Social Login"
+   - Project Name: "ApnaCrowdfunding Social Login"
    - Click "Create"
 
 ### Step 2: Enable APIs
@@ -138,13 +138,13 @@ php artisan cache:clear
    - If prompted, configure OAuth consent screen
    - Choose "External" user type
    - Fill required information:
-     - App Name: "ApnaFund"
+     - App Name: "ApnaCrowdfunding"
      - User Support Email: your-email@domain.com
      - Developer Contact: your-email@domain.com
 
 3. **Create OAuth Client**
    - Application Type: "Web application"
-   - Name: "ApnaFund Web Client"
+   - Name: "ApnaCrowdfunding Web Client"
    - Authorized Redirect URIs:
      ```
      https://yourdomain.com/user/auth/google/callback
@@ -334,10 +334,10 @@ Once configured correctly, users will be able to:
 - Automatically create accounts if they don't exist
 - Access all features as regular users
 
-The social login system is now fully integrated with your ApnaFund application!
+The social login system is now fully integrated with your ApnaCrowdfunding application!
 
 ---
 
 **Last Updated**: January 2024  
 **Version**: 1.0  
-**Compatible with**: ApnaFund v1.0+
+**Compatible with**: ApnaCrowdfunding v1.0+

@@ -123,7 +123,7 @@ try {
     echo "\n7. Testing email template content...\n";
     
     $mailContent = $mailMessage->render();
-    $hasWelcomeText = strpos($mailContent, 'Welcome to ApnaFund') !== false;
+    $hasWelcomeText = strpos($mailContent, 'Welcome to ApnaCrowdfunding') !== false;
     $hasUsername = strpos($mailContent, $testUser->username) !== false;
     $hasEmail = strpos($mailContent, $testUser->email) !== false;
     $hasMobile = strpos($mailContent, $testUser->mobile) !== false;

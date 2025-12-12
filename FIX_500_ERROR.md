@@ -4,12 +4,12 @@
 
 Browser mein yeh URL open karo:
 ```
-http://localhost/apnafund/QUICK_FIX.php
+http://localhost/apnacrowdfunding/QUICK_FIX.php
 ```
 
 Ya phir terminal mein:
 ```bash
-cd /Applications/XAMPP/xamppfiles/htdocs/apnafund
+cd /Applications/XAMPP/xamppfiles/htdocs/apnacrowdfunding
 /Applications/XAMPP/xamppfiles/bin/php QUICK_FIX.php
 ```
 
@@ -17,7 +17,7 @@ cd /Applications/XAMPP/xamppfiles/htdocs/apnafund
 
 ### Step 1: .env File Create Karo
 ```bash
-cd /Applications/XAMPP/xamppfiles/htdocs/apnafund
+cd /Applications/XAMPP/xamppfiles/htdocs/apnacrowdfunding
 cp env_template.txt .env
 ```
 
@@ -41,7 +41,7 @@ chmod -R 755 bootstrap/cache
 ```
 
 ### Step 5: Test Karo
-Browser mein: `http://localhost/apnafund/`
+Browser mein: `http://localhost/apnacrowdfunding/`
 
 ## Agar Abhi Bhi 500 Error Aaye:
 
@@ -51,11 +51,11 @@ Browser mein: `http://localhost/apnafund/`
 
 2. **Check Laravel Log:**
    ```bash
-   tail -50 /Applications/XAMPP/xamppfiles/htdocs/apnafund/storage/logs/laravel.log
+   tail -50 /Applications/XAMPP/xamppfiles/htdocs/apnacrowdfunding/storage/logs/laravel.log
    ```
 
 3. **Test Error Script:**
-   Browser mein: `http://localhost/apnafund/test_error.php`
+   Browser mein: `http://localhost/apnacrowdfunding/test_error.php`
 
 ## Common Issues:
 

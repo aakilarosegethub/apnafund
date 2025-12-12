@@ -43,7 +43,7 @@ class FaqSeeder extends Seeder
             ],
             [
                 'question' => 'How do I contact support?',
-                'answer' => 'You can contact our support team through the contact form on our website, email us at support@apnafund.com, or use the live chat feature available on our platform.'
+                'answer' => 'You can contact our support team through the contact form on our website, email us at support@apnacrowdfunding.com, or use the live chat feature available on our platform.'
             ],
             [
                 'question' => 'Is my payment information secure?',

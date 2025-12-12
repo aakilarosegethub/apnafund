@@ -52,6 +52,6 @@ return [
 
     'firestore' => [
         'database_id' => env('FIREBASE_DATABASE_ID', '(default)'),
-        'collection_prefix' => env('FIREBASE_COLLECTION_PREFIX', 'apnafund'),
+        'collection_prefix' => env('FIREBASE_COLLECTION_PREFIX', 'apnacrowdfunding'),
     ],
 ];

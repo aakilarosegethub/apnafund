@@ -86,7 +86,7 @@ if (!file_exists($dbFile)) {
     echo "✅ database.sqlite exists\n";
 }
 
-echo "\n✨ Done! Try accessing http://localhost/apnafund/\n";
+echo "\n✨ Done! Try accessing http://localhost/apnacrowdfunding/\n";
 echo "If still having issues, check:\n";
 echo "1. XAMPP Apache is running\n";
 echo "2. .env file has APP_KEY (run: php artisan key:generate)\n";

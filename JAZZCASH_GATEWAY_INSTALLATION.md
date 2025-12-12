@@ -1,7 +1,7 @@
 # JazzCash Mobile Wallet Gateway Installation Guide
 
 ## Overview
-This guide will help you install and configure the **JazzCash Mobile Wallet Gateway** for your ApnaFund application. JazzCash is Pakistan's leading mobile wallet service, and this gateway allows users to make payments using their JazzCash mobile wallet.
+This guide will help you install and configure the **JazzCash Mobile Wallet Gateway** for your ApnaCrowdfunding application. JazzCash is Pakistan's leading mobile wallet service, and this gateway allows users to make payments using their JazzCash mobile wallet.
 
 ## Features
 - ✅ **Mobile Wallet Payment** - JazzCash mobile wallet integration

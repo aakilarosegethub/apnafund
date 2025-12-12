@@ -3,7 +3,7 @@
  * Plugin Name: Vendor Shop Webhook Handler
  * Description: Handles product webhooks and returns product URLs in response
  * Version: 1.0.0
- * Author: ApnaFund
+ * Author: ApnaCrowdfunding
  */
 
 // Prevent direct access

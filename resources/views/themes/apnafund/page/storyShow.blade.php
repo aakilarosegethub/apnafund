@@ -18,7 +18,7 @@
                 </div>
                 <div class="author-info">
                     <p class="author-name">@lang('Success Story')</p>
-                    <p class="author-title">@lang('Apna Fund')</p>
+                    <p class="author-title">@lang('Apna Crowdfunding')</p>
                 </div>
             </div>
         </div>
