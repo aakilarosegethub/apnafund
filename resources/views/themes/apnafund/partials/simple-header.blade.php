@@ -50,6 +50,7 @@
                         </ul>
                     </div>
                 @else
+                    <a href="{{ route('creators') }}" class="btn btn-outline-light me-2">Creators</a>
                     <a href="{{ route('user.login.form') }}" class="btn btn-outline-light">Creator Login</a>
                 @endif
             </div>

@@ -234,7 +234,7 @@
                 </select>
             </div>
 
-            <div class="info">Who's eligible to run a Kickstarter project?</div>
+            <div class="info">Who's eligible to run a {{ bs('site_name') ?? 'ApnaCrowdfunding' }} project?</div>
 
             <div class="button-group">
                 <button type="submit" class="continue-btn" id="continueBtn">

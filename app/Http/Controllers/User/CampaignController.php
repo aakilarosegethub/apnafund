@@ -13,6 +13,7 @@ use App\Models\Category;
 use App\Models\AdminNotification;
 use App\Http\Controllers\Controller;
 use App\Services\YouTubeUploadService;
+use App\Constants\ManageStatus;
 use Illuminate\Validation\Rules\File;
 use Illuminate\Support\Facades\Validator;
 
@@ -343,6 +344,7 @@ class CampaignController extends Controller
             $campaign->goal_amount     = $goalAmount;
             $campaign->start_date        = Carbon::parse($startDate);
             $campaign->end_date          = Carbon::parse($endDate);
+            $campaign->status           = ManageStatus::CAMPAIGN_PENDING;
             $campaign->save();
             
             // Debug logging

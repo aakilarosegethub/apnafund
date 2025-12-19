@@ -11,7 +11,12 @@
                 <div class="col-lg-10">
                     <div class="card custom--card" data-aos="fade-up" data-aos-duration="1500">
                         <div class="card-body policy--details">
-                            @php echo $policy->data_info->details @endphp
+                            @php 
+                                $details = isset($policy->data_info['details']) 
+                                    ? $policy->data_info['details'] 
+                                    : ($policy->data_info->details ?? '');
+                                echo $details;
+                            @endphp
                         </div>
                     </div>
                 </div>

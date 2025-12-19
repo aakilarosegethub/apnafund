@@ -137,21 +137,25 @@
                 <h3 class="title">@lang('Relevant Images')</h3>
             </div>
             <div class="card-body">
-                <div id="charityImageSlide" class="custom--carousel carousel slide">
-                    <div class="carousel-inner">
-                        @foreach($campaign->gallery as $image)
-                            <div @class(['carousel-item', 'active' => $loop->first])>
-                                <img src="{{ getImage(getFilePath('campaign') . '/' . $image, getFileSize('campaign')) }}" class="d-block w-100" alt="Image">
-                            </div>
-                        @endforeach
+                @if($campaign->gallery && count($campaign->gallery) > 0)
+                    <div id="charityImageSlide" class="custom--carousel carousel slide">
+                        <div class="carousel-inner">
+                            @foreach($campaign->gallery as $image)
+                                <div @class(['carousel-item', 'active' => $loop->first])>
+                                    <img src="{{ getImage(getFilePath('campaign') . '/' . $image, getFileSize('campaign')) }}" class="d-block w-100" alt="Image">
+                                </div>
+                            @endforeach
+                        </div>
+                        <button type="button" class="carousel-control-prev" data-bs-target="#charityImageSlide" data-bs-slide="prev">
+                            <i class="ti ti-chevron-left"></i>
+                        </button>
+                        <button type="button" class="carousel-control-next" data-bs-target="#charityImageSlide" data-bs-slide="next">
+                            <i class="ti ti-chevron-right"></i>
+                        </button>
                     </div>
-                    <button type="button" class="carousel-control-prev" data-bs-target="#charityImageSlide" data-bs-slide="prev">
-                        <i class="ti ti-chevron-left"></i>
-                    </button>
-                    <button type="button" class="carousel-control-next" data-bs-target="#charityImageSlide" data-bs-slide="next">
-                        <i class="ti ti-chevron-right"></i>
-                    </button>
-                </div>
+                @else
+                    @include('admin.partials.noData')
+                @endif
             </div>
         </div>
 

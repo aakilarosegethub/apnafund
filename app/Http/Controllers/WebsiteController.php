@@ -88,6 +88,15 @@ class WebsiteController extends Controller
         return view($this->activeTheme . 'page.faq', compact('pageTitle', 'faqContent', 'faqElements', 'pageSEO'));
     }
 
+    function creators() {
+        $pageTitle = 'Creators';
+        
+        // Get page SEO
+        $pageSEO = getPageSEO('creators');
+        
+        return view($this->activeTheme . 'page.creators', compact('pageTitle', 'pageSEO'));
+    }
+
     function campaigns() {
         $pageTitle  = 'Campaigns';
         
@@ -257,21 +266,36 @@ class WebsiteController extends Controller
             'slug' => $slug,
             'request_data' => request()->all(),
             'user_id' => auth()->id(),
-            'ip' => request()->ip()
+            'ip' => request()->ip(),
+            'is_ajax' => request()->ajax()
         ]);
         
-        $this->validate(request(), [
-            'name'    => 'required|string|max:40',
-            'email'   => 'required|string|max:40',
-            'comment' => 'required|string',
-            'rating'  => 'nullable|integer|min:1|max:5',
-            'title'   => 'nullable|string|max:255',
-        ]);
+        try {
+            $this->validate(request(), [
+                'name'    => 'required|string|max:40',
+                'email'   => 'required|string|max:40',
+                'comment' => 'required|string',
+                'rating'  => 'nullable|integer|min:1|max:5',
+                'title'   => 'nullable|string|max:255',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            throw $e;
+        }
 
         // Check whether user active or not
         if (auth()->check() && !auth()->user()->status) {
-            $toast[] = ['error', 'The user is banned'];
-
+            $message = 'The user is banned';
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $message], 403);
+            }
+            $toast[] = ['error', $message];
             return back()->withToasts($toast);
         }
 
@@ -279,33 +303,43 @@ class WebsiteController extends Controller
 
         // Check whether campaign found or not
         if (!$campaign) {
-            $toast[] = ['error', 'Campaign not found'];
-
+            $message = 'Campaign not found';
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $message], 404);
+            }
+            $toast[] = ['error', $message];
             return back()->withToasts($toast);
         }
 
         // Check whether campaign category active or not
         if (!$campaign->category->status) {
-            $toast[] = ['error', 'Campaign category is not active'];
-
+            $message = 'Campaign category is not active';
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $message], 403);
+            }
+            $toast[] = ['error', $message];
             return back()->withToasts($toast);
         }
 
-        // Check for approved & running campaign
+        // Check for approved campaign (allow comments on approved campaigns regardless of date status)
         if ($campaign->status == ManageStatus::CAMPAIGN_PENDING ||
-            $campaign->status == ManageStatus::CAMPAIGN_REJECTED ||
-            !$campaign->isRunning() || 
-            $campaign->isExpired()
+            $campaign->status == ManageStatus::CAMPAIGN_REJECTED
         ) {
-            $toast[] = ['error', 'Campaign is unavailable right now'];
-
+            $message = 'Campaign is unavailable right now';
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $message], 403);
+            }
+            $toast[] = ['error', $message];
             return back()->withToasts($toast);
         }
 
         // Check whether user commenting on his/her own campaign
         if (auth()->check() && $campaign->user_id == auth()->id()) {
-            $toast[] = ['error', 'You can\'t comment on your own campaign'];
-
+            $message = 'You can\'t comment on your own campaign';
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $message], 403);
+            }
+            $toast[] = ['error', $message];
             return back()->withToasts($toast);
         }
 
@@ -349,8 +383,16 @@ class WebsiteController extends Controller
         $adminNotification->click_url = urlPath('admin.comments.index');
         $adminNotification->save();
 
-        $toast[] = ['success', 'Your review has been submitted successfully! Please wait for admin approval.'];
+        $message = 'Your review has been submitted successfully! Please wait for admin approval.';
+        
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message
+            ]);
+        }
 
+        $toast[] = ['success', $message];
         return back()->withToasts($toast);
     }
 
@@ -667,7 +709,7 @@ class WebsiteController extends Controller
             $campaign->raised_amount = 0;
             $campaign->start_date = Carbon::today();
             $campaign->end_date = Carbon::today()->addDays(30);
-            $campaign->status = 'pending'; // Will need admin approval
+            $campaign->status = ManageStatus::CAMPAIGN_PENDING; // Will need admin approval
             $campaign->save();
 
             // Clear session data
@@ -760,14 +802,25 @@ class WebsiteController extends Controller
         if (bs('site_maintenance') == ManageStatus::INACTIVE) return to_route('home');
 
         $maintenance = SiteData::where('data_key', 'maintenance.data')->first();
-        $pageTitle   = $maintenance->data_info->heading;
+        $pageTitle   = 'Maintenance';
+        
+        if ($maintenance && $maintenance->data_info) {
+            $pageTitle = isset($maintenance->data_info['heading']) 
+                ? $maintenance->data_info['heading'] 
+                : 'Maintenance';
+        }
 
         return view($this->activeTheme . 'page.maintenance', compact('pageTitle', 'maintenance'));
     }
 
     function policyPages($slug, $id) {
         $policy    = SiteData::where('id', $id)->where('data_key', 'policy_pages.element')->firstOrFail();
-        $pageTitle = $policy->data_info->title;
+        
+        // Access data_info as array (since it's cast as 'array' in model)
+        $pageTitle = 'Policy';
+        if ($policy->data_info && is_array($policy->data_info) && isset($policy->data_info['title'])) {
+            $pageTitle = $policy->data_info['title'];
+        }
 
         return view($this->activeTheme . 'page.policy', compact('policy', 'pageTitle'));
     }
@@ -777,7 +830,14 @@ class WebsiteController extends Controller
         $reportContent = SiteData::where('data_key', 'report_fundraiser.content')->first();
         
         // Check if report page is enabled
-        if (!$reportContent || $reportContent->data_info->status != ManageStatus::ACTIVE) {
+        $status = null;
+        if ($reportContent && $reportContent->data_info) {
+            $status = isset($reportContent->data_info['status']) 
+                ? $reportContent->data_info['status'] 
+                : null;
+        }
+            
+        if (!$reportContent || $status != ManageStatus::ACTIVE) {
             abort(404, 'Report Fundraiser page is not available');
         }
 

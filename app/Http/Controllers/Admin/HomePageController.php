@@ -30,7 +30,7 @@ class HomePageController extends Controller
             'hero_heading_3' => 'required|string|max:255',
             'hero_description' => 'required|string',
             'button_text' => 'required|string|max:100',
-            'button_url' => 'required|string|max:255',
+            'button_url' => 'required|string|max:500',
             'hero_background_image' => ['nullable', 'image', File::types(['png', 'jpg', 'jpeg'])],
         ]);
 
@@ -78,8 +78,11 @@ class HomePageController extends Controller
         $heroContent->data_info = $data;
         $heroContent->save();
 
+        // Clear any related cache
+        cache()->forget('home.hero');
+
         $toast[] = ['success', 'Hero section updated successfully'];
-        return back()->withToasts($toast);
+        return back()->withToasts($toast)->withInput();
     }
 
     public function updateInfoBanner(Request $request)

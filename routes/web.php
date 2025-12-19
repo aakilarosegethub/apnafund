@@ -19,6 +19,7 @@ Route::controller('WebsiteController')->group(function () {
     Route::get('volunteers', 'volunteers')->name('volunteers');
     Route::get('about', 'aboutUs')->name('about.us');
     Route::get('faq', 'faq')->name('faq');
+    Route::get('creators', 'creators')->name('creators');
     Route::get('campaigns', 'campaigns')->name('campaign');
 
     // Campaign 

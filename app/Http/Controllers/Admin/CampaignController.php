@@ -64,10 +64,8 @@ class CampaignController extends Controller
         else $campaigns = Campaign::query();
 
         return $campaigns->with(['user', 'category'])
-            ->leftJoin('users', 'campaigns.user_id', '=', 'users.id')
-            ->leftJoin('categories', 'campaigns.category_id', '=', 'categories.id')
             ->searchable(['name', 'category:name', 'user:username'])
-            ->latest('campaigns.created_at')
+            ->latest()
             ->paginate(getPaginate());
     }
 

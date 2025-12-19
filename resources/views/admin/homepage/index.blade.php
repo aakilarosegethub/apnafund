@@ -12,37 +12,62 @@
                     </h5>
                 </div>
                 <div class="card-body">
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
                     <form action="{{ route('admin.homepage.hero.update') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <div class="row">
                             <div class="col-lg-6">
                                 <div class="form-group">
                                     <label>@lang('Hero Heading Line 1')</label>
-                                    <input type="text" class="form--control" name="hero_heading_1" value="{{ @$heroContent->data_info->hero_heading_1 ?? 'Crowd Funding' }}" required>
+                                    <input type="text" class="form--control @error('hero_heading_1') is-invalid @enderror" name="hero_heading_1" value="{{ old('hero_heading_1', @$heroContent->data_info->hero_heading_1 ?? 'Crowd Funding') }}" required>
+                                    @error('hero_heading_1')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
                                 </div>
                             </div>
                             <div class="col-lg-6">
                                 <div class="form-group">
                                     <label>@lang('Hero Heading Line 2')</label>
-                                    <input type="text" class="form--control" name="hero_heading_2" value="{{ @$heroContent->data_info->hero_heading_2 ?? 'By The People,' }}" required>
+                                    <input type="text" class="form--control @error('hero_heading_2') is-invalid @enderror" name="hero_heading_2" value="{{ old('hero_heading_2', @$heroContent->data_info->hero_heading_2 ?? 'By The People,') }}" required>
+                                    @error('hero_heading_2')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
                                 </div>
                             </div>
                             <div class="col-lg-6">
                                 <div class="form-group">
                                     <label>@lang('Hero Heading Line 3')</label>
-                                    <input type="text" class="form--control" name="hero_heading_3" value="{{ @$heroContent->data_info->hero_heading_3 ?? 'For The People,' }}" required>
+                                    <input type="text" class="form--control @error('hero_heading_3') is-invalid @enderror" name="hero_heading_3" value="{{ old('hero_heading_3', @$heroContent->data_info->hero_heading_3 ?? 'For The People,') }}" required>
+                                    @error('hero_heading_3')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
                                 </div>
                             </div>
                             <div class="col-lg-6">
                                 <div class="form-group">
                                     <label>@lang('Button Text')</label>
-                                    <input type="text" class="form--control" name="button_text" value="{{ @$heroContent->data_info->button_text ?? 'Get Started Now!' }}" required>
+                                    <input type="text" class="form--control @error('button_text') is-invalid @enderror" name="button_text" value="{{ old('button_text', @$heroContent->data_info->button_text ?? 'Get Started Now!') }}" required>
+                                    @error('button_text')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
                                 </div>
                             </div>
                             <div class="col-lg-6">
                                 <div class="form-group">
                                     <label>@lang('Button URL')</label>
-                                    <input type="text" class="form--control" name="button_url" value="{{ @$heroContent->data_info->button_url ?? route('business.resources') }}" required>
+                                    <input type="text" class="form--control @error('button_url') is-invalid @enderror" name="button_url" value="{{ old('button_url', @$heroContent->data_info->button_url ?? route('business.resources')) }}" required>
+                                    @error('button_url')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
+                                    <small class="text--muted">@lang('Enter full URL or route name (e.g., /campaigns or route name)')</small>
                                 </div>
                             </div>
                             <div class="col-lg-6">
@@ -57,7 +82,10 @@
                             <div class="col-12">
                                 <div class="form-group">
                                     <label>@lang('Hero Description')</label>
-                                    <textarea class="form--control" name="hero_description" rows="3" required>{{ @$heroContent->data_info->hero_description ?? 'Together, we empower small businesses— From young dreamers, bold visionaries and those who want to improve their societies.' }}</textarea>
+                                    <textarea class="form--control @error('hero_description') is-invalid @enderror" name="hero_description" rows="3" required>{{ old('hero_description', @$heroContent->data_info->hero_description ?? 'Together, we empower small businesses— From young dreamers, bold visionaries and those who want to improve their societies.') }}</textarea>
+                                    @error('hero_description')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
                                 </div>
                             </div>
                         </div>

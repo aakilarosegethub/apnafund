@@ -292,7 +292,7 @@
             
             if (categoryId) {
                 // AJAX request to fetch subcategories
-                const url = `${appUrl}/api/subcategories/${categoryId}`;
+                const url = `/api/subcategories/${categoryId}`;
                 console.log('Fetching subcategories from:', url);
                 
                 fetch(url, {

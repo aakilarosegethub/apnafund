@@ -968,7 +968,9 @@
             
             <div class="box">
                 <label>Project Story *</label>
-                <textarea name="description" placeholder="Tell your story..." required>{{ old('description', $campaign->description ?? '') }}</textarea>
+                <!-- Froala Editor -->
+                <textarea name="description" id="storyEditor" required>{{ old('description', $campaign->description ?? '') }}</textarea>
+                
                 <p class="note">Share the story behind your project and why it matters.</p>
                 @error('description')
                     <p class="note" style="color: red;">{{ $message }}</p>
@@ -1164,44 +1166,215 @@
         @endif
 
         @if($currentSection == 'story')
-        // Story form handling
+        // Story form handling with Quill Editor
         (function() {
-            const storyForm = document.getElementById("storyForm");
-            let initialDescription = '';
-            
-            if (storyForm) {
-                // Capture initial description value
-                const descriptionField = storyForm.querySelector('textarea[name="description"]');
-                if (descriptionField) {
-                    initialDescription = descriptionField.value || '';
-                }
+            // Hidden file input for custom image handler
+            const imageInput = document.createElement('input');
+            imageInput.type = 'file';
+            imageInput.accept = 'image/*';
+            imageInput.style.display = 'none';
+            imageInput.id = 'storyImageInput';
+            document.body.appendChild(imageInput);
 
-                // Function to check if description has changed
-                function checkFormChanges() {
-                    if (descriptionField) {
-                        const currentDescription = descriptionField.value || '';
-                        if (currentDescription !== initialDescription) {
-                            // Show buttons if description changed
+            // Custom image handler
+            function customImageHandler() {
+                imageInput.click();
+                imageInput.onchange = function() {
+                    const file = imageInput.files[0];
+                    if (!file) return;
+                    
+                    // Validate file type
+                    if (!file.type.match('image.*')) {
+                        alert('Please select an image file');
+                        return;
+                    }
+                    
+                    // Validate file size (5MB max)
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('Image size must be less than 5MB');
+                        return;
+                    }
+                    
+                    // Create FormData for file upload
+                    const formData = new FormData();
+                    formData.append('files', file);
+                    formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+
+                    // Upload file to server
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', '{{ route("user.campaign.upload-image") }}');
+                    
+                    xhr.onload = function() {
+                        if (xhr.status === 200) {
+                            try {
+                                const response = JSON.parse(xhr.responseText);
+                                if (response.location && window.storyQuill) {
+                                    const range = window.storyQuill.getSelection();
+                                    if (range) {
+                                        window.storyQuill.insertEmbed(range.index, 'image', response.location);
+                                        window.storyQuill.setSelection(range.index + 1, 0);
+                                    } else {
+                                        const length = window.storyQuill.getLength();
+                                        window.storyQuill.insertEmbed(length - 1, 'image', response.location);
+                                        window.storyQuill.setSelection(length, 0);
+                                    }
+                                } else {
+                                    alert('Upload failed: ' + (response.message || 'Invalid response'));
+                                }
+                            } catch (e) {
+                                console.error('JSON parse error:', e);
+                                alert('Upload failed: Invalid JSON response');
+                            }
+                        } else {
+                            alert('Upload failed: Server error ' + xhr.status);
+                        }
+                    };
+                    
+                    xhr.onerror = function() {
+                        alert('Upload failed: Network error');
+                    };
+                    
+                    xhr.send(formData);
+                };
+            }
+
+            // Custom video handler
+            function customVideoHandler() {
+                const url = prompt('Paste video URL (YouTube, Vimeo, MP4, etc.)');
+                if (!url) return;
+                
+                // Convert YouTube URL to embeddable format
+                let embedUrl = url;
+                if (url.includes('youtube.com/watch?v=')) {
+                    const videoId = url.split('v=')[1].split('&')[0];
+                    embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                } else if (url.includes('youtu.be/')) {
+                    const videoId = url.split('youtu.be/')[1].split('?')[0];
+                    embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                }
+                
+                if (window.storyQuill) {
+                    const range = window.storyQuill.getSelection(true);
+                    if (range) {
+                        if (embedUrl.includes('youtube.com/embed/')) {
+                            const iframe = document.createElement('iframe');
+                            iframe.src = embedUrl;
+                            iframe.width = '560';
+                            iframe.height = '315';
+                            iframe.frameBorder = '0';
+                            iframe.allowFullscreen = true;
+                            iframe.style.border = 'none';
+                            iframe.style.borderRadius = '8px';
+                            iframe.style.margin = '10px 0';
+                            window.storyQuill.clipboard.dangerouslyPasteHTML(range.index, iframe.outerHTML);
+                            window.storyQuill.setSelection(range.index + 1, 0);
+                        } else {
+                            window.storyQuill.insertEmbed(range.index, 'video', url, 'user');
+                            window.storyQuill.setSelection(range.index + 1, 0);
+                        }
+                    }
+                }
+            }
+
+            // Initialize Quill Editor
+            function initializeStoryQuill() {
+                const editorElement = document.getElementById('storyEditor');
+                if (!editorElement) {
+                    console.error('Story editor element not found');
+                    return false;
+                }
+                
+                if (typeof Quill === 'undefined') {
+                    console.error('Quill library not loaded');
+                    return false;
+                }
+                
+                try {
+                    window.storyQuill = new Quill('#storyEditor', {
+                        theme: 'snow',
+                        placeholder: 'Tell your story...',
+                        modules: {
+                            toolbar: {
+                                container: '#storyToolbar',
+                                handlers: {
+                                    image: customImageHandler,
+                                    video: customVideoHandler
+                                }
+                            }
+                        }
+                    });
+                    
+                    // Load existing content
+                    const existingContent = document.getElementById('storyDescription').value || '';
+                    if (existingContent) {
+                        window.storyQuill.root.innerHTML = existingContent;
+                        window.storyQuill.update();
+                    }
+                    
+                    // Track initial content for change detection
+                    const initialContent = window.storyQuill.root.innerHTML;
+                    
+                    // Monitor changes
+                    window.storyQuill.on('text-change', function() {
+                        const currentContent = window.storyQuill.root.innerHTML;
+                        if (currentContent !== initialContent) {
                             if (typeof window.showActionButtons === 'function') {
                                 window.showActionButtons();
                             }
                         }
-                    }
+                    });
+                    
+                    console.log('Story Quill editor initialized successfully');
+                    return true;
+                } catch (error) {
+                    console.error('Error initializing Story Quill editor:', error);
+                    return false;
                 }
+            }
 
-                // Add event listeners to description field
-                if (descriptionField) {
-                    descriptionField.addEventListener('input', checkFormChanges);
-                    descriptionField.addEventListener('change', checkFormChanges);
-                    descriptionField.addEventListener('keyup', checkFormChanges);
+            // Wait for Quill library to load
+            function waitForQuillAndInitialize() {
+                if (typeof Quill !== 'undefined' && document.getElementById('storyEditor')) {
+                    initializeStoryQuill();
+                } else {
+                    setTimeout(waitForQuillAndInitialize, 100);
                 }
+            }
 
-                // Form submission handling
+            // Start initialization
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', waitForQuillAndInitialize);
+            } else {
+                waitForQuillAndInitialize();
+            }
+
+            // Story form handling
+            const storyForm = document.getElementById("storyForm");
+            if (storyForm) {
+                // Form submission - copy Quill content to textarea
                 storyForm.addEventListener("submit", function(e) {
+                    if (window.storyQuill) {
+                        const editorContent = window.storyQuill.root.innerHTML;
+                        document.getElementById('storyDescription').value = editorContent;
+                    }
+                    
                     const topSaveBtn = document.getElementById("topSaveBtn");
                     if (topSaveBtn) {
                         topSaveBtn.disabled = true;
                         topSaveBtn.textContent = "Saving...";
+                    }
+                });
+            }
+
+            // Update top save button to handle Quill content
+            const topSaveBtn = document.getElementById("topSaveBtn");
+            if (topSaveBtn) {
+                const originalClick = topSaveBtn.onclick;
+                topSaveBtn.addEventListener('click', function() {
+                    if (window.storyQuill && storyForm) {
+                        const editorContent = window.storyQuill.root.innerHTML;
+                        document.getElementById('storyDescription').value = editorContent;
+                        storyForm.submit();
                     }
                 });
             }
@@ -1236,9 +1409,18 @@
 @include($activeTheme . 'user.campaign.commonStyleScript')
 
 @push('page-style-lib')
+    @if($currentSection == 'story')
+    <!-- Froala Editor CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/froala-editor@latest/css/froala_editor.pkgd.min.css" rel="stylesheet" type="text/css" />
+    <link href="https://cdn.jsdelivr.net/npm/froala-editor@latest/css/froala_style.min.css" rel="stylesheet" type="text/css" />
+    @endif
 @endpush
 
 @push('page-script-lib')
+    @if($currentSection == 'story')
+    <!-- Froala Editor JS -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/froala-editor@latest/js/froala_editor.pkgd.min.js"></script>
+    @endif
 @endpush
 
 
