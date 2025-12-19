@@ -4,7 +4,7 @@
             <div class="row align-items-center">
                 <div class="col-md-6">
                     <div class="footer-logo">
-                        <img src="{{ getImage(getFilePath('logoFavicon') . '/logo_light.png', getFileSize('logoFavicon')) }}" alt="Apna Fund Logo" class="footer-logo-img">
+                        <img src="{{ getImage(getFilePath('logoFavicon') . '/logo_light.png', getFileSize('logoFavicon')) }}" alt="Apna Crowdfunding Logo" class="footer-logo-img">
                         <p class="footer-tagline">{{ __(@$footerContent->data_info->footer_text) }}</p>
                     </div>
                 </div>

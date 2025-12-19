@@ -44,8 +44,8 @@ if ($adminTemplate && $userTemplate) {
         'method_name' => 'Credit Card',
         'trx' => 'TXN123456789',
         'date' => 'Dec 19, 2024 10:30 AM',
-        'admin_url' => 'https://admin.apnafund.com/donations',
-        'campaign_url' => 'https://apnafund.com/campaign/test',
+        'admin_url' => 'https://admin.apnacrowdfunding.com/donations',
+        'campaign_url' => 'https://apnacrowdfunding.com/campaign/test',
         'currency_symbol' => '$'
     ];
     

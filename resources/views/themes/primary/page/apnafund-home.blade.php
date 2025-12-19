@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apna Fund</title>
+    <title>Apna Crowdfunding</title>
     <link rel="stylesheet" href="{{ asset('apnafund/assets/css/app.css') }}">
     <link rel="stylesheet" href="{{ asset('apnafund/assets/bootstrap/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -19,7 +19,7 @@
                 <div class="col-md-12">
                     <div class="logo text-center">
                         <a href="/">
-                            <img src="{{ asset('apnafund/assets/images/White Logo.png') }}" alt="Apna Fund Logo" class="logo-img">
+                            <img src="{{ asset('apnafund/assets/images/White Logo.png') }}" alt="Apna Crowdfunding Logo" class="logo-img">
                         </a>
                     </div>
                 </div>
@@ -142,7 +142,7 @@
             <div class="section-header">
                 <div class="row align-items-center">
                     <div class="col-lg-8">
-                        <h2 class="stories-title">Creators are the stars of Apna Fund</h2>
+                        <h2 class="stories-title">Creators are the stars of Apna Crowdfunding</h2>
                         <p class="stories-subtitle">We're the world's leading funding and launch platform because of the
                             stellar ideas that come to life here.</p>
                     </div>
@@ -189,7 +189,7 @@
                             <div class="col-lg-6">
                                 <div class="slide-content">
                                     <h3 class="slide-title">John Doe - Senior Developer</h3>
-                                    <p class="slide-description">"Apna Fund helped us raise $2.5M for our tech startup.
+                                    <p class="slide-description">"Apna Crowdfunding helped us raise $2.5M for our tech startup.
                                         The platform's ease of use and supportive community made all the difference in
                                         our journey from idea to successful launch."</p>
                                     <button class="case-study-btn">See case study</button>
@@ -220,7 +220,7 @@
                                 <div class="slide-content">
                                     <h3 class="slide-title">Sarah Miller - Creative Director</h3>
                                     <p class="slide-description">"Our creative project found its perfect audience
-                                        through Apna Fund. We exceeded our funding goal by 300% and built a community of
+                                        through Apna Crowdfunding. We exceeded our funding goal by 300% and built a community of
                                         passionate supporters who believe in our vision."</p>
                                     <button class="case-study-btn">See case study</button>
                                 </div>
@@ -249,7 +249,7 @@
                             <div class="col-lg-6">
                                 <div class="slide-content">
                                     <h3 class="slide-title">Rajesh Kumar - Startup Founder</h3>
-                                    <p class="slide-description">"Apna Fund's platform transformed our startup journey.
+                                    <p class="slide-description">"Apna Crowdfunding's platform transformed our startup journey.
                                         We raised $1.8M and connected with investors who shared our vision for
                                         sustainable technology solutions."</p>
                                     <button class="case-study-btn">See case study</button>
@@ -269,7 +269,7 @@
                 <div class="row align-items-center">
                     <div class="col-lg-8">
                         <h2 class="faq-title">Frequently Asked Questions</h2>
-                        <p class="faq-subtitle">Everything you need to know about Apna Fund and crowdfunding</p>
+                        <p class="faq-subtitle">Everything you need to know about Apna Crowdfunding and crowdfunding</p>
                     </div>
                     <div class="col-lg-4 text-end">
                         <button class="help-center-btn">Visit Help Center</button>
@@ -284,13 +284,13 @@
                         <h2 class="accordion-header" id="faq1">
                             <button class="accordion-button" type="button" data-bs-toggle="collapse"
                                 data-bs-target="#collapse1" aria-expanded="true" aria-controls="collapse1">
-                                What can I use Apna Fund to finance?
+                                What can I use Apna Crowdfunding to finance?
                             </button>
                         </h2>
                         <div id="collapse1" class="accordion-collapse collapse show" aria-labelledby="faq1"
                             data-bs-parent="#faqAccordion">
                             <div class="accordion-body">
-                                Apna Fund supports a wide range of creative and innovative projects including technology
+                                Apna Crowdfunding supports a wide range of creative and innovative projects including technology
                                 startups, creative arts, social causes, business ventures, and community initiatives.
                                 Whether you're launching a new product, creating art, or starting a business, our
                                 platform provides the tools and community to bring your vision to life.
@@ -411,13 +411,13 @@
             <div class="row align-items-center">
                 <div class="col-md-6">
                     <div class="footer-logo">
-                        <img src="assets/images/White Logo.png" alt="Apna Fund Logo" class="footer-logo-img">
+                        <img src="assets/images/White Logo.png" alt="Apna Crowdfunding Logo" class="footer-logo-img">
                         <p class="footer-tagline">Empowering Dreams, Building Futures</p>
                     </div>
                 </div>
                 <div class="col-md-6 text-end">
                     <div class="footer-info">
-                        <p class="copyright">© 2024 Apna Fund. All rights reserved.</p>
+                        <p class="copyright">© 2024 Apna Crowdfunding. All rights reserved.</p>
                         <p class="email">contact@apnacrowdfunding.com</p>
                     </div>
                 </div>

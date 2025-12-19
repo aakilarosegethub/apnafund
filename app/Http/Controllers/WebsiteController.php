@@ -28,17 +28,35 @@ class WebsiteController extends Controller
         // You can add any initialization code here if needed
     }
     function home() {
-        $pageTitle               = 'Home';
-        
-        // Get dynamic home page content
-        $heroContent = SiteData::where('data_key', 'home.hero')->first();
-        $infoBannerContent = SiteData::where('data_key', 'home.info_banner')->first();
-        $featuredProjectsContent = SiteData::where('data_key', 'home.featured_projects')->first();
-        
-        // Get featured campaigns (approved and featured, regardless of date status)
-        $featuredCampaigns = Campaign::commonQuery()->approve()->featured()->latest()->limit(5)->get();
+        try {
+            $pageTitle               = 'Home';
+            
+            // Get dynamic home page content
+            $heroContent = SiteData::where('data_key', 'home.hero')->first();
+            $infoBannerContent = SiteData::where('data_key', 'home.info_banner')->first();
+            $featuredProjectsContent = SiteData::where('data_key', 'home.featured_projects')->first();
+            
+            // Get featured campaigns (approved and featured, regardless of date status)
+            try {
+                $featuredCampaigns = Campaign::commonQuery()->approve()->featured()->latest()->limit(5)->get();
+            } catch (\Exception $e) {
+                \Log::error('Error fetching featured campaigns', ['error' => $e->getMessage()]);
+                $featuredCampaigns = collect(); // Empty collection if error
+            }
 
-        return view($this->activeTheme .'page.home', compact('pageTitle', 'heroContent', 'infoBannerContent', 'featuredProjectsContent', 'featuredCampaigns'));
+            return view($this->activeTheme .'page.home', compact('pageTitle', 'heroContent', 'infoBannerContent', 'featuredProjectsContent', 'featuredCampaigns'));
+        } catch (\Exception $e) {
+            \Log::error('Home page error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            if (config('app.debug')) {
+                throw $e;
+            }
+            
+            abort(500, 'Something went wrong. Please try again later.');
+        }
     }
 
     function homeNew() {
@@ -59,7 +77,7 @@ class WebsiteController extends Controller
         $successContent          = getSiteData('success_story.content', true);
         $successElements         = getSiteData('success_story.element', false, 3, true);
 
-        return view('themes.primary.page.apnafund-new', compact('pageTitle', 'coverContent', 'bannerElements', 'featuredCampaignContent', 'counterElements', 'campaignCategoryContent', 'campaignCategories', 'recentCampaignContent', 'recentCampaigns', 'featuredCampaigns', 'upcomingContent', 'upcomingCampaigns', 'subscribeContent', 'successContent', 'successElements'));
+        return view('themes.primary.page.apnacrowdfunding-new', compact('pageTitle', 'coverContent', 'bannerElements', 'featuredCampaignContent', 'counterElements', 'campaignCategoryContent', 'campaignCategories', 'recentCampaignContent', 'recentCampaigns', 'featuredCampaigns', 'upcomingContent', 'upcomingCampaigns', 'subscribeContent', 'successContent', 'successElements'));
     }
 
     function volunteers() {
@@ -938,7 +956,7 @@ class WebsiteController extends Controller
                 [
                     "id" => 2,
                     "name" => "Getting Started",
-                    "slug" => "apnafund-basics",
+                    "slug" => "apnacrowdfunding-basics",
                     "description" => "",
                     "count" => 5,
                     "posts" => [

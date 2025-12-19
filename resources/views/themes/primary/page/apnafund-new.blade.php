@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apna Fund</title>
+    <title>Apna Crowdfunding</title>
     <link rel="stylesheet" href="{{ custom_asset('apnafund/assets/css/app.css') }}">
     <link rel="stylesheet" href="{{ custom_asset('apnafund/assets/bootstrap/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -19,7 +19,7 @@
                 <div class="col-md-12">
                     <div class="logo text-center">
                         <a href="/">
-                            <img src="{{ custom_asset('apnafund/assets/images/White Logo.png') }}" alt="Apna Fund Logo" class="logo-img">
+                            <img src="{{ custom_asset('apnafund/assets/images/White Logo.png') }}" alt="Apna Crowdfunding Logo" class="logo-img">
                         </a>
                     </div>
                 </div>
@@ -123,7 +123,7 @@
             <div class="section-header">
                 <div class="row align-items-center">
                     <div class="col-lg-8">
-                        <h2 class="stories-title">{{ $successContent->data_values->title ?? 'Creators are the stars of Apna Fund' }}</h2>
+                        <h2 class="stories-title">{{ $successContent->data_values->title ?? 'Creators are the stars of Apna Crowdfunding' }}</h2>
                         <p class="stories-subtitle">{{ $successContent->data_values->description ?? "We're the world's leading funding and launch platform because of the stellar ideas that come to life here." }}</p>
                     </div>
                     <div class="col-lg-4 text-end">
@@ -195,7 +195,7 @@
                 <div class="row align-items-center">
                     <div class="col-lg-8">
                         <h2 class="faq-title">{{ $faqContent->data_values->title ?? 'Frequently Asked Questions' }}</h2>
-                        <p class="faq-subtitle">{{ $faqContent->data_values->description ?? 'Everything you need to know about Apna Fund and crowdfunding' }}</p>
+                        <p class="faq-subtitle">{{ $faqContent->data_values->description ?? 'Everything you need to know about Apna Crowdfunding and crowdfunding' }}</p>
                     </div>
                     <div class="col-lg-4 text-end">
                         <button class="help-center-btn">{{ $faqContent->data_values->button_text ?? 'Visit Help Center' }}</button>
@@ -264,13 +264,13 @@
             <div class="row align-items-center">
                 <div class="col-md-6">
                     <div class="footer-logo">
-                        <img src="{{ custom_asset('apnafund/assets/images/White Logo.png') }}" alt="Apna Fund Logo" class="footer-logo-img">
+                        <img src="{{ custom_asset('apnafund/assets/images/White Logo.png') }}" alt="Apna Crowdfunding Logo" class="footer-logo-img">
                         <p class="footer-tagline">Empowering Dreams, Building Futures</p>
                     </div>
                 </div>
                 <div class="col-md-6 text-end">
                     <div class="footer-info">
-                        <p class="copyright">© {{ date('Y') }} Apna Fund. All rights reserved.</p>
+                        <p class="copyright">© {{ date('Y') }} Apna Crowdfunding. All rights reserved.</p>
                         <p class="email">contact@apnacrowdfunding.com</p>
                     </div>
                 </div>

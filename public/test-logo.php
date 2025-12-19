@@ -4,7 +4,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Logo Test - ApnaFund</title>
+    <title>Logo Test - ApnaCrowdfunding</title>
     <style>
         body { 
             font-family: Arial, sans-serif; 
@@ -42,7 +42,7 @@
     </style>
 </head>
 <body>
-    <h1>ApnaFund Logo Test</h1>
+    <h1>ApnaCrowdfunding Logo Test</h1>
     <p>Current time: <?php echo date('Y-m-d H:i:s'); ?></p>
     
     <div class="logo-test">

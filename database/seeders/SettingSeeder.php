@@ -16,7 +16,7 @@ class SettingSeeder extends Seeder
         // Check if settings already exist
         if (Setting::count() == 0) {
             Setting::create([
-                'site_name' => 'ApnaFund',
+                'site_name' => 'ApnaCrowdfunding',
                 'site_url' => 'http://localhost:8000',
                 'site_logo' => null,
                 'site_favicon' => null,

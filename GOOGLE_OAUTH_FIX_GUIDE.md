@@ -21,7 +21,7 @@ The Google OAuth client is not properly configured in Google Cloud Console, or t
 1. Go to "APIs & Services" > "OAuth consent screen"
 2. Choose "External" user type
 3. Fill in the required information:
-   - App name: "ApnaFund"
+   - App name: "ApnaCrowdfunding"
    - User support email: your email
    - Developer contact: your email
 4. Add scopes:
@@ -34,7 +34,7 @@ The Google OAuth client is not properly configured in Google Cloud Console, or t
 1. Go to "APIs & Services" > "Credentials"
 2. Click "Create Credentials" > "OAuth 2.0 Client IDs"
 3. Choose "Web application" as the application type
-4. Set the name: "ApnaFund Web Client"
+4. Set the name: "ApnaCrowdfunding Web Client"
 5. Add authorized redirect URIs:
    - `http://localhost:8000/user/auth/google/callback`
    - `https://yourdomain.com/user/auth/google/callback` (for production)
@@ -68,7 +68,7 @@ php artisan cache:clear
 
 ### Issue 2: "App not verified"
 - This is normal for development
-- Click "Advanced" > "Go to ApnaFund (unsafe)" to proceed
+- Click "Advanced" > "Go to ApnaCrowdfunding (unsafe)" to proceed
 
 ### Issue 3: "Access blocked"
 - Make sure you've added your email as a test user in OAuth consent screen

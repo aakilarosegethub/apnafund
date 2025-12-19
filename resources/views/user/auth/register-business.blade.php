@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $pageTitle }} - Apna Fund</title>
+    <title>{{ $pageTitle }} - Apna Crowdfunding</title>
     <link rel="stylesheet" href="{{ asset('apnafund/assets/css/app.css') }}">
     <link rel="stylesheet" href="{{ asset('apnafund/assets/bootstrap/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -592,10 +592,14 @@
                 <select class="form-control" id="country">
                     <option value="">Select your country</option>
                     @php
-                        $countries = json_decode(file_get_contents(resource_path('views/partials/country.json')));
+                        $countries = json_decode(file_get_contents(resource_path('views/partials/country.json')), true);
+                        // Sort countries alphabetically by country name
+                        uasort($countries, function($a, $b) {
+                            return strcmp($a['country'], $b['country']);
+                        });
                     @endphp
                     @foreach($countries as $code => $country)
-                        <option value="{{ $code }}">{{ $country->country }}</option>
+                        <option value="{{ $code }}">{{ $country['country'] }}</option>
                     @endforeach
                 </select>
             </div>
@@ -690,7 +694,7 @@
                     <i class="fas fa-check-circle"></i>
                 </div>
                 <h2 class="success-title">Account Created Successfully!</h2>
-                <p class="success-subtitle">Welcome to Apna Fund! Your account has been created and you can now start building your crowdfunding campaign.</p>
+                <p class="success-subtitle">Welcome to Apna Crowdfunding! Your account has been created and you can now start building your crowdfunding campaign.</p>
                 <button class="btn-theme" onclick="goToHome()">Go to Home</button>
             </div>
         </div>

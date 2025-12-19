@@ -294,7 +294,7 @@ class CampaignController extends Controller
                             
                             $title = request('name') . ' - Campaign Video';
                             $description = 'Campaign video for: ' . request('name') . "\n\n" . request('description');
-                            $tags = ['campaign', 'donation', 'fundraising', 'apnafund'];
+                            $tags = ['campaign', 'donation', 'fundraising', 'apnacrowdfunding'];
                             
                             $youtubeUrl = $youtubeService->uploadVideo(
                                 $tempPath,

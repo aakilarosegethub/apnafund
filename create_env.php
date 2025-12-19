@@ -1,15 +1,15 @@
 <?php
 /**
- * Create .env file for ApnaFund
+ * Create .env file for ApnaCrowdfunding
  */
 
 $envContent = <<<'ENV'
-APP_NAME=ApnaFund
+APP_NAME=ApnaCrowdfunding
 APP_ENV=local
 APP_KEY=
 APP_DEBUG=true
 APP_TIMEZONE=UTC
-APP_URL=http://localhost/apnafund
+APP_URL=http://localhost/apnacrowdfunding
 
 APP_LOCALE=en
 APP_FALLBACK_LOCALE=en
@@ -26,7 +26,7 @@ LOG_DEPRECATIONS_CHANNEL=null
 LOG_LEVEL=debug
 
 DB_CONNECTION=sqlite
-DB_DATABASE=/Applications/XAMPP/xamppfiles/htdocs/apnafund/database/database.sqlite
+DB_DATABASE=/Applications/XAMPP/xamppfiles/htdocs/apnacrowdfunding/database/database.sqlite
 
 SESSION_DRIVER=database
 SESSION_LIFETIME=120
@@ -41,7 +41,7 @@ QUEUE_CONNECTION=database
 CACHE_STORE=database
 CACHE_PREFIX=
 
-ASSETS_URL=http://localhost/apnafund
+ASSETS_URL=http://localhost/apnacrowdfunding
 
 # Mail Configuration
 MAIL_MAILER=log
@@ -69,18 +69,18 @@ FIREBASE_DATABASE_ID=(default)
 # Social Login (Optional)
 FACEBOOK_CLIENT_ID=
 FACEBOOK_CLIENT_SECRET=
-FACEBOOK_REDIRECT_URI=http://localhost/apnafund/user/auth/facebook/callback
+FACEBOOK_REDIRECT_URI=http://localhost/apnacrowdfunding/user/auth/facebook/callback
 
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
-GOOGLE_REDIRECT_URI=http://localhost/apnafund/user/auth/google/callback
+GOOGLE_REDIRECT_URI=http://localhost/apnacrowdfunding/user/auth/google/callback
 GOOGLE_MAPS_API_KEY=
 
 # YouTube (Optional)
 YOUTUBE_CLIENT_ID=
 YOUTUBE_CLIENT_SECRET=
-YOUTUBE_REDIRECT_URI=http://localhost/apnafund/youtube/callback
-YOUTUBE_CREDENTIALS_PATH=/Applications/XAMPP/xamppfiles/htdocs/apnafund/storage/app/youtube-credentials.json
+YOUTUBE_REDIRECT_URI=http://localhost/apnacrowdfunding/youtube/callback
+YOUTUBE_CREDENTIALS_PATH=/Applications/XAMPP/xamppfiles/htdocs/apnacrowdfunding/storage/app/youtube-credentials.json
 YOUTUBE_ACCESS_TOKEN=
 YOUTUBE_REFRESH_TOKEN=
 

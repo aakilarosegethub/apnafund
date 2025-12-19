@@ -110,7 +110,7 @@ return [
 
     'from' => [
         'address' => env('MAIL_FROM_ADDRESS', 'diyanabdulsattardiyan@gmail.com'),
-        'name' => env('MAIL_FROM_NAME', 'ApnaFund'),
+        'name' => env('MAIL_FROM_NAME', 'ApnaCrowdfunding'),
     ],
 
 ];

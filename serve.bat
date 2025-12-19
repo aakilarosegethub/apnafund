@@ -1,7 +1,7 @@
 @echo off
-title ApnaFund Development Server
+title ApnaCrowdfunding Development Server
 echo ==========================================
-echo    ApnaFund Development Server Launcher
+echo    ApnaCrowdfunding Development Server Launcher
 echo ==========================================
 echo.
 echo ^🚀 Starting Laravel Development Server...

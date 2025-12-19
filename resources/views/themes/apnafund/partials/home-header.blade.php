@@ -4,7 +4,7 @@
             <!-- Left: Logo -->
             <div class="col-12 col-md-2 text-center text-md-start">
                 <a href="/">
-                    <img src="{{ asset('apnafund/assets/images/White Logo.png') }}" alt="Apna Fund Logo" class="logo-img"
+                    <img src="{{ asset('apnafund/assets/images/White Logo.png') }}" alt="Apna Crowdfunding Logo" class="logo-img"
                         style="max-height:50px;">
                 </a>
             </div>

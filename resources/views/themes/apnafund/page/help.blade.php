@@ -157,7 +157,7 @@
                     </a>
                 </div>
 
-                <!-- ApnaFund Project Updates -->
+                <!-- ApnaCrowdfunding Project Updates -->
                 <div class="col-md-4">
                     <a href="#" class="resource-card text-decoration-none">
                         <div class="resource-image project-updates">
@@ -185,7 +185,7 @@
                             </div>
                         </div>
                         <div class="resource-content">
-                            <h5 class="fw-bold mb-0">ApnaFund Project Updates</h5>
+                            <h5 class="fw-bold mb-0">ApnaCrowdfunding Project Updates</h5>
                         </div>
                     </a>
                 </div>
@@ -316,7 +316,7 @@
                 {
                     "id": 2,
                     "name": "Getting Started",
-                    "slug": "apnafund-basics",
+                    "slug": "apnacrowdfunding-basics",
                     "description": "",
                     "count": 5,
                     "posts": [
@@ -536,7 +536,7 @@
         container.innerHTML = articles.map(article => `
             <a href="${article.permalink}" target="_blank" class="dropdown-item">
                 <span>${article.title}</span>
-                <small class="text-muted">ApnaFund Support > ${article.category}</small>
+                <small class="text-muted">ApnaCrowdfunding Support > ${article.category}</small>
             </a>
         `).join('');
     }
@@ -647,7 +647,7 @@
                     resultsHtml += `
                         <a href="${post.permalink}" target="_blank" class="dropdown-item">
                             <span>${post.title}</span>
-                            <small class="text-muted">ApnaFund Support > ${categoryData.category_info.name}</small>
+                            <small class="text-muted">ApnaCrowdfunding Support > ${categoryData.category_info.name}</small>
                         </a>
                     `;
                 });
@@ -659,7 +659,7 @@
                 resultsHtml += `
                     <a href="${post.permalink}" target="_blank" class="dropdown-item">
                         <span>${post.title}</span>
-                        <small class="text-muted">ApnaFund Support</small>
+                        <small class="text-muted">ApnaCrowdfunding Support</small>
                     </a>
                 `;
             });
@@ -687,7 +687,7 @@
             container.innerHTML = articles.map(article => `
                 <a href="${article.permalink}" target="_blank" class="dropdown-item">
                     <span>${article.title}</span>
-                    <small class="text-muted">ApnaFund Support > ${article.category}</small>
+                    <small class="text-muted">ApnaCrowdfunding Support > ${article.category}</small>
                 </a>
             `).join('');
         }

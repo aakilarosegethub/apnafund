@@ -24,7 +24,7 @@ class YouTubeUploadService
     {
         try {
             $this->client = new Google_Client();
-            $this->client->setApplicationName('ApnaFund Campaign Videos');
+            $this->client->setApplicationName('ApnaCrowdfunding Campaign Videos');
             $this->client->setScopes([
                 Google_Service_YouTube::YOUTUBE_UPLOAD,
                 Google_Service_YouTube::YOUTUBE_READONLY

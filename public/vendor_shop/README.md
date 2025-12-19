@@ -242,4 +242,4 @@ This plugin is licensed under the GPL v2 or later.
 
 ## Credits
 
-Developed by ApnaFund Team.
+Developed by ApnaCrowdfunding Team.

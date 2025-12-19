@@ -491,7 +491,7 @@
             
             <div class="illustration-content">
                 <a href="{{ url('/') }}">
-                    <img src="{{ getImage(getFilePath('logoFavicon') . '/logo_light.png', getFileSize('logoFavicon')) }}" alt="Apna Fund Logo" class="logo-img">
+                    <img src="{{ getImage(getFilePath('logoFavicon') . '/logo_light.png', getFileSize('logoFavicon')) }}" alt="Apna Crowdfunding Logo" class="logo-img">
                 </a>
                 <p class="illustration-subtitle">Secure & Easy Fundraising Platform</p>
                 <div style="font-size: 4rem; margin-top: 20px;">

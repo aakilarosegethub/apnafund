@@ -3,7 +3,7 @@
 echo "🔄 Installing/Updating Composer Dependencies..."
 echo ""
 
-cd /Applications/XAMPP/xamppfiles/htdocs/apnafund
+cd /Applications/XAMPP/xamppfiles/htdocs/apnacrowdfunding
 
 # Try to find composer
 if command -v composer &> /dev/null; then
@@ -35,7 +35,7 @@ if [ $? -eq 0 ]; then
     echo "  /Applications/XAMPP/xamppfiles/bin/php artisan config:clear"
     echo "  /Applications/XAMPP/xamppfiles/bin/php artisan cache:clear"
     echo ""
-    echo "Then try: http://localhost/apnafund/"
+    echo "Then try: http://localhost/apnacrowdfunding/"
 else
     echo ""
     echo "❌ Error installing dependencies!"

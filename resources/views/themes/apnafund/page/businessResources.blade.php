@@ -165,7 +165,7 @@
 
         <!-- What's Happening Section -->
         <div class="featured-section">
-            <h2 class="featured-title">@lang('What\'s happening around Apnafund')</h2>
+            <h2 class="featured-title">@lang('What\'s happening around Apnacrowdfunding')</h2>
             <div class="row">
                 @forelse($successElements->take(3) as $index => $story)
                 @php

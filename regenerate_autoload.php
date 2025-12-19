@@ -42,7 +42,7 @@ if (!$composer) {
         if (file_exists($helpersFile)) {
             echo "✅ helpers.php exists at: $helpersFile\n";
             echo "\n✅ File structure is correct!\n";
-            echo "Try accessing: http://localhost/apnafund/\n";
+            echo "Try accessing: http://localhost/apnacrowdfunding/\n";
         } else {
             echo "❌ helpers.php still missing!\n";
         }
@@ -65,5 +65,5 @@ if ($return === 0) {
     echo implode("\n", $output) . "\n";
 }
 
-echo "\n✅ Done! Try accessing: http://localhost/apnafund/\n";
+echo "\n✅ Done! Try accessing: http://localhost/apnacrowdfunding/\n";
 

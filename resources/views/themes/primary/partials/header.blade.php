@@ -4,7 +4,7 @@
             <!-- Left: Logo -->
             <div class="col-12 col-md-2 text-center text-md-start">
                 <a href="/">
-                    <img src="{{ getImage(getFilePath('logoFavicon') . '/logo_light.png', getFileSize('logoFavicon')) }}" alt="Apna Fund Logo" class="logo-img">
+                    <img src="{{ getImage(getFilePath('logoFavicon') . '/logo_light.png', getFileSize('logoFavicon')) }}" alt="Apna Crowdfunding Logo" class="logo-img">
                 </a>
             </div>
 

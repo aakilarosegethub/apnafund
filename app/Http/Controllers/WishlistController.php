@@ -60,7 +60,7 @@ class WebsiteController extends Controller
         $successContent          = getSiteData('success_story.content', true);
         $successElements         = getSiteData('success_story.element', false, 3, true);
 
-        return view('themes.primary.page.apnafund-new', compact('pageTitle', 'coverContent', 'bannerElements', 'featuredCampaignContent', 'counterElements', 'campaignCategoryContent', 'campaignCategories', 'recentCampaignContent', 'recentCampaigns', 'featuredCampaigns', 'upcomingContent', 'upcomingCampaigns', 'subscribeContent', 'successContent', 'successElements'));
+        return view('themes.primary.page.apnacrowdfunding-new', compact('pageTitle', 'coverContent', 'bannerElements', 'featuredCampaignContent', 'counterElements', 'campaignCategoryContent', 'campaignCategories', 'recentCampaignContent', 'recentCampaigns', 'featuredCampaigns', 'upcomingContent', 'upcomingCampaigns', 'subscribeContent', 'successContent', 'successElements'));
     }
 
     function volunteers() {
@@ -721,7 +721,7 @@ class WebsiteController extends Controller
                 [
                     "id" => 2,
                     "name" => "Getting Started",
-                    "slug" => "apnafund-basics",
+                    "slug" => "apnacrowdfunding-basics",
                     "description" => "",
                     "count" => 5,
                     "posts" => [

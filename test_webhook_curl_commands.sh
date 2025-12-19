@@ -7,7 +7,7 @@ echo "=== Webhook Logging Test Commands ==="
 echo ""
 
 # Base URL - change this to your actual domain
-BASE_URL="http://localhost/apnafund"
+BASE_URL="http://localhost/apnacrowdfunding"
 
 echo "1. Testing JazzCash IPN with Success Status..."
 curl -X POST "$BASE_URL/jazzcash/ipn" \

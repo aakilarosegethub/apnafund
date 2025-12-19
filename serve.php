@@ -1,10 +1,10 @@
 <?php
 /**
- * ApnaFund Development Server Launcher
+ * ApnaCrowdfunding Development Server Launcher
  * Quick serve script for Laravel project
  */
 
-echo "🚀 Starting ApnaFund Development Server...\n";
+echo "🚀 Starting ApnaCrowdfunding Development Server...\n";
 echo "📁 Project Directory: " . __DIR__ . "\n";
 echo "🌐 Server URL: http://0.0.0.0:9001\n";
 echo "⏰ Started at: " . date('Y-m-d H:i:s') . "\n";

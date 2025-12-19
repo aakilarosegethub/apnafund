@@ -139,7 +139,7 @@
 
     .container.visible {
         opacity: 1;
-        margin-top: 40px;
+        margin-top: -500px;
         padding-top: 40px;
     }
 

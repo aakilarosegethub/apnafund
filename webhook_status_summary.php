@@ -8,10 +8,10 @@ echo "=== Webhook System Status Summary ===\n\n";
 
 // Test 1: Check if webhook endpoint is accessible
 echo "1. Webhook Endpoint Test:\n";
-echo "   URL: http://localhost/apnafund/jazzcash/ipn\n";
+echo "   URL: http://localhost/apnacrowdfunding/jazzcash/ipn\n";
 
 $ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, 'http://localhost/apnafund/jazzcash/ipn');
+curl_setopt($ch, CURLOPT_URL, 'http://localhost/apnacrowdfunding/jazzcash/ipn');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, 'TransactionID=TEST&Amount=100&Currency=PKR&Status=Success&Hash=test');
@@ -33,7 +33,7 @@ if ($error) {
 echo "\n2. Database Tables Check:\n";
 
 $host = 'localhost';
-$dbname = 'apnafund';
+$dbname = 'apnacrowdfunding';
 $username = 'root';
 $password = '';
 
@@ -70,8 +70,8 @@ try {
 // Test 3: Check file permissions
 echo "\n3. File Permissions Check:\n";
 
-$storagePath = '/Applications/XAMPP/xamppfiles/htdocs/apnafund/storage';
-$cachePath = '/Applications/XAMPP/xamppfiles/htdocs/apnafund/storage/framework/cache';
+$storagePath = '/Applications/XAMPP/xamppfiles/htdocs/apnacrowdfunding/storage';
+$cachePath = '/Applications/XAMPP/xamppfiles/htdocs/apnacrowdfunding/storage/framework/cache';
 
 echo "   Storage directory: " . (is_writable($storagePath) ? "WRITABLE" : "NOT WRITABLE") . "\n";
 echo "   Cache directory: " . (is_writable($cachePath) ? "WRITABLE" : "NOT WRITABLE") . "\n";
@@ -79,7 +79,7 @@ echo "   Cache directory: " . (is_writable($cachePath) ? "WRITABLE" : "NOT WRITA
 // Test 4: Check Laravel configuration
 echo "\n4. Laravel Configuration Check:\n";
 
-$envFile = '/Applications/XAMPP/xamppfiles/htdocs/apnafund/.env';
+$envFile = '/Applications/XAMPP/xamppfiles/htdocs/apnacrowdfunding/.env';
 if (file_exists($envFile)) {
     echo "   .env file: EXISTS\n";
     $envContent = file_get_contents($envFile);
@@ -105,6 +105,6 @@ echo "3. Check database connection in .env file\n";
 echo "4. Run migrations: php artisan migrate\n\n";
 
 echo "=== Test Commands ===\n";
-echo "curl -X POST 'http://localhost/apnafund/jazzcash/ipn' -d 'TransactionID=TEST_123&Amount=100&Currency=PKR&Status=Success&Hash=test'\n";
+echo "curl -X POST 'http://localhost/apnacrowdfunding/jazzcash/ipn' -d 'TransactionID=TEST_123&Amount=100&Currency=PKR&Status=Success&Hash=test'\n";
 echo "php quick_webhook_test.php\n";
 ?>

@@ -17,7 +17,7 @@ $testData = [
     'OrderID' => 'ORDER_' . time(),
 ];
 
-$url = 'http://localhost/apnafund/jazzcash/ipn';
+$url = 'http://localhost/apnacrowdfunding/jazzcash/ipn';
 
 echo "1. Testing JazzCash IPN Webhook...\n";
 echo "URL: $url\n";

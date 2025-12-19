@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# ApnaFund Development Server Launcher
+# ApnaCrowdfunding Development Server Launcher
 # Quick serve script for Laravel project
 
-echo "🚀 Starting ApnaFund Development Server..."
+echo "🚀 Starting ApnaCrowdfunding Development Server..."
 echo "📁 Project Directory: $(pwd)"
 echo "🌐 Server URL: http://0.0.0.0:9001"
 echo "⏰ Started at: $(date)"

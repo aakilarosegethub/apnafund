@@ -284,7 +284,7 @@
             color: #0dcaf0;
         }
 
-        /* Toast Notification Customization for ApnaFund Theme */
+        /* Toast Notification Customization for ApnaCrowdfunding Theme */
         .iziToast {
             border-radius: 10px !important;
             box-shadow: 0 5px 25px rgba(0, 0, 0, 0.15) !important;

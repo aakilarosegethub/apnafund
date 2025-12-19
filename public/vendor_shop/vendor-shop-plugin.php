@@ -4,7 +4,7 @@
  * Plugin URI: https://yourdomain.com
  * Description: Manages vendor shop products with webhook support and URL generation
  * Version: 1.0.0
- * Author: ApnaFund
+ * Author: ApnaCrowdfunding
  * License: GPL v2 or later
  * Text Domain: vendor-shop
  */

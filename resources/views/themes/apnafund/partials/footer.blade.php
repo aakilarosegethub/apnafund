@@ -3,8 +3,8 @@
         <div class="footer-container">
             <div class="footer-content">
                 <div class="footer-section">
-                    <h4>ApnaFund</h4>
-                    <img src="{{ getImage(getFilePath('logoFavicon') . '/logo_light.png', getFileSize('logoFavicon')) }}" alt="Apna Fund Logo" class="footer-logo-img">
+                    <h4>ApnaCrowdfunding</h4>
+                    <img src="{{ getImage(getFilePath('logoFavicon') . '/logo_light.png', getFileSize('logoFavicon')) }}" alt="Apna Crowdfunding Logo" class="footer-logo-img">
                         <p class="footer-tagline">{{ __(@$footerContent->data_info->footer_text) }}</p>
                     
                 </div>
@@ -50,7 +50,7 @@
             </div>
 
             <div class="footer-bottom">
-                <p>&copy; 2010-2025 Apna Fund. All rights reserved.</p>
+                <p>&copy; 2010-2025 Apna Crowdfunding. All rights reserved.</p>
             </div>
         </div>
     </footer>

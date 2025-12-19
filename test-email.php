@@ -10,7 +10,7 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Notifications\WelcomeNotification;
 
-echo "<h2>ApnaFund Email Test</h2>";
+echo "<h2>ApnaCrowdfunding Email Test</h2>";
 
 // Get current settings
 $setting = Setting::first();

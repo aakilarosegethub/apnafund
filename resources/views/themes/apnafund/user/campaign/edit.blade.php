@@ -13,6 +13,10 @@
 @extends($activeTheme . 'layouts.frontend')
 @section('style')
 <style>
+    .input-group{
+        overflow :unset !important;
+        border-radius:2px !important
+    }
         body {
             margin: 0;
             padding: 0;

@@ -6,7 +6,7 @@
 
 // Database connection (adjust these settings as per your config)
 $host = 'localhost';
-$dbname = 'apnafund'; // Change this to your database name
+$dbname = 'apnacrowdfunding'; // Change this to your database name
 $username = 'root'; // Change this to your database username
 $password = ''; // Change this to your database password
 
@@ -75,7 +75,7 @@ try {
     
     echo "\n=== Test Complete ===\n";
     echo "To test webhook logging, run:\n";
-    echo "curl -X POST 'http://localhost/apnafund/jazzcash/ipn' -d 'TransactionID=TEST_123&Amount=100&Currency=PKR&Status=Success&Hash=test'\n";
+    echo "curl -X POST 'http://localhost/apnacrowdfunding/jazzcash/ipn' -d 'TransactionID=TEST_123&Amount=100&Currency=PKR&Status=Success&Hash=test'\n";
     
 } catch (PDOException $e) {
     echo "Database connection failed: " . $e->getMessage() . "\n";

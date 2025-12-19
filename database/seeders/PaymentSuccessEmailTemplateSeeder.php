@@ -14,10 +14,10 @@ class PaymentSuccessEmailTemplateSeeder extends Seeder
     public function run(): void
     {
         // Create Admin Payment Success Email Template
-        $this->createOrUpdateTemplate('ADMIN_PAYMENT_SUCCESS', 'New Successful Payment Received - ApnaFund', '
+        $this->createOrUpdateTemplate('ADMIN_PAYMENT_SUCCESS', 'New Successful Payment Received - ApnaCrowdfunding', '
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="color: #05ce78; margin: 0;">ApnaFund</h1>
+                <h1 style="color: #05ce78; margin: 0;">ApnaCrowdfunding</h1>
                 <p style="color: #666; margin: 10px 0 0 0;">Crowdfunding Platform</p>
             </div>
             
@@ -70,8 +70,8 @@ class PaymentSuccessEmailTemplateSeeder extends Seeder
             </div>
             
             <div style="text-align: center; color: #999; font-size: 12px;">
-                <p>This is an automated notification from ApnaFund.</p>
-                <p>© 2024 ApnaFund. All rights reserved.</p>
+                <p>This is an automated notification from ApnaCrowdfunding.</p>
+                <p>© 2024 ApnaCrowdfunding. All rights reserved.</p>
             </div>
         </div>', [
             'full_name' => 'Donor full name',
@@ -89,7 +89,7 @@ class PaymentSuccessEmailTemplateSeeder extends Seeder
         $this->createOrUpdateTemplate('USER_PAYMENT_SUCCESS', 'Payment Successful - Thank You for Your Donation!', '
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="color: #05ce78; margin: 0;">ApnaFund</h1>
+                <h1 style="color: #05ce78; margin: 0;">ApnaCrowdfunding</h1>
                 <p style="color: #666; margin: 10px 0 0 0;">Crowdfunding Platform</p>
             </div>
             
@@ -149,8 +149,8 @@ class PaymentSuccessEmailTemplateSeeder extends Seeder
             </div>
             
             <div style="text-align: center; color: #999; font-size: 12px;">
-                <p>This is an automated receipt from ApnaFund.</p>
-                <p>© 2024 ApnaFund. All rights reserved.</p>
+                <p>This is an automated receipt from ApnaCrowdfunding.</p>
+                <p>© 2024 ApnaCrowdfunding. All rights reserved.</p>
             </div>
         </div>', [
             'full_name' => 'Donor full name',

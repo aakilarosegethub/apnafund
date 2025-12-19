@@ -14,10 +14,10 @@ class EmailTemplateSeeder extends Seeder
     public function run(): void
     {
         // Create or update EVER_CODE email template
-        $this->createOrUpdateTemplate('EVER_CODE', 'Verify Your Email - ApnaFund', '
+        $this->createOrUpdateTemplate('EVER_CODE', 'Verify Your Email - ApnaCrowdfunding', '
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="color: #05ce78; margin: 0;">ApnaFund</h1>
+                <h1 style="color: #05ce78; margin: 0;">ApnaCrowdfunding</h1>
                 <p style="color: #666; margin: 10px 0 0 0;">Crowdfunding Platform</p>
             </div>
             
@@ -25,7 +25,7 @@ class EmailTemplateSeeder extends Seeder
                 <h2 style="color: #333; margin: 0 0 20px 0; text-align: center;">Email Verification Required</h2>
                 
                 <p style="color: #666; line-height: 1.6; margin: 0 0 20px 0;">
-                    Thank you for joining ApnaFund! To complete your registration and start creating campaigns, 
+                    Thank you for joining ApnaCrowdfunding! To complete your registration and start creating campaigns, 
                     please verify your email address using the code below:
                 </p>
                 
@@ -43,18 +43,18 @@ class EmailTemplateSeeder extends Seeder
             </div>
             
             <div style="text-align: center; color: #999; font-size: 12px;">
-                <p>If you didn\'t create an account with ApnaFund, please ignore this email.</p>
-                <p>© 2024 ApnaFund. All rights reserved.</p>
+                <p>If you didn\'t create an account with ApnaCrowdfunding, please ignore this email.</p>
+                <p>© 2024 ApnaCrowdfunding. All rights reserved.</p>
             </div>
         </div>', [
             'code' => 'Email verification code'
         ]);
 
         // Create or update PASS_RESET_CODE email template
-        $this->createOrUpdateTemplate('PASS_RESET_CODE', 'Password Reset Code - ApnaFund', '
+        $this->createOrUpdateTemplate('PASS_RESET_CODE', 'Password Reset Code - ApnaCrowdfunding', '
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="color: #05ce78; margin: 0;">ApnaFund</h1>
+                <h1 style="color: #05ce78; margin: 0;">ApnaCrowdfunding</h1>
                 <p style="color: #666; margin: 10px 0 0 0;">Crowdfunding Platform</p>
             </div>
             
@@ -90,7 +90,7 @@ class EmailTemplateSeeder extends Seeder
             
             <div style="text-align: center; color: #999; font-size: 12px;">
                 <p>If you didn\'t request a password reset, please ignore this email and your password will remain unchanged.</p>
-                <p>© 2024 ApnaFund. All rights reserved.</p>
+                <p>© 2024 ApnaCrowdfunding. All rights reserved.</p>
             </div>
         </div>', [
             'code' => 'Password reset verification code',
@@ -101,10 +101,10 @@ class EmailTemplateSeeder extends Seeder
         ]);
 
         // Create or update PASS_RESET_DONE email template
-        $this->createOrUpdateTemplate('PASS_RESET_DONE', 'Password Reset Successful - ApnaFund', '
+        $this->createOrUpdateTemplate('PASS_RESET_DONE', 'Password Reset Successful - ApnaCrowdfunding', '
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="color: #05ce78; margin: 0;">ApnaFund</h1>
+                <h1 style="color: #05ce78; margin: 0;">ApnaCrowdfunding</h1>
                 <p style="color: #666; margin: 10px 0 0 0;">Crowdfunding Platform</p>
             </div>
             
@@ -135,7 +135,7 @@ class EmailTemplateSeeder extends Seeder
             
             <div style="text-align: center; color: #999; font-size: 12px;">
                 <p>If you didn\'t reset your password, please contact our support team immediately.</p>
-                <p>© 2024 ApnaFund. All rights reserved.</p>
+                <p>© 2024 ApnaCrowdfunding. All rights reserved.</p>
             </div>
         </div>', [
             'login_url' => 'Login page URL',

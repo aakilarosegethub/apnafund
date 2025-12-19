@@ -16,7 +16,7 @@
                         <div class="col-lg-6">
                             <label class="form--label required">@lang('Email Subject')</label>
                             <input type="text" class="form--control" name="subject" 
-                                   value="🎉 Welcome to ApnaFund - Your Journey Begins!" required>
+                                   value="🎉 Welcome to ApnaCrowdfunding - Your Journey Begins!" required>
                             <div class="form-text">@lang('Use emojis to make your subject line more engaging')</div>
                         </div>
                         
@@ -37,7 +37,7 @@
                         <div class="col-12">
                             <label class="form--label required">@lang('Email Content')</label>
                             <textarea class="form--control" name="content" rows="20" required>
-🌟 Welcome to ApnaFund! We're thrilled to have you join our community of entrepreneurs and innovators.
+🌟 Welcome to ApnaCrowdfunding! We're thrilled to have you join our community of entrepreneurs and innovators.
 
 Your account has been created successfully and you're ready to start your fundraising journey!
 
@@ -71,7 +71,7 @@ Need help? Our support team is here for you!
 📞 Contact us anytime - we're here to help you succeed!
 
 Best regards,
-The ApnaFund Team 💙
+The ApnaCrowdfunding Team 💙
                             </textarea>
                             <div class="form-text">@lang('Use Markdown formatting and emojis to create engaging content')</div>
                         </div>

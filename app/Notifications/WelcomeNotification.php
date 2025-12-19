@@ -38,9 +38,9 @@ class WelcomeNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $mailMessage = (new MailMessage)
-            ->subject('🎉 Welcome to ApnaFund - Your Journey Begins!')
+            ->subject('🎉 Welcome to ApnaCrowdfunding - Your Journey Begins!')
             ->greeting('Hello ' . $this->user->firstname . ' ' . $this->user->lastname . '!')
-            ->line('🌟 Welcome to ApnaFund! We\'re thrilled to have you join our community of entrepreneurs and innovators.')
+            ->line('🌟 Welcome to ApnaCrowdfunding! We\'re thrilled to have you join our community of entrepreneurs and innovators.')
             ->line('Your account has been created successfully and you\'re ready to start your fundraising journey!')
             ->line('')
             ->line('📋 **Your Account Details:**')
@@ -75,7 +75,7 @@ class WelcomeNotification extends Notification
             ->line('📞 Contact us anytime - we\'re here to help you succeed!')
             ->line('')
             ->line('Best regards,')
-            ->line('The ApnaFund Team 💙');
+            ->line('The ApnaCrowdfunding Team 💙');
 
         return $mailMessage;
     }
@@ -88,7 +88,7 @@ class WelcomeNotification extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            'message' => 'Welcome to ApnaFund! Your account has been created successfully.',
+            'message' => 'Welcome to ApnaCrowdfunding! Your account has been created successfully.',
             'user_id' => $this->user->id,
         ];
     }
