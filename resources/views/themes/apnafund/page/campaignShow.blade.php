@@ -3044,148 +3044,6 @@
 
 @push('page-script')
     <script>
-        // Define share modal functions in global scope immediately (before jQuery)
-        (function() {
-            window.openShareModal = function() {
-                const modal = document.getElementById('shareModal');
-                if (!modal) {
-                    console.error('Share modal not found');
-                    return;
-                }
-                modal.style.display = 'flex';
-                document.body.style.overflow = 'hidden';
-                
-                // Trigger animation after display is set
-                setTimeout(() => {
-                    modal.classList.add('show');
-                }, 10);
-            };
-
-            window.closeShareModal = function() {
-                const modal = document.getElementById('shareModal');
-                if (!modal) return;
-                modal.classList.remove('show');
-                document.body.style.overflow = 'auto';
-                
-                // Hide modal after animation completes
-                setTimeout(() => {
-                    modal.style.display = 'none';
-                }, 400);
-            };
-            
-            window.copyShareUrl = function() {
-                const shareUrl = document.getElementById('shareUrl');
-                if (!shareUrl) return;
-                shareUrl.select();
-                shareUrl.setSelectionRange(0, 99999);
-                
-                try {
-                    document.execCommand('copy');
-                    if (typeof showToast === 'function') {
-                        showToast('success', 'Link copied to clipboard!');
-                    } else {
-                        alert('Link copied to clipboard!');
-                    }
-                } catch (err) {
-                    // Fallback for modern browsers
-                    navigator.clipboard.writeText(shareUrl.value).then(function() {
-                        if (typeof showToast === 'function') {
-                            showToast('success', 'Link copied to clipboard!');
-                        } else {
-                            alert('Link copied to clipboard!');
-                        }
-                    }).catch(function() {
-                        if (typeof showToast === 'function') {
-                            showToast('error', 'Failed to copy link');
-                        } else {
-                            alert('Failed to copy link');
-                        }
-                    });
-                }
-            };
-
-            // Social Sharing Functions (Global Scope)
-            window.shareOnFacebook = function() {
-                const url = encodeURIComponent(document.getElementById('shareUrl').value);
-                const title = encodeURIComponent('{{ @$campaignData->name }}');
-                const description = encodeURIComponent('Test');
-                const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${title}`;
-                window.open(shareUrl, '_blank', 'width=600,height=400');
-            };
-
-            window.shareOnTwitter = function() {
-                const url = encodeURIComponent(document.getElementById('shareUrl').value);
-                const title = encodeURIComponent('{{ @$campaignData->name }}');
-                const shareUrl = `https://twitter.com/intent/tweet?url=${url}&text=${title}`;
-                window.open(shareUrl, '_blank', 'width=600,height=400');
-            };
-
-            window.shareOnWhatsApp = function() {
-                const url = encodeURIComponent(document.getElementById('shareUrl').value);
-                const title = encodeURIComponent('{{ @$campaignData->name }}');
-                const shareUrl = `https://wa.me/?text=${title}%20${url}`;
-                window.open(shareUrl, '_blank');
-            };
-
-            window.shareOnTelegram = function() {
-                const url = encodeURIComponent(document.getElementById('shareUrl').value);
-                const title = encodeURIComponent('{{ @$campaignData->name }}');
-                const shareUrl = `https://t.me/share/url?url=${url}&text=${title}`;
-                window.open(shareUrl, '_blank');
-            };
-
-            window.shareViaEmail = function() {
-                const url = document.getElementById('shareUrl').value;
-                const title = '{{ @$campaignData->name }}';
-                const subject = encodeURIComponent(`Check out this campaign: ${title}`);
-                const body = encodeURIComponent(`I found this interesting campaign and thought you might want to check it out:\n\n${title}\n\n${url}`);
-                const shareUrl = `mailto:?subject=${subject}&body=${body}`;
-                window.location.href = shareUrl;
-                return false;
-            };
-
-            window.shareOnLinkedIn = function() {
-                const url = encodeURIComponent(document.getElementById('shareUrl').value);
-                const title = encodeURIComponent('{{ @$campaignData->name }}');
-                const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${url}`;
-                window.open(shareUrl, '_blank', 'width=600,height=400');
-            };
-
-            window.shareOnInstagram = function() {
-                // Copy the link to clipboard first
-                if (typeof window.copyShareUrl === 'function') {
-                    window.copyShareUrl();
-                }
-                
-                // Show a more detailed message
-                setTimeout(() => {
-                    if (typeof showToast === 'function') {
-                        showToast('info', 'Link copied! Open Instagram and paste it in your story or post.');
-                    } else {
-                        alert('Link copied! Open Instagram and paste it in your story or post.');
-                    }
-                }, 1000);
-                
-                return false;
-            };
-
-            window.shareOnReddit = function() {
-                const url = encodeURIComponent(document.getElementById('shareUrl').value);
-                const title = encodeURIComponent('{{ @$campaignData->name }}');
-                const shareUrl = `https://reddit.com/submit?url=${url}&title=${title}`;
-                window.open(shareUrl, '_blank', 'width=600,height=400');
-            };
-
-            window.shareOnPinterest = function() {
-                const url = encodeURIComponent(document.getElementById('shareUrl').value);
-                const title = encodeURIComponent('{{ @$campaignData->name }}');
-                const image = encodeURIComponent('{{ getImage(getFilePath("campaign") . "/" . @$campaignData->image, getFileSize("campaign")) }}');
-                const shareUrl = `https://pinterest.com/pin/create/button/?url=${url}&media=${image}&description=${title}`;
-                window.open(shareUrl, '_blank', 'width=600,height=400');
-            };
-        })();
-    </script>
-    <script>
         (function ($) {
             'use strict'
 
@@ -3314,14 +3172,11 @@
                 }
                 
                 var formData = new FormData(this);
-                var submitBtn = $(this).find('button[type="submit"]');
+                var submitBtn = $(this).find('.btn-submit-review');
                 var originalText = submitBtn.text();
                 
                 // Disable submit button
                 submitBtn.prop('disabled', true).text('Submitting...');
-                
-                // Get CSRF token from meta tag or form
-                var csrfToken = $('meta[name="csrf-token"]').attr('content') || $('input[name="_token"]').val();
                 
                 $.ajax({
                     url: $(this).attr('action'),
@@ -3330,18 +3185,14 @@
                     processData: false,
                     contentType: false,
                     headers: {
-                        'X-CSRF-TOKEN': csrfToken,
-                        'X-Requested-With': 'XMLHttpRequest'
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
                     beforeSend: function() {
                         console.log('Submitting comment form...');
                     },
                     success: function(response) {
-                        console.log('Comment submission success:', response);
-                        
                         // Show success toast
-                        var message = response.message || 'Comment submitted successfully! Please wait for admin approval.';
-                        showToast('success', message);
+                        showToast('success', 'Comment submitted successfully! Please wait for admin approval.');
                         
                         // Reset form
                         $('#reviewForm')[0].reset();
@@ -3537,7 +3388,17 @@
                 $('#donationsModal').addClass('show');
             }
 
-            // Share Modal Functions - Swipe Up Animation (moved to global scope below)
+            // Share Modal Functions - Swipe Up Animation
+            function openShareModal() {
+                const modal = document.getElementById('shareModal');
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+                
+                // Trigger animation after display is set
+                setTimeout(() => {
+                    modal.classList.add('show');
+                }, 10);
+            }
 
             
                 
@@ -3715,8 +3576,119 @@
                 iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&showinfo=0&controls=1&mute=0`;
             }
         }
-        
-        // Share Modal Functions are now defined at the top of the script section
+        // Share Modal Functions - Swipe Up Animation
+function openShareModal() {
+    const modal = document.getElementById('shareModal');
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    // Trigger animation after display is set
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 10);
+        }
+
+            function closeShareModal() {
+                const modal = document.getElementById('shareModal');
+                modal.classList.remove('show');
+                document.body.style.overflow = 'auto';
+                
+                // Hide modal after animation completes
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                }, 400);
+            }
+            function copyShareUrl() {
+                const shareUrl = document.getElementById('shareUrl');
+                shareUrl.select();
+                shareUrl.setSelectionRange(0, 99999);
+                
+                try {
+                    document.execCommand('copy');
+                    showToast('success', 'Link copied to clipboard!');
+                } catch (err) {
+                    // Fallback for modern browsers
+                    navigator.clipboard.writeText(shareUrl.value).then(function() {
+                        showToast('success', 'Link copied to clipboard!');
+                    }).catch(function() {
+                        showToast('error', 'Failed to copy link');
+                    });
+                }
+            }
+
+            // Social Sharing Functions
+            function shareOnFacebook() {
+                const url = encodeURIComponent(document.getElementById('shareUrl').value);
+                const title = encodeURIComponent('{{ @$campaignData->name }}');
+                const description = encodeURIComponent('{{ Str::limit(strip_tags(@$campaignData->description), 100) }}');
+                const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${title}`;
+                window.open(shareUrl, '_blank', 'width=600,height=400');
+            }
+
+            function shareOnTwitter() {
+                const url = encodeURIComponent(document.getElementById('shareUrl').value);
+                const title = encodeURIComponent('{{ @$campaignData->name }}');
+                const shareUrl = `https://twitter.com/intent/tweet?url=${url}&text=${title}`;
+                    window.open(shareUrl, '_blank', 'width=600,height=400');
+                }
+
+            function shareOnWhatsApp() {
+                const url = encodeURIComponent(document.getElementById('shareUrl').value);
+                const title = encodeURIComponent('{{ @$campaignData->name }}');
+                const shareUrl = `https://wa.me/?text=${title}%20${url}`;
+                window.open(shareUrl, '_blank');
+            }
+
+            function shareOnTelegram() {
+                const url = encodeURIComponent(document.getElementById('shareUrl').value);
+                const title = encodeURIComponent('{{ @$campaignData->name }}');
+                const shareUrl = `https://t.me/share/url?url=${url}&text=${title}`;
+                window.open(shareUrl, '_blank');
+            }
+
+            function shareViaEmail() {
+                const url = document.getElementById('shareUrl').value;
+                const title = '{{ @$campaignData->name }}';
+                const subject = encodeURIComponent(`Check out this campaign: ${title}`);
+                const body = encodeURIComponent(`I found this interesting campaign and thought you might want to check it out:\n\n${title}\n\n${url}`);
+                const shareUrl = `mailto:?subject=${subject}&body=${body}`;
+                window.location.href = shareUrl;
+                return false;
+            }
+
+            function shareOnLinkedIn() {
+                const url = encodeURIComponent(document.getElementById('shareUrl').value);
+                const title = encodeURIComponent('{{ @$campaignData->name }}');
+                const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${url}`;
+                window.open(shareUrl, '_blank', 'width=600,height=400');
+            }
+
+            function shareOnInstagram() {
+                // Copy the link to clipboard first
+                copyShareUrl();
+                
+                // Show a more detailed message
+                setTimeout(() => {
+                    showToast('info', 'Link copied! Open Instagram and paste it in your story or post.');
+                }, 1000);
+                
+                return false;
+            }
+
+            function shareOnReddit() {
+                const url = encodeURIComponent(document.getElementById('shareUrl').value);
+                const title = encodeURIComponent('{{ @$campaignData->name }}');
+                const shareUrl = `https://reddit.com/submit?url=${url}&title=${title}`;
+                window.open(shareUrl, '_blank', 'width=600,height=400');
+            }
+
+            function shareOnPinterest() {
+                const url = encodeURIComponent(document.getElementById('shareUrl').value);
+                const title = encodeURIComponent('{{ @$campaignData->name }}');
+                const image = encodeURIComponent('{{ getImage(getFilePath("campaign") . "/" . @$campaignData->image, getFileSize("campaign")) }}');
+                const shareUrl = `https://pinterest.com/pin/create/button/?url=${url}&media=${image}&description=${title}`;
+                window.open(shareUrl, '_blank', 'width=600,height=400');
+            }
 
             // Event listeners for share modal
             document.addEventListener('DOMContentLoaded', function() {
