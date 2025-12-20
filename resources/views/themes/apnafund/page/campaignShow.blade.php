@@ -549,409 +549,6 @@
             border-top: 1px solid #f0f0f0;
         }
 
-        /* Rewards Section */
-        .rewards-section {
-            margin-top: 40px;
-            padding-top: 30px;
-            border-top: 2px solid #f0f0f0;
-        }
-
-        .rewards-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-
-        .rewards-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #333;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .rewards-title i {
-            color: #05ce78;
-        }
-
-        .rewards-actions {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .btn-add-reward, .btn-add-first-reward {
-            background: #05ce78;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            font-weight: 500;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: background-color 0.3s;
-        }
-
-        .btn-add-reward:hover, .btn-add-first-reward:hover {
-            background: #04b866;
-        }
-
-        .btn-manage-rewards {
-            background: #6c757d;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 6px;
-            font-weight: 500;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: background-color 0.3s;
-        }
-
-        .btn-manage-rewards:hover {
-            background: #5a6268;
-            color: white;
-            text-decoration: none;
-        }
-
-        .rewards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .reward-card {
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            transition: transform 0.3s, box-shadow 0.3s;
-            position: relative;
-        }
-
-        .reward-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-        }
-
-        .reward-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 15px;
-        }
-
-        .reward-title {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: #333;
-            margin: 0;
-            flex: 1;
-        }
-
-        .reward-amount {
-            background: #05ce78;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            white-space: nowrap;
-        }
-
-        .reward-image {
-            margin-bottom: 15px;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        .reward-image img {
-            width: 100%;
-            height: 150px;
-            object-fit: cover;
-        }
-
-        .reward-content {
-            margin-bottom: 20px;
-        }
-
-        .reward-description {
-            color: #666;
-            line-height: 1.5;
-            margin-bottom: 15px;
-        }
-
-        .reward-details {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 10px;
-        }
-
-        .reward-type, .reward-quantity {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 0.9rem;
-            color: #666;
-        }
-
-        .reward-type i, .reward-quantity i {
-            color: #05ce78;
-        }
-
-        .reward-terms {
-            color: #888;
-            font-size: 0.85rem;
-            font-style: italic;
-        }
-
-        .reward-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .btn-get-reward {
-            background: #05ce78;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: 500;
-            transition: background-color 0.3s;
-        }
-
-        .btn-get-reward:hover {
-            background: #04b866;
-            color: white;
-        }
-
-        .reward-admin-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .btn-edit-reward, .btn-delete-reward {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            color: #666;
-            padding: 8px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .btn-edit-reward:hover {
-            background: #e9ecef;
-            color: #05ce78;
-        }
-
-        .btn-delete-reward:hover {
-            background: #f8d7da;
-            color: #dc3545;
-            border-color: #f5c6cb;
-        }
-
-        .no-rewards {
-            text-align: center;
-            padding: 60px 20px;
-            color: #666;
-        }
-
-        .no-rewards i {
-            font-size: 3rem;
-            color: #ddd;
-            margin-bottom: 20px;
-        }
-
-        .no-rewards h4 {
-            margin-bottom: 10px;
-            color: #333;
-        }
-
-        .no-rewards p {
-            margin-bottom: 20px;
-        }
-
-        /* Reward Modal */
-        .reward-modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-        }
-
-        .reward-modal-content {
-            background-color: white;
-            margin: 5% auto;
-            padding: 0;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 600px;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        }
-
-        .reward-modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 30px;
-            border-bottom: 1px solid #e0e0e0;
-            background: #f8f9fa;
-            border-radius: 12px 12px 0 0;
-        }
-
-        .reward-modal-header h3 {
-            margin: 0;
-            color: #333;
-            font-size: 1.3rem;
-        }
-
-        .reward-modal-close {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            color: #666;
-            cursor: pointer;
-            padding: 5px;
-        }
-
-        .reward-modal-close:hover {
-            color: #333;
-        }
-
-        .reward-modal-body {
-            padding: 30px;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .form-group label {
-            font-weight: 500;
-            margin-bottom: 8px;
-            color: #333;
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            padding: 10px 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #05ce78;
-        }
-
-        .input-group {
-            display: flex;
-            align-items: center;
-        }
-
-        .input-group-text {
-            background: #f8f9fa;
-            border: 1px solid #ddd;
-            border-right: none;
-            padding: 10px 12px;
-            border-radius: 6px 0 0 6px;
-            color: #666;
-            font-weight: 500;
-        }
-
-        .input-group input {
-            border-radius: 0 6px 6px 0;
-        }
-
-        .image-preview {
-            margin-top: 10px;
-            text-align: center;
-        }
-
-        .preview-image {
-            max-width: 200px;
-            max-height: 150px;
-            border-radius: 6px;
-            border: 1px solid #ddd;
-        }
-
-        .form-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 15px;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #e0e0e0;
-        }
-
-        .btn-cancel {
-            background: #6c757d;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
-        }
-
-        .btn-cancel:hover {
-            background: #5a6268;
-        }
-
-        .btn-save {
-            background: #05ce78;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
-        }
-
-        .btn-save:hover {
-            background: #04b866;
-        }
-
-        @media (max-width: 768px) {
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-            
-            .reward-modal-content {
-                width: 95%;
-                margin: 10% auto;
-            }
-        }
-
         .detail-item {
             display: flex;
             justify-content: space-between;
@@ -1670,322 +1267,6 @@
             }
         }
 
-        /* Share Modal - Swipe Up Animation */
-        .share-modal {
-            display: none;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 9999;
-            backdrop-filter: blur(5px);
-        }
-
-        .share-modal.show {
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-        }
-
-        .share-modal-content {
-            background: #fff;
-            border-radius: 20px 20px 0 0;
-            width: 100%;
-            max-width: 800px;
-            max-height: 85vh;
-            transform: translateY(100%);
-            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.2);
-        }
-
-        .share-modal.show .share-modal-content {
-            transform: translateY(0);
-        }
-
-        .share-modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 25px;
-            border-bottom: 1px solid #f0f0f0;
-            position: relative;
-        }
-
-        .share-modal-header::before {
-            content: '';
-            position: absolute;
-            top: 8px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 40px;
-            height: 4px;
-            background: #ddd;
-            border-radius: 2px;
-        }
-
-        .share-modal-header h3 {
-            margin: 0;
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #333;
-            text-align: center;
-            flex: 1;
-        }
-
-        .share-modal-close {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            color: #666;
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 50%;
-            transition: all 0.2s ease;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .share-modal-close:hover {
-            background: #f8f9fa;
-            color: #333;
-        }
-
-        .share-modal-body {
-            padding: 25px;
-        }
-
-        .share-url-section {
-            margin-bottom: 30px;
-        }
-
-        .share-url-section h4 {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 15px;
-        }
-
-        .url-input-group {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .url-input-group input {
-            flex: 1;
-            padding: 12px 15px;
-            border: 2px solid #e9ecef;
-            border-radius: 10px;
-            font-size: 14px;
-            background: #f8f9fa;
-            transition: all 0.3s ease;
-        }
-
-        .url-input-group input:focus {
-            outline: none;
-            border-color: #05ce78;
-            background: #fff;
-            box-shadow: 0 0 0 3px rgba(5, 206, 120, 0.1);
-        }
-
-        .copy-btn {
-            padding: 12px 20px;
-            background: #05ce78;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            white-space: nowrap;
-        }
-
-        .copy-btn:hover {
-            background: #04a85f;
-            transform: translateY(-1px);
-        }
-
-        .social-platforms {
-            margin-bottom: 30px;
-        }
-
-        .social-platforms h4 {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 20px;
-        }
-
-        .platforms-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-        }
-
-        .platform-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            padding: 20px 15px;
-            border: 2px solid #f0f0f0;
-            border-radius: 15px;
-            text-decoration: none;
-            color: #333;
-            transition: all 0.3s ease;
-            background: #fff;
-        }
-
-        .platform-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-            text-decoration: none;
-            color: #333;
-        }
-
-        .platform-btn.facebook:hover {
-            border-color: #1877f2;
-            background: #f0f7ff;
-        }
-
-        .platform-btn.twitter:hover {
-            border-color: #1da1f2;
-            background: #f0f9ff;
-        }
-
-        .platform-btn.whatsapp:hover {
-            border-color: #25d366;
-            background: #f0fff4;
-        }
-
-        .platform-btn.telegram:hover {
-            border-color: #0088cc;
-            background: #f0f9ff;
-        }
-
-        .platform-btn.email:hover {
-            border-color: #ea4335;
-            background: #fff5f5;
-        }
-
-        .platform-btn.linkedin:hover {
-            border-color: #0077b5;
-            background: #f0f7ff;
-        }
-
-        .platform-btn.instagram:hover {
-            border-color: #e4405f;
-            background: #fff0f3;
-        }
-
-        .platform-btn.reddit:hover {
-            border-color: #ff4500;
-            background: #fff5f0;
-        }
-
-        .platform-btn.pinterest:hover {
-            border-color: #bd081c;
-            background: #fff0f0;
-        }
-
-        .platform-btn.copy:hover {
-            border-color: #05ce78;
-            background: #f0fff4;
-        }
-
-        .platform-icon {
-            font-size: 2rem;
-            margin-bottom: 5px;
-        }
-
-        .platform-btn.facebook .platform-icon { color: #1877f2; }
-        .platform-btn.twitter .platform-icon { color: #1da1f2; }
-        .platform-btn.whatsapp .platform-icon { color: #25d366; }
-        .platform-btn.telegram .platform-icon { color: #0088cc; }
-        .platform-btn.email .platform-icon { color: #ea4335; }
-        .platform-btn.linkedin .platform-icon { color: #0077b5; }
-        .platform-btn.instagram .platform-icon { color: #e4405f; }
-        .platform-btn.reddit .platform-icon { color: #ff4500; }
-        .platform-btn.pinterest .platform-icon { color: #bd081c; }
-        .platform-btn.copy .platform-icon { color: #05ce78; }
-
-        .platform-name {
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-align: center;
-        }
-
-        .campaign-preview {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid #e9ecef;
-        }
-
-        .campaign-preview h5 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 10px;
-            line-height: 1.4;
-        }
-
-        .campaign-preview p {
-            color: #666;
-            font-size: 0.9rem;
-            line-height: 1.5;
-            margin-bottom: 15px;
-        }
-
-        .campaign-preview .preview-image {
-            width: 100%;
-            height: 120px;
-            object-fit: cover;
-            border-radius: 10px;
-            margin-bottom: 10px;
-        }
-
-        .preview-stats {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.85rem;
-            color: #05ce78;
-            font-weight: 600;
-        }
-
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            .platforms-grid {
-                grid-template-columns: repeat(3, 1fr);
-                gap: 12px;
-            }
-            
-            .platform-btn {
-                padding: 15px 10px;
-            }
-            
-            .platform-icon {
-                font-size: 1.8rem;
-            }
-            
-            .platform-name {
-                font-size: 0.8rem;
-            }
-            
-            .share-modal-content {
-                max-height: 90vh;
-                max-width: 95%;
-            }
-        }
-
         /* Toast Notifications */
         .toast-notification {
             position: fixed;
@@ -2179,17 +1460,7 @@
 
 @section('frontend')
 @php
-            $goalAmount = @$campaignData->goal_amount ?? 0;
-            $raisedAmount = @$campaignData->raised_amount ?? 0;
-            
-            // If raised_amount is 0, try to calculate from deposits
-            if ($raisedAmount == 0) {
-                $raisedAmount = $campaignData->deposits()
-                    ->where('status', \App\Constants\ManageStatus::PAYMENT_SUCCESS)
-                    ->sum('amount');
-            }
-            
-            $percentage = donationPercentage($goalAmount, $raisedAmount);
+            $percentage = donationPercentage(@$campaignData->goal_amount, @$campaignData->raised_amount);
         @endphp
 <!-- Main Fundraiser Section -->
     <div class="fundraiser-container mt-4">
@@ -2320,14 +1591,23 @@
                 <!-- Review Form -->
                 <div class="review-form-container">
                     <h4>Write a Comment</h4>
-                    @if(!auth()->check())
-                        <p style="color: #666; font-size: 0.9rem; margin-bottom: 15px;">
-                            <i class="fas fa-info-circle"></i> 
-                            You can comment as a guest. Just fill in your name and email below.
-                        </p>
-                    @endif
                     <form class="review-form" id="reviewForm" method="POST" action="{{ route('campaign.comment', $campaignData->slug) }}">
                         @csrf
+                        <div class="rating-container">
+                            <label>Your Rating:</label>
+                            <div class="star-rating">
+                                <input type="radio" name="rating" value="5" id="star5">
+                                <label for="star5" class="star">★</label>
+                                <input type="radio" name="rating" value="4" id="star4">
+                                <label for="star4" class="star">★</label>
+                                <input type="radio" name="rating" value="3" id="star3">
+                                <label for="star3" class="star">★</label>
+                                <input type="radio" name="rating" value="2" id="star2">
+                                <label for="star2" class="star">★</label>
+                                <input type="radio" name="rating" value="1" id="star1">
+                                <label for="star1" class="star">★</label>
+                            </div>
+                        </div>
 
                         <div class="form-group">
                             <label for="reviewTitle">Comment Title:</label>
@@ -2351,7 +1631,6 @@
                         </div>
 
                         <button type="submit" class="btn-submit-review">Submit Comment</button>
-                        <button type="button" class="btn-submit-review" onclick="submitFormDirectly()" style="margin-left: 10px; background: #007bff;">Submit Directly (Test)</button>
                     </form>
                 </div>
 
@@ -2361,11 +1640,11 @@
                         <div>
                             <h4>Recent Comments</h4>
                             @php
-                                $avgRating = $comments->whereNotNull('rating')->avg('rating');
-                                $totalReviews = $comments->whereNotNull('rating')->count();
+                                $avgRating = $comments->where('rating', '!=', null)->avg('rating');
+                                $totalReviews = $comments->where('rating', '!=', null)->count();
                             @endphp
                             @if($avgRating)
-                            <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9rem;">
+                                <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9rem;">
                                     <span style="color: #ffd700;">★★★★★</span> 
                                     {{ number_format($avgRating, 1) }} average rating 
                                     ({{ $totalReviews }} {{ $totalReviews == 1 ? 'review' : 'reviews' }})
@@ -2450,116 +1729,10 @@
                     <span>Created 4 d ago</span>
                     <span>Medical</span>
                 </div>
-                <a href="{{ route('report.fundraiser') }}" class="report-link">
+                <a href="#" class="report-link">
                     <i class="fas fa-flag"></i>
                     Report fundraiser
                 </a>
-            </div>
-
-            <!-- Rewards Section -->
-            <div class="rewards-section">
-                <div class="rewards-header">
-                    <h3 class="rewards-title">
-                        <i class="fas fa-gift"></i>
-                        Campaign Rewards
-                    </h3>
-                    @auth
-                        @if(auth()->id() == $campaignData->user_id)
-                            <div class="rewards-actions">
-                                <button class="btn-add-reward" onclick="openRewardModal()">
-                                    <i class="fas fa-plus"></i>
-                                    Add More Rewards
-                                </button>
-                                <a href="{{ route('user.rewards.index', $campaignData->slug) }}" class="btn-manage-rewards">
-                                    <i class="fas fa-cog"></i>
-                                    Manage All Rewards
-                                </a>
-                            </div>
-                        @endif
-                    @endauth
-                </div>
-                
-                <div class="rewards-grid" id="rewardsGrid">
-                    @php
-                        $campaignRewards = $campaignData->rewards()->active()->orderBy('minimum_amount')->get();
-                    @endphp
-                    
-                    @if($campaignRewards->count() > 0)
-                        @foreach($campaignRewards as $reward)
-                            <div class="reward-card" data-reward-id="{{ $reward->id }}">
-                                <div class="reward-header">
-                                    <h4 class="reward-title">{{ $reward->title }}</h4>
-                                    <span class="reward-amount">{{ $setting->cur_sym . showAmount($reward->minimum_amount) }}</span>
-                                </div>
-                                
-                                @if($reward->image)
-                                    <div class="reward-image">
-                                        <img src="{{ getImage(getFilePath('reward') . '/' . $reward->image, getThumbSize('reward')) }}" 
-                                             alt="{{ $reward->title }}">
-                                    </div>
-                                @endif
-                                
-                                <div class="reward-content">
-                                    <p class="reward-description">{{ $reward->description }}</p>
-                                    
-                                    <div class="reward-details">
-                                        <div class="reward-type">
-                                            <i class="fas fa-{{ $reward->type == 'physical' ? 'box' : 'download' }}"></i>
-                                            {{ ucfirst($reward->type) }} Reward
-                                        </div>
-                                        
-                                        @if($reward->quantity)
-                                            <div class="reward-quantity">
-                                                <i class="fas fa-layer-group"></i>
-                                                {{ $reward->getRemainingQuantity() }} left
-                                            </div>
-                                        @endif
-                                    </div>
-                                    
-                                    @if($reward->terms_conditions)
-                                        <div class="reward-terms">
-                                            <small>{{ $reward->terms_conditions }}</small>
-                                        </div>
-                                    @endif
-                                </div>
-                                
-                                <div class="reward-actions">
-                                    <a href="{{ route('campaign.donate', $campaignData->slug) }}?reward={{ $reward->id }}" 
-                                       class="btn-get-reward">
-                                        Get This Reward
-                                    </a>
-                                    
-                                    @auth
-                                        @if(auth()->id() == $campaignData->user_id)
-                                            <div class="reward-admin-actions">
-                                                <button class="btn-edit-reward" onclick="editReward({{ $reward->id }})">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <button class="btn-delete-reward" onclick="deleteReward({{ $reward->id }})">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </div>
-                                        @endif
-                                    @endauth
-                                </div>
-                            </div>
-                        @endforeach
-                    @else
-                        <div class="no-rewards">
-                            <i class="fas fa-gift"></i>
-                            <h4>No Rewards Available</h4>
-                            <p>This campaign doesn't have any rewards yet.</p>
-                            @auth
-                                @if(auth()->id() == $campaignData->user_id)
-                                    <button class="btn-add-first-reward" onclick="openRewardModal()">
-                                        <i class="fas fa-plus"></i>
-                                        Add Your First Reward
-                                    </button>
-                                @endif
-                            @endauth
-                        </div>
-                    @endif
-                </div>
             </div>
         </div>
 
@@ -2569,27 +1742,17 @@
             <div class="sidebar-card mt-5">
                 <div class="progress-section">
                     <div class="progress-text">
-                        <h3 class="progress-title">{{ $setting->cur_sym . showAmount($raisedAmount) }} raised</h3>
+                        <h3 class="progress-title">{{ $setting->cur_sym . showAmount(@$campaignData->raised_amount) }} raised</h3>
                         <div class="progress-subtitle align-items-center">
                             <span>{{ $percentage . '%' }} of goal</span>
-                            <span>{{ showAmount($goalAmount).$setting->cur_sym }} goal</span>
+                            <span>{{ showAmount(@$campaignData->goal_amount).$setting->cur_sym }} goal</span>
                         </div>
                     </div>
                     <div class="progress-circle">
                         <svg viewBox="0 0 100 100" class="progress-ring">
                             <circle class="progress-ring-bg" cx="50" cy="50" r="40" stroke-width="8" fill="none" stroke="#e8e8e8"/>
-                            <circle 
-                                class="progress-ring-fill" 
-                                cx="50" cy="50" r="40" 
-                                stroke-width="8" 
-                                fill="none" 
-                                stroke="#05ce78" 
-                                stroke-linecap="round" 
-                                stroke-dasharray="251.2" 
-                                stroke-dashoffset="{{ 251.2 - (251.2 * floatval($percentage) / 100) }}"
-                            />
+                            <circle class="progress-ring-fill" cx="50" cy="50" r="40" stroke-width="8" fill="none" stroke="#05ce78" stroke-linecap="round" stroke-dasharray="251.2" stroke-dashoffset="calc(251.2 - (251.2 * {{ $percentage }}) / 100)"/>
                         </svg>
-                        {}
                         <span class="progress-percentage">{{ $percentage . '%' }}</span>
                     </div>
                 </div>
@@ -2675,152 +1838,52 @@
         </div>
     </div>
 
-    <!-- Reward Modal -->
-    <div class="reward-modal" id="rewardModal">
-        <div class="reward-modal-content">
-            <div class="reward-modal-header">
-                <h3 id="rewardModalTitle">Add New Reward</h3>
-                <button class="reward-modal-close" id="closeRewardModal" onclick="closeRewardModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="reward-modal-body">
-                <form id="rewardForm" enctype="multipart/form-data">
-                    @csrf
-                    <input type="hidden" id="rewardId" name="reward_id">
-                    <input type="hidden" id="campaignSlug" name="campaign_slug" value="{{ $campaignData->slug }}">
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="rewardTitle">Reward Title *</label>
-                            <input type="text" id="rewardTitle" name="title" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="rewardAmount">Minimum Amount *</label>
-                            <div class="input-group">
-                                <span class="input-group-text">{{ $setting->cur_sym }}</span>
-                                <input type="number" id="rewardAmount" name="minimum_amount" step="0.01" min="1" required>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="rewardDescription">Description *</label>
-                        <textarea id="rewardDescription" name="description" rows="3" required></textarea>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="rewardType">Reward Type *</label>
-                            <select id="rewardType" name="type" required>
-                                <option value="">Select Type</option>
-                                <option value="physical">Physical Reward</option>
-                                <option value="digital">Digital Reward</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="rewardQuantity">Available Quantity</label>
-                            <input type="number" id="rewardQuantity" name="quantity" min="1" placeholder="Leave empty for unlimited">
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="rewardColor">Color Theme *</label>
-                            <select id="rewardColor" name="color_theme" required>
-                                <option value="">Select Color</option>
-                                <option value="primary">Primary (Blue)</option>
-                                <option value="success">Success (Green)</option>
-                                <option value="warning">Warning (Yellow)</option>
-                                <option value="danger">Danger (Red)</option>
-                                <option value="info">Info (Cyan)</option>
-                                <option value="secondary">Secondary (Gray)</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="rewardImage">Reward Image</label>
-                            <input type="file" id="rewardImage" name="image" accept="image/*">
-                            <div id="imagePreview" class="image-preview" style="display: none;">
-                                <img id="previewImg" class="preview-image">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="rewardTerms">Terms & Conditions</label>
-                        <textarea id="rewardTerms" name="terms_conditions" rows="2" placeholder="Any special terms or conditions for this reward"></textarea>
-                    </div>
-                    
-                    <div class="form-actions">
-                        <button type="button" class="btn-cancel" onclick="closeRewardModal()">Cancel</button>
-                        <button type="submit" class="btn-save">Save Reward</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
     <!-- Share Modal -->
     <div class="share-modal" id="shareModal">
         <div class="share-modal-content">
             <div class="share-modal-header">
-                <h3>Share Campaign</h3>
-                <button class="share-modal-close" id="closeShareModal" onclick="closeShareModal()">
+                <h3>Share This Campaign</h3>
+                <button class="share-modal-close" onclick="closeShareModal()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="share-modal-body">
-
-                <!-- Share URL Section -->
-                <div class="share-url-section">
-                    <h4>Campaign Link</h4>
-                    <div class="url-input-group">
-                        <input type="text" id="shareUrl" value="{{ url('campaign/' . @$campaignData->slug) }}" readonly>
-                        <button class="copy-btn" onclick="copyShareUrl()">
-                            <i class="fas fa-copy"></i> Copy
-                        </button>
+                <div class="share-options">
+                    <!-- Copy Link -->
+                    <div class="share-option">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="shareUrl" value="{{ url()->current() }}" readonly>
+                            <button class="btn btn-primary" onclick="copyShareUrl()">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                        </div>
                     </div>
-                </div>
-
-                <!-- Social Platforms -->
-                <div class="social-platforms">
-                    <h4>Share on Social Media</h4>
-                    <div class="platforms-grid">
-                        <a href="#" class="platform-btn facebook" onclick="shareOnFacebook()">
-                            <i class="fab fa-facebook-f platform-icon"></i>
-                            <span class="platform-name">Facebook</span>
+                    
+                    <!-- Social Media Buttons -->
+                    <div class="social-share-buttons">
+                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode(url()->current()) }}" target="_blank" class="social-share-btn facebook">
+                            <i class="fab fa-facebook-f"></i>
+                            <span>Facebook</span>
                         </a>
-                        <a href="#" class="platform-btn twitter" onclick="shareOnTwitter()">
-                            <i class="fab fa-twitter platform-icon"></i>
-                            <span class="platform-name">Twitter</span>
+                        
+                        <a href="https://twitter.com/intent/tweet?text={{ urlencode($campaignData->name) }}&url={{ urlencode(url()->current()) }}" target="_blank" class="social-share-btn twitter">
+                            <i class="fab fa-twitter"></i>
+                            <span>Twitter</span>
                         </a>
-                        <a href="#" class="platform-btn whatsapp" onclick="shareOnWhatsApp()">
-                            <i class="fab fa-whatsapp platform-icon"></i>
-                            <span class="platform-name">WhatsApp</span>
+                        
+                        <a href="https://wa.me/?text={{ urlencode($campaignData->name . ' - ' . url()->current()) }}" target="_blank" class="social-share-btn whatsapp">
+                            <i class="fab fa-whatsapp"></i>
+                            <span>WhatsApp</span>
                         </a>
-                        <a href="#" class="platform-btn telegram" onclick="shareOnTelegram()">
-                            <i class="fab fa-telegram platform-icon"></i>
-                            <span class="platform-name">Telegram</span>
+                        
+                        <a href="https://t.me/share/url?url={{ urlencode(url()->current()) }}&text={{ urlencode($campaignData->name) }}" target="_blank" class="social-share-btn telegram">
+                            <i class="fab fa-telegram-plane"></i>
+                            <span>Telegram</span>
                         </a>
-                        <a href="#" class="platform-btn email" onclick="shareViaEmail(); return false;">
-                            <i class="fas fa-envelope platform-icon"></i>
-                            <span class="platform-name">Email</span>
-                        </a>
-                        <a href="#" class="platform-btn linkedin" onclick="shareOnLinkedIn()">
-                            <i class="fab fa-linkedin-in platform-icon"></i>
-                            <span class="platform-name">LinkedIn</span>
-                        </a>
-                        <a href="#" class="platform-btn instagram" onclick="shareOnInstagram(); return false;">
-                            <i class="fab fa-instagram platform-icon"></i>
-                            <span class="platform-name">Instagram</span>
-                        </a>
-                        <a href="#" class="platform-btn reddit" onclick="shareOnReddit()">
-                            <i class="fab fa-reddit-alien platform-icon"></i>
-                            <span class="platform-name">Reddit</span>
-                        </a>
-                        <a href="#" class="platform-btn pinterest" onclick="shareOnPinterest()">
-                            <i class="fab fa-pinterest platform-icon"></i>
-                            <span class="platform-name">Pinterest</span>
+                        
+                        <a href="mailto:?subject={{ urlencode($campaignData->name) }}&body={{ urlencode('Check out this campaign: ' . url()->current()) }}" class="social-share-btn email">
+                            <i class="fas fa-envelope"></i>
+                            <span>Email</span>
                         </a>
                     </div>
                 </div>
@@ -3040,6 +2103,7 @@
 @endpush
 
 @push('page-script-lib')
+    <script src="{{ asset($activeThemeTrue . 'js/select2.js') }}"></script>
 @endpush
 
 @push('page-script')
@@ -3061,6 +2125,10 @@
                 } else {
                     $('.anonymous-alert-text').addClass('d-none')
                 }
+            })
+
+            $('.select-2').select2({
+                containerCssClass: ':all:',
             })
 
             $('[name=gateway]').change(function() {
@@ -3140,35 +2208,11 @@
             $('#reviewForm').on('submit', function(e) {
                 e.preventDefault();
                 
-                console.log('Form submission started...');
-                
-                // Basic validation
-                var name = $('#reviewerName').val().trim();
-                var email = $('#reviewerEmail').val().trim();
-                var comment = $('#reviewContent').val().trim();
-                
-                console.log('Form data:', {name: name, email: email, comment: comment});
-                
-                if (!name) {
-                    showToast('error', 'Please enter your name.');
-                    return false;
-                }
-                
-                if (!email) {
-                    showToast('error', 'Please enter your email.');
-                    return false;
-                }
-                
-                if (!comment) {
-                    showToast('error', 'Please enter your comment.');
-                    return false;
-                }
-                
-                // Basic email validation
-                var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(email)) {
-                    showToast('error', 'Please enter a valid email address.');
-                    return false;
+                // Validate rating
+                var rating = $('input[name="rating"]:checked').val();
+                if (!rating) {
+                    showToast('error', 'Please select a rating.');
+                    return;
                 }
                 
                 var formData = new FormData(this);
@@ -3187,9 +2231,6 @@
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
-                    beforeSend: function() {
-                        console.log('Submitting comment form...');
-                    },
                     success: function(response) {
                         // Show success toast
                         showToast('success', 'Comment submitted successfully! Please wait for admin approval.');
@@ -3203,7 +2244,6 @@
                         }, 2000);
                     },
                     error: function(xhr) {
-                        console.error('Comment submission error:', xhr);
                         var message = 'An error occurred while submitting your comment.';
                         if (xhr.responseJSON && xhr.responseJSON.errors) {
                             var errors = xhr.responseJSON.errors;
@@ -3214,18 +2254,8 @@
                             message = errorMessages.join(', ');
                         } else if (xhr.responseJSON && xhr.responseJSON.message) {
                             message = xhr.responseJSON.message;
-                        } else if (xhr.status === 419) {
-                            message = 'Session expired. Please refresh the page and try again.';
-                        } else if (xhr.status === 422) {
-                            message = 'Please check your form data and try again.';
                         }
                         showToast('error', message);
-                        
-                        // Fallback: submit form normally if AJAX fails
-                        console.log('AJAX failed, submitting form normally...');
-                        setTimeout(function() {
-                            $('#reviewForm')[0].submit();
-                        }, 2000);
                     },
                     complete: function() {
                         // Re-enable submit button
@@ -3388,70 +2418,47 @@
                 $('#donationsModal').addClass('show');
             }
 
-            // Share Modal Functions - Swipe Up Animation
+            // Share Modal Functions
             function openShareModal() {
-                const modal = document.getElementById('shareModal');
-                modal.style.display = 'flex';
+                document.getElementById('shareModal').style.display = 'block';
                 document.body.style.overflow = 'hidden';
-                
-                // Trigger animation after display is set
-                setTimeout(() => {
-                    modal.classList.add('show');
-                }, 10);
             }
 
-            
+            function closeShareModal() {
+                document.getElementById('shareModal').style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+
+            function copyShareUrl() {
+                const shareUrl = document.getElementById('shareUrl');
+                shareUrl.select();
+                shareUrl.setSelectionRange(0, 99999);
                 
-            // Close modal when clicking outside
-            document.addEventListener('DOMContentLoaded', function() {
-                const modal = document.getElementById('shareModal');
-                if (modal) {
-                    modal.addEventListener('click', function(event) {
-                        if (event.target === this) {
-                            closeShareModal();
-                        }
+                try {
+                    document.execCommand('copy');
+                    showToast('success', 'Link copied to clipboard!');
+                } catch (err) {
+                    // Fallback for modern browsers
+                    navigator.clipboard.writeText(shareUrl.value).then(function() {
+                        showToast('success', 'Link copied to clipboard!');
+                    }).catch(function() {
+                        showToast('error', 'Failed to copy link');
                     });
                 }
-            });
+            }
+
+            // Close modal when clicking outside
+            window.onclick = function(event) {
+                const modal = document.getElementById('shareModal');
+                if (event.target === modal) {
+                    closeShareModal();
+                }
+            }
 
             // Close modal with Escape key
             document.addEventListener('keydown', function(event) {
                 if (event.key === 'Escape') {
                     closeShareModal();
-                }
-            });
-
-            // Touch/swipe gestures for mobile
-            let startY = 0;
-            let currentY = 0;
-            let isDragging = false;
-            const modal = document.getElementById('shareModal');
-            const modalContent = document.querySelector('.share-modal-content');
-
-            modal.addEventListener('touchstart', function(e) {
-                startY = e.touches[0].clientY;
-                isDragging = true;
-            });
-
-            modal.addEventListener('touchmove', function(e) {
-                if (!isDragging) return;
-                currentY = e.touches[0].clientY;
-                const diff = currentY - startY;
-                
-                if (diff > 0) {
-                    modalContent.style.transform = `translateY(${Math.min(diff, 100)}px)`;
-                }
-            });
-
-            modal.addEventListener('touchend', function(e) {
-                if (!isDragging) return;
-                isDragging = false;
-                
-                const diff = currentY - startY;
-                if (diff > 100) {
-                    closeShareModal();
-                } else {
-                    modalContent.style.transform = 'translateY(0)';
                 }
             });
 
@@ -3482,81 +2489,6 @@
 
         })(jQuery)
 
-        // Direct form submission function (for testing)
-        function submitFormDirectly() {
-            var name = document.getElementById('reviewerName').value.trim();
-            var email = document.getElementById('reviewerEmail').value.trim();
-            var comment = document.getElementById('reviewContent').value.trim();
-            
-            if (!name || !email || !comment) {
-                showToast('error', 'Please fill in all required fields.');
-                return;
-            }
-            
-            // Basic email validation
-            var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                showToast('error', 'Please enter a valid email address.');
-                return;
-            }
-            
-            console.log('Submitting form directly...');
-            document.getElementById('reviewForm').submit();
-        }
-
-        // Form validation function
-        function validateCommentForm() {
-            var name = document.getElementById('reviewerName').value.trim();
-            var email = document.getElementById('reviewerEmail').value.trim();
-            var comment = document.getElementById('reviewContent').value.trim();
-            
-            if (!name) {
-                showToast('error', 'Please enter your name.');
-                return false;
-            }
-            
-            if (!email) {
-                showToast('error', 'Please enter your email.');
-                return false;
-            }
-            
-            if (!comment) {
-                showToast('error', 'Please enter your comment.');
-                return false;
-            }
-            
-            // Basic email validation
-            var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                showToast('error', 'Please enter a valid email address.');
-                return false;
-            }
-            
-            return true;
-        }
-
-        // Global showToast function
-        function showToast(type, message) {
-            const toast = document.createElement('div');
-            toast.className = `toast-notification ${type}`;
-            toast.innerHTML = message;
-            
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.style.transform = 'translateX(0)';
-            }, 100);
-            
-            setTimeout(() => {
-                toast.style.transform = 'translateX(100%)';
-                setTimeout(() => {
-                    if (document.body.contains(toast)) {
-                        document.body.removeChild(toast);
-                    }
-                }, 300);
-            }, 5000);
-        }
-
         // Simple function to show video
         function showVideo(videoId) {
             // Hide campaign image
@@ -3576,272 +2508,6 @@
                 iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&showinfo=0&controls=1&mute=0`;
             }
         }
-        // Share Modal Functions - Swipe Up Animation
-function openShareModal() {
-    const modal = document.getElementById('shareModal');
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-    
-    // Trigger animation after display is set
-    setTimeout(() => {
-        modal.classList.add('show');
-    }, 10);
-        }
 
-            function closeShareModal() {
-                const modal = document.getElementById('shareModal');
-                modal.classList.remove('show');
-                document.body.style.overflow = 'auto';
-                
-                // Hide modal after animation completes
-                setTimeout(() => {
-                    modal.style.display = 'none';
-                }, 400);
-            }
-            function copyShareUrl() {
-                const shareUrl = document.getElementById('shareUrl');
-                shareUrl.select();
-                shareUrl.setSelectionRange(0, 99999);
-                
-                try {
-                    document.execCommand('copy');
-                    showToast('success', 'Link copied to clipboard!');
-                } catch (err) {
-                    // Fallback for modern browsers
-                    navigator.clipboard.writeText(shareUrl.value).then(function() {
-                        showToast('success', 'Link copied to clipboard!');
-                    }).catch(function() {
-                        showToast('error', 'Failed to copy link');
-                    });
-                }
-            }
-
-            // Social Sharing Functions
-            function shareOnFacebook() {
-                const url = encodeURIComponent(document.getElementById('shareUrl').value);
-                const title = encodeURIComponent('{{ @$campaignData->name }}');
-                const description = encodeURIComponent('{{ Str::limit(strip_tags(@$campaignData->description), 100) }}');
-                const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${title}`;
-                window.open(shareUrl, '_blank', 'width=600,height=400');
-            }
-
-            function shareOnTwitter() {
-                const url = encodeURIComponent(document.getElementById('shareUrl').value);
-                const title = encodeURIComponent('{{ @$campaignData->name }}');
-                const shareUrl = `https://twitter.com/intent/tweet?url=${url}&text=${title}`;
-                    window.open(shareUrl, '_blank', 'width=600,height=400');
-                }
-
-            function shareOnWhatsApp() {
-                const url = encodeURIComponent(document.getElementById('shareUrl').value);
-                const title = encodeURIComponent('{{ @$campaignData->name }}');
-                const shareUrl = `https://wa.me/?text=${title}%20${url}`;
-                window.open(shareUrl, '_blank');
-            }
-
-            function shareOnTelegram() {
-                const url = encodeURIComponent(document.getElementById('shareUrl').value);
-                const title = encodeURIComponent('{{ @$campaignData->name }}');
-                const shareUrl = `https://t.me/share/url?url=${url}&text=${title}`;
-                window.open(shareUrl, '_blank');
-            }
-
-            function shareViaEmail() {
-                const url = document.getElementById('shareUrl').value;
-                const title = '{{ @$campaignData->name }}';
-                const subject = encodeURIComponent(`Check out this campaign: ${title}`);
-                const body = encodeURIComponent(`I found this interesting campaign and thought you might want to check it out:\n\n${title}\n\n${url}`);
-                const shareUrl = `mailto:?subject=${subject}&body=${body}`;
-                window.location.href = shareUrl;
-                return false;
-            }
-
-            function shareOnLinkedIn() {
-                const url = encodeURIComponent(document.getElementById('shareUrl').value);
-                const title = encodeURIComponent('{{ @$campaignData->name }}');
-                const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${url}`;
-                window.open(shareUrl, '_blank', 'width=600,height=400');
-            }
-
-            function shareOnInstagram() {
-                // Copy the link to clipboard first
-                copyShareUrl();
-                
-                // Show a more detailed message
-                setTimeout(() => {
-                    showToast('info', 'Link copied! Open Instagram and paste it in your story or post.');
-                }, 1000);
-                
-                return false;
-            }
-
-            function shareOnReddit() {
-                const url = encodeURIComponent(document.getElementById('shareUrl').value);
-                const title = encodeURIComponent('{{ @$campaignData->name }}');
-                const shareUrl = `https://reddit.com/submit?url=${url}&title=${title}`;
-                window.open(shareUrl, '_blank', 'width=600,height=400');
-            }
-
-            function shareOnPinterest() {
-                const url = encodeURIComponent(document.getElementById('shareUrl').value);
-                const title = encodeURIComponent('{{ @$campaignData->name }}');
-                const image = encodeURIComponent('{{ getImage(getFilePath("campaign") . "/" . @$campaignData->image, getFileSize("campaign")) }}');
-                const shareUrl = `https://pinterest.com/pin/create/button/?url=${url}&media=${image}&description=${title}`;
-                window.open(shareUrl, '_blank', 'width=600,height=400');
-            }
-
-            // Event listeners for share modal
-            document.addEventListener('DOMContentLoaded', function() {
-                const closeBtn = document.getElementById('closeShareModal');
-                if (closeBtn) {
-                    closeBtn.addEventListener('click', closeShareModal);
-                }
-            });
-
-            // Reward Modal Functions
-            function openRewardModal() {
-                const modal = document.getElementById('rewardModal');
-                modal.style.display = 'block';
-                document.body.style.overflow = 'hidden';
-                
-                // Reset form
-                document.getElementById('rewardForm').reset();
-                document.getElementById('rewardModalTitle').textContent = 'Add New Reward';
-                document.getElementById('rewardId').value = '';
-                document.getElementById('imagePreview').style.display = 'none';
-            }
-
-            function closeRewardModal() {
-                const modal = document.getElementById('rewardModal');
-                modal.style.display = 'none';
-                document.body.style.overflow = 'auto';
-            }
-
-            function editReward(rewardId) {
-                // Fetch reward data and populate form
-                fetch(`/user/campaign/{{ $campaignData->slug }}/rewards/${rewardId}/edit`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            const reward = data.reward;
-                            document.getElementById('rewardModalTitle').textContent = 'Edit Reward';
-                            document.getElementById('rewardId').value = reward.id;
-                            document.getElementById('rewardTitle').value = reward.title;
-                            document.getElementById('rewardDescription').value = reward.description;
-                            document.getElementById('rewardAmount').value = reward.minimum_amount;
-                            document.getElementById('rewardType').value = reward.type;
-                            document.getElementById('rewardQuantity').value = reward.quantity || '';
-                            document.getElementById('rewardColor').value = reward.color_theme;
-                            document.getElementById('rewardTerms').value = reward.terms_conditions || '';
-                            
-                            // Show existing image if available
-                            if (reward.image) {
-                                const preview = document.getElementById('imagePreview');
-                                const previewImg = document.getElementById('previewImg');
-                                previewImg.src = reward.image_url;
-                                preview.style.display = 'block';
-                            }
-                            
-                            openRewardModal();
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error fetching reward:', error);
-                        alert('Error loading reward data');
-                    });
-            }
-
-            function deleteReward(rewardId) {
-                if (confirm('Are you sure you want to delete this reward?')) {
-                    fetch(`/user/campaign/{{ $campaignData->slug }}/rewards/${rewardId}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                            'Content-Type': 'application/json'
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            // Remove reward card from DOM
-                            const rewardCard = document.querySelector(`[data-reward-id="${rewardId}"]`);
-                            if (rewardCard) {
-                                rewardCard.remove();
-                            }
-                            
-                            // Check if no rewards left
-                            const rewardsGrid = document.getElementById('rewardsGrid');
-                            if (rewardsGrid.children.length === 0) {
-                                location.reload(); // Reload to show no rewards message
-                            }
-                        } else {
-                            alert('Error deleting reward');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error deleting reward:', error);
-                        alert('Error deleting reward');
-                    });
-                }
-            }
-
-            // Image preview functionality
-            document.getElementById('rewardImage').addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                const preview = document.getElementById('imagePreview');
-                const previewImg = document.getElementById('previewImg');
-                
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        previewImg.src = e.target.result;
-                        preview.style.display = 'block';
-                    }
-                    reader.readAsDataURL(file);
-                } else {
-                    preview.style.display = 'none';
-                }
-            });
-
-            // Form submission
-            document.getElementById('rewardForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const formData = new FormData(this);
-                const rewardId = document.getElementById('rewardId').value;
-                const isEdit = rewardId !== '';
-                
-                const url = isEdit 
-                    ? `/user/campaign/{{ $campaignData->slug }}/rewards/${rewardId}/update`
-                    : `/user/campaign/{{ $campaignData->slug }}/rewards/store`;
-                
-                fetch(url, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        closeRewardModal();
-                        location.reload(); // Reload to show updated rewards
-                    } else {
-                        alert('Error saving reward: ' + (data.message || 'Unknown error'));
-                    }
-                })
-                .catch(error => {
-                    console.error('Error saving reward:', error);
-                    alert('Error saving reward');
-                });
-            });
-
-            // Close modal when clicking outside
-            document.getElementById('rewardModal').addEventListener('click', function(e) {
-                if (e.target === this) {
-                    closeRewardModal();
-                }
-            });
     </script>
 @endpush
