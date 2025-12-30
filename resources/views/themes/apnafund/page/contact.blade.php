@@ -22,8 +22,8 @@
                             <div class="col-lg-4 col-sm-6">
                                 <div class="custom--card contact__info__card" data-aos="fade-up" data-aos-duration="1500">
                                     <div class="card-body">
-                                        <h3 class="contact__info__title card-subtitle mb-2">@php echo $contact->data_info->icon @endphp {{ __(@$contact->data_info->heading) }}:</h3>
-                                        <p>{{ __(@$contact->data_info->data) }}</p>
+                                        <h3 class="contact__info__title card-subtitle mb-2">@php echo @$contact->data_info['icon'] @endphp {{ __(@$contact->data_info['heading']) }}:</h3>
+                                        <p>{{ __(@$contact->data_info['data']) }}</p>
                                     </div>
                                 </div>
                             </div>

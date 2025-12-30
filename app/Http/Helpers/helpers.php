@@ -75,11 +75,23 @@ function fileUploader($file, $location, $size = null, $old = null, $thumb = null
     $fileManager        = new FileManager($file);
     // Convert relative path to full public path if needed
     $publicPath = public_path();
-    if (strpos($location, $publicPath) !== 0 && strpos($location, '/') !== 0 && !file_exists($location)) {
-        $fileManager->path  = public_path($location);
-    } else {
-    $fileManager->path  = $location;
+    
+    // If location is already an absolute path, use it as is
+    if (strpos($location, $publicPath) === 0 || (strpos($location, '/') === 0 && file_exists($location))) {
+        $fileManager->path = $location;
+    } 
+    // If location starts with / but doesn't exist, try public_path
+    elseif (strpos($location, '/') === 0) {
+        $fileManager->path = public_path(ltrim($location, '/'));
     }
+    // Otherwise, treat as relative path from public directory
+    else {
+        $fileManager->path = public_path($location);
+    }
+    
+    // Ensure the directory exists and is writable
+    $fileManager->makeDirectory();
+    
     $fileManager->size  = $size;
     $fileManager->old   = $old;
     $fileManager->thumb = $thumb;
@@ -755,7 +767,7 @@ function getDashboardNavigation(): array {
             'id' => 'create',
             'title' => __('Create Campaign'),
             'icon' => 'fas fa-rocket',
-            'route' => 'user.campaign.create'
+            'route' => 'start.project'
         ],
         [
             'id' => 'manage',

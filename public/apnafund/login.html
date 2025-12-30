@@ -4,334 +4,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Apna Crowdfunding</title>
+    <title>Login - Apna Fund</title>
     <link rel="stylesheet" href="assets/css/app.css">
     <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="shortcut icon" href="assets/images/fav-icon.png" type="image/png">
-    <style>
-        body {
-            background: #ffffff;
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            line-height: 1.6;
-            color: #333;
-        }
-
-        /* Header */
-        .main-header {
-            background: #05ce78;
-            padding: 25px 0;
-            margin: 0;
-            border: none;
-        }
-
-        .main-header .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        .main-header .logo {
-            text-align: center;
-            margin: 0;
-        }
-
-        .main-header .logo-img {
-            height: 40px;
-            width: auto;
-        }
-
-        .main-header .tagline {
-            color: #fff;
-            font-size: 12px;
-            text-align: center;
-            margin-top: 5px;
-            font-weight: 400;
-        }
-
-        /* Login Container */
-        .login-container {
-            max-width: 500px;
-            margin: 40px auto;
-            padding: 40px 20px;
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-        }
-
-        .login-header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .login-title {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 1rem;
-        }
-
-        .login-subtitle {
-            color: #666;
-            font-size: 1.1rem;
-            margin-bottom: 2rem;
-        }
-
-        /* Form Styles */
-        .form-group {
-            margin-bottom: 2rem;
-        }
-
-        .form-label {
-            display: block;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 0.5rem;
-            font-size: 1.1rem;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            background: #fff;
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: #05ce78;
-            box-shadow: 0 0 0 3px rgba(5, 206, 120, 0.1);
-        }
-
-        .input-group {
-            position: relative;
-        }
-
-        .input-group .form-control {
-            padding-right: 50px;
-        }
-
-        .input-group-text {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: #666;
-            cursor: pointer;
-            z-index: 10;
-            font-size: 1.1rem;
-        }
-
-        .input-group-text:hover {
-            color: #05ce78;
-        }
-
-        /* Button Styles */
-        .btn-theme {
-            background: linear-gradient(135deg, #05ce78 0%, #04a85f 100%);
-            color: #fff;
-            border: none;
-            padding: 15px 30px;
-            font-size: 16px;
-            font-weight: 600;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-            box-shadow: 0 4px 15px rgba(5, 206, 120, 0.3);
-            width: 100%;
-        }
-
-        .btn-theme:hover {
-            background: linear-gradient(135deg, #04a85f 0%, #038c4f 100%);
-            color: #fff;
-            text-decoration: none;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(5, 206, 120, 0.4);
-        }
-
-        .btn-theme:disabled {
-            background: #6c757d;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: #fff;
-            border: none;
-            padding: 15px 30px;
-            font-size: 16px;
-            font-weight: 600;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-            margin-right: 15px;
-        }
-
-        .btn-secondary:hover {
-            background: #5a6268;
-            color: #fff;
-            text-decoration: none;
-            transform: translateY(-2px);
-        }
-
-        /* Form Check */
-        .form-check {
-            display: flex;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-
-        .form-check-input {
-            margin-right: 10px;
-            width: 18px;
-            height: 18px;
-            border: 2px solid #e9ecef;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .form-check-input:checked {
-            background-color: #05ce78;
-            border-color: #05ce78;
-        }
-
-        .form-check-label {
-            color: #666;
-            font-size: 0.95rem;
-            cursor: pointer;
-        }
-
-        /* Links */
-        .forgot-password {
-            text-align: right;
-            margin-bottom: 2rem;
-        }
-
-        .forgot-password a {
-            color: #05ce78;
-            text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-
-        .forgot-password a:hover {
-            text-decoration: underline;
-        }
-
-        .login-footer {
-            text-align: center;
-            margin-top: 2rem;
-        }
-
-        .login-footer a {
-            color: #05ce78;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .login-footer a:hover {
-            text-decoration: underline;
-        }
-
-        /* Alert Styles */
-        .alert {
-            border-radius: 8px;
-            border: none;
-            padding: 15px 20px;
-            margin-bottom: 2rem;
-            font-weight: 500;
-        }
-
-        .alert-danger {
-            background: rgba(220, 53, 69, 0.1);
-            color: #dc3545;
-        }
-
-        .alert-success {
-            background: rgba(5, 206, 120, 0.1);
-            color: #05ce78;
-        }
-
-        /* Loading Spinner */
-        .loading-spinner {
-            display: none;
-            width: 20px;
-            height: 20px;
-            border: 2px solid #fff;
-            border-top: 2px solid transparent;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Success Message */
-        .success-message {
-            text-align: center;
-            padding: 40px 20px;
-        }
-
-        .success-icon {
-            font-size: 4rem;
-            color: #05ce78;
-            margin-bottom: 1rem;
-        }
-
-        .success-title {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 1rem;
-        }
-
-        .success-subtitle {
-            color: #666;
-            font-size: 1.1rem;
-            margin-bottom: 2rem;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .login-container {
-                margin: 20px auto;
-                padding: 30px 20px;
-            }
-
-            .login-title {
-                font-size: 1.5rem;
-            }
-
-            .login-subtitle {
-                font-size: 1rem;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
-    <!-- Main Header -->
-    <header class="main-header">
+    <!-- Header -->
+    <header class="header">
         <div class="container">
-            <div class="logo">
-                <a href="/"><img src="assets/images/White Logo.png" alt="Apna Crowdfunding Logo" class="logo-img"></a>
+            <div class="row align-items-center justify-content-between">
+                <!-- Left: Logo -->
+                <div class="col-12 col-md-2 text-center text-md-start">
+                    <a href="/">
+                        <img src="logo_light (2).png" alt="Apna Fund Logo" class="logo-img">
+                    </a>
+                </div>
+
+                <!-- Center: Search Bar -->
+                <div class="col-12 col-md-8">
+                    <div class="search-container">
+                        <form class="search-box" method="get" action="http://192.168.1.89:8000/campaigns">
+                            <input type="text" class="search-input" name="name" placeholder="Search projects, creators, and categories..." aria-label="Search">
+                            <button class="search-btn" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Right: Buttons -->
+                <div class="col-12 col-md-2 text-center text-md-end">
+                    <a href="http://192.168.1.89:8000/user/login" class="btn btn-outline-light">Creator Login</a>
+                </div>
+            </div>
+
+            <!-- Mobile Navigation Toggle (Hidden on desktop) -->
+            <div class="mobile-nav-toggle">
+                <button class="nav-toggle" id="navToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+
+            <!-- Mobile Menu (Hidden by default) -->
+            <div class="mobile-menu" id="mobileMenu">
+                <div class="mobile-menu-header">
+                    <div class="mobile-logo">
+                        <img src="logo_light (2).png" alt="Apna Fund Logo" class="mobile-logo-img">
+                    </div>
+                    <button class="mobile-close" id="mobileClose">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="mobile-menu-content">
+                    <div class="mobile-nav-links">
+                        <a href="#" class="mobile-nav-link">Discover</a>
+                        <a href="#" class="mobile-nav-link">Categories</a>
+                        <a href="#" class="mobile-nav-link">How it works</a>
+                        <a href="#" class="mobile-nav-link">Sign in</a>
+                    </div>
+                    
+                    <div class="mobile-cta">
+                        <a href="#" class="mobile-start-fundraiser">Start a fundraiser</a>
+                    </div>
+                </div>
             </div>
         </div>
     </header>
@@ -340,7 +80,7 @@
     <div class="login-container">
         <div class="login-header">
             <h2 class="login-title">Welcome Back!</h2>
-            <p class="login-subtitle">Sign in to your Apna Crowdfunding account</p>
+            <p class="login-subtitle">Sign in to your Apna Fund account</p>
         </div>
 
         <!-- Alert Messages -->
@@ -355,9 +95,9 @@
 
             <div class="form-group">
                 <label for="password" class="form-label">Password</label>
-                <div class="input-group">
-                    <input type="password" class="form-control" id="password" placeholder="Enter your password" required>
-                    <button type="button" class="input-group-text" id="togglePassword">
+                <div class="password-input-wrapper">
+                    <input type="password" class="form-control password-input" id="password" placeholder="Enter your password" required>
+                    <button type="button" class="password-toggle" id="togglePassword">
                         <i class="fas fa-eye" id="passwordIcon"></i>
                     </button>
                 </div>
@@ -392,7 +132,7 @@
                 <i class="fas fa-check-circle"></i>
             </div>
             <h2 class="success-title">Login Successful!</h2>
-            <p class="success-subtitle">Welcome back to Apna Crowdfunding! You're being redirected to your dashboard.</p>
+            <p class="success-subtitle">Welcome back to Apna Fund! You're being redirected to your dashboard.</p>
             <div class="loading-spinner" style="display: inline-block; margin: 0 auto;"></div>
         </div>
     </div>
@@ -586,17 +326,7 @@
                 }
             }
 
-            // Add some interactive effects
-            const formInputs = document.querySelectorAll('.form-control');
-            formInputs.forEach(input => {
-                input.addEventListener('focus', function() {
-                    this.style.transform = 'scale(1.02)';
-                });
-                
-                input.addEventListener('blur', function() {
-                    this.style.transform = 'scale(1)';
-                });
-            });
+            // Removed interactive effects that were causing styling issues
 
             // Add keyboard shortcuts
             document.addEventListener('keydown', function(e) {

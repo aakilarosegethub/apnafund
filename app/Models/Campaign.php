@@ -95,6 +95,14 @@ class Campaign extends Model
     }
 
     /**
+     * Get the FAQs for the campaign.
+     */
+    public function faqs(): HasMany
+    {
+        return $this->hasMany(CampaignFaq::class);
+    }
+
+    /**
      * Scope a query to only include pending campaigns.
      */
     public function scopePending($query): void

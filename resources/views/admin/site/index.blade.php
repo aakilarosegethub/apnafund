@@ -22,7 +22,21 @@
                                             <input type="file" id="image{{ $loop->index }}" class="image-upload" name="image_input[{{ @$imgKey }}]" accept=".jpeg, .jpg, .png">
 
                                             <label for="image{{ $loop->index }}" class="upload__img-preview image-preview">
-                                                <img src="{{getImage('assets/images/site/' . $key .'/'. @$content->data_info->$imgKey, @$section->content->images->$imgKey->size) }}" alt="{{ @$content->data_info->{$imgKey.'_alt'} ?? 'image' }}">
+                                                @php
+                                                    $currentImage = @$content->data_info[$imgKey] ?? '';
+                                                    $imageUrl = '';
+                                                    if ($currentImage) {
+                                                        // Check if it's a URL
+                                                        if (filter_var($currentImage, FILTER_VALIDATE_URL)) {
+                                                            $imageUrl = $currentImage;
+                                                        } else {
+                                                            $imageUrl = getImage('assets/images/site/' . $key .'/'. $currentImage, @$section->content->images->$imgKey->size);
+                                                        }
+                                                    } else {
+                                                        $imageUrl = getImage('assets/images/site/' . $key .'/'. $currentImage, @$section->content->images->$imgKey->size);
+                                                    }
+                                                @endphp
+                                                <img src="{{ $imageUrl }}" alt="{{ @$content->data_info[$imgKey.'_alt'] ?? 'image' }}">
                                             </label>
 
                                             <button type="button" class="btn btn--sm btn--icon btn--danger custom-file-input-clear d-none"><i class="ti ti-circle-x"></i></button>
@@ -38,10 +52,17 @@
                                             @endif
                                         </label>
                                         
+                                        <!-- Image URL Field -->
+                                        <div class="mt-2">
+                                            <label class="form--label">@lang('Or Enter Image URL') ({{ keyToTitle($imgKey) }})</label>
+                                            <input type="url" class="form--control" name="{{ $imgKey }}_url" value="{{ (filter_var(@$content->data_info[$imgKey] ?? '', FILTER_VALIDATE_URL)) ? @$content->data_info[$imgKey] : '' }}" placeholder="@lang('https://example.com/image.jpg')">
+                                            <small class="text-muted">@lang('Leave empty if uploading file above')</small>
+                                        </div>
+                                        
                                         <!-- Image Alt Text Field -->
                                         <div class="mt-2">
                                             <label class="form--label">@lang('Image Alt Text') ({{ keyToTitle($imgKey) }})</label>
-                                            <input type="text" class="form--control" name="{{ $imgKey }}_alt" value="{{ @$content->data_info->{$imgKey.'_alt'} }}" placeholder="@lang('Enter alt text for accessibility')">
+                                            <input type="text" class="form--control" name="{{ $imgKey }}_alt" value="{{ @$content->data_info[$imgKey.'_alt'] ?? '' }}" placeholder="@lang('Enter alt text for accessibility')">
                                         </div>
                                     </div>
                                 @endforeach
@@ -64,8 +85,8 @@
                                                         </div>
                                                         <div class="col-lg-9">
                                                             <div class="input--group">
-                                                                <input type="text" class="form--control iconPicker icon" name="{{ $k }}" value="{{ @$content->data_info->$k }}" autocomplete="off" required>
-                                                                <span class="input-group-text input-group-addon" data-icon="ti ti-home" role="iconpicker">@php echo @$content->data_info->$k; @endphp</span>
+                                                                <input type="text" class="form--control iconPicker icon" name="{{ $k }}" value="{{ @$content->data_info[$k] ?? '' }}" autocomplete="off" required>
+                                                                <span class="input-group-text input-group-addon" data-icon="ti ti-home" role="iconpicker">@php echo @$content->data_info[$k] ?? ''; @endphp</span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -77,7 +98,7 @@
                                                             <label class="form--label required">{{ __(keyToTitle($k)) }}</label>
                                                         </div>
                                                         <div class="col-lg-9">
-                                                            <textarea class="form--control" name="{{ $k }}" required>{{ @$content->data_info->$k}}</textarea>
+                                                            <textarea class="form--control" name="{{ $k }}" required>{{ @$content->data_info[$k] ?? '' }}</textarea>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -88,7 +109,7 @@
                                                             <label class="form--label required">{{ __(keyToTitle($k)) }}</label>
                                                         </div>
                                                         <div class="col-lg-9">
-                                                            <textarea class="form--control trumEdit" name="{{ $k }}">{{ @$content->data_info->$k }}</textarea>
+                                                            <textarea class="form--control trumEdit" name="{{ $k }}">{{ @$content->data_info[$k] ?? '' }}</textarea>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -116,7 +137,7 @@
                                                             <label class="form--label required">{{ __(keyToTitle($k)) }}</label>
                                                         </div>
                                                         <div class="col-lg-9">
-                                                            <input type="text" class="form--control" name="{{ $k }}" value="{{@$content->data_info->$k }}" required>
+                                                            <input type="text" class="form--control" name="{{ $k }}" value="{{ @$content->data_info[$k] ?? '' }}" required>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -231,7 +252,20 @@
                             <td>
                                 <div class="table-card-with-image">
                                     <div class="table-card-with-image__img">
-                                        <img src="{{ getImage('assets/images/site/' . $key .'/'. @$data->data_info->$firstKey,@$section->element->images->$firstKey->size) }}" alt="{{ @$data->data_info->{$firstKey.'_alt'} ?? 'Image' }}">
+                                        @php
+                                            $elementImage = @$data->data_info[$firstKey] ?? '';
+                                            $elementImageUrl = '';
+                                            if ($elementImage) {
+                                                if (filter_var($elementImage, FILTER_VALIDATE_URL)) {
+                                                    $elementImageUrl = $elementImage;
+                                                } else {
+                                                    $elementImageUrl = getImage('assets/images/site/' . $key .'/'. $elementImage, @$section->element->images->$firstKey->size);
+                                                }
+                                            } else {
+                                                $elementImageUrl = getImage('assets/images/site/' . $key .'/'. $elementImage, @$section->element->images->$firstKey->size);
+                                            }
+                                        @endphp
+                                        <img src="{{ $elementImageUrl }}" alt="{{ @$data->data_info[$firstKey.'_alt'] ?? 'Image' }}">
                                     </div>
                                 </div>
                             </td>
@@ -241,13 +275,13 @@
                             @if($k !='modal')
                                 @if($type == 'text' || $type == 'icon')
                                     @if($type == 'icon')
-                                        <td>@php echo @$data->data_info->$k; @endphp</td>
+                                        <td>@php echo @$data->data_info[$k] ?? ''; @endphp</td>
                                     @else
-                                        <td>{{ __(@$data->data_info->$k) }}</td>
+                                        <td>{{ __(@$data->data_info[$k] ?? '') }}</td>
                                     @endif
                                 @elseif($k == 'select')
                                     @php $dataVal = @$section->element->$k->name; @endphp
-                                    <td>{{ @$data->data_info->$dataVal }}</td>
+                                    <td>{{ @$data->data_info[$dataVal] ?? '' }}</td>
                                 @endif
                             @endif
                         @endforeach
@@ -273,6 +307,19 @@
                                     <a href="{{ route('admin.site.sections.element', [ $key, $data->id ]) }}" class="btn btn--sm btn--base">
                                         <i class="ti ti-edit"></i> @lang('Edit')
                                     </a>
+                                @endif
+
+                                @if($key == 'dynamic_pages')
+                                    @php
+                                        $pageSlug = isset($data->data_info['slug']) && $data->data_info['slug'] 
+                                            ? slug($data->data_info['slug']) 
+                                            : (isset($data->data_info['title']) ? slug($data->data_info['title']) : '');
+                                    @endphp
+                                    @if($pageSlug)
+                                        <a href="{{ url('/' . $pageSlug) }}" target="_blank" class="btn btn--sm btn--info">
+                                            <i class="ti ti-eye"></i> @lang('View')
+                                        </a>
+                                    @endif
                                 @endif
 
                                 <button type="button" class="btn btn--sm btn-outline--danger decisionBtn" data-question="@lang('Are you confirming the removal of this item')?" data-action="{{ route('admin.site.remove',$data->id) }}">
@@ -611,9 +658,50 @@
                     window.editors = {};
                     document.querySelectorAll('.trumEdit').forEach((node, index) => {
                         ClassicEditor
-                            .create(node)
+                            .create(node, {
+                                simpleUpload: {
+                                    uploadUrl: '{{ env('APP_URL') }}/admin/upload/file'
+                                }
+                            })
                             .then(newEditor => {
                                 window.editors[index] = newEditor;
+                                
+                                // Handle external image URLs - auto upload to server
+                                newEditor.model.document.on('change:data', () => {
+                                    const viewFragment = newEditor.data.get();
+                                    const parser = new DOMParser();
+                                    const doc = parser.parseFromString(viewFragment, 'text/html');
+                                    const images = doc.querySelectorAll('img');
+                                    
+                                    images.forEach(async (img) => {
+                                        const imgSrc = img.getAttribute('src');
+                                        if (imgSrc && imgSrc.startsWith('http') && !imgSrc.includes(window.location.origin)) {
+                                            // External image detected - upload to server
+                                            try {
+                                                const response = await fetch('{{ route("admin.admin.upload.external-image") }}', {
+                                                    method: 'POST',
+                                                    headers: {
+                                                        'Content-Type': 'application/json',
+                                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                                    },
+                                                    body: JSON.stringify({
+                                                        external_url: imgSrc
+                                                    })
+                                                });
+                                                
+                                                const data = await response.json();
+                                                if (data.success && data.url) {
+                                                    // Replace external URL with server URL
+                                                    const currentContent = newEditor.getData();
+                                                    const updatedContent = currentContent.replace(imgSrc, data.url);
+                                                    newEditor.setData(updatedContent);
+                                                }
+                                            } catch (error) {
+                                                console.error('Error uploading external image:', error);
+                                            }
+                                        }
+                                    });
+                                });
                             });
                     });
                 }

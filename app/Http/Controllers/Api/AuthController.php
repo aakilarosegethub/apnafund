@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class AuthController extends BaseApiController
 {
@@ -80,45 +83,58 @@ class AuthController extends BaseApiController
                 ], 401);
             }
 
+            // Hash password before storing
+            $hashedPassword = Hash::make($password);
+            
             $table = "users";
             // Using users table fields: firstname, lastname, username, email, mobile, password, country_code, status
             // created_at will be automatically set by Laravel
             $field_values = ["firstname", "lastname", "username", "email", "mobile", "password", "country_code", "status"];
-            $data_values = [$firstname, $lastname, $username, $email, $mobile, $password, $ccode, 1];
+            $data_values = [$firstname, $lastname, $username, $email, $mobile, $hashedPassword, $ccode, 1];
 
             $check = $this->h->insertDataId_Api($field_values, $data_values, $table);
 
             if ($check) {
-                $c = $this->h->queryfire("select id, firstname, lastname, email, mobile, password, country_code as ccode, status, created_at as rdate, balance as wallet, image as profile_pic from users where id=" . $check . "");
-                if ($c && $c->num_rows > 0) {
-                    $userData = $c->fetch_assoc();
-                    // Combine firstname and lastname as name for API response
-                    $userData['name'] = trim(($userData['firstname'] ?? '') . ' ' . ($userData['lastname'] ?? ''));
-                    // Format rdate if needed
-                    if (isset($userData['rdate']) && $userData['rdate']) {
-                        $userData['rdate'] = date("Y-m-d H:i:s", strtotime($userData['rdate']));
-                    } else {
-                        // If created_at is null, use current timestamp
-                        $userData['rdate'] = date("Y-m-d H:i:s");
-                    }
-                    // Try to get settings, but don't fail if table doesn't exist
-                    $set = $this->h->fetchData("SELECT * FROM `settings` LIMIT 1");
-                    if (!$set) {
-                        // Try alternative table name
-                        $set = $this->h->fetchData("SELECT * FROM `tbl_setting` LIMIT 1");
-                    }
-                    $currency = '';
-                    if ($set) {
-                        $currency = $set['currency'] ?? $set['site_currency'] ?? '';
-                    }
+                // Get user using Laravel model to create token
+                $user = User::find($check);
+                if ($user) {
+                    // Create token
+                    $token = $user->createToken('auth_token')->plainTextToken;
+                    
+                    $c = $this->h->queryfire("select id, firstname, lastname, email, mobile, password, country_code as ccode, status, created_at as rdate, balance as wallet, image as profile_pic from users where id=" . $check . "");
+                    if ($c && $c->num_rows > 0) {
+                        $userData = $c->fetch_assoc();
+                        // Remove password from response
+                        unset($userData['password']);
+                        // Combine firstname and lastname as name for API response
+                        $userData['name'] = trim(($userData['firstname'] ?? '') . ' ' . ($userData['lastname'] ?? ''));
+                        // Format rdate if needed
+                        if (isset($userData['rdate']) && $userData['rdate']) {
+                            $userData['rdate'] = date("Y-m-d H:i:s", strtotime($userData['rdate']));
+                        } else {
+                            // If created_at is null, use current timestamp
+                            $userData['rdate'] = date("Y-m-d H:i:s");
+                        }
+                        // Try to get settings, but don't fail if table doesn't exist
+                        $set = $this->h->fetchData("SELECT * FROM `settings` LIMIT 1");
+                        if (!$set) {
+                            // Try alternative table name
+                            $set = $this->h->fetchData("SELECT * FROM `tbl_setting` LIMIT 1");
+                        }
+                        $currency = '';
+                        if ($set) {
+                            $currency = $set['currency'] ?? $set['site_currency'] ?? '';
+                        }
 
-                    return response()->json([
-                        "UserLogin" => $userData,
-                        "currency" => $currency,
-                        "ResponseCode" => "200",
-                        "Result" => "true",
-                        "ResponseMsg" => "Sign Up Done Successfully!"
-                    ]);
+                        return response()->json([
+                            "UserLogin" => $userData,
+                            "token" => $token,
+                            "currency" => $currency,
+                            "ResponseCode" => "200",
+                            "Result" => "true",
+                            "ResponseMsg" => "Sign Up Done Successfully!"
+                        ]);
+                    }
                 }
             }
 
@@ -173,42 +189,90 @@ class AuthController extends BaseApiController
         $password = strip_tags($this->h->real_string($data['password']));
         $ccode = strip_tags($this->h->real_string($data['ccode']));
 
-        $chek = $this->h->queryfire("select * from users where (mobile='" . $mobile . "' or email='" . $mobile . "') and status = 1 and password='" . $password . "' and country_code='" . $ccode . "'");
-        $status = $this->h->queryfire("select * from users where status = 1");
+        // Find user by mobile or email
+        $user = User::where(function($query) use ($mobile) {
+            $query->where('mobile', $mobile)
+                  ->orWhere('email', $mobile);
+        })
+        ->where('country_code', $ccode)
+        ->where('status', 1)
+        ->first();
 
-        if ($status && $status->num_rows != 0) {
-            if ($chek && $chek->num_rows != 0) {
-                $c = $this->h->queryfire("select id, firstname, lastname, email, mobile, password, country_code as ccode, status, created_at as rdate, balance as wallet, image as profile_pic from users where (mobile='" . $mobile . "' or email='" . $mobile . "') and status = 1 and password='" . $password . "'");
-                $c = $c->fetch_assoc();
-                // Combine firstname and lastname as name for API response
-                if ($c) {
-                    $c['name'] = trim(($c['firstname'] ?? '') . ' ' . ($c['lastname'] ?? ''));
-                    // Format rdate if needed
-                    if (isset($c['rdate'])) {
-                        $c['rdate'] = date("Y-m-d H:i:s", strtotime($c['rdate']));
-                    }
-                }
-
-                return response()->json([
-                    "UserLogin" => $c,
-                    "ResponseCode" => "200",
-                    "Result" => "true",
-                    "ResponseMsg" => "Login successfully!"
-                ]);
-            } else {
-                return response()->json([
-                    "ResponseCode" => "401",
-                    "Result" => "false",
-                    "ResponseMsg" => "Invalid Email/Mobile No or Password!!!"
-                ], 401);
-            }
-        } else {
+        if (!$user) {
             return response()->json([
                 "ResponseCode" => "401",
                 "Result" => "false",
-                "ResponseMsg" => "Your profile has been blocked by the administrator, preventing you from using our app as a regular user."
+                "ResponseMsg" => "Invalid Email/Mobile No or Password!!!"
             ], 401);
         }
+
+        // Check if password matches (handle both hashed and plain text for backward compatibility)
+        $passwordValid = false;
+        
+        // Try Bcrypt first (Laravel default)
+        try {
+            if (Hash::check($password, $user->password)) {
+                $passwordValid = true;
+            }
+        } catch (\Exception $e) {
+            // Password is not Bcrypt, try other methods
+        }
+        
+        // If Bcrypt failed, try plain text comparison
+        if (!$passwordValid && $user->password === $password) {
+            // Legacy plain text password - hash it for future use
+            $user->password = Hash::make($password);
+            $user->save();
+            $passwordValid = true;
+        }
+        
+        // If still not valid, try MD5 (common legacy format)
+        if (!$passwordValid && md5($password) === $user->password) {
+            // MD5 password - convert to Bcrypt
+            $user->password = Hash::make($password);
+            $user->save();
+            $passwordValid = true;
+        }
+        
+        // If still not valid, try SHA1 (another legacy format)
+        if (!$passwordValid && sha1($password) === $user->password) {
+            // SHA1 password - convert to Bcrypt
+            $user->password = Hash::make($password);
+            $user->save();
+            $passwordValid = true;
+        }
+
+        if (!$passwordValid) {
+            return response()->json([
+                "ResponseCode" => "401",
+                "Result" => "false",
+                "ResponseMsg" => "Invalid Email/Mobile No or Password!!!"
+            ], 401);
+        }
+
+        // Create token
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        // Get user data in the expected format
+        $c = $this->h->queryfire("select id, firstname, lastname, email, mobile, country_code as ccode, status, created_at as rdate, balance as wallet, image as profile_pic from users where id=" . $user->id . "");
+        $c = $c->fetch_assoc();
+        
+        // Combine firstname and lastname as name for API response
+        if ($c) {
+            $c['name'] = trim(($c['firstname'] ?? '') . ' ' . ($c['lastname'] ?? ''));
+            // Format rdate if needed
+            if (isset($c['rdate'])) {
+                $c['rdate'] = date("Y-m-d H:i:s", strtotime($c['rdate']));
+            }
+        }
+
+        return response()->json([
+            "UserLogin" => $c,
+            "token" => $token,
+            "ResponseCode" => "200",
+            "Result" => "true",
+            "ResponseMsg" => "Login successfully!"
+        ]);
     }
 
     /**
@@ -270,42 +334,35 @@ class AuthController extends BaseApiController
 
         $email = strip_tags($this->h->real_string($data['email']));
 
-        $chek = $this->h->queryfire("select * from users where email='" . $email . "'");
+        // Find user by email
+        $user = User::where('email', $email)->where('status', 1)->first();
 
-        if ($chek && $chek->num_rows != 0) {
-            $status = $this->h->queryfire("select * from users where status = 1 and email='" . $email . "'");
-            if ($status && $status->num_rows != 0) {
-                $c = $this->h->queryfire("select id, firstname, lastname, email, mobile, password, country_code as ccode, status, created_at as rdate, balance as wallet, image as profile_pic from users where email='" . $email . "'");
-                $c = $c->fetch_assoc();
-                // Combine firstname and lastname as name for API response
-                if ($c) {
-                    $c['name'] = trim(($c['firstname'] ?? '') . ' ' . ($c['lastname'] ?? ''));
-                    // Format rdate if needed
-                    if (isset($c['rdate'])) {
-                        $c['rdate'] = date("Y-m-d H:i:s", strtotime($c['rdate']));
-                    }
-                }
-
-                return response()->json([
-                    "UserLogin" => $c,
-                    "ResponseCode" => "200",
-                    "Result" => "true",
-                    "ResponseMsg" => "Login successfully!"
-                ]);
-            } else {
-                return response()->json([
-                    "ResponseCode" => "401",
-                    "Result" => "false",
-                    "ResponseMsg" => "Your profile has been blocked by the administrator, preventing you from using our app as a regular user."
-                ], 401);
-            }
-        } else {
+        if (!$user) {
             return response()->json([
                 "ResponseCode" => "201",
                 "Result" => "false",
                 "ResponseMsg" => "Account Not Found!!"
             ], 201);
         }
+
+        // Create token
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        // Get user data
+        $c = $this->h->queryfire("select id, firstname, lastname, email, mobile, country_code as ccode, status, created_at as rdate, balance as wallet, image as profile_pic from users where email='" . $email . "'");
+        $c = $c->fetch_assoc();
+        
+        if ($c) {
+            $c['name'] = trim(($c['firstname'] ?? '') . ' ' . ($c['lastname'] ?? ''));
+        }
+
+        return response()->json([
+            "UserLogin" => $c,
+            "token" => $token,
+            "ResponseCode" => "200",
+            "Result" => "true",
+            "ResponseMsg" => "Login successfully!"
+        ]);
     }
 
     /**
@@ -326,9 +383,10 @@ class AuthController extends BaseApiController
         $mobile = strip_tags($this->h->real_string($data['mobile']));
         $code = strip_tags($this->h->real_string($data['ccode']));
 
-        $chek = $this->h->queryfire("select * from users where mobile='" . $mobile . "' and country_code='" . $code . "'")->num_rows;
+        $chek = $this->h->queryfire("select * from users where mobile='" . $mobile . "' and country_code='" . $code . "'");
+        $chekRows = $chek ? $chek->num_rows : 0;
 
-        if ($chek != 0) {
+        if ($chekRows != 0) {
             return response()->json([
                 "ResponseCode" => "401",
                 "Result" => "false",

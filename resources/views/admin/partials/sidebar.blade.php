@@ -24,6 +24,12 @@
             </a>
         </li>
         <li class="sidebar-item">
+            <a href="{{ route('admin.banners.index') }}" class="sidebar-link {{ navigationActive('admin.banners*', 2) }}">
+                <span class="nav-icon"><i class="ti ti-photo"></i></span>
+                <span class="sidebar-txt">@lang('Banners')</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
             <a role="button" class="sidebar-link has-sub {{ navigationActive('admin.campaigns*', 2) }}">
                 <span class="nav-icon">
                     <i class="ti ti-speakerphone"></i>

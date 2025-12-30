@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responsive Header - Apna Fund</title>
+    <link rel="stylesheet" href="assets/css/app.css">
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="shortcut icon" href="assets/images/fav-icon.png" type="image/png">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="row align-items-center justify-content-between">
+                <!-- Left: Logo -->
+                <div class="col-12 col-md-2 text-center text-md-start">
+                    <a href="/">
+                        <img src="logo_light (2).png" alt="Apna Fund Logo" class="logo-img">
+                    </a>
+                </div>
+
+                <!-- Center: Search Bar -->
+                <div class="col-12 col-md-8">
+                    <div class="search-container">
+                        <form class="search-box" method="get" action="http://192.168.1.89:8000/campaigns">
+                            <input type="text" class="search-input" name="name" placeholder="Search projects, creators, and categories..." aria-label="Search">
+                            <button class="search-btn" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Right: Buttons -->
+                <div class="col-12 col-md-2 text-center text-md-end">
+                    <a href="http://192.168.1.89:8000/user/login" class="btn btn-outline-light">Creator Login</a>
+                </div>
+            </div>
+
+            <!-- Mobile Navigation Toggle (Hidden on desktop) -->
+            <div class="mobile-nav-toggle">
+                <button class="nav-toggle" id="navToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+
+            <!-- Mobile Menu (Hidden by default) -->
+            <div class="mobile-menu" id="mobileMenu">
+                <div class="mobile-menu-header">
+                    <div class="mobile-logo">
+                        <img src="logo_light (2).png" alt="Apna Fund Logo" class="mobile-logo-img">
+                    </div>
+                    <button class="mobile-close" id="mobileClose">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="mobile-menu-content">
+                    <div class="mobile-nav-links">
+                        <a href="#" class="mobile-nav-link">Discover</a>
+                        <a href="#" class="mobile-nav-link">Categories</a>
+                        <a href="#" class="mobile-nav-link">How it works</a>
+                        <a href="#" class="mobile-nav-link">Sign in</a>
+                    </div>
+                    
+                    <div class="mobile-cta">
+                        <a href="#" class="mobile-start-fundraiser">Start a fundraiser</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    
+    <script>
+        // Mobile Navigation Toggle
+        const navToggle = document.getElementById('navToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileClose = document.getElementById('mobileClose');
+        
+        // Open mobile menu
+        if (navToggle && mobileMenu) {
+            navToggle.addEventListener('click', function() {
+                mobileMenu.classList.add('active');
+                document.body.style.overflow = 'hidden'; // Prevent background scrolling
+            });
+        }
+
+        // Close mobile menu
+        if (mobileClose && mobileMenu) {
+            mobileClose.addEventListener('click', function() {
+                mobileMenu.classList.remove('active');
+                document.body.style.overflow = ''; // Restore scrolling
+            });
+        }
+
+        // Close mobile menu when clicking on a navigation link
+        const mobileNavLinks = document.querySelectorAll('.mobile-nav-link, .mobile-start-fundraiser');
+        mobileNavLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                mobileMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        });
+
+        // Close mobile menu when clicking outside (on overlay)
+        if (mobileMenu) {
+            mobileMenu.addEventListener('click', function(event) {
+                if (event.target === mobileMenu) {
+                    mobileMenu.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+        }
+
+        // Close mobile menu with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && mobileMenu.classList.contains('active')) {
+                mobileMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+
+        // Search functionality
+        const searchForms = document.querySelectorAll('.search-box');
+        
+        searchForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const searchInput = form.querySelector('.search-input');
+                if (!searchInput.value.trim()) {
+                    e.preventDefault();
+                    searchInput.focus();
+                    return false;
+                }
+                // Form will submit naturally to the action URL
+            });
+        });
+    </script>
+</body>
+</html>

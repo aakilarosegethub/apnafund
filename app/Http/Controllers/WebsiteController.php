@@ -14,6 +14,7 @@ use App\Constants\ManageStatus;
 use App\Models\GatewayCurrency;
 use App\Models\AdminNotification;
 use App\Models\Subscriber;
+use App\Models\User;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
@@ -38,7 +39,7 @@ class WebsiteController extends Controller
             
             // Get featured campaigns (approved and featured, regardless of date status)
             try {
-                $featuredCampaigns = Campaign::commonQuery()->approve()->featured()->latest()->limit(5)->get();
+                $featuredCampaigns = Campaign::commonQuery()->approve()->featured()->latest()->limit(6)->get();
             } catch (\Exception $e) {
                 \Log::error('Error fetching featured campaigns', ['error' => $e->getMessage()]);
                 $featuredCampaigns = collect(); // Empty collection if error
@@ -78,14 +79,6 @@ class WebsiteController extends Controller
         $successElements         = getSiteData('success_story.element', false, 3, true);
 
         return view('themes.primary.page.apnacrowdfunding-new', compact('pageTitle', 'coverContent', 'bannerElements', 'featuredCampaignContent', 'counterElements', 'campaignCategoryContent', 'campaignCategories', 'recentCampaignContent', 'recentCampaigns', 'featuredCampaigns', 'upcomingContent', 'upcomingCampaigns', 'subscribeContent', 'successContent', 'successElements'));
-    }
-
-    function volunteers() {
-        $pageTitle         = 'Volunteers';
-        $volunteerElements = SiteData::where('data_key', 'volunteer.element')->paginate(getPaginate());
-        $pageSEO           = getPageSEO('volunteer');
-
-        return view($this->activeTheme . 'page.volunteer', compact('pageTitle', 'volunteerElements', 'pageSEO'));
     }
 
     function aboutUs() {
@@ -180,7 +173,13 @@ class WebsiteController extends Controller
                                     ->get();
                                     
 
-        return view($this->activeTheme . 'page.campaignShow', compact('pageTitle', 'campaignData', 'relatedCampaigns', 'seoContents', 'authUser', 'comments', 'commentCount', 'countries', 'gatewayCurrencies', 'donations'));
+        // Load FAQs for the campaign
+        $faqs = \App\Models\CampaignFaq::where('campaign_id', $campaignData->id)
+            ->orderBy('order')
+            ->orderBy('id')
+            ->get();
+
+        return view($this->activeTheme . 'page.campaignShow', compact('pageTitle', 'campaignData', 'relatedCampaigns', 'seoContents', 'authUser', 'comments', 'commentCount', 'countries', 'gatewayCurrencies', 'donations', 'faqs'));
     }
 
     function campaignDonate($slug) {
@@ -843,6 +842,56 @@ class WebsiteController extends Controller
         return view($this->activeTheme . 'page.policy', compact('policy', 'pageTitle'));
     }
 
+    function dynamicPages($slug) {
+        // Find page by slug - check both slug field and slugified title
+        $allPages = SiteData::where('data_key', 'dynamic_pages.element')->get();
+        $page = null;
+        
+        foreach ($allPages as $p) {
+            if (isset($p->data_info['slug']) && $p->data_info['slug']) {
+                // Check if slug matches (both exact and slugified)
+                if ($p->data_info['slug'] == $slug || slug($p->data_info['slug']) == $slug) {
+                    $page = $p;
+                    break;
+                }
+            }
+            // Fallback: check if slugified title matches
+            if (isset($p->data_info['title']) && slug($p->data_info['title']) == $slug) {
+                $page = $p;
+                break;
+            }
+        }
+        
+        if (!$page) {
+            abort(404);
+        }
+        
+        // Access data_info as array (since it's cast as 'array' in model)
+        $pageTitle = 'Page';
+        if ($page->data_info && is_array($page->data_info) && isset($page->data_info['title'])) {
+            $pageTitle = $page->data_info['title'];
+        }
+
+        // Prepare SEO data
+        $seoContents = [];
+        if ($page->data_info && is_array($page->data_info)) {
+            $seoContents['social_title'] = $page->data_info['title'] ?? $pageTitle;
+            $seoContents['description'] = $page->data_info['meta_description'] ?? strLimit($page->data_info['details'] ?? '', 150);
+            $seoContents['social_description'] = $page->data_info['meta_description'] ?? strLimit($page->data_info['details'] ?? '', 150);
+            $seoContents['keywords'] = isset($page->data_info['meta_keywords']) && is_array($page->data_info['meta_keywords']) 
+                ? $page->data_info['meta_keywords'] 
+                : (isset($page->data_info['meta_keywords']) ? explode(',', $page->data_info['meta_keywords']) : []);
+            
+            // Image for SEO (using default logo since image field removed)
+            $seoContents['image'] = getImage(getFilePath('logoFavicon') . '/logo_dark.png');
+            $seoContents['image_size'] = '1200x630';
+        }
+
+        $pageSEO = getPageSEO('dynamic_pages');
+
+        return view($this->activeTheme . 'page.dynamic', compact('page', 'pageTitle', 'seoContents', 'pageSEO'));
+    }
+
     function reportFundraiser() {
         $pageTitle = 'Report a Fundraiser';
         $reportContent = SiteData::where('data_key', 'report_fundraiser.content')->first();
@@ -938,14 +987,72 @@ class WebsiteController extends Controller
 
     public function help()
     {
-        // Redirect to external support URL
-        return redirect('https://apnacrowdfunding.com/support/');
+        $pageTitle = 'Help Center';
+        
+        // Try to fetch data from the live API
+        try {
+            $response = Http::timeout(10)->get('https://apnacrowdfunding.com/support/wp-json/zia-api/v1/categories-with-posts');
+            
+            if ($response->successful()) {
+                $helpData = $response->json();
+                $lastUpdated = now();
+            } else {
+                // Fallback to hardcoded data if API fails
+                $helpData = $this->getFallbackHelpData();
+                $lastUpdated = now();
+            }
+        } catch (\Exception $e) {
+            // Fallback to hardcoded data if API fails
+            $helpData = $this->getFallbackHelpData();
+            $lastUpdated = now();
+        }
+        
+        return view($this->activeTheme . 'page.help', compact('pageTitle', 'helpData', 'lastUpdated'));
     }
 
     public function sitemap()
     {
         $pageTitle = 'Sitemap';
         return view($this->activeTheme . 'page.sitemap', compact('pageTitle'));
+    }
+
+    public function editor()
+    {
+        $pageTitle = 'Editor';
+        
+        return view($this->activeTheme . 'page.editor', compact('pageTitle'));
+    }
+
+    public function creatorProfile($username)
+    {
+        $pageTitle = 'Creator Profile';
+        
+        $user = User::where('username', $username)
+            ->orWhere('creator_slug', $username)
+            ->firstOrFail();
+        
+        // Get user's campaigns with relationships
+        $campaigns = Campaign::with(['user', 'category'])
+            ->where('user_id', $user->id)
+            ->approve()
+            ->latest()
+            ->paginate(12);
+        
+        // Get user stats
+        $totalCampaigns = Campaign::where('user_id', $user->id)->approve()->count();
+        $totalRaised = Deposit::whereHas('campaign', function($q) use ($user) {
+            $q->where('user_id', $user->id);
+        })->done()->sum('amount');
+        
+        // Get setting for currency symbol
+        $setting = bs();
+        
+        $seoContents['keywords'] = [];
+        $seoContents['social_title'] = $user->fullname . ' - Creator Profile';
+        $seoContents['description'] = $user->business_description ?? 'View ' . $user->fullname . '\'s profile and campaigns';
+        $seoContents['social_description'] = $seoContents['description'];
+        
+        return view($this->activeTheme . 'page.creatorProfile', compact('pageTitle', 'user', 'campaigns', 'totalCampaigns', 'totalRaised', 'seoContents', 'setting'));
     }
 
     private function getFallbackHelpData()

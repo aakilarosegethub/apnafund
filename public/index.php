@@ -18,8 +18,22 @@ $app = require_once __DIR__.'/../bootstrap/app.php';
 
 $kernel = $app->make(Kernel::class);
 
-$response = $kernel->handle(
-    $request = Request::capture()
-)->send();
+$request = Request::capture();
+
+// Strip /apnafund prefix from URI if present
+$requestUri = $request->server->get('REQUEST_URI', '');
+if (strpos($requestUri, '/apnafund') === 0) {
+    $newUri = preg_replace('#^/apnafund#', '', $requestUri);
+    $request->server->set('REQUEST_URI', $newUri);
+    // Also update PATH_INFO if it exists
+    if ($request->server->has('PATH_INFO')) {
+        $pathInfo = $request->server->get('PATH_INFO', '');
+        if (strpos($pathInfo, '/apnafund') === 0) {
+            $request->server->set('PATH_INFO', preg_replace('#^/apnafund#', '', $pathInfo));
+        }
+    }
+}
+
+$response = $kernel->handle($request)->send();
 
 $kernel->terminate($request, $response);

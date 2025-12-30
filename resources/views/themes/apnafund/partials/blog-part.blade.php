@@ -26,7 +26,7 @@
 
     <div class="row mt-4">
         <div class="col-12 text-center">
-            <a href="{{ route('stories') }}" class="btn-theme">@lang('View All Success Stories')</a>
+            <a href="{{ route('campaign') }}" class="btn-theme">@lang('View All Campaigns')</a>
         </div>
     </div>
 </div>

@@ -16,7 +16,6 @@
                         <li><a href="{{ url('about') }}">About</a></li>
                         <li><a href="{{ url('contact') }}">Contact</a></li>
                         <li><a href="http://apnacrowdfunding.com/blog">Blog</a></li>
-                        <li><a href="{{ url('faq') }}">FAQ</a></li>
                         
                     </ul>
                 </div>

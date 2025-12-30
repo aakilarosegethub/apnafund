@@ -3,14 +3,52 @@
 namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Auth\AuthenticationException;
 use Throwable;
 
 class Handler extends ExceptionHandler
 {
     // app/Exceptions/Handler.php
 
+    /**
+     * Handle unauthenticated user exceptions
+     */
+    protected function unauthenticated($request, AuthenticationException $exception)
+    {
+        // For API routes, always return JSON error
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json([
+                "ResponseCode" => "401",
+                "Result" => "false",
+                "ResponseMsg" => "Unauthenticated! Please provide a valid token."
+            ], 401);
+        }
+
+        // For web routes, try to redirect to login if route exists
+        try {
+            if (\Route::has('user.login')) {
+                return redirect()->guest(route('user.login'));
+            }
+        } catch (\Exception $e) {
+            // Route doesn't exist, just redirect to home
+        }
+        
+        return redirect('/');
+    }
+
     public function render($request, Throwable $exception)
     {
+        // Handle unauthenticated exceptions for API requests (backup)
+        if ($exception instanceof AuthenticationException) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json([
+                    "ResponseCode" => "401",
+                    "Result" => "false",
+                    "ResponseMsg" => "Unauthenticated! Please provide a valid token."
+                ], 401);
+            }
+        }
+
         if ($this->isHttpException($exception)) {
             if ($exception->getStatusCode() == 404) {
                 return redirect('/'); // Home page par redirect

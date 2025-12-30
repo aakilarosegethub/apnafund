@@ -423,6 +423,7 @@
             <a href="{{ route('user.campaign.edit.people', $campaign->slug) }}" class="{{ ($section ?? 'basics') == 'people' ? 'active' : '' }}">People</a>
             <a href="{{ route('user.campaign.edit.payment', $campaign->slug) }}" class="{{ ($section ?? 'basics') == 'payment' ? 'active' : '' }}">Payment</a>
             <a href="{{ route('user.campaign.edit.boost', $campaign->slug) }}" class="{{ ($section ?? 'basics') == 'boost' ? 'active' : '' }}">Boost</a>
+            <a href="{{ route('user.campaign.edit.faq', $campaign->slug) }}" class="{{ ($section ?? 'basics') == 'faq' ? 'active' : '' }}">FAQ</a>
         </div>
         <div id="topActionButtons" style="display: none; gap: 10px; align-items: center;">
             <button type="button" id="topExitBtn" class="next-btn" style="margin: 0; padding: 8px 20px; font-size: 14px; background: #666;">Exit</button>
@@ -972,8 +973,8 @@
             
             <div class="box">
                 <label>Project Story *</label>
-                <!-- Froala Editor -->
-                <textarea name="description" id="storyEditor" required>{{ old('description', $campaign->description ?? '') }}</textarea>
+                <!-- Summernote Editor -->
+                <textarea id="summernote" name="description" required>{{ old('description', $campaign->description ?? '') }}</textarea>
                 
                 <p class="note">Share the story behind your project and why it matters.</p>
                 @error('description')
@@ -1009,6 +1010,214 @@
             <div class="box">
                 <p>Boost section content will be here. Promote your campaign to reach more backers.</p>
             </div>
+            @endif
+
+            @if($currentSection == 'faq')
+            @php
+                $faqs = $faqs ?? $campaign->faqs()->orderBy('order')->orderBy('id')->get();
+            @endphp
+            
+            <h1>Frequently Asked Questions</h1>
+            <p class="subtitle">Add FAQs to help backers understand your campaign better.</p>
+            
+            <!-- FAQ List -->
+            <div id="faqList" style="margin-bottom: 30px;">
+                @forelse($faqs as $faq)
+                <div class="box faq-item" data-faq-id="{{ $faq->id }}" style="margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                        <div style="flex: 1;">
+                            <h3 style="margin: 0 0 8px; font-size: 18px; font-weight: 600;">{{ $faq->question }}</h3>
+                            <p style="margin: 0; color: #666; font-size: 15px; line-height: 1.6;">{{ $faq->answer }}</p>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-left: 20px;">
+                            <button type="button" onclick="editFaq({{ $faq->id }})" style="padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; background: #007bff; color: white;">Edit</button>
+                            <button type="button" onclick="deleteFaq({{ $faq->id }})" style="padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; background: #dc3545; color: white;">Delete</button>
+                        </div>
+                    </div>
+                </div>
+                @empty
+                <div class="box" style="text-align: center; padding: 40px; color: #888;">
+                    <p>No FAQs added yet. Click "Add FAQ" to create your first FAQ.</p>
+                </div>
+                @endforelse
+            </div>
+
+            <!-- Add/Edit FAQ Form -->
+            <div class="box" id="faqForm" style="display: none;">
+                <h2 id="faqFormTitle" style="margin-top: 0; font-size: 22px; margin-bottom: 20px;">Add FAQ</h2>
+                
+                <form id="faqFormElement">
+                    @csrf
+                    <input type="hidden" id="faqId" name="faq_id">
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label>Question *</label>
+                        <input type="text" id="faqQuestion" name="question" placeholder="Enter your question..." required style="width: 100%; padding: 12px; font-size: 15px; border: 1px solid #d9d9d9; border-radius: 8px;">
+                        <p class="note">Write a clear and concise question.</p>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <label>Answer *</label>
+                        <textarea id="faqAnswer" name="answer" placeholder="Enter the answer..." required style="width: 100%; padding: 12px; font-size: 15px; border: 1px solid #d9d9d9; border-radius: 8px; min-height: 120px; resize: vertical;"></textarea>
+                        <p class="note">Provide a detailed answer to help backers understand.</p>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <label>Order (optional)</label>
+                        <input type="number" id="faqOrder" name="order" value="0" min="0" placeholder="0" style="width: 100%; padding: 12px; font-size: 15px; border: 1px solid #d9d9d9; border-radius: 8px;">
+                        <p class="note">Lower numbers appear first. Leave as 0 for default order.</p>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-top: 25px;">
+                        <button type="submit" id="faqSaveBtn" style="padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; font-size: 15px; background: #028858; color: white;">Save FAQ</button>
+                        <button type="button" onclick="cancelFaqForm()" style="padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; font-size: 15px; background: #666; color: white;">Cancel</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Add FAQ Button -->
+            <button type="button" id="addFaqBtn" onclick="showFaqForm()" style="padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; font-size: 15px; background: #028858; color: white; margin-top: 20px;">+ Add FAQ</button>
+
+            <script>
+                function showFaqForm() {
+                    document.getElementById('faqForm').style.display = 'block';
+                    document.getElementById('addFaqBtn').style.display = 'none';
+                    document.getElementById('faqFormTitle').textContent = 'Add FAQ';
+                    document.getElementById('faqFormElement').reset();
+                    document.getElementById('faqId').value = '';
+                    document.getElementById('faqOrder').value = '0';
+                    
+                    // Scroll to form
+                    document.getElementById('faqForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    
+                    if (typeof window.showActionButtons === 'function') {
+                        window.showActionButtons();
+                    }
+                }
+
+                function cancelFaqForm() {
+                    document.getElementById('faqForm').style.display = 'none';
+                    document.getElementById('addFaqBtn').style.display = 'block';
+                    document.getElementById('faqFormElement').reset();
+                    document.getElementById('faqId').value = '';
+                }
+
+                function editFaq(id) {
+                    fetch("{{ route('user.campaign.faq.get', [$campaign->slug, ':id']) }}".replace(':id', id), {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const faq = data.faq;
+                            document.getElementById('faqQuestion').value = faq.question || '';
+                            document.getElementById('faqAnswer').value = faq.answer || '';
+                            document.getElementById('faqOrder').value = faq.order || '0';
+                            document.getElementById('faqId').value = faq.id;
+                            document.getElementById('faqFormTitle').textContent = 'Edit FAQ';
+                            document.getElementById('faqForm').style.display = 'block';
+                            document.getElementById('addFaqBtn').style.display = 'none';
+                            
+                            // Scroll to form
+                            document.getElementById('faqForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            
+                            if (typeof window.showActionButtons === 'function') {
+                                window.showActionButtons();
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Failed to load FAQ data');
+                    });
+                }
+
+                function deleteFaq(id) {
+                    if (!confirm('Are you sure you want to delete this FAQ?')) {
+                        return;
+                    }
+                    
+                    fetch("{{ route('user.campaign.faq.delete', [$campaign->slug, ':id']) }}".replace(':id', id), {
+                        method: 'DELETE',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || document.querySelector('input[name="_token"]').value
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert(data.message || 'Failed to delete FAQ');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred. Please try again.');
+                    });
+                }
+
+                // FAQ Form Submission
+                document.getElementById('faqFormElement').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const formData = new FormData(this);
+                    const faqId = document.getElementById('faqId').value;
+                    const saveBtn = document.getElementById('faqSaveBtn');
+                    const originalText = saveBtn.textContent;
+                    
+                    saveBtn.disabled = true;
+                    saveBtn.textContent = "Saving...";
+                    
+                    let url;
+                    if (faqId) {
+                        url = "{{ route('user.campaign.faq.update', [$campaign->slug, ':id']) }}".replace(':id', faqId);
+                    } else {
+                        url = "{{ route('user.campaign.faq.store', $campaign->slug) }}";
+                    }
+                    
+                    fetch(url, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert(data.message || 'An error occurred');
+                            saveBtn.disabled = false;
+                            saveBtn.textContent = originalText;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred. Please try again.');
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = originalText;
+                    });
+                });
+
+                // Track form changes
+                const faqForm = document.getElementById('faqFormElement');
+                if (faqForm) {
+                    const formFields = faqForm.querySelectorAll('input, textarea');
+                    formFields.forEach(field => {
+                        field.addEventListener('input', function() {
+                            if (typeof window.showActionButtons === 'function') {
+                                window.showActionButtons();
+                            }
+                        });
+                    });
+                }
+            </script>
             @endif
 
         </div>
@@ -1051,6 +1260,11 @@
                         const storyForm = document.getElementById("storyForm");
                         if (storyForm) {
                             storyForm.submit();
+                        }
+                    } else if (currentSection === 'faq') {
+                        const faqForm = document.getElementById("faqFormElement");
+                        if (faqForm && document.getElementById("faqForm").style.display !== 'none') {
+                            faqForm.dispatchEvent(new Event('submit'));
                         }
                     }
                 });
@@ -1170,198 +1384,68 @@
         @endif
 
         @if($currentSection == 'story')
-        // Story form handling with Quill Editor
+        // Story form handling with Summernote Editor
         (function() {
-            // Hidden file input for custom image handler
-            const imageInput = document.createElement('input');
-            imageInput.type = 'file';
-            imageInput.accept = 'image/*';
-            imageInput.style.display = 'none';
-            imageInput.id = 'storyImageInput';
-            document.body.appendChild(imageInput);
-
-            // Custom image handler
-            function customImageHandler() {
-                imageInput.click();
-                imageInput.onchange = function() {
-                    const file = imageInput.files[0];
-                    if (!file) return;
-                    
-                    // Validate file type
-                    if (!file.type.match('image.*')) {
-                        alert('Please select an image file');
-                        return;
-                    }
-                    
-                    // Validate file size (5MB max)
-                    if (file.size > 5 * 1024 * 1024) {
-                        alert('Image size must be less than 5MB');
-                        return;
-                    }
-                    
-                    // Create FormData for file upload
-                    const formData = new FormData();
-                    formData.append('files', file);
-                    formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
-
-                    // Upload file to server
-                    const xhr = new XMLHttpRequest();
-                    xhr.open('POST', '{{ route("user.campaign.upload-image") }}');
-                    
-                    xhr.onload = function() {
-                        if (xhr.status === 200) {
-                            try {
-                                const response = JSON.parse(xhr.responseText);
-                                if (response.location && window.storyQuill) {
-                                    const range = window.storyQuill.getSelection();
-                                    if (range) {
-                                        window.storyQuill.insertEmbed(range.index, 'image', response.location);
-                                        window.storyQuill.setSelection(range.index + 1, 0);
-                                    } else {
-                                        const length = window.storyQuill.getLength();
-                                        window.storyQuill.insertEmbed(length - 1, 'image', response.location);
-                                        window.storyQuill.setSelection(length, 0);
-                                    }
-                                } else {
-                                    alert('Upload failed: ' + (response.message || 'Invalid response'));
-                                }
-                            } catch (e) {
-                                console.error('JSON parse error:', e);
-                                alert('Upload failed: Invalid JSON response');
-                            }
-                        } else {
-                            alert('Upload failed: Server error ' + xhr.status);
-                        }
-                    };
-                    
-                    xhr.onerror = function() {
-                        alert('Upload failed: Network error');
-                    };
-                    
-                    xhr.send(formData);
-                };
-            }
-
-            // Custom video handler
-            function customVideoHandler() {
-                const url = prompt('Paste video URL (YouTube, Vimeo, MP4, etc.)');
-                if (!url) return;
-                
-                // Convert YouTube URL to embeddable format
-                let embedUrl = url;
-                if (url.includes('youtube.com/watch?v=')) {
-                    const videoId = url.split('v=')[1].split('&')[0];
-                    embedUrl = `https://www.youtube.com/embed/${videoId}`;
-                } else if (url.includes('youtu.be/')) {
-                    const videoId = url.split('youtu.be/')[1].split('?')[0];
-                    embedUrl = `https://www.youtube.com/embed/${videoId}`;
-                }
-                
-                if (window.storyQuill) {
-                    const range = window.storyQuill.getSelection(true);
-                    if (range) {
-                        if (embedUrl.includes('youtube.com/embed/')) {
-                            const iframe = document.createElement('iframe');
-                            iframe.src = embedUrl;
-                            iframe.width = '560';
-                            iframe.height = '315';
-                            iframe.frameBorder = '0';
-                            iframe.allowFullscreen = true;
-                            iframe.style.border = 'none';
-                            iframe.style.borderRadius = '8px';
-                            iframe.style.margin = '10px 0';
-                            window.storyQuill.clipboard.dangerouslyPasteHTML(range.index, iframe.outerHTML);
-                            window.storyQuill.setSelection(range.index + 1, 0);
-                        } else {
-                            window.storyQuill.insertEmbed(range.index, 'video', url, 'user');
-                            window.storyQuill.setSelection(range.index + 1, 0);
-                        }
-                    }
-                }
-            }
-
-            // Initialize Quill Editor
-            function initializeStoryQuill() {
-                const editorElement = document.getElementById('storyEditor');
-                if (!editorElement) {
-                    console.error('Story editor element not found');
-                    return false;
-                }
-                
-                if (typeof Quill === 'undefined') {
-                    console.error('Quill library not loaded');
+            // Initialize Summernote Editor
+            function initializeSummernote() {
+                if (typeof jQuery === 'undefined' || typeof jQuery.fn.summernote === 'undefined') {
+                    console.error('Summernote library not loaded');
+                    setTimeout(initializeSummernote, 100);
                     return false;
                 }
                 
                 try {
-                    window.storyQuill = new Quill('#storyEditor', {
-                        theme: 'snow',
-                        placeholder: 'Tell your story...',
-                        modules: {
-                            toolbar: {
-                                container: '#storyToolbar',
-                                handlers: {
-                                    image: customImageHandler,
-                                    video: customVideoHandler
+                    jQuery('#summernote').summernote({
+                        toolbar: [
+                            // [groupName, [list of button]]
+                            ['style', ['bold', 'italic', 'underline', 'clear']],
+                            ['font', ['strikethrough', 'superscript', 'subscript']],
+                            ['fontsize', ['fontsize']],
+                            ['color', ['color']],
+                            ['para', ['ul', 'ol', 'paragraph']],
+                            ['height', ['height']]
+                        ],
+                        height: 500,
+                        callbacks: {
+                            onChange: function(contents, $editable) {
+                                // Show action buttons when content changes
+                                if (typeof window.showActionButtons === 'function') {
+                                    window.showActionButtons();
                                 }
                             }
                         }
                     });
                     
-                    // Load existing content
-                    const existingContent = document.getElementById('storyDescription').value || '';
-                    if (existingContent) {
-                        window.storyQuill.root.innerHTML = existingContent;
-                        window.storyQuill.update();
-                    }
-                    
-                    // Track initial content for change detection
-                    const initialContent = window.storyQuill.root.innerHTML;
-                    
-                    // Monitor changes
-                    window.storyQuill.on('text-change', function() {
-                        const currentContent = window.storyQuill.root.innerHTML;
-                        if (currentContent !== initialContent) {
-                            if (typeof window.showActionButtons === 'function') {
-                                window.showActionButtons();
-                            }
-                        }
-                    });
-                    
-                    console.log('Story Quill editor initialized successfully');
+                    console.log('Summernote Editor initialized successfully');
                     return true;
                 } catch (error) {
-                    console.error('Error initializing Story Quill editor:', error);
+                    console.error('Error initializing Summernote Editor:', error);
                     return false;
                 }
             }
 
-            // Wait for Quill library to load
-            function waitForQuillAndInitialize() {
-                if (typeof Quill !== 'undefined' && document.getElementById('storyEditor')) {
-                    initializeStoryQuill();
+            // Wait for jQuery and Summernote library to load
+            function waitForSummernoteAndInitialize() {
+                if (typeof jQuery !== 'undefined' && typeof jQuery.fn.summernote !== 'undefined') {
+                    initializeSummernote();
                 } else {
-                    setTimeout(waitForQuillAndInitialize, 100);
+                    setTimeout(waitForSummernoteAndInitialize, 100);
                 }
             }
 
             // Start initialization
             if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', waitForQuillAndInitialize);
+                document.addEventListener('DOMContentLoaded', waitForSummernoteAndInitialize);
             } else {
-                waitForQuillAndInitialize();
+                waitForSummernoteAndInitialize();
             }
 
             // Story form handling
             const storyForm = document.getElementById("storyForm");
             if (storyForm) {
-                // Form submission - copy Quill content to textarea
+                // Form submission - Summernote automatically syncs content to textarea
                 storyForm.addEventListener("submit", function(e) {
-                    if (window.storyQuill) {
-                        const editorContent = window.storyQuill.root.innerHTML;
-                        document.getElementById('storyDescription').value = editorContent;
-                    }
-                    
+                    // Summernote automatically updates the textarea value
                     const topSaveBtn = document.getElementById("topSaveBtn");
                     if (topSaveBtn) {
                         topSaveBtn.disabled = true;
@@ -1370,14 +1454,12 @@
                 });
             }
 
-            // Update top save button to handle Quill content
+            // Update top save button to handle Summernote content
             const topSaveBtn = document.getElementById("topSaveBtn");
             if (topSaveBtn) {
-                const originalClick = topSaveBtn.onclick;
                 topSaveBtn.addEventListener('click', function() {
-                    if (window.storyQuill && storyForm) {
-                        const editorContent = window.storyQuill.root.innerHTML;
-                        document.getElementById('storyDescription').value = editorContent;
+                    if (storyForm) {
+                        // Summernote automatically syncs content to textarea on form submit
                         storyForm.submit();
                     }
                 });
@@ -1410,22 +1492,28 @@
 
 @endsection
 
-@include($activeTheme . 'user.campaign.commonStyleScript')
-
 @push('page-style-lib')
+    <link rel="stylesheet" href="{{ asset($activeThemeTrue . 'css/dropzone.min.css') }}">
     @if($currentSection == 'story')
-    <!-- Froala Editor CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/froala-editor@latest/css/froala_editor.pkgd.min.css" rel="stylesheet" type="text/css" />
-    <link href="https://cdn.jsdelivr.net/npm/froala-editor@latest/css/froala_style.min.css" rel="stylesheet" type="text/css" />
+    <!-- include libraries(jQuery, bootstrap) -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" rel="stylesheet">
+    <!-- include summernote css/js -->
+    <link href="https://cdn.jsdelivr.net/npm/summernote@0.9.0/dist/summernote.min.css" rel="stylesheet">
     @endif
 @endpush
 
 @push('page-script-lib')
+    <script src="{{ asset($activeThemeTrue . 'js/dropzone.min.js') }}"></script>
     @if($currentSection == 'story')
-    <!-- Froala Editor JS -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/froala-editor@latest/js/froala_editor.pkgd.min.js"></script>
+    <!-- include libraries(jQuery, bootstrap) -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <!-- include summernote css/js -->
+    <script src="https://cdn.jsdelivr.net/npm/summernote@0.9.0/dist/summernote.min.js"></script>
     @endif
 @endpush
+
+@include($activeTheme . 'user.campaign.commonStyleScript')
 
 
 

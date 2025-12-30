@@ -169,16 +169,6 @@
                     </div>
                     <div class="col-md-3 mb-3">
                         <div class="sitemap-card">
-                            <a href="{{ route('volunteers') }}">VOLUNTEERS</a>
-                        </div>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <div class="sitemap-card">
-                            <a href="{{ route('stories') }}">SUCCESS STORIES</a>
-                        </div>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <div class="sitemap-card">
                             <a href="{{ route('upcoming') }}">UPCOMING CAMPAIGNS</a>
                         </div>
                     </div>

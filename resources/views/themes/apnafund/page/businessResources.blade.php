@@ -55,6 +55,7 @@
             <div class="row">
                 @forelse($categories as $category)
                     <div class="col-md-3 mb-4">
+                        <a href="{{ route('campaign') }}?category={{ $category->slug }}" class="category-card-link">
                         <div class="category-card">
                             <div class="category-icon" style="background-color: {{ $category->color ?? '#05ce78' }}20; color: {{ $category->color ?? '#05ce78' }};">
                                 <i class="{{ $category->icon ?? 'fas fa-folder' }}"></i>
@@ -62,6 +63,7 @@
                             <h3 class="category-name">{{ $category->name }}</h3>
                             <p class="category-description">{{ $category->description ?? 'Explore campaigns in this category' }}</p>
                         </div>
+                        </a>
                     </div>
                 @empty
                     <!-- Fallback categories if none exist -->
@@ -159,7 +161,7 @@
             <div class="col-md-8 offset-md-2 text-center">
                 <h2>@lang('A new platform for every stage of your crowdfunding journey')</h2>
                 <p>@lang('From concept to fulfillment, we provide the tools and resources you need to succeed')</p>
-                <a href="{{ route('stories') }}" class="btn-theme mt-3">@lang('Discover all resources')</a>
+                <a href="{{ route('campaign') }}" class="btn-theme mt-3">@lang('Discover all resources')</a>
             </div>
         </div>
 
@@ -179,7 +181,7 @@
                             <div class="campaign-card-body">
                                 <h3 class="campaign-card-title">{{ $story->data_info['title'] }}</h3>
                                 <p class="campaign-card-text">{{ strLimit($story->data_info['details'], 80) }}</p>
-                                <a href="{{ route('stories.show', $story->id) }}" class="campaign-card-link">@lang('Read more') <i class="fas fa-arrow-right"></i></a>
+                                <a href="{{ route('campaign') }}" class="campaign-card-link">@lang('Read more') <i class="fas fa-arrow-right"></i></a>
                             </div>
                         </div>
                     </div>
@@ -191,7 +193,7 @@
                         <div class="campaign-card-body">
                             <h3 class="campaign-card-title">@lang('Creator Interviews')</h3>
                             <p class="campaign-card-text">@lang('Insights from successful entrepreneurs')</p>
-                            <a href="{{ route('stories') }}" class="campaign-card-link">@lang('Read more') <i class="fas fa-arrow-right"></i></a>
+                            <a href="{{ route('campaign') }}" class="campaign-card-link">@lang('Read more') <i class="fas fa-arrow-right"></i></a>
                         </div>
                     </div>
                 </div>
@@ -333,6 +335,17 @@
             text-align: center;
         }
 
+        .category-card-link {
+            text-decoration: none;
+            display: block;
+            color: inherit;
+        }
+
+        .category-card-link:hover {
+            text-decoration: none;
+            color: inherit;
+        }
+
         .category-card {
             text-align: center;
             padding: 25px 15px;
@@ -340,9 +353,10 @@
             background: #f9f9f9;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             height: 100%;
+            cursor: pointer;
         }
 
-        .category-card:hover {
+        .category-card-link:hover .category-card {
             transform: translateY(-5px);
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
         }

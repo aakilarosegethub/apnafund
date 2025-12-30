@@ -147,11 +147,13 @@
         }
 
         .banner-title {
-            font-size: 2rem;
+            font-size: 2.25rem;
             font-weight: 700;
-            margin: 0 0 13px 0;
-            color: #333;
+            margin: 0 0 24px 0;
+            color: #2c2c2c;
             text-align: left;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
         }
 
         /* Organizer Section */
@@ -196,6 +198,23 @@
             color: #666;
             font-size: 0.9rem;
             line-height: 1.4;
+        }
+
+        .organizer-info a {
+            transition: opacity 0.3s ease;
+        }
+
+        .organizer-info a:hover {
+            opacity: 0.8;
+        }
+
+        .organizer-info a:hover .organizer-avatar {
+            transform: scale(1.05);
+            transition: transform 0.3s ease;
+        }
+
+        .organizer-info a:hover h4 {
+            color: #007bff;
         }
 
         .donation-protected {
@@ -547,6 +566,80 @@
             margin-top: 30px;
             padding-top: 20px;
             border-top: 1px solid #f0f0f0;
+        }
+
+        /* Campaign Tabs */
+        .campaign-tabs {
+            background: #fff;
+            border-bottom: 1px solid #e5e7eb;
+            margin: 30px 0 0 0;
+            width: 100%;
+        }
+
+        .tabs-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .tabs-left {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            flex: 1;
+            overflow-x: visible;
+        }
+
+        .tab-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 12px 16px;
+            color: #666;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        .tab-link:hover {
+            color: #333;
+        }
+
+        .tab-link.active {
+            color: #000;
+            border-bottom-color: #000;
+            font-weight: 600;
+        }
+
+        .tab-badge {
+            background: #05ce78;
+            color: #fff;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 600;
+            margin-left: 4px;
+            line-height: 1.2;
+        }
+
+        .tab-link.active .tab-badge {
+            background: #000;
+        }
+
+        .title-section {
+            margin-bottom: 32px;
+        }
+
+        /* Tab Content Sections */
+        .tab-content-section {
+            display: block;
         }
 
         /* Rewards Section */
@@ -1595,6 +1688,32 @@
 
         /* Responsive Design */
         @media (max-width: 768px) {
+            .campaign-tabs {
+                margin: 20px 0 0 0;
+            }
+
+            .tabs-nav {
+                padding: 0 16px;
+                flex-wrap: wrap;
+            }
+
+            .tabs-left {
+                width: 100%;
+                order: 1;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .tab-link {
+                padding: 10px 12px;
+                font-size: 0.85rem;
+            }
+
+            .tab-badge {
+                font-size: 0.65rem;
+                padding: 1px 5px;
+            }
+
             .fundraiser-container {
                 flex-direction: column;
             }
@@ -1604,7 +1723,7 @@
             }
 
             .banner-title {
-                font-size: 2rem;
+                font-size: 1.75rem;
             }
 
             .fundraiser-actions {
@@ -1995,23 +2114,45 @@
             border-radius: 8px;
             color: #fff;
             font-weight: 600;
-            z-index: 9999;
-            max-width: 300px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 99999;
+            max-width: 400px;
+            min-width: 300px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
             transform: translateX(100%);
             transition: transform 0.3s ease;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            line-height: 1.5;
         }
 
         .toast-notification.success {
             background-color: #05ce78;
+            border-left: 4px solid #04b868;
         }
 
         .toast-notification.error {
             background-color: #dc3545;
+            border-left: 4px solid #c82333;
         }
 
         .toast-notification.info {
             background-color: #333;
+            border-left: 4px solid #222;
+        }
+        
+        .toast-notification i {
+            font-size: 18px;
+            margin-right: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .toast-notification {
+                right: 10px;
+                left: 10px;
+                max-width: calc(100% - 20px);
+                min-width: auto;
+            }
         }
 
         /* Load More Button */
@@ -2259,17 +2400,19 @@
             <!-- Organizer Section -->
             <div class="organizer-section">
                 <div class="organizer-info">
-                    <div class="organizer-avatar">
-                        @if($campaignData->user->image)
-                            <img src="{{ getImage(getFilePath('userProfile') . '/' . $campaignData->user->image) }}" alt="{{ $campaignData->user->fullname }}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
-                        @else
-                            {{ strtoupper(substr($campaignData->user->fullname, 0, 2)) }}
-                        @endif
-                    </div>
-                    <div class="organizer-details">
-                        <h4>{{ $campaignData->user->fullname }}</h4>
-                        <p>is organizing this fundraiser</p>
-                    </div>
+                    <a href="{{ route('creator.profile', $campaignData->user->username ?? $campaignData->user->id) }}" style="text-decoration: none; display: flex; align-items: center; gap: 12px;">
+                        <div class="organizer-avatar">
+                            @if($campaignData->user->image)
+                                <img src="{{ getImage(getFilePath('userProfile') . '/' . $campaignData->user->image) }}" alt="{{ $campaignData->user->fullname }}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                            @else
+                                {{ strtoupper(substr($campaignData->user->fullname, 0, 2)) }}
+                            @endif
+                        </div>
+                        <div class="organizer-details">
+                            <h4 style="margin: 0; color: inherit;">{{ $campaignData->user->fullname }}</h4>
+                            <p style="margin: 0;">is organizing this fundraiser</p>
+                        </div>
+                    </a>
                 </div>
                 <div class="donation-protected">
                     <i class="fas fa-shield-alt"></i>
@@ -2277,43 +2420,85 @@
                 </div>
             </div>
 
-            <!-- Description -->
-            <div class="fundraiser-description">
-                <h2 class="donation-details__title" data-aos="fade-up" data-aos-duration="1500">{{ __(@$campaignData->name) }}</h2>
+            <!-- Title Section -->
+            <div class="title-section">
+                <h1 class="banner-title">{{ __(@$campaignData->name) }}</h1>
+            </div>
+
+            <!-- Navigation Tabs -->
+            @php
+                $activeTab = request()->get('tab', 'campaign');
+            @endphp
+            <div class="campaign-tabs">
+                <nav class="tabs-nav">
+                    <div class="tabs-left">
+                        <a href="{{ route('campaign.show', $campaignData->slug) }}?tab=campaign" class="tab-link {{ $activeTab == 'campaign' ? 'active' : '' }}">Campaign</a>
+                        <a href="{{ route('campaign.show', $campaignData->slug) }}?tab=rewards" class="tab-link {{ $activeTab == 'rewards' ? 'active' : '' }}">Rewards</a>
+                        <a href="{{ route('campaign.show', $campaignData->slug) }}?tab=creator" class="tab-link {{ $activeTab == 'creator' ? 'active' : '' }}">Creator</a>
+                        <a href="{{ route('campaign.show', $campaignData->slug) }}?tab=faq" class="tab-link {{ $activeTab == 'faq' ? 'active' : '' }}">FAQ</a>
+                        <a href="{{ route('campaign.show', $campaignData->slug) }}?tab=updates" class="tab-link {{ $activeTab == 'updates' ? 'active' : '' }}">Updates</a>
+                        <a href="{{ route('campaign.show', $campaignData->slug) }}?tab=comments" class="tab-link {{ $activeTab == 'comments' ? 'active' : '' }}">
+                            Comments 
+                            @if($comments->count() > 0)
+                                <span class="tab-badge">{{ $comments->count() }}</span>
+                            @endif
+                        </a>
+                        <a href="{{ route('campaign.show', $campaignData->slug) }}?tab=community" class="tab-link {{ $activeTab == 'community' ? 'active' : '' }}">Community</a>
+                    </div>
+                </nav>
+            </div>
+
+            <!-- Campaign Tab Content (Description) -->
+            @if($activeTab == 'campaign' || !request()->has('tab'))
+            <div class="fundraiser-description tab-content-section" id="campaign-section">
             <div class="donation-details__desc" data-aos="fade-up" data-aos-duration="1500">
                 @php echo @$campaignData->description @endphp
             </div>
+                <a href="#" class="read-more">Read more</a>
             </div>
 
+            <!-- Engagement -->
+            <div class="engagement-section">
+                <div class="engagement-item">
+                    <i class="fas fa-heart"></i>
+                    <span>1</span>
+                </div>
+            </div>
 
             <!-- Actions -->
             <div class="fundraiser-actions">
                 <a href="{{ url('campaign/' . @$campaignData->slug . '/contribute') }}" class="btn-donate">Contribute</a>
                 <a href="#" class="btn-share" onclick="openShareModal()">Share</a>
             </div>
+            @endif
 
-            <!-- Organizer Details -->
-            <div class="organizer-section">
+            <!-- Organizer Details (Show in campaign and creator tabs) -->
+            @if($activeTab == 'campaign' || $activeTab == 'creator' || !request()->has('tab'))
+            <div class="organizer-section tab-content-section" id="creator-section">
                 <h3>Organizer</h3>
                 <div class="organizer-info">
-                    <div class="organizer-avatar">
-                        @if($campaignData->user->image)
-                            <img src="{{ getImage(getFilePath('userProfile') . '/' . $campaignData->user->image) }}" alt="{{ $campaignData->user->fullname }}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
-                        @else
-                            {{ strtoupper(substr($campaignData->user->fullname, 0, 2)) }}
-                        @endif
-                    </div>
-                    <div class="organizer-details">
-                        <h4>{{ $campaignData->user->fullname }}</h4>
-                        <p>Organizer</p>
-                        <p>{{ $campaignData->user->country_name ?? 'Location not specified' }}</p>
-                    </div>
+                    <a href="{{ route('creator.profile', $campaignData->user->username ?? $campaignData->user->id) }}" style="text-decoration: none; display: flex; align-items: center; gap: 12px;">
+                        <div class="organizer-avatar">
+                            @if($campaignData->user->image)
+                                <img src="{{ getImage(getFilePath('userProfile') . '/' . $campaignData->user->image) }}" alt="{{ $campaignData->user->fullname }}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                            @else
+                                {{ strtoupper(substr($campaignData->user->fullname, 0, 2)) }}
+                            @endif
+                        </div>
+                        <div class="organizer-details">
+                            <h4 style="margin: 0; color: inherit;">{{ $campaignData->user->fullname }}</h4>
+                            <p style="margin: 0;">Organizer</p>
+                            <p style="margin: 0;">{{ $campaignData->user->country_name ?? 'Location not specified' }}</p>
+                        </div>
+                    </a>
                 </div>
-                <a href="#" class="btn-share">Contact</a>
+                <a href="{{ route('creator.profile', $campaignData->user->username ?? $campaignData->user->id) }}" class="btn-share">View Profile</a>
             </div>
+            @endif
 
-            <!-- Reviews and Comments Section -->
-            <div class="reviews-section">
+            <!-- Reviews and Comments Section (Show in comments tab) -->
+            @if($activeTab == 'comments')
+            <div class="reviews-section tab-content-section" id="comments-section">
                 <h3>Comments & Reviews</h3>
                 <p class="reviews-prompt">Share your thoughts and experiences about this campaign.</p>
 
@@ -2443,8 +2628,10 @@
                     </div>
                 </div>
             </div>
+            @endif
 
-            <!-- Fundraiser Details -->
+            <!-- Fundraiser Details (Show in campaign tab) -->
+            @if($activeTab == 'campaign' || !request()->has('tab'))
             <div class="fundraiser-details">
                 <div class="detail-item">
                     <span>Created 4 d ago</span>
@@ -2455,9 +2642,50 @@
                     Report fundraiser
                 </a>
             </div>
+            @endif
 
-            <!-- Rewards Section -->
-            <div class="rewards-section">
+            <!-- FAQ Section (Show in FAQ tab) -->
+            @if($activeTab == 'faq')
+            <div class="faq-section tab-content-section" id="faq-section" style="margin-top: 40px; padding-top: 30px;">
+                <h3 style="font-size: 1.5rem; font-weight: 600; color: #333; margin-bottom: 30px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-question-circle" style="color: #05ce78;"></i>
+                    Frequently Asked Questions
+                </h3>
+                
+                @php
+                    // Use FAQs from controller, or load from campaign if not available
+                    if (!isset($faqs) || $faqs->isEmpty()) {
+                        $faqs = $campaignData->faqs()->orderBy('order')->orderBy('id')->get();
+                    }
+                @endphp
+                
+                @if($faqs && $faqs->count() > 0)
+                    <div class="faq-list" style="display: flex; flex-direction: column; gap: 15px;">
+                        @foreach($faqs as $index => $faq)
+                            <div class="faq-item" style="background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: all 0.3s ease;">
+                                <div class="faq-question" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-bottom: 0;" onclick="toggleFaq({{ $index }})">
+                                    <h4 style="font-size: 1.1rem; font-weight: 600; color: #333; margin: 0; flex: 1; padding-right: 20px;">{{ $faq->question }}</h4>
+                                    <i class="fas fa-chevron-down faq-icon" id="faq-icon-{{ $index }}" style="color: #05ce78; font-size: 1rem; transition: transform 0.3s ease;"></i>
+                                </div>
+                                <div class="faq-answer" id="faq-answer-{{ $index }}" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease; padding-top: 0;">
+                                    <p style="color: #666; line-height: 1.6; margin: 15px 0 0 0; font-size: 0.95rem;">{{ $faq->answer }}</p>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="no-faqs" style="text-align: center; padding: 60px 20px; color: #888;">
+                        <i class="fas fa-question-circle" style="font-size: 3rem; color: #ddd; margin-bottom: 20px; display: block;"></i>
+                        <h4 style="margin-bottom: 10px; color: #333;">No FAQs Available</h4>
+                        <p>This campaign doesn't have any frequently asked questions yet.</p>
+                    </div>
+                @endif
+            </div>
+            @endif
+
+            <!-- Rewards Section (Show in rewards tab only if not already shown above) -->
+            @if($activeTab == 'rewards')
+            <div class="rewards-section tab-content-section" id="rewards-section">
                 <div class="rewards-header">
                     <h3 class="rewards-title">
                         <i class="fas fa-gift"></i>
@@ -2561,6 +2789,7 @@
                     @endif
                 </div>
             </div>
+            @endif
         </div>
 
         <!-- Sidebar -->
@@ -3339,9 +3568,16 @@
                     success: function(response) {
                         console.log('Comment submission success:', response);
                         
-                        // Show success toast
+                        // Show success toast with icon
                         var message = response.message || 'Comment submitted successfully! Please wait for admin approval.';
+                        
+                        // Enhanced toast notification
+                        if (typeof showToast === 'function') {
                         showToast('success', message);
+                        } else {
+                            // Fallback toast notification
+                            showToastNotification('success', message);
+                        }
                         
                         // Reset form
                         $('#reviewForm')[0].reset();
@@ -3349,7 +3585,7 @@
                         // Reload page after a short delay to show new comment
                         setTimeout(function() {
                             location.reload();
-                        }, 2000);
+                        }, 3000);
                     },
                     error: function(xhr) {
                         console.error('Comment submission error:', xhr);
@@ -3368,13 +3604,15 @@
                         } else if (xhr.status === 422) {
                             message = 'Please check your form data and try again.';
                         }
+                        // Show error toast
+                        if (typeof showToast === 'function') {
                         showToast('error', message);
+                        } else {
+                            showToastNotification('error', message);
+                        }
                         
-                        // Fallback: submit form normally if AJAX fails
-                        console.log('AJAX failed, submitting form normally...');
-                        setTimeout(function() {
-                            $('#reviewForm')[0].submit();
-                        }, 2000);
+                        // Don't submit form normally on error, just show error message
+                        console.log('Comment submission failed:', message);
                     },
                     complete: function() {
                         // Re-enable submit button
@@ -3396,10 +3634,22 @@
                 }
             });
 
-            // Toast Notification Function
+            // Toast Notification Function (Enhanced)
             function showToast(type, message) {
-                // Create toast element
-                var toast = $('<div class="toast-notification ' + type + '">' + message + '</div>');
+                // Remove any existing toasts first
+                $('.toast-notification').remove();
+                
+                // Create toast element with icon
+                var icon = '';
+                if (type === 'success') {
+                    icon = '<i class="fas fa-check-circle" style="margin-right: 10px;"></i>';
+                } else if (type === 'error') {
+                    icon = '<i class="fas fa-exclamation-circle" style="margin-right: 10px;"></i>';
+                } else if (type === 'info') {
+                    icon = '<i class="fas fa-info-circle" style="margin-right: 10px;"></i>';
+                }
+                
+                var toast = $('<div class="toast-notification ' + type + '" style="display: flex; align-items: center;">' + icon + '<span>' + message + '</span></div>');
                 
                 // Add to page
                 $('body').append(toast);
@@ -3414,6 +3664,39 @@
                     toast.css('transform', 'translateX(100%)');
                     setTimeout(function() {
                         toast.remove();
+                    }, 300);
+                }, 5000);
+            }
+            
+            // Fallback toast notification function
+            function showToastNotification(type, message) {
+                var toast = document.createElement('div');
+                toast.className = 'toast-notification ' + type;
+                toast.style.cssText = 'position: fixed; top: 20px; right: 20px; padding: 15px 20px; border-radius: 8px; color: #fff; font-weight: 600; z-index: 9999; max-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transform: translateX(100%); transition: transform 0.3s ease; display: flex; align-items: center;';
+                
+                if (type === 'success') {
+                    toast.style.backgroundColor = '#05ce78';
+                    toast.innerHTML = '<i class="fas fa-check-circle" style="margin-right: 10px;"></i><span>' + message + '</span>';
+                } else if (type === 'error') {
+                    toast.style.backgroundColor = '#dc3545';
+                    toast.innerHTML = '<i class="fas fa-exclamation-circle" style="margin-right: 10px;"></i><span>' + message + '</span>';
+                } else {
+                    toast.style.backgroundColor = '#333';
+                    toast.innerHTML = '<i class="fas fa-info-circle" style="margin-right: 10px;"></i><span>' + message + '</span>';
+                }
+                
+                document.body.appendChild(toast);
+                
+                setTimeout(function() {
+                    toast.style.transform = 'translateX(0)';
+                }, 100);
+                
+                setTimeout(function() {
+                    toast.style.transform = 'translateX(100%)';
+                    setTimeout(function() {
+                        if (toast.parentNode) {
+                            toast.parentNode.removeChild(toast);
+                        }
                     }, 300);
                 }, 5000);
             }
@@ -3870,6 +4153,120 @@
                 if (e.target === this) {
                     closeRewardModal();
                 }
+            });
+
+            // FAQ Toggle Functionality
+            function toggleFaq(index) {
+                const answer = document.getElementById('faq-answer-' + index);
+                const icon = document.getElementById('faq-icon-' + index);
+                const faqItem = answer ? answer.closest('.faq-item') : null;
+                
+                if (!answer || !icon) return;
+                
+                if (answer.style.maxHeight && answer.style.maxHeight !== '0px') {
+                    // Close
+                    answer.style.maxHeight = '0px';
+                    answer.style.paddingTop = '0';
+                    icon.style.transform = 'rotate(0deg)';
+                    if (faqItem) {
+                        faqItem.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                    }
+                } else {
+                    // Open
+                    answer.style.maxHeight = answer.scrollHeight + 'px';
+                    answer.style.paddingTop = '15px';
+                    icon.style.transform = 'rotate(180deg)';
+                    if (faqItem) {
+                        faqItem.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)';
+                    }
+                }
+            }
+
+            // Initialize FAQ items - close all by default
+            document.addEventListener('DOMContentLoaded', function() {
+                const faqItems = document.querySelectorAll('.faq-item');
+                faqItems.forEach((item, index) => {
+                    const answer = document.getElementById('faq-answer-' + index);
+                    if (answer) {
+                        answer.style.maxHeight = '0px';
+                    }
+                });
+
+                // Auto-scroll to active tab section on page load
+                const urlParams = new URLSearchParams(window.location.search);
+                const activeTab = urlParams.get('tab') || 'campaign';
+                
+                // Wait a bit for page to fully render
+                setTimeout(function() {
+                    scrollToTabSection(activeTab);
+                }, 300);
+            });
+
+            // Function to scroll to tab section
+            function scrollToTabSection(tabName) {
+                let targetElement = null;
+                
+                switch(tabName) {
+                    case 'campaign':
+                        targetElement = document.getElementById('campaign-section') || document.querySelector('.fundraiser-description.tab-content-section');
+                        break;
+                    case 'rewards':
+                        targetElement = document.getElementById('rewards-section') || document.querySelector('.rewards-section.tab-content-section');
+                        break;
+                    case 'creator':
+                        // Find organizer section
+                        targetElement = document.getElementById('creator-section') || document.querySelector('.organizer-section.tab-content-section');
+                        if (!targetElement) {
+                            targetElement = document.querySelector('.organizer-section');
+                        }
+                        break;
+                    case 'faq':
+                        targetElement = document.getElementById('faq-section') || document.querySelector('.faq-section.tab-content-section');
+                        break;
+                    case 'comments':
+                        targetElement = document.getElementById('comments-section') || document.querySelector('.reviews-section.tab-content-section');
+                        break;
+                    case 'updates':
+                    case 'community':
+                        // These sections might not exist yet, scroll to tabs
+                        targetElement = document.querySelector('.campaign-tabs');
+                        break;
+                    default:
+                        targetElement = document.getElementById('campaign-section') || document.querySelector('.fundraiser-description.tab-content-section');
+                }
+                
+                if (targetElement) {
+                    // Calculate offset for sticky header/tabs
+                    const tabsHeight = document.querySelector('.campaign-tabs')?.offsetHeight || 0;
+                    const headerHeight = document.querySelector('.main-header')?.offsetHeight || 0;
+                    const offset = tabsHeight + headerHeight + 20; // 20px extra padding
+                    
+                    const elementPosition = targetElement.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - offset;
+                    
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            }
+
+            // Also scroll when tab links are clicked (before navigation)
+            document.querySelectorAll('.tab-link').forEach(function(link) {
+                link.addEventListener('click', function(e) {
+                    // Get tab name from URL
+                    const href = this.getAttribute('href');
+                    if (href && href.includes('tab=')) {
+                        const tabMatch = href.match(/tab=([^&]+)/);
+                        if (tabMatch) {
+                            const tabName = tabMatch[1];
+                            // Small delay to let page start loading
+                            setTimeout(function() {
+                                scrollToTabSection(tabName);
+                            }, 100);
+                        }
+                    }
+                });
             });
     </script>
 @endpush

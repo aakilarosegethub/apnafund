@@ -28,8 +28,6 @@
             $pageKey = 'faq';
         } elseif ($routeName == 'contact') {
             $pageKey = 'contact_us';
-        } elseif ($routeName == 'volunteers') {
-            $pageKey = 'volunteer';
         } elseif ($routeName == 'stories') {
             $pageKey = 'success_story';
         } elseif ($routeName == 'business.resources') {
@@ -44,6 +42,8 @@
             $pageKey = 'policy_pages';
         } elseif (str_contains($path, 'policy')) {
             $pageKey = 'policy_pages';
+        } elseif (str_contains($path, 'page/') && $routeName == 'dynamic.pages') {
+            $pageKey = 'dynamic_pages';
         }
     }
     

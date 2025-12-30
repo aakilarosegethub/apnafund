@@ -14,6 +14,7 @@
         <link rel="stylesheet" href="{{ asset($activeThemeTrue . 'css/aos.css') }}">
         <link rel="stylesheet" href="{{ asset($activeThemeTrue . 'css/main.css') }}">
         <link rel="stylesheet" href="{{ asset($activeThemeTrue . 'css/custom.css') }}">
+        <link rel="stylesheet" href="{{ asset('apnafund/assets/css/ui-standard.css') }}">
         <link rel="stylesheet" href="{{ asset($activeThemeTrue . 'css/color.php?color1=' . $setting->first_color . '&color2=' . $setting->second_color) }}">
 
         @stack('page-style-lib')

@@ -185,9 +185,9 @@
                 }
             },
             "heading": "text",
-            "description": "textarea",
-            "button_text": "text",
-            "button_url": "text"
+            "description": "textarea-editor",
+            "url": "text",
+            "more_details": "textarea-editor"
         }
     },
     "client_review": {
@@ -354,6 +354,20 @@
         "element": {
             "title": "text",
             "details": "textarea-editor",
+            "modal": false
+        }
+    },
+    "dynamic_pages": {
+        "builder": true,
+        "no_selection": true,
+        "name": "Dynamic Pages",
+        "element": {
+            "title": "text",
+            "slug": "text",
+            "details": "textarea-editor",
+            "meta_title": "text",
+            "meta_description": "textarea",
+            "meta_keywords": "text",
             "modal": false
         }
     },

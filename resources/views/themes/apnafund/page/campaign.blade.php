@@ -51,20 +51,7 @@
                             </div>
                         </div>
 
-                        <!-- Date Filter -->
-                        <div class="filter-card mb-4">
-                            <h5 class="filter-title">
-                                <i class="fas fa-calendar me-2"></i>Date Range
-                            </h5>
-                            <div class="filter-content">
-                                <div class="date-filter">
-                                    <input type="text" class="form-control date-picker" placeholder="Select date range" id="date-range" value="{{ request('date_range') }}">
-                                    <button class="btn btn-outline-primary w-100 mt-2 filter-by-date">
-                                        <i class="fas fa-filter me-2"></i>Filter
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        
 
                         <!-- Sort Options -->
                         <div class="filter-card">

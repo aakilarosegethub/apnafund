@@ -21,8 +21,5 @@
             @endforelse
         </div>
 
-        <div class="d-flex justify-content-center pt-lg-5 pt-4" data-aos="fade-up" data-aos-duration="1500">
-            <a href="{{ route('volunteers') }}" class="btn btn--base">@lang('See All Volunteer')</a>
-        </div>
     </div>
 </div>

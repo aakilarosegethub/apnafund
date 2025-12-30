@@ -4,6 +4,21 @@ use Illuminate\Support\Facades\Route;
 use App\Models\SiteData;
 use App\Models\Campaign;
 use App\Models\Category;
+use App\Http\Controllers\Api\HomeController;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\FundController;
+use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\DonateController;
+use App\Http\Controllers\Api\FundUpdateController;
+use App\Http\Controllers\Api\WithdrawController;
+use App\Http\Controllers\Api\WalletController;
+use App\Http\Controllers\Api\ActivityController;
+use App\Http\Controllers\Api\FaqController;
+use App\Http\Controllers\Api\PageController;
+use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\OTPController;
+use App\Http\Controllers\Api\AccountController;
 
 // CSRF Token refresh route
 Route::get('/csrf-token', function () {
@@ -16,7 +31,6 @@ Route::post('/api/verify-email', 'App\Http\Controllers\User\AuthorizationControl
 Route::controller('WebsiteController')->group(function () {
     Route::get('/', 'home')->name('home');
     Route::get('home-new', 'homeNew')->name('home.new');
-    Route::get('volunteers', 'volunteers')->name('volunteers');
     Route::get('about', 'aboutUs')->name('about.us');
     Route::get('faq', 'faq')->name('faq');
     Route::get('creators', 'creators')->name('creators');
@@ -35,10 +49,6 @@ Route::controller('WebsiteController')->group(function () {
 
     Route::get('upcoming-campaigns', 'upcomingCampaigns')->name('upcoming');
     Route::get('upcoming-campaign/{slug}', 'upcomingCampaignShow')->name('upcoming.show');
-
-    // Success Stories
-    Route::get('success-stories', 'stories')->name('stories');
-    Route::get('success-story/{id}', 'storyShow')->name('stories.show');
 
     // Business Resources
     Route::get('business-resources', 'businessResources')->name('business.resources');
@@ -69,6 +79,12 @@ Route::controller('WebsiteController')->group(function () {
     Route::get('help', 'help')->name('help');
     Route::get('sitemap', 'sitemap')->name('sitemap');
 
+    // Editor
+    Route::get('editor', 'editor')->name('editor');
+
+    // Public User/Creator Profile
+    Route::get('creator/{username}', 'creatorProfile')->name('creator.profile');
+
     // Policy Details
     Route::get('policy/{slug}/{id}', 'policyPages')->name('policy.pages');
     
@@ -80,6 +96,11 @@ Route::controller('WebsiteController')->group(function () {
     // Update user country in session
     Route::post('/update-user-country', [App\Http\Controllers\WebsiteController::class, 'updateUserCountry'])->name('update.user.country');
 });
+
+// Dynamic Pages - Must be at the end to avoid route conflicts
+Route::get('{slug}', [App\Http\Controllers\WebsiteController::class, 'dynamicPages'])
+    ->name('dynamic.pages')
+    ->where('slug', '[a-z0-9-]+');
 
 // Test route for IP detection
 Route::get('/test-ip-detection', function() {
@@ -152,6 +173,73 @@ Route::any('/test-logging', function(\Illuminate\Http\Request $request) {
         ], 500);
     }
 })->name('test.logging');
+
+// Mobile App API Routes (moved from routes/api.php)
+Route::prefix('api')->group(function () {
+
+    // Public APIs (No authentication required)
+    Route::match(['get', 'post'], '/home_api.php', [HomeController::class, 'index']);
+    Route::match(['get', 'post'], '/home.php', [HomeController::class, 'index']);
+    Route::match(['get', 'post'], '/catwisefund.php', [FundController::class, 'categoryWiseFund']);
+    Route::match(['get', 'post'], '/search_fund.php', [FundController::class, 'searchFund']);
+    Route::match(['get', 'post'], '/catlist.php', [CategoryController::class, 'categoryList']);
+    Route::match(['get', 'post'], '/charitylist.php', [CategoryController::class, 'charityList']);
+    Route::match(['get', 'post'], '/faq.php', [FaqController::class, 'faqList']);
+    Route::match(['get', 'post'], '/pagelist.php', [PageController::class, 'pageList']);
+    Route::match(['get', 'post'], '/paymentgateway.php', [PaymentController::class, 'paymentGatewayList']);
+
+    // Auth APIs (Public - No token required for login/register)
+    Route::match(['get', 'post'], '/reg_user.php', [AuthController::class, 'register']);
+    Route::match(['get', 'post'], '/user_login.php', [AuthController::class, 'login']);
+    Route::match(['get', 'post'], '/forget_password.php', [AuthController::class, 'forgetPassword']);
+    Route::match(['get', 'post'], '/social_login.php', [AuthController::class, 'socialLogin']);
+    Route::match(['get', 'post'], '/mobile_check.php', [AuthController::class, 'checkMobile']);
+
+    // OTP APIs (Public)
+    Route::match(['get', 'post'], '/msg_otp.php', [OTPController::class, 'msgOTP']);
+    Route::match(['get', 'post'], '/twilio_otp.php', [OTPController::class, 'twilioOTP']);
+    Route::match(['get', 'post'], '/sms_type.php', [OTPController::class, 'smsType']);
+
+    // Protected APIs (Require authentication via Bearer token)
+    Route::middleware('auth:sanctum')->group(function () {
+        // Fund APIs
+        Route::match(['get', 'post'], '/fundlist.php', [FundController::class, 'fundList']);
+        Route::match(['get', 'post'], '/fundidwise.php', [FundController::class, 'fundById']);
+        Route::match(['get', 'post'], '/fundraise.php', [FundController::class, 'fundRaise']);
+
+        // Fund Update APIs
+        Route::match(['get', 'post'], '/fund_update.php', [FundUpdateController::class, 'fundUpdate']);
+        Route::match(['get', 'post'], '/fund_cancle.php', [FundUpdateController::class, 'cancelFund']);
+        Route::match(['get', 'post'], '/fund_complete.php', [FundUpdateController::class, 'completeFund']);
+        Route::match(['get', 'post'], '/edit_fund.php', [FundUpdateController::class, 'editFund']);
+
+        // User APIs
+        Route::match(['get', 'post'], '/edit_profile.php', [UserController::class, 'editProfile']);
+        Route::match(['get', 'post'], '/pro_image.php', [UserController::class, 'uploadProfileImage']);
+        Route::match(['get', 'post'], '/wallet_up.php', [UserController::class, 'updateWallet']);
+        Route::match(['get', 'post'], '/getbalance.php', [UserController::class, 'getBalance']);
+
+        // Donate APIs
+        Route::match(['get', 'post'], '/donate_now.php', [DonateController::class, 'donateNow']);
+        Route::match(['get', 'post'], '/my_donate_fundlist.php', [DonateController::class, 'myDonateFundList']);
+
+        // Withdraw APIs
+        Route::match(['get', 'post'], '/request_withdraw.php', [WithdrawController::class, 'requestWithdraw']);
+        Route::match(['get', 'post'], '/payout_list.php', [WithdrawController::class, 'payoutList']);
+
+        // Wallet APIs
+        Route::match(['get', 'post'], '/wallet_report.php', [WalletController::class, 'walletReport']);
+
+        // Activity APIs
+        Route::match(['get', 'post'], '/activity.php', [ActivityController::class, 'activityList']);
+
+        // Notification APIs
+        Route::match(['get', 'post'], '/notification.php', [HomeController::class, 'notification']);
+
+        // Account APIs
+        Route::match(['get', 'post'], '/acc_delete.php', [AccountController::class, 'deleteAccount']);
+    });
+});
 
 // API Routes for Products/Campaigns
 Route::prefix('api')->group(function () {

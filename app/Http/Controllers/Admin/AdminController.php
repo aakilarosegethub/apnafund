@@ -249,20 +249,28 @@ class AdminController extends Controller
             
             // Validate file
             $this->validate(request(), [
-                'upload' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
+                'upload' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120'
             ]);
 
             // Generate unique filename
             $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
             
-            // Store file in public/uploads/ckeditor directory
-            $path = $file->storeAs('uploads/ckeditor', $fileName, 'public');
+            // Create directory if not exists
+            $uploadPath = public_path('assets/images/editor');
+            if (!file_exists($uploadPath)) {
+                @mkdir($uploadPath, 0777, true);
+                @chmod($uploadPath, 0777);
+            }
+            
+            // Move file to public directory
+            $file->move($uploadPath, $fileName);
+            @chmod($uploadPath . '/' . $fileName, 0777);
             
             // Return CKEditor response format
             return response()->json([
                 'uploaded' => 1,
                 'fileName' => $fileName,
-                'url' => asset('storage/' . $path)
+                'url' => asset('assets/images/editor/' . $fileName)
             ]);
         }
         
@@ -272,5 +280,113 @@ class AdminController extends Controller
                 'message' => 'No file uploaded or invalid file type.'
             ]
         ]);
+    }
+
+    // Handle external image URLs - download and upload to server
+    function uploadExternalImage() {
+        try {
+            $externalUrl = request()->input('external_url');
+            
+            if (!$externalUrl) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No external URL provided'
+                ], 400);
+            }
+
+            // Validate URL
+            if (!filter_var($externalUrl, FILTER_VALIDATE_URL)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid URL provided'
+                ], 400);
+            }
+
+            // Check if URL is from current domain - if yes, return as is
+            $currentUrl = url('/');
+            if (strpos($externalUrl, $currentUrl) === 0) {
+                return response()->json([
+                    'success' => true,
+                    'url' => $externalUrl,
+                    'message' => 'Image is already on this server'
+                ]);
+            }
+
+            // Download image from external URL
+            $context = stream_context_create([
+                'http' => [
+                    'timeout' => 30,
+                    'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                    'follow_location' => true,
+                    'max_redirects' => 5
+                ]
+            ]);
+            
+            $imageData = @file_get_contents($externalUrl, false, $context);
+            
+            if ($imageData === false) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to download image from external URL'
+                ], 400);
+            }
+
+            // Get image info
+            $imageInfo = @getimagesizefromstring($imageData);
+            if ($imageInfo === false) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid image file'
+                ], 400);
+            }
+
+            // Determine file extension from MIME type
+            $mimeType = $imageInfo['mime'];
+            $extensions = [
+                'image/jpeg' => 'jpg',
+                'image/png' => 'png',
+                'image/gif' => 'gif',
+                'image/webp' => 'webp'
+            ];
+            
+            $extension = $extensions[$mimeType] ?? 'jpg';
+            
+            // Generate unique filename
+            $filename = time() . '_' . uniqid() . '.' . $extension;
+            
+            // Create upload directory
+            $uploadPath = public_path('assets/images/editor');
+            if (!file_exists($uploadPath)) {
+                @mkdir($uploadPath, 0777, true);
+                @chmod($uploadPath, 0777);
+            }
+            
+            // Save image
+            $fullPath = $uploadPath . '/' . $filename;
+            file_put_contents($fullPath, $imageData);
+            @chmod($fullPath, 0777);
+            
+            // Return success response with image URL
+            $imageUrl = asset('assets/images/editor/' . $filename);
+            
+            return response()->json([
+                'success' => true,
+                'url' => $imageUrl,
+                'fileName' => $filename,
+                'message' => 'Image uploaded successfully'
+            ]);
+
+        } catch (Exception $e) {
+            \Log::error('External image upload failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'url' => request()->input('external_url')
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while uploading external image: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

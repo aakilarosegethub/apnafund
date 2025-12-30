@@ -8,6 +8,7 @@ use App\Models\Deposit;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -154,6 +155,20 @@ class UserController extends Controller
         $user->save();
 
         $toast[] = ['success', 'User details updated successfully'];
+
+        return back()->withToasts($toast);
+    }
+
+    function changePassword($id) {
+        $this->validate(request(), [
+            'password' => 'required|string|min:6|confirmed',
+        ]);
+
+        $user = User::findOrFail($id);
+        $user->password = Hash::make(request('password'));
+        $user->save();
+
+        $toast[] = ['success', 'User password changed successfully'];
 
         return back()->withToasts($toast);
     }

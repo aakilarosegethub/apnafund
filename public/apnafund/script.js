@@ -1,4 +1,4 @@
-// Custom JavaScript for Apna Crowdfunding
+// Custom JavaScript for Apna Fund
 
 document.addEventListener('DOMContentLoaded', function() {
     
@@ -400,5 +400,176 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    console.log('Apna Crowdfunding website loaded successfully! ❤️');
+    console.log('Apna Fund website loaded successfully! ❤️');
 }); 
+
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('loginForm');
+            const loginBtn = document.getElementById('loginBtn');
+            const loginBtnText = document.getElementById('loginBtnText');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const togglePassword = document.getElementById('togglePassword');
+            const passwordInput = document.getElementById('password');
+            const passwordIcon = document.getElementById('passwordIcon');
+            const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+            const forgotPasswordModal = new bootstrap.Modal(document.getElementById('forgotPasswordModal'));
+            const sendResetEmail = document.getElementById('sendResetEmail');
+            const resetSpinner = document.getElementById('resetSpinner');
+            const resetBtnText = document.getElementById('resetBtnText');
+            const successStep = document.getElementById('successStep');
+
+            // Toggle password visibility
+            togglePassword.addEventListener('click', function() {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                passwordIcon.classList.toggle('fa-eye');
+                passwordIcon.classList.toggle('fa-eye-slash');
+            });
+
+            // Handle login form submission
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const email = document.getElementById('email').value;
+                const password = passwordInput.value;
+                const rememberMe = document.getElementById('rememberMe').checked;
+
+                // Validate form
+                if (!email || !password) {
+                    showAlert('Please fill in all required fields.', 'danger');
+                    return;
+                }
+
+                if (!isValidEmail(email)) {
+                    showAlert('Please enter a valid email address.', 'danger');
+                    return;
+                }
+
+                // Show loading state
+                setLoadingState(true);
+
+                // Simulate API call
+                setTimeout(() => {
+                    // For demo purposes, accept any email/password combination
+                    if (email && password) {
+                        // Store login state
+                        if (rememberMe) {
+                            localStorage.setItem('rememberMe', 'true');
+                            localStorage.setItem('userEmail', email);
+                        } else {
+                            sessionStorage.setItem('userEmail', email);
+                        }
+
+                        // Show success message
+                        loginForm.style.display = 'none';
+                        document.querySelector('.login-footer').style.display = 'none';
+                        successStep.style.display = 'block';
+                        
+                        // Redirect to dashboard after 3 seconds
+                        setTimeout(() => {
+                            window.location.href = 'business-dashboard.html';
+                        }, 3000);
+                    } else {
+                        showAlert('Invalid email or password. Please try again.', 'danger');
+                        setLoadingState(false);
+                    }
+                }, 2000);
+            });
+
+            // Handle forgot password
+            forgotPasswordLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                forgotPasswordModal.show();
+            });
+
+            // Handle reset password form
+            sendResetEmail.addEventListener('click', function() {
+                const resetEmail = document.getElementById('resetEmail').value;
+                
+                if (!resetEmail || !isValidEmail(resetEmail)) {
+                    showAlert('Please enter a valid email address.', 'danger');
+                    return;
+                }
+
+                // Show loading state
+                resetBtnText.style.display = 'none';
+                resetSpinner.style.display = 'inline-block';
+                sendResetEmail.disabled = true;
+
+                // Simulate API call
+                setTimeout(() => {
+                    showAlert('Password reset link sent to your email!', 'success');
+                    forgotPasswordModal.hide();
+                    
+                    // Reset form and button
+                    document.getElementById('forgotPasswordForm').reset();
+                    resetBtnText.style.display = 'inline';
+                    resetSpinner.style.display = 'none';
+                    sendResetEmail.disabled = false;
+                }, 2000);
+            });
+
+            // Check for remembered login
+            checkRememberedLogin();
+
+            // Helper functions
+            function setLoadingState(loading) {
+                if (loading) {
+                    loginBtn.disabled = true;
+                    loginBtnText.style.display = 'none';
+                    loadingSpinner.style.display = 'inline-block';
+                } else {
+                    loginBtn.disabled = false;
+                    loginBtnText.style.display = 'inline';
+                    loadingSpinner.style.display = 'none';
+                }
+            }
+
+            function showAlert(message, type) {
+                const alertContainer = document.getElementById('alertContainer');
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+                alertDiv.innerHTML = `
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                
+                alertContainer.innerHTML = '';
+                alertContainer.appendChild(alertDiv);
+                
+                // Auto remove after 5 seconds
+                setTimeout(() => {
+                    if (alertDiv.parentNode) {
+                        alertDiv.remove();
+                    }
+                }, 5000);
+            }
+
+            function isValidEmail(email) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return emailRegex.test(email);
+            }
+
+            function checkRememberedLogin() {
+                const remembered = localStorage.getItem('rememberMe');
+                const userEmail = localStorage.getItem('userEmail') || sessionStorage.getItem('userEmail');
+                
+                if (remembered === 'true' && userEmail) {
+                    document.getElementById('email').value = userEmail;
+                    document.getElementById('rememberMe').checked = true;
+                }
+            }
+
+            // Removed interactive effects that were causing styling issues
+
+            // Add keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.key === 'Enter') {
+                    loginForm.dispatchEvent(new Event('submit'));
+                }
+            });
+        });
+    </script>

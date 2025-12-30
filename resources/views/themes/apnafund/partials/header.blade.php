@@ -502,7 +502,7 @@
                 
                 <div class="mobile-cta">
                     @if(auth()->check())
-                        <a href="{{ route('user.campaign.create') }}" class="mobile-start-fundraiser">Start a fundraiser</a>
+                        <a href="{{ route('start.project') }}" class="mobile-start-fundraiser">Start a fundraiser</a>
                     @else
                         <a href="{{ route('user.register') }}" class="mobile-start-fundraiser">Start a fundraiser</a>
                     @endif

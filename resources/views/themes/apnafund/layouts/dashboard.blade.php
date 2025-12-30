@@ -107,9 +107,12 @@
             transition: all 0.3s ease;
         }
 
-        .form-control:focus {
-            border-color: #05ce78;
-            box-shadow: 0 0 0 0.2rem rgba(5, 206, 120, 0.25);
+        .form-control:focus,
+        input.form-control:focus,
+        textarea.form-control:focus,
+        select.form-control:focus {
+            border-color: transparent !important;
+            box-shadow: 0 0 0 0.2rem rgba(5, 206, 120, 0.25) !important;
         }
 
         .form-select {
@@ -367,7 +370,7 @@
 
         // Switch to create page
         function switchToCreatePage() {
-            window.location.href = '{{ route("user.campaign.create") }}';
+            window.location.href = '{{ route("start.project") }}';
         }
 
         // Show alert function

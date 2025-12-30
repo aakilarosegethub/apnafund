@@ -173,35 +173,68 @@
 
     .form-control:focus {
         outline: none;
-        border-color: #05ce78;
-        box-shadow: 0 0 0 3px rgba(5, 206, 120, 0.1);
+        border-color: transparent !important;
+        box-shadow: 0 0 0 3px rgba(5, 206, 120, 0.1) !important;
         transform: translateY(-2px);
     }
 
-    /* Button Styles */
+    /* Button Styles - Standardized */
     .btn-theme {
-        background: linear-gradient(135deg, #05ce78 0%, #04a85f 100%);
-        color: #fff;
-        border: none;
-        padding: 15px 30px;
-        font-size: 16px;
-        font-weight: 600;
-        border-radius: 10px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        display: inline-block;
-        box-shadow: 0 4px 15px rgba(5, 206, 120, 0.3);
-        width: 100%;
-        margin-top: 10px;
+        background: #05ce78 !important;
+        color: #fff !important;
+        border: none !important;
+        padding: 12px 24px !important;
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        border-radius: 10px !important;
+        cursor: pointer !important;
+        transition: all 0.3s ease !important;
+        text-decoration: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+        width: 100% !important;
+        margin-top: 10px !important;
+        min-height: 44px !important;
     }
 
     .btn-theme:hover {
-        background: linear-gradient(135deg, #04a85f 0%, #038c4f 100%);
-        color: #fff;
-        text-decoration: none;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(5, 206, 120, 0.4);
+        background: #04a85f !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .btn-theme:active {
+        transform: translateY(0) !important;
+    }
+
+    /* Form Control - Standardized */
+    .form-control {
+        border-radius: 10px !important;
+        border: 1px solid #e9ecef !important;
+        padding: 12px 16px !important;
+        min-height: 44px !important;
+    }
+
+    /* Alert - Standardized */
+    .alert {
+        border-radius: 10px !important;
+        padding: 16px !important;
+        border: none !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+    }
+
+    .alert-success {
+        background-color: rgba(5, 206, 120, 0.1) !important;
+        color: #038a4d !important;
+        border-left: 4px solid #05ce78 !important;
+    }
+
+    .alert-danger {
+        background-color: rgba(220, 53, 69, 0.1) !important;
+        color: #721c24 !important;
+        border-left: 4px solid #dc3545 !important;
     }
 
     .btn-theme:disabled {

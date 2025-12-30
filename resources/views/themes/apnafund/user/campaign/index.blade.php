@@ -10,7 +10,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h4 class="mb-0">@lang('Manage Your Gigs')</h4>
-                    <a href="{{ route('user.campaign.create') }}" class="btn btn-primary">
+                    <a href="{{ route('start.project') }}" class="btn btn-primary">
                         <i class="fas fa-plus me-2"></i>@lang('Create New Gig')
                     </a>
                 </div>
@@ -84,7 +84,7 @@
                             <div class="text-center py-5">
                                 <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                                 <h5 class="text-muted">{{ __($emptyMessage ?? 'No campaigns found') }}</h5>
-                                <a href="{{ route('user.campaign.create') }}" class="btn btn-primary mt-3">
+                                <a href="{{ route('start.project') }}" class="btn btn-primary mt-3">
                                     <i class="fas fa-plus me-2"></i>@lang('Create Your First Campaign')
                                 </a>
                             </div>

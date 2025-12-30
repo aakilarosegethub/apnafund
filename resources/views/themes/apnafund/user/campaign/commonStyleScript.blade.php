@@ -65,6 +65,8 @@
         (function($) {
             "use strict"
 
+            // Check if Dropzone is loaded and element exists before initializing
+            if (typeof Dropzone !== 'undefined' && document.querySelector('.dropzone')) {
             new Dropzone('.dropzone', {
                 thumbnailWidth: 200,
                 acceptedFiles: '.jpg, .jpeg, .png',
@@ -97,6 +99,7 @@
                     return fileRef != null ? fileRef.parentNode.removeChild(fileRef) : void 0
                 }
             });
+            }
         })(jQuery)
     </script>
 @endpush

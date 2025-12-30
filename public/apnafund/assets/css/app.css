@@ -31,7 +31,6 @@ body {
 
 .search-input:focus {
     outline: none;
-    border-color: #05ce78;
     box-shadow: 0 4px 12px rgba(5, 206, 120, 0.2);
 }
 
@@ -162,7 +161,7 @@ h3 {
     font-weight: 700;
     margin-bottom: 1rem;
     color: #0a3d27;
-    /* Dark green for Apna Crowdfunding theme */
+    /* Dark green for Apna Fund theme */
 }
 
 /* Paragraph */
@@ -1188,7 +1187,6 @@ p {
 }
 
 .nav-btn:hover {
-    border-color: #05ce78;
     color: #05ce78;
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(5, 206, 120, 0.2);

@@ -10,6 +10,7 @@
 
         @include('partials.seo')
     <link rel="stylesheet" href="{{ asset('apnafund/assets/css/app.css') }}">
+    <link rel="stylesheet" href="{{ asset('apnafund/assets/css/ui-standard.css') }}">
     <link rel="stylesheet" href="{{ asset('apnafund/assets/bootstrap/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ asset('assets/universal/css/iziToast.min.css') }}">
@@ -92,9 +93,12 @@
             transition: all 0.3s ease;
         }
 
-        .form-control:focus {
-            border-color: #05ce78;
-            box-shadow: 0 0 0 0.2rem rgba(5, 206, 120, 0.25);
+        .form-control:focus,
+        input.form-control:focus,
+        textarea.form-control:focus,
+        select.form-control:focus {
+            border-color: transparent !important;
+            box-shadow: 0 0 0 0.2rem rgba(5, 206, 120, 0.25) !important;
         }
 
         .form-select {

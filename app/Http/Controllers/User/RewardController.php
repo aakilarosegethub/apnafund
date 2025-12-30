@@ -52,19 +52,31 @@ class RewardController extends Controller
         try {
             $validated = $request->validate([
                 'title' => 'required|string|max:255',
-                'description' => 'required|string|min:10',
+                'description' => 'required|string|min:3',
                 'minimum_amount' => 'required|numeric|min:1',
                 'quantity' => 'nullable|integer|min:1',
                 'type' => 'nullable|in:digital,physical',
                 'color_theme' => 'nullable|string',
                 'terms_conditions' => 'nullable|string',
-                'image' => ['nullable', File::types(['png', 'jpg', 'jpeg'])->max(2048)],
+                'image' => ['nullable', File::types(['png', 'jpg', 'jpeg', 'gif', 'webp'])->max(5120)],
+            ], [
+                'title.required' => 'Reward title is required',
+                'title.max' => 'Reward title cannot exceed 255 characters',
+                'description.required' => 'Reward description is required',
+                'description.min' => 'Reward description must be at least 3 characters long',
+                'minimum_amount.required' => 'Minimum amount is required',
+                'minimum_amount.numeric' => 'Minimum amount must be a valid number',
+                'minimum_amount.min' => 'Minimum amount must be at least 1',
+                'quantity.integer' => 'Quantity must be a valid number',
+                'quantity.min' => 'Quantity must be at least 1',
+                'type.in' => 'Reward type must be either digital or physical',
+                'image.max' => 'Image size must be less than 5MB',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Validation failed',
+                    'message' => 'Validation failed. Please check the errors below.',
                     'errors' => $e->errors()
                 ], 422);
             }
@@ -225,19 +237,31 @@ class RewardController extends Controller
         try {
             $validated = $request->validate([
                 'title' => 'required|string|max:255',
-                'description' => 'required|string|min:10',
+                'description' => 'required|string|min:3',
                 'minimum_amount' => 'required|numeric|min:1',
                 'quantity' => 'nullable|integer|min:1',
                 'type' => 'nullable|in:digital,physical',
                 'color_theme' => 'nullable|string',
                 'terms_conditions' => 'nullable|string',
-                'image' => ['nullable', File::types(['png', 'jpg', 'jpeg'])->max(2048)],
+                'image' => ['nullable', File::types(['png', 'jpg', 'jpeg', 'gif', 'webp'])->max(5120)],
+            ], [
+                'title.required' => 'Reward title is required',
+                'title.max' => 'Reward title cannot exceed 255 characters',
+                'description.required' => 'Reward description is required',
+                'description.min' => 'Reward description must be at least 3 characters long',
+                'minimum_amount.required' => 'Minimum amount is required',
+                'minimum_amount.numeric' => 'Minimum amount must be a valid number',
+                'minimum_amount.min' => 'Minimum amount must be at least 1',
+                'quantity.integer' => 'Quantity must be a valid number',
+                'quantity.min' => 'Quantity must be at least 1',
+                'type.in' => 'Reward type must be either digital or physical',
+                'image.max' => 'Image size must be less than 5MB',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Validation failed',
+                    'message' => 'Validation failed. Please check the errors below.',
                     'errors' => $e->errors()
                 ], 422);
             }

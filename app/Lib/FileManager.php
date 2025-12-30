@@ -181,7 +181,11 @@ class FileManager
     function makeDirectory($location = null): bool|string
     {
         if (!$location) $location = $this->path;
-        if (file_exists($location)) {
+        
+        // Normalize the path
+        $location = rtrim($location, '/');
+        
+        if (file_exists($location) && is_dir($location)) {
             // Check if writable, if not try to fix permissions
             if (!is_writable($location)) {
                 @chmod($location, 0775);
@@ -190,15 +194,22 @@ class FileManager
                     @chmod($location, 0777);
                 }
             }
-            return true;
+            return $location;
         }
 
-        $result = mkdir($location, 0775, true);
+        // Create directory recursively
+        $result = @mkdir($location, 0775, true);
+        
         // If creation successful, ensure it's writable
         if ($result && file_exists($location)) {
             @chmod($location, 0775);
         }
-        return $result;
+        
+        if (!$result && !file_exists($location)) {
+            throw new Exception("Failed to create directory: $location. Please check permissions.");
+        }
+        
+        return $result ? $location : false;
     }
 
     /**
@@ -235,14 +246,28 @@ class FileManager
      */
     function removeFile($path = null): void
     {
-        if (!$path) $path = $this->path . '/' . $this->old;
+        if (!$path) {
+            if (!$this->old) return; // No old file to delete
+            $path = $this->path . '/' . $this->old;
+        }
 
-        file_exists($path) && is_file($path) && @unlink($path);
+        if (file_exists($path) && is_file($path)) {
+            // Ensure file is writable before deletion
+            @chmod($path, 0777);
+            if (!@unlink($path)) {
+                \Log::warning('Failed to delete file: ' . $path);
+            }
+        }
 
-        if ($this->thumb) {
-            if (!$path) $path = $this->path . '/thumb_' . $this->old;
+        // Delete thumbnail if exists
+        if ($this->thumb || $this->old) {
+            $thumbPath = $path ? dirname($path) . '/thumb_' . basename($path) : ($this->old ? $this->path . '/thumb_' . $this->old : null);
 
-            file_exists($path) && is_file($path) && @unlink($path);
+            if ($thumbPath && file_exists($thumbPath) && is_file($thumbPath)) {
+                // Ensure file is writable before deletion
+                @chmod($thumbPath, 0777);
+                @unlink($thumbPath);
+            }
         }
     }
 

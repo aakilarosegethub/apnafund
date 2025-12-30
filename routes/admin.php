@@ -50,7 +50,11 @@ Route::middleware(['admin'])->group(function () {
         
         // CKEditor File Upload
         Route::post('upload/file', 'uploadFile')->name('admin.upload.file');
+        Route::post('upload/external-image', 'uploadExternalImage')->name('admin.upload.external-image');
     });
+
+    // Banner Management
+    Route::resource('banners', 'BannerController');
 
     // Campaign category
     Route::controller('CategoryController')->prefix('categories')->name('categories.')->group(function () {
@@ -105,6 +109,7 @@ Route::middleware(['admin'])->group(function () {
         // User Details Operation
         Route::get('details/{id}', 'details')->name('details');
         Route::post('update/{id}', 'update')->name('update');
+        Route::post('password-change/{id}', 'changePassword')->name('password.change');
         Route::get('login/{id}', 'login')->name('login');
         Route::post('balance-update/{id}', 'balanceUpdate')->name('add.sub.balance');
         Route::post('status/{id}', 'status')->name('status');

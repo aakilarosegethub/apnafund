@@ -4,11 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apna Crowdfunding</title>
+    <title>Apna Fund</title>
     <link rel="stylesheet" href="assets/css/app.css">
     <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="shortcut icon" href="assets/images/fav-icon.png" type="image/png">
+    <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
@@ -19,28 +20,57 @@
                 <!-- Left: Logo -->
                 <div class="col-12 col-md-2 text-center text-md-start">
                     <a href="/">
-                        <img src="assets/images/White Logo.png" alt="Apna Crowdfunding Logo" class="logo-img"
-                            style="max-height:50px;">
+                        <img src="logo_light (2).png" alt="Apna Fund Logo" class="logo-img">
                     </a>
                 </div>
 
                 <!-- Center: Search Bar -->
                 <div class="col-12 col-md-8">
                     <div class="search-container">
-                        <div class="search-box">
-                            <input type="text" class="search-input"
-                                placeholder="Search projects, creators, and categories..." aria-label="Search">
-                            <button class="search-btn" type="button">
+                        <form class="search-box" method="get" action="http://192.168.1.89:8000/campaigns">
+                            <input type="text" class="search-input" name="name" placeholder="Search projects, creators, and categories..." aria-label="Search">
+                            <button class="search-btn" type="submit">
                                 <i class="fas fa-search"></i>
                             </button>
-                        </div>
+                        </form>
                     </div>
                 </div>
 
                 <!-- Right: Buttons -->
                 <div class="col-12 col-md-2 text-center text-md-end">
-                    <a href="creator.html" class="btn btn-outline-light me-2">Creator</a>
-                    <a href="login.html" class="btn text-white">Login</a>
+                    <a href="http://192.168.1.89:8000/user/login" class="btn btn-outline-light">Creator Login</a>
+                </div>
+            </div>
+
+            <!-- Mobile Navigation Toggle (Hidden on desktop) -->
+            <div class="mobile-nav-toggle">
+                <button class="nav-toggle" id="navToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+
+            <!-- Mobile Menu (Hidden by default) -->
+            <div class="mobile-menu" id="mobileMenu">
+                <div class="mobile-menu-header">
+                    <div class="mobile-logo">
+                        <img src="logo_light (2).png" alt="Apna Fund Logo" class="mobile-logo-img">
+                    </div>
+                    <button class="mobile-close" id="mobileClose">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="mobile-menu-content">
+                    <div class="mobile-nav-links">
+                        <a href="#" class="mobile-nav-link">Discover</a>
+                        <a href="#" class="mobile-nav-link">Categories</a>
+                        <a href="#" class="mobile-nav-link">How it works</a>
+                        <a href="#" class="mobile-nav-link">Sign in</a>
+                    </div>
+                    
+                    <div class="mobile-cta">
+                        <a href="#" class="mobile-start-fundraiser">Start a fundraiser</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -118,219 +148,260 @@
     </section>
 
     <!-- Projects Section -->
-    <section class="projects-section">
-        <div class="container">
-            <div class="row">
-                <div class="col-12">
-                    <h2 class="section-title-sm text-left mb-4">Featured Projects</h2>
-                </div>
-            </div>
-
-            <!-- First Row: One item in 6 columns -->
-            <div class="row mb-4">
-                <div class="col-12 col-lg-6">
-                    <a href="gig-showcase.html" class="project-card-link">
-                        <div class="project-card featured-project">
-                            <div class="project-image">
-                                <img src="assets/images/banner-1.jpg" alt="Featured Project" class="img-fluid">
-                                <div class="project-overlay">
-                                    <div class="project-category">Technology</div>
-                                    <div class="project-progress">
-                                        <div class="progress-bar">
-                                            <div class="progress-fill" style="width: 75%"></div>
-                                        </div>
-                                        <span class="progress-text">75% funded</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="project-content">
-                                <h3 class="project-title">Smart Home Automation System</h3>
-                                <p class="project-description">Revolutionary IoT system that transforms your home into a
-                                    smart, energy-efficient living space.</p>
-                                <div class="project-stats">
-                                    <div class="stat">
-                                        <span class="stat-value">$45,000</span>
-                                        <span class="stat-label">raised</span>
-                                    </div>
-                                    <div class="stat">
-                                        <span class="stat-value">15</span>
-                                        <span class="stat-label">days left</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </a>
-                </div>
-                <div class="col-12 col-md-3">
-                    <a href="gig-showcase.html" class="project-card-link">
-                        <div class="project-card">
-                            <div class="project-image">
-                                <img src="assets/images/banner-2.jpg" alt="Project 1" class="img-fluid">
-                                <div class="project-overlay">
-                                    <div class="project-category">Art</div>
-                                    <div class="project-progress">
-                                        <div class="progress-bar">
-                                            <div class="progress-fill" style="width: 60%"></div>
-                                        </div>
-                                        <span class="progress-text">60% funded</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="project-content">
-                                <h3 class="project-title">Digital Art Collection</h3>
-                                <p class="project-description">Exclusive NFT collection featuring contemporary digital
-                                    artists.</p>
-                                <div class="project-stats">
-                                    <div class="stat">
-                                        <span class="stat-value">$12,500</span>
-                                        <span class="stat-label">raised</span>
-                                    </div>
-                                    <div class="stat">
-                                        <span class="stat-value">8</span>
-                                        <span class="stat-label">days left</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </a>
-                </div>
-                <div class="col-12 col-md-3">
-                    <a href="gig-showcase.html" class="project-card-link">
-                        <div class="project-card">
-                            <div class="project-image">
-                                <img src="assets/images/banner-3.jpeg" alt="Project 2" class="img-fluid">
-                                <div class="project-overlay">
-                                    <div class="project-category">Food</div>
-                                    <div class="project-progress">
-                                        <div class="progress-bar">
-                                            <div class="progress-fill" style="width: 85%"></div>
-                                        </div>
-                                        <span class="progress-text">85% funded</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="project-content">
-                                <h3 class="project-title">Organic Farm Expansion</h3>
-                                <p class="project-description">Sustainable farming initiative to provide fresh organic
-                                    produce to local communities.</p>
-                                <div class="project-stats">
-                                    <div class="stat">
-                                        <span class="stat-value">$28,000</span>
-                                        <span class="stat-label">raised</span>
-                                    </div>
-                                    <div class="stat">
-                                        <span class="stat-value">22</span>
-                                        <span class="stat-label">days left</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </a>
-                </div>
-            </div>
-            <!-- Third Row: Three items in 3 columns each -->
-            <div class="row">
-                <div class="col-12 col-md-4">
-                    <a href="gig-showcase.html" class="project-card-link">
-                        <div class="project-card">
-                            <div class="project-image">
-                                <img src="assets/images/banner-4.jpg" alt="Project 3" class="img-fluid">
-                                <div class="project-overlay">
-                                    <div class="project-category">Music</div>
-                                    <div class="project-progress">
-                                        <div class="progress-bar">
-                                            <div class="progress-fill" style="width: 45%"></div>
-                                        </div>
-                                        <span class="progress-text">45% funded</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="project-content">
-                                <h3 class="project-title">Indie Album Production</h3>
-                                <p class="project-description">Supporting independent musicians to create their debut album.
-                                </p>
-                                <div class="project-stats">
-                                    <div class="stat">
-                                        <span class="stat-value">$8,500</span>
-                                        <span class="stat-label">raised</span>
-                                    </div>
-                                    <div class="stat">
-                                        <span class="stat-value">18</span>
-                                        <span class="stat-label">days left</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </a>
-                </div>
-                <div class="col-12 col-md-4">
-                    <a href="gig-showcase.html" class="project-card-link">
-                        <div class="project-card">
-                            <div class="project-image">
-                                <img src="assets/images/banner-5.jpg" alt="Project 4" class="img-fluid">
-                                <div class="project-overlay">
-                                    <div class="project-category">Education</div>
-                                    <div class="project-progress">
-                                        <div class="progress-bar">
-                                            <div class="progress-fill" style="width: 70%"></div>
-                                        </div>
-                                        <span class="progress-text">70% funded</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="project-content">
-                                <h3 class="project-title">Coding Bootcamp</h3>
-                                <p class="project-description">Free programming education for underprivileged youth.</p>
-                                <div class="project-stats">
-                                    <div class="stat">
-                                        <span class="stat-value">$15,200</span>
-                                        <span class="stat-label">raised</span>
-                                    </div>
-                                    <div class="stat">
-                                        <span class="stat-value">12</span>
-                                        <span class="stat-label">days left</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </a>
-                </div>
-                <div class="col-12 col-md-4">
-                    <a href="gig-showcase.html" class="project-card-link">
-                        <div class="project-card">
-                            <div class="project-image">
-                                <img src="assets/images/banner-6.jpg" alt="Project 5" class="img-fluid">
-                                <div class="project-overlay">
-                                    <div class="project-category">Health</div>
-                                    <div class="project-progress">
-                                        <div class="progress-bar">
-                                            <div class="progress-fill" style="width: 55%"></div>
-                                        </div>
-                                        <span class="progress-text">55% funded</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="project-content">
-                                <h3 class="project-title">Medical Equipment</h3>
-                                <p class="project-description">Providing essential medical devices to rural healthcare
-                                    centers.</p>
-                                <div class="project-stats">
-                                    <div class="stat">
-                                        <span class="stat-value">$32,000</span>
-                                        <span class="stat-label">raised</span>
-                                    </div>
-                                    <div class="stat">
-                                        <span class="stat-value">25</span>
-                                        <span class="stat-label">days left</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </a>
-                </div>
+  <!-- Projects Section -->
+  <section class="projects-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h2 class="section-title-sm text-left mb-4">Featured Project</h2>
             </div>
         </div>
-    </section>
+
+        <!-- First Row: One item in 6 columns -->
+        <div class="row mb-4">
+            <div class="col-12 col-lg-6">
+                <a href="gig-showcase.html" class="project-card-link">
+                    <div class="project-card featured-project">
+
+                        <!-- IMAGE -->
+                        <div class="project-image project-image-1">
+                            <div class="project-overlay">
+                                <div class="project-category">Technology</div>
+                                <div class="project-progress">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 75%"></div>
+                                    </div>
+                                    <span class="progress-text">75% funded</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- NEW PROGRESS LINE BELOW IMAGE -->
+                        <div style="width:100%;height:6px;background:#eee;border-radius:10px;overflow:hidden;margin-top:0;margin-bottom:10px;">
+                            <div style="height:100%;width:75%;background:#28a745;border-radius:10px;"></div>
+                        </div>
+
+                        <div class="project-content">
+                            <h3 class="project-title">Smart Home Automation System</h3>
+                            <p class="project-description">Revolutionary IoT system that transforms your home into a smart, energy-efficient living space.</p>
+                            <div class="project-stats">
+                                <div class="stat">
+                                    <span class="stat-value">$45,000</span>
+                                    <span class="stat-label">raised</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-value">15</span>
+                                    <span class="stat-label">days left</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- SMALL CARD 1 -->
+            <div class="col-12 col-md-3">
+                <a href="gig-showcase.html" class="project-card-link">
+                    <div class="project-card">
+
+                        <div class="project-image project-image-2">
+                            <div class="project-overlay">
+                                <div class="project-category">Art</div>
+                                <div class="project-progress">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 60%"></div>
+                                    </div>
+                                    <span class="progress-text">60% funded</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- NEW PROGRESS LINE -->
+                        <div style="width:100%;height:6px;background:#eee;border-radius:10px;overflow:hidden;margin-top:0;margin-bottom:10px;">
+                            <div style="height:100%;width:60%;background:#28a745;border-radius:10px;"></div>
+                        </div>
+
+                        <div class="project-content">
+                            <h3 class="project-title">Digital Art Collection</h3>
+                            <p class="project-description">Exclusive NFT collection featuring contemporary digital artists.</p>
+                            <div class="project-stats">
+                                <div class="stat">
+                                    <span class="stat-value">$12,500</span>
+                                    <span class="stat-label">raised</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-value">8</span>
+                                    <span class="stat-label">days left</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- SMALL CARD 2 -->
+            <div class="col-12 col-md-3">
+                <a href="gig-showcase.html" class="project-card-link">
+                    <div class="project-card">
+
+                        <div class="project-image project-image-3">
+                            <div class="project-overlay">
+                                <div class="project-category">Food</div>
+                                <div class="project-progress">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 85%"></div>
+                                    </div>
+                                    <span class="progress-text">85% funded</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- NEW PROGRESS LINE -->
+                        <div style="width:100%;height:6px;background:#eee;border-radius:10px;overflow:hidden;margin-top:0;margin-bottom:10px;">
+                            <div style="height:100%;width:85%;background:#28a745;border-radius:10px;"></div>
+                        </div>
+
+                        <div class="project-content">
+                            <h3 class="project-title">Organic Farm Expansion</h3>
+                            <p class="project-description">Sustainable farming initiative to provide fresh organic produce to local communities.</p>
+                            <div class="project-stats">
+                                <div class="stat">
+                                    <span class="stat-value">$28,000</span>
+                                    <span class="stat-label">raised</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-value">22</span>
+                                    <span class="stat-label">days left</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- SECOND ROW -->
+        <div class="row">
+
+            <div class="col-12 col-md-4">
+                <a href="gig-showcase.html" class="project-card-link">
+                    <div class="project-card">
+                        <div class="project-image project-image-4">
+                            <div class="project-overlay">
+                                <div class="project-category">Music</div>
+                                <div class="project-progress">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 45%"></div>
+                                    </div>
+                                    <span class="progress-text">45% funded</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- NEW PROGRESS LINE -->
+                        <div style="width:100%;height:6px;background:#eee;border-radius:10px;overflow:hidden;margin-top:0;margin-bottom:10px;">
+                            <div style="height:100%;width:45%;background:#28a745;border-radius:10px;"></div>
+                        </div>
+
+                        <div class="project-content">
+                            <h3 class="project-title">Indie Album Production</h3>
+                            <p class="project-description">Supporting independent musicians to create their debut album.</p>
+                            <div class="project-stats">
+                                <div class="stat">
+                                    <span class="stat-value">$8,500</span>
+                                    <span class="stat-label">raised</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-value">18</span>
+                                    <span class="stat-label">days left</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-12 col-md-4">
+                <a href="gig-showcase.html" class="project-card-link">
+                    <div class="project-card">
+                        <div class="project-image project-image-5">
+                            <div class="project-overlay">
+                                <div class="project-category">Education</div>
+                                <div class="project-progress">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 70%"></div>
+                                    </div>
+                                    <span class="progress-text">70% funded</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- NEW PROGRESS LINE -->
+                        <div style="width:100%;height:6px;background:#eee;border-radius:10px;overflow:hidden;margin-top:0;margin-bottom:10px;">
+                            <div style="height:100%;width:70%;background:#28a745;border-radius:10px;"></div>
+                        </div>
+
+                        <div class="project-content">
+                            <h3 class="project-title">Coding Bootcamp</h3>
+                            <p class="project-description">Free programming education for underprivileged youth.</p>
+                            <div class="project-stats">
+                                <div class="stat">
+                                    <span class="stat-value">$15,200</span>
+                                    <span class="stat-label">raised</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-value">12</span>
+                                    <span class="stat-label">days left</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-12 col-md-4">
+                <a href="gig-showcase.html" class="project-card-link">
+                    <div class="project-card">
+                        <div class="project-image project-image-6">
+                            <div class="project-overlay">
+                                <div class="project-category">Health</div>
+                                <div class="project-progress">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 55%"></div>
+                                    </div>
+                                    <span class="progress-text">55% funded</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- NEW PROGRESS LINE -->
+                        <div style="width:100%;height:6px;background:#eee;border-radius:10px;overflow:hidden;margin-top:0;margin-bottom:10px;">
+                            <div style="height:100%;width:55%;background:#28a745;border-radius:10px;"></div>
+                        </div>
+
+                        <div class="project-content">
+                            <h3 class="project-title">Medical Equipment</h3>
+                            <p class="project-description">Providing essential medical devices to rural healthcare centers.</p>
+                            <div class="project-stats">
+                                <div class="stat">
+                                    <span class="stat-value">$32,000</span>
+                                    <span class="stat-label">raised</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-value">25</span>
+                                    <span class="stat-label">days left</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
 
     <!-- Footer -->
     <footer class="footer">
@@ -338,14 +409,14 @@
             <div class="row align-items-center">
                 <div class="col-md-6">
                     <div class="footer-logo">
-                        <img src="assets/images/White Logo.png" alt="Apna Crowdfunding Logo" class="footer-logo-img">
+                        <img src="assets/images/White Logo.png" alt="Apna Fund Logo" class="footer-logo-img">
                         <p class="footer-tagline">Empowering Dreams, Building Futures</p>
                     </div>
                 </div>
                 <div class="col-md-6 text-end">
                     <div class="footer-info">
-                        <p class="copyright">© 2024 Apna Crowdfunding. All rights reserved.</p>
-                        <p class="email">contact@apnacrowdfunding.com</p>
+                        <p class="copyright">© 2024 Apna Fund. All rights reserved.</p>
+                        <p class="email">contact@apnafund.com</p>
                     </div>
                 </div>
             </div>
@@ -353,6 +424,71 @@
     </footer>
 
     <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Mobile Navigation Toggle
+        const navToggle = document.getElementById('navToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileClose = document.getElementById('mobileClose');
+        
+        // Open mobile menu
+        if (navToggle && mobileMenu) {
+            navToggle.addEventListener('click', function() {
+                mobileMenu.classList.add('active');
+                document.body.style.overflow = 'hidden'; // Prevent background scrolling
+            });
+        }
+
+        // Close mobile menu
+        if (mobileClose && mobileMenu) {
+            mobileClose.addEventListener('click', function() {
+                mobileMenu.classList.remove('active');
+                document.body.style.overflow = ''; // Restore scrolling
+            });
+        }
+
+        // Close mobile menu when clicking on a navigation link
+        const mobileNavLinks = document.querySelectorAll('.mobile-nav-link, .mobile-start-fundraiser');
+        mobileNavLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                mobileMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        });
+
+        // Close mobile menu when clicking outside (on overlay)
+        if (mobileMenu) {
+            mobileMenu.addEventListener('click', function(event) {
+                if (event.target === mobileMenu) {
+                    mobileMenu.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+        }
+
+        // Close mobile menu with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && mobileMenu.classList.contains('active')) {
+                mobileMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+
+        // Search functionality
+        const searchForms = document.querySelectorAll('.search-box');
+        
+        searchForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const searchInput = form.querySelector('.search-input');
+                if (!searchInput.value.trim()) {
+                    e.preventDefault();
+                    searchInput.focus();
+                    return false;
+                }
+                // Form will submit naturally to the action URL
+            });
+        });
+    </script>
 
 </body>
 

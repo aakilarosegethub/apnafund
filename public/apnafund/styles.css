@@ -1,0 +1,730 @@
+/* Consolidated CSS for ApnaFund - Combined from index.html, login.html, and header_1.html */
+
+/* Base Body Styles */
+body {
+    background: #ffffff;
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    line-height: 1.6;
+    color: #333;
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+}
+
+/* Touch-friendly improvements */
+button, 
+.btn-donate,
+.btn-share,
+.btn-share-card,
+.btn-donate-card,
+.btn-submit-review,
+.btn-like-review,
+.btn-reply-review {
+    min-height: 44px;
+    touch-action: manipulation;
+}
+
+/* Prevent horizontal scroll on mobile */
+html, body {
+    overflow-x: hidden;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+/* Header Styles */
+.header {
+    background: #05ce78;
+    padding: 15px 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    height: 100px;
+}
+
+.header .container {
+    max-width: 1200px;
+}
+
+/* Main Header (Login Page Style) */
+.main-header {
+    background: #05ce78;
+    padding: 25px 0;
+    margin: 0;
+    border: none;
+}
+
+.main-header .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.main-header .logo {
+    text-align: center;
+    margin: 0;
+}
+
+.main-header .logo-img {
+    height: 40px;
+    width: auto;
+}
+
+.main-header .tagline {
+    color: #fff;
+    font-size: 12px;
+    text-align: center;
+    margin-top: 5px;
+    font-weight: 400;
+}
+
+/* Logo Styling */
+.logo-img {
+    height: 25px;
+    width: auto;
+    transition: all 0.3s ease;
+}
+
+.logo-img:hover {
+    transform: scale(1.05);
+}
+
+/* Hide mobile elements on desktop */
+.mobile-nav-toggle,
+.mobile-menu {
+    display: none;
+}
+
+/* Mobile Menu Styling */
+.mobile-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: #05ce78;
+    z-index: 9999;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+}
+
+.mobile-menu.active {
+    transform: translateX(0);
+}
+
+.mobile-menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.mobile-logo {
+    display: flex;
+    align-items: center;
+}
+
+.mobile-logo-img {
+    height: 32px;
+    margin-right: 10px;
+}
+
+.mobile-logo-text {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.mobile-close {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 8px;
+}
+
+.mobile-menu-content {
+    padding: 30px 20px;
+}
+
+.mobile-nav-links {
+    margin-bottom: 40px;
+}
+
+.mobile-nav-link {
+    display: block;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 500;
+    text-decoration: none;
+    padding: 15px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.mobile-nav-link:hover {
+    color: #fff;
+    opacity: 0.8;
+    padding-left: 10px;
+}
+
+.mobile-start-fundraiser {
+    display: block;
+    background: #fff;
+    color: #05ce78;
+    padding: 15px 30px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 16px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.mobile-start-fundraiser:hover {
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateY(-2px);
+}
+
+/* Search Container */
+.search-container {
+    position: relative;
+    width: 100%;
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 50px 12px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    font-size: 15px;
+    outline: none;
+    transition: all 0.3s ease;
+    background: #05ce78;
+    color: #fff;
+}
+
+.search-input:focus {
+    border-color: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+}
+
+.search-input::placeholder {
+    color: #fff;
+}
+
+.search-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px;
+    transition: color 0.3s ease;
+}
+
+.search-btn:hover {
+    color: #f0f0f0;
+}
+
+/* Mobile Navigation Toggle */
+.nav-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 5px;
+}
+
+/* Navigation - GoFundMe Style */
+.nav-links {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0;
+    margin: 0;
+    gap: 40px;
+}
+
+.nav-left,
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.nav-link {
+    color: #fff;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    padding: 8px 0;
+    position: relative;
+}
+
+.nav-link:hover {
+    color: #fff;
+    opacity: 0.8;
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: #fff;
+    transition: width 0.3s ease;
+}
+
+.nav-link:hover::after {
+    width: 100%;
+}
+
+.btn-start-fundraiser {
+    background: #fff;
+    color: #05ce78;
+    padding: 10px 20px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    border: 2px solid #fff;
+}
+
+.btn-start-fundraiser:hover {
+    background: transparent;
+    color: #fff;
+    border-color: #fff;
+}
+
+.search-below-header {
+    display: none;
+}
+
+/* Login Container Styles */
+.login-container {
+    max-width: 500px;
+    margin: 40px auto;
+    padding: 40px 20px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.login-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.login-subtitle {
+    color: #666;
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 2rem;
+}
+
+.form-label {
+    display: block;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #fff;
+    color: #333;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #05ce78;
+    box-shadow: 0 0 5px rgba(5, 206, 120, 0.3);
+}
+
+.form-control:hover {
+    border-color: #bbb;
+}
+
+/* Password Input Wrapper */
+.password-input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.password-input {
+    width: 100%;
+    padding-right: 50px !important;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 8px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.password-toggle:hover {
+    color: #05ce78;
+    background: rgba(5, 206, 120, 0.1);
+}
+
+.password-toggle:focus {
+    outline: none;
+    color: #05ce78;
+}
+
+/* Button Styles */
+.btn-theme {
+    background: linear-gradient(135deg, #05ce78 0%, #04a85f 100%);
+    color: #fff;
+    border: none;
+    padding: 15px 30px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    box-shadow: 0 4px 15px rgba(5, 206, 120, 0.3);
+    width: 100%;
+}
+
+.btn-theme:hover {
+    background: linear-gradient(135deg, #04a85f 0%, #038c4f 100%);
+    color: #fff;
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(5, 206, 120, 0.4);
+}
+
+.btn-theme:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: #fff;
+    border: none;
+    padding: 15px 30px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    margin-right: 15px;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+    color: #fff;
+    text-decoration: none;
+    transform: translateY(-2px);
+}
+
+/* Form Check */
+.form-check {
+    display: flex;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.form-check-input {
+    margin-right: 10px;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #e9ecef;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.form-check-input:checked {
+    background-color: #05ce78;
+    border-color: #05ce78;
+}
+
+.form-check-label {
+    color: #666;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+/* Links */
+.forgot-password {
+    text-align: right;
+    margin-bottom: 2rem;
+}
+
+.forgot-password a {
+    color: #05ce78;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.forgot-password a:hover {
+    text-decoration: underline;
+}
+
+.login-footer {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.login-footer a {
+    color: #05ce78;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.login-footer a:hover {
+    text-decoration: underline;
+}
+
+/* Alert Styles */
+.alert {
+    border-radius: 8px;
+    border: none;
+    padding: 15px 20px;
+    margin-bottom: 2rem;
+    font-weight: 500;
+}
+
+.alert-danger {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+.alert-success {
+    background: rgba(5, 206, 120, 0.1);
+    color: #05ce78;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    display: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #fff;
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Success Message */
+.success-message {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.success-icon {
+    font-size: 4rem;
+    color: #05ce78;
+    margin-bottom: 1rem;
+}
+
+.success-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.success-subtitle {
+    color: #666;
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+}
+
+/* Content area styling */
+.content-area {
+    padding: 40px 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.content-area h1 {
+    color: #1a1a1a;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.content-area p {
+    color: #666;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    text-align: center;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Mobile Layout */
+@media (max-width: 768px) {
+    .header {
+        height: auto;
+        padding: 15px 0;
+    }
+
+    /* Mobile logo size */
+    .logo-img {
+        height: 40px !important;
+    }
+
+    /* Hide mobile toggle and menu by default */
+    .mobile-nav-toggle,
+    .mobile-menu {
+        display: none;
+    }
+
+    /* Stack elements vertically on mobile */
+    .row {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .col-md-2,
+    .col-md-8 {
+        width: 100%;
+        max-width: 100%;
+        text-align: center;
+    }
+
+    /* Hide desktop login button on mobile */
+    .col-md-2:last-child {
+        display: none;
+    }
+
+    /* Show mobile menu toggle */
+    .mobile-nav-toggle {
+        display: block;
+        position: absolute;
+        top: 15px;
+        right: 15px;
+    }
+
+    .nav-toggle {
+        display: block;
+        background: none;
+        border: none;
+        color: #fff;
+        font-size: 20px;
+        cursor: pointer;
+        padding: 8px;
+    }
+
+    /* Mobile menu styling */
+    .mobile-menu.active {
+        display: block;
+        margin-top: 15px;
+        text-align: center;
+    }
+
+    /* Adjust search input for mobile */
+    .search-input {
+        font-size: 16px;
+        padding: 12px 45px 12px 16px;
+    }
+
+    /* Login container responsive */
+    .login-container {
+        margin: 20px auto;
+        padding: 30px 20px;
+    }
+
+    .login-title {
+        font-size: 1.5rem;
+    }
+
+    .login-subtitle {
+        font-size: 1rem;
+    }
+
+    .content-area {
+        padding: 30px 16px;
+    }
+
+    .content-area h1 {
+        font-size: 2rem;
+    }
+
+    .content-area p {
+        font-size: 1rem;
+    }
+}
+
+/* Small Mobile Screens */
+@media (max-width: 576px) {
+    .header {
+        padding: 12px 0;
+    }
+
+    .logo-img {
+        height: 35px !important;
+    }
+
+    .nav-toggle {
+        font-size: 18px;
+        padding: 6px;
+    }
+
+    .search-input {
+        font-size: 15px;
+        padding: 10px 40px 10px 14px;
+    }
+}

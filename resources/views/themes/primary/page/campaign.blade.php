@@ -40,17 +40,6 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="post-sidebar__card" data-aos="fade-up" data-aos-duration="1500">
-                            <h3 class="post-sidebar__card__header">@lang('Filter by date')</h3>
-                            <div class="post-sidebar__card__body">
-                                <div class="input--group">
-                                    <input type="text" class="form--control date-picker" placeholder="@lang('Start Date - End Date')" data-language="en" data-range="true" data-multiple-dates-separator=" - " autocomplete="off" id="date-range" value="{{ request('date_range') }}">
-                                    <button class="btn btn--base px-3 filter-by-date">
-                                        <i class="ti ti-search"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
                 <div class="col-lg-8">

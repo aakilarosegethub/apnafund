@@ -38,6 +38,11 @@ return Application::configure(basePath: dirname(__DIR__))
                     ->group(base_path('routes/web.php'));
             });
 
+            // API Routes for Mobile App - Now loaded from web.php
+            // Route::prefix('api')
+            //     ->middleware('api')
+            //     ->group(base_path('routes/api.php'));
+
             Route::get('maintenance-mode','App\Http\Controllers\WebsiteController@maintenance')->name('maintenance');
         },
         web: __DIR__.'/../routes/web.php',
@@ -84,5 +89,33 @@ return Application::configure(basePath: dirname(__DIR__))
         );
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // Handle authentication exceptions for API routes
+        $exceptions->shouldRenderJsonWhen(function ($request, Throwable $e) {
+            if ($e instanceof \Illuminate\Auth\AuthenticationException) {
+                return $request->is('api/*') || $request->expectsJson();
+            }
+            return false;
+        });
+        
+        // Custom handler for authentication exceptions
+        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json([
+                    "ResponseCode" => "401",
+                    "Result" => "false",
+                    "ResponseMsg" => "Unauthenticated! Please provide a valid token."
+                ], 401);
+            }
+            
+            // For web routes, try to redirect to user.login or home
+            try {
+                if (\Route::has('user.login')) {
+                    return redirect()->guest(route('user.login'));
+                }
+            } catch (\Exception $ex) {
+                // Route doesn't exist
+            }
+            
+            return redirect('/');
+        });
     })->create();

@@ -91,7 +91,6 @@
     
     textarea.form-control:focus {
         background: #fff;
-        border-color: #5e72e4;
         box-shadow: 0 0 0 0.2rem rgba(94, 114, 228, 0.25);
     }
 </style>

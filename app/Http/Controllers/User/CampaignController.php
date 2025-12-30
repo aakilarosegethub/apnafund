@@ -10,6 +10,7 @@ use App\Models\Deposit;
 use App\Models\Gallery;
 use App\Models\Campaign;
 use App\Models\Category;
+use App\Models\CampaignFaq;
 use App\Models\AdminNotification;
 use App\Http\Controllers\Controller;
 use App\Services\YouTubeUploadService;
@@ -458,6 +459,8 @@ class CampaignController extends Controller
                 $section = 'payment';
             } elseif (strpos($routeName, 'boost') !== false) {
                 $section = 'boost';
+            } elseif (strpos($routeName, 'faq') !== false) {
+                $section = 'faq';
             } else {
                 $section = 'basics';
             }
@@ -468,7 +471,13 @@ class CampaignController extends Controller
                 $rewards = $campaign->rewards()->orderBy('minimum_amount')->get();
             }
 
-            return view('themes.apnafund.user.campaign.edit', compact('pageTitle', 'categories', 'campaign', 'section', 'rewards'));
+            // Load FAQs if FAQ section
+            $faqs = null;
+            if ($section == 'faq') {
+                $faqs = CampaignFaq::where('campaign_id', $campaign->id)->orderBy('order')->orderBy('id')->get();
+            }
+
+            return view('themes.apnafund.user.campaign.edit', compact('pageTitle', 'categories', 'campaign', 'section', 'rewards', 'faqs'));
         } catch (\Exception $e) {
             $toast[] = ['error', 'Error loading campaign: ' . $e->getMessage()];
             return back()->withToasts($toast);
@@ -947,18 +956,22 @@ class CampaignController extends Controller
         try {
             $request = request();
             
-            if (!$request->hasFile('files')) {
+            // Check for both 'file' (TinyMCE) and 'files' (other editors)
+            $file = null;
+            if ($request->hasFile('file')) {
+                $file = $request->file('file');
+            } elseif ($request->hasFile('files')) {
+                $file = $request->file('files');
+            } else {
                 return response()->json([
                     'success' => false,
                     'message' => 'No image file provided'
                 ], 400);
             }
-
-            $file = $request->file('files');
             
             // Validate file
             $validator = Validator::make(['file' => $file], [
-                'file' => ['required', 'image', 'mimes:jpeg,png,jpg,gif', 'max:5120'] // 5MB max
+                'file' => ['required', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:5120'] // 5MB max
             ]);
 
             if ($validator->fails()) {
@@ -968,13 +981,10 @@ class CampaignController extends Controller
                 ], 400);
             }
 
-            // Generate unique filename
-            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            // Upload file using fileUploader helper
+            $uploadedFile = fileUploader($file, getFilePath('campaign'), getFileSize('campaign'));
             
-            // Upload file
-            $path = fileManager()->uploadFile($file, getFilePath('campaign'), null, $filename);
-            
-            if (!$path) {
+            if (!$uploadedFile) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Failed to upload image'
@@ -982,17 +992,234 @@ class CampaignController extends Controller
             }
 
             // Return success response with image URL for TinyMCE
-            $imageUrl = request()->getSchemeAndHttpHost() . '/assets/universal/images/campaign/' . $filename;
+            $imageUrl = asset(getFilePath('campaign') . '/' . $uploadedFile);
             
             return response()->json([
                 'location' => $imageUrl
             ]);
 
         } catch (Exception $e) {
+            \Log::error('Image upload failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while uploading the image: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    // Handle external image URLs - download and upload to server
+    public function uploadExternalImage() {
+        try {
+            $request = request();
+            $externalUrl = $request->input('external_url');
+            
+            if (!$externalUrl) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No external URL provided'
+                ], 400);
+            }
+
+            // Validate URL
+            if (!filter_var($externalUrl, FILTER_VALIDATE_URL)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid URL provided'
+                ], 400);
+            }
+
+            // Download image from external URL
+            $imageData = @file_get_contents($externalUrl);
+            
+            if ($imageData === false) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to download image from external URL'
+                ], 400);
+            }
+
+            // Get image info
+            $imageInfo = @getimagesizefromstring($imageData);
+            if ($imageInfo === false) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid image file'
+                ], 400);
+            }
+
+            // Determine file extension from MIME type
+            $mimeType = $imageInfo['mime'];
+            $extensions = [
+                'image/jpeg' => 'jpg',
+                'image/png' => 'png',
+                'image/gif' => 'gif',
+                'image/webp' => 'webp'
+            ];
+            
+            $extension = $extensions[$mimeType] ?? 'jpg';
+            
+            // Generate unique filename
+            $filename = time() . '_' . uniqid() . '.' . $extension;
+            
+            // Save to temporary file
+            $tempFile = sys_get_temp_dir() . '/' . $filename;
+            file_put_contents($tempFile, $imageData);
+            
+            // Create UploadedFile instance
+            $uploadedFile = new \Illuminate\Http\UploadedFile(
+                $tempFile,
+                $filename,
+                $mimeType,
+                null,
+                true
+            );
+            
+            // Upload using fileUploader helper
+            $savedFile = fileUploader($uploadedFile, getFilePath('campaign'), getFileSize('campaign'));
+            
+            // Clean up temp file
+            @unlink($tempFile);
+            
+            if (!$savedFile) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to upload image to server'
+                ], 500);
+            }
+
+            // Return success response with image URL
+            $imageUrl = asset(getFilePath('campaign') . '/' . $savedFile);
+            
+            return response()->json([
+                'location' => $imageUrl
+            ]);
+
+        } catch (Exception $e) {
+            \Log::error('External image upload failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'url' => $request->input('external_url')
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while uploading external image: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Store FAQ for campaign
+     */
+    function storeFaq($slug) {
+        $campaign = Campaign::where('slug', $slug)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
+
+        request()->validate([
+            'question' => 'required|string|max:500',
+            'answer' => 'required|string|max:2000',
+            'order' => 'nullable|integer|min:0'
+        ]);
+
+        $faq = new CampaignFaq();
+        $faq->campaign_id = $campaign->id;
+        $faq->question = request('question');
+        $faq->answer = request('answer');
+        $faq->order = request('order', 0);
+        $faq->save();
+
+        if (request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'FAQ added successfully',
+                'faq' => $faq
+            ]);
+        }
+
+        $toast[] = ['success', 'FAQ added successfully'];
+        return back()->withToasts($toast);
+    }
+
+    /**
+     * Update FAQ
+     */
+    function updateFaq($slug, $faqId) {
+        $campaign = Campaign::where('slug', $slug)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
+
+        $faq = CampaignFaq::where('id', $faqId)
+            ->where('campaign_id', $campaign->id)
+            ->firstOrFail();
+
+        request()->validate([
+            'question' => 'required|string|max:500',
+            'answer' => 'required|string|max:2000',
+            'order' => 'nullable|integer|min:0'
+        ]);
+
+        $faq->question = request('question');
+        $faq->answer = request('answer');
+        $faq->order = request('order', 0);
+        $faq->save();
+
+        if (request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'FAQ updated successfully',
+                'faq' => $faq
+            ]);
+        }
+
+        $toast[] = ['success', 'FAQ updated successfully'];
+        return back()->withToasts($toast);
+    }
+
+    /**
+     * Delete FAQ
+     */
+    function deleteFaq($slug, $faqId) {
+        $campaign = Campaign::where('slug', $slug)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
+
+        $faq = CampaignFaq::where('id', $faqId)
+            ->where('campaign_id', $campaign->id)
+            ->firstOrFail();
+
+        $faq->delete();
+
+        if (request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'FAQ deleted successfully'
+            ]);
+        }
+
+        $toast[] = ['success', 'FAQ deleted successfully'];
+        return back()->withToasts($toast);
+    }
+
+    /**
+     * Get FAQ for editing (AJAX)
+     */
+    function getFaq($slug, $faqId) {
+        $campaign = Campaign::where('slug', $slug)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
+
+        $faq = CampaignFaq::where('id', $faqId)
+            ->where('campaign_id', $campaign->id)
+            ->firstOrFail();
+
+        return response()->json([
+            'success' => true,
+            'faq' => $faq
+        ]);
     }
 }

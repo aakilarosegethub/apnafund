@@ -170,12 +170,15 @@
         box-sizing: border-box;
     }
 
-    .form-control:focus {
-        outline: none;
-        border-color: #05ce78;
-        box-shadow: 0 0 0 3px rgba(5, 206, 120, 0.1);
+    .form-control:focus,
+    input.form-control:focus,
+    textarea.form-control:focus,
+    select.form-control:focus {
+        outline: none !important;
+        border-color: transparent !important;
+        box-shadow: 0 0 0 3px rgba(5, 206, 120, 0.1) !important;
         transform: translateY(-2px);
-    }
+    } 
 
     .input-group {
         position: relative;
@@ -200,7 +203,6 @@
     }
 
     .input-group-text:hover {
-        color: #05ce78;
     }
 
     /* Button Styles */
@@ -523,11 +525,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const formInputs = document.querySelectorAll('.form-control');
     formInputs.forEach(input => {
         input.addEventListener('focus', function() {
-            this.style.transform = 'translateY(-2px)';
+            //this.style.transform = 'translateY(-2px)';
         });
         
         input.addEventListener('blur', function() {
-            this.style.transform = 'translateY(0)';
+            //this.style.transform = 'translateY(0)';
         });
     });
 

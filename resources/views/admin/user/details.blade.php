@@ -410,6 +410,48 @@
     </div>
     @endif
 
+    <!-- Password Change Section -->
+    <div class="col-12">
+        <div class="custom--card">
+            <div class="card-header">
+                <h3 class="title">@lang('Change Password')</h3>
+            </div>
+            <form action="{{ route('admin.user.password.change', $user->id) }}" method="POST">
+                @csrf
+                <div class="card-body">
+                    <div class="row gy-3">
+                        <div class="col-md-6">
+                            <div class="row g-2 align-items-center">
+                                <div class="col-lg-4">
+                                    <label class="col-form--label required">@lang('New Password')</label>
+                                </div>
+                                <div class="col-lg-8">
+                                    <input type="password" class="form--control" name="password" id="password" placeholder="@lang('Enter new password')" required minlength="6">
+                                    <small class="text--muted">@lang('Minimum 6 characters')</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="row g-2 align-items-center">
+                                <div class="col-lg-4">
+                                    <label class="col-form--label required">@lang('Confirm Password')</label>
+                                </div>
+                                <div class="col-lg-8">
+                                    <input type="password" class="form--control" name="password_confirmation" id="password_confirmation" placeholder="@lang('Confirm new password')" required minlength="6">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body border-top">
+                    <div class="d-flex justify-content-center">
+                        <button class="btn btn--base px-4" type="submit">@lang('Change Password')</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="col-12">
         <div class="custom--modal modal fade" id="balanceUpdateModal" tabindex="-1" aria-labelledby="balanceUpdateModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">

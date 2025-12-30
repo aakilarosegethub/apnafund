@@ -74,7 +74,7 @@
                                     </a>
                                     <ul class="dropdown-menu">
                                         <li class="dropdown-menu__list">
-                                            <a href="{{ route('user.campaign.create') }}" class="dropdown-menu__link">@lang('Create Campaign')</a>
+                                            <a href="{{ route('start.project') }}" class="dropdown-menu__link">@lang('Create Campaign')</a>
                                         </li>
                                         <li class="dropdown-menu__list">
                                             <a href="{{ route('user.campaign.index') }}" class="dropdown-menu__link">@lang('All Campaigns')</a>

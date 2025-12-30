@@ -4,11 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Donate - Apna Crowdfunding</title>
+    <title>Donate - Apna Fund</title>
     <link rel="stylesheet" href="assets/css/app.css">
     <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="shortcut icon" href="assets/images/fav-icon.png" type="image/png">
+    <link rel="stylesheet" href="styles.css">
     <style>
         body {
             background: #f8f9fa;
@@ -630,14 +631,64 @@
 
 <body>
     <!-- Header -->
-    <header class="main-header">
+    <header class="header">
         <div class="container">
-            <div class="header-content">
-                <a href="gig-showcase.html" class="back-link">
-                    <i class="fas fa-arrow-left"></i>
-                    Fundraiser
-                </a>
-                <a href="#" class="signin-link">Already have an account? Sign in</a>
+            <div class="row align-items-center justify-content-between">
+                <!-- Left: Logo -->
+                <div class="col-12 col-md-2 text-center text-md-start">
+                    <a href="/">
+                        <img src="logo_light (2).png" alt="Apna Fund Logo" class="logo-img">
+                    </a>
+                </div>
+
+                <!-- Center: Search Bar -->
+                <div class="col-12 col-md-8">
+                    <div class="search-container">
+                        <form class="search-box" method="get" action="http://192.168.1.89:8000/campaigns">
+                            <input type="text" class="search-input" name="name" placeholder="Search projects, creators, and categories..." aria-label="Search">
+                            <button class="search-btn" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Right: Buttons -->
+                <div class="col-12 col-md-2 text-center text-md-end">
+                    <a href="http://192.168.1.89:8000/user/login" class="btn btn-outline-light">Creator Login</a>
+                </div>
+            </div>
+
+            <!-- Mobile Navigation Toggle (Hidden on desktop) -->
+            <div class="mobile-nav-toggle">
+                <button class="nav-toggle" id="navToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+
+            <!-- Mobile Menu (Hidden by default) -->
+            <div class="mobile-menu" id="mobileMenu">
+                <div class="mobile-menu-header">
+                    <div class="mobile-logo">
+                        <img src="logo_light (2).png" alt="Apna Fund Logo" class="mobile-logo-img">
+                    </div>
+                    <button class="mobile-close" id="mobileClose">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="mobile-menu-content">
+                    <div class="mobile-nav-links">
+                        <a href="#" class="mobile-nav-link">Discover</a>
+                        <a href="#" class="mobile-nav-link">Categories</a>
+                        <a href="#" class="mobile-nav-link">How it works</a>
+                        <a href="#" class="mobile-nav-link">Sign in</a>
+                    </div>
+                    
+                    <div class="mobile-cta">
+                        <a href="#" class="mobile-start-fundraiser">Start a fundraiser</a>
+                    </div>
+                </div>
             </div>
         </div>
     </header>
@@ -677,9 +728,9 @@
 
             <!-- Tip Section -->
             <div class="tip-section">
-                <h3 class="section-title">Tip Apna Crowdfunding services</h3>
+                <h3 class="section-title">Tip Apna Fund services</h3>
                 <p class="tip-description">
-                    Apna Crowdfunding has a 0% platform fee for organizers. Apna Crowdfunding will continue offering its services thanks
+                    Apna Fund has a 0% platform fee for organizers. Apna Fund will continue offering its services thanks
                     to donors who will leave an optional amount here:
                 </p>
                 <input type="range" class="tip-slider" id="tipSlider" min="0" max="25" value="17.5" step="0.5">
@@ -729,7 +780,7 @@
                 <div class="checkbox-item">
                     <div class="checkbox checked" id="marketingCheckbox"></div>
                     <label class="checkbox-label">
-                        Get occasional marketing updates from Apna Crowdfunding. You may unsubscribe at any time.
+                        Get occasional marketing updates from Apna Fund. You may unsubscribe at any time.
                     </label>
                 </div>
             </div>
@@ -741,7 +792,7 @@
                     <span class="summary-value" id="donationAmount">$0.00</span>
                 </div>
                 <div class="summary-item">
-                    <span class="summary-label">Apna Crowdfunding tip</span>
+                    <span class="summary-label">Apna Fund tip</span>
                     <span class="summary-value" id="tipAmount">$0.00</span>
                 </div>
                 <div class="summary-item summary-total">
@@ -760,7 +811,7 @@
 
             <!-- Legal Text -->
             <p class="legal-text">
-                By clicking 'Google Pay', you agree to Apna Crowdfunding's <a href="terms-conditions.html">Terms of Service</a>
+                By clicking 'Google Pay', you agree to Apna Fund's <a href="terms-conditions.html">Terms of Service</a>
                 and <a href="privacy-policy.html">Privacy Notice</a>. Learn more about <a href="#">pricing and fees</a>.
             </p>
         </div>
@@ -770,10 +821,10 @@
             <div class="protection-icon">
                 <i class="fas fa-shield-alt"></i>
             </div>
-            <h3 class="protection-title">Apna Crowdfunding protects your donation</h3>
+            <h3 class="protection-title">Apna Fund protects your donation</h3>
             <p class="protection-text">
                 We guarantee you a full refund for up to a year in the rare case that fraud occurs. See our <a
-                    href="#">Apna Crowdfunding Giving Guarantee</a>.
+                    href="#">Apna Fund Giving Guarantee</a>.
             </p>
         </div>
     </div>
@@ -866,6 +917,73 @@
 
         // Initialize summary
         updateSummary();
+    </script>
+
+    <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Mobile Navigation Toggle
+        const navToggle = document.getElementById('navToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileClose = document.getElementById('mobileClose');
+        
+        // Open mobile menu
+        if (navToggle && mobileMenu) {
+            navToggle.addEventListener('click', function() {
+                mobileMenu.classList.add('active');
+                document.body.style.overflow = 'hidden'; // Prevent background scrolling
+            });
+        }
+
+        // Close mobile menu
+        if (mobileClose && mobileMenu) {
+            mobileClose.addEventListener('click', function() {
+                mobileMenu.classList.remove('active');
+                document.body.style.overflow = ''; // Restore scrolling
+            });
+        }
+
+        // Close mobile menu when clicking on a navigation link
+        const mobileNavLinks = document.querySelectorAll('.mobile-nav-link, .mobile-start-fundraiser');
+        mobileNavLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                mobileMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        });
+
+        // Close mobile menu when clicking outside (on overlay)
+        if (mobileMenu) {
+            mobileMenu.addEventListener('click', function(event) {
+                if (event.target === mobileMenu) {
+                    mobileMenu.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+        }
+
+        // Close mobile menu with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && mobileMenu.classList.contains('active')) {
+                mobileMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+
+        // Search functionality
+        const searchForms = document.querySelectorAll('.search-box');
+        
+        searchForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const searchInput = form.querySelector('.search-input');
+                if (!searchInput.value.trim()) {
+                    e.preventDefault();
+                    searchInput.focus();
+                    return false;
+                }
+                // Form will submit naturally to the action URL
+            });
+        });
     </script>
 </body>
 

@@ -426,28 +426,7 @@
             <p class="login-subtitle">Welcome back! Please enter your details</p>
         </div>
 
-        <!-- Alert Messages -->
-        @if ($errors->any())
-            <div class="alert alert-danger">
-                <ul class="mb-0" style="margin: 0; padding-left: 20px;">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
-        @if (session('success'))
-            <div class="alert alert-success">
-                {{ session('success') }}
-            </div>
-        @endif
-
-        @if (session('error'))
-            <div class="alert alert-danger">
-                {{ session('error') }}
-            </div>
-        @endif
+        
 
         <!-- Login Form -->
         <form action="{{ route('user.login') }}" method="POST" class="verify-gcaptcha" id="loginForm">

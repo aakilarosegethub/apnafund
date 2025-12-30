@@ -1109,7 +1109,7 @@
                     Call Organizer
                 </a>
                 @endif
-                <a href="#" class="btn-view-profile">
+                <a href="{{ route('creator.profile', $campaign->user->username ?? $campaign->user->id) }}" class="btn-view-profile">
                     <i class="fas fa-user"></i>
                     View Profile
                 </a>

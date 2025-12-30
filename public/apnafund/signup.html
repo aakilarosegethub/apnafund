@@ -4,11 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apna Crowdfunding - Create Project</title>
+    <title>Apna Fund - Create Project</title>
     <link rel="stylesheet" href="assets/css/app.css">
     <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="shortcut icon" href="assets/images/fav-icon.png" type="image/png">
+    <link rel="stylesheet" href="styles.css">
     <style>
         body {
             background: #ffffff;
@@ -155,14 +156,62 @@
 
 <body>
     <!-- Header -->
-    <header class="header py-0">
+    <header class="header">
         <div class="container">
-            <div class="row align-items-center">
-                <div class="col-md-12">
-                    <div class="logo text-center">
-                        <a href="/">
-                            <img src="assets/images/White Logo.png" alt="Apna Crowdfunding Logo" class="logo-img">
-                        </a>
+            <div class="row align-items-center justify-content-between">
+                <!-- Left: Logo -->
+                <div class="col-12 col-md-2 text-center text-md-start">
+                    <a href="/">
+                        <img src="logo_light (2).png" alt="Apna Fund Logo" class="logo-img">
+                    </a>
+                </div>
+
+                <!-- Center: Search Bar -->
+                <div class="col-12 col-md-8">
+                    <div class="search-container">
+                        <form class="search-box" method="get" action="http://192.168.1.89:8000/campaigns">
+                            <input type="text" class="search-input" name="name" placeholder="Search projects, creators, and categories..." aria-label="Search">
+                            <button class="search-btn" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Right: Buttons -->
+                <div class="col-12 col-md-2 text-center text-md-end">
+                    <a href="http://192.168.1.89:8000/user/login" class="btn btn-outline-light">Creator Login</a>
+                </div>
+            </div>
+
+            <!-- Mobile Navigation Toggle (Hidden on desktop) -->
+            <div class="mobile-nav-toggle">
+                <button class="nav-toggle" id="navToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+
+            <!-- Mobile Menu (Hidden by default) -->
+            <div class="mobile-menu" id="mobileMenu">
+                <div class="mobile-menu-header">
+                    <div class="mobile-logo">
+                        <img src="logo_light (2).png" alt="Apna Fund Logo" class="mobile-logo-img">
+                    </div>
+                    <button class="mobile-close" id="mobileClose">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="mobile-menu-content">
+                    <div class="mobile-nav-links">
+                        <a href="#" class="mobile-nav-link">Discover</a>
+                        <a href="#" class="mobile-nav-link">Categories</a>
+                        <a href="#" class="mobile-nav-link">How it works</a>
+                        <a href="#" class="mobile-nav-link">Sign in</a>
+                    </div>
+                    
+                    <div class="mobile-cta">
+                        <a href="#" class="mobile-start-fundraiser">Start a fundraiser</a>
                     </div>
                 </div>
             </div>

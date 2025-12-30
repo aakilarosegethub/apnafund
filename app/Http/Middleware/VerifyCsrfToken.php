@@ -13,6 +13,7 @@ class VerifyCsrfToken extends Middleware
      */
     protected $except = [
         'user/register-business',
-        'api/verify-email'
+        'api/verify-email',
+        'api/*'  // Exclude all API routes from CSRF verification
     ];
 }

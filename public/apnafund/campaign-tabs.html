@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campaign Tabs - Apna Fund</title>
+    <link rel="stylesheet" href="assets/css/app.css">
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="shortcut icon" href="assets/images/fav-icon.png" type="image/png">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            background: #ffffff;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Campaign Tabs */
+        .campaign-tabs {
+            background: #fff;
+            border-bottom: 1px solid #e5e7eb;
+            margin: 30px 0 0 0;
+            width: 100%;
+        }
+
+        .tabs-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .tabs-left {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            flex: 1;
+            overflow-x: visible;
+        }
+
+        .tab-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 12px 16px;
+            color: #666;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        .tab-link:hover {
+            color: #333;
+        }
+
+        .tab-link.active {
+            color: #000;
+            border-bottom-color: #000;
+            font-weight: 600;
+        }
+
+        .tab-badge {
+            background: #05ce78;
+            color: #fff;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 600;
+            margin-left: 4px;
+            line-height: 1.2;
+        }
+
+        .tab-link.active .tab-badge {
+            background: #000;
+        }
+
+        /* Tab Content Sections */
+        .tab-content-section {
+            display: block;
+            margin-top: 30px;
+        }
+
+        .tab-content-section[style*="display: none"] {
+            display: none !important;
+        }
+
+        /* Description */
+        .fundraiser-description {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #555;
+            margin-bottom: 25px;
+        }
+
+        .read-more {
+            color: #05ce78;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .read-more:hover {
+            text-decoration: underline;
+        }
+
+        /* Rewards Section */
+        .rewards-section {
+            width: 100%;
+            margin-bottom: 40px;
+            margin-top: 30px;
+        }
+
+        .rewards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-top: 20px;
+        }
+
+        .reward-card {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border: 1px solid #e5e7eb;
+        }
+
+        .reward-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .reward-image {
+            width: 100%;
+            height: 200px;
+            overflow: hidden;
+            background: #f3f4f6;
+        }
+
+        .reward-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .reward-card:hover .reward-image img {
+            transform: scale(1.05);
+        }
+
+        .reward-details {
+            padding: 20px;
+        }
+
+        .reward-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            gap: 16px;
+        }
+
+        .reward-text-content {
+            flex: 1;
+        }
+
+        .reward-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin: 0 0 8px 0;
+        }
+
+        .reward-price {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #05ce78;
+            margin: 0;
+        }
+
+        .reward-pledge-btn {
+            background: #05ce78;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        .reward-pledge-btn:hover {
+            background: #04a85f;
+            color: #fff;
+            text-decoration: none;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(5, 206, 120, 0.3);
+        }
+
+        .reward-description {
+            font-size: 0.9rem;
+            color: #666;
+            line-height: 1.5;
+            margin: 0 0 16px 0;
+        }
+
+        .reward-info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-top: 16px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .reward-backers,
+        .reward-delivery {
+            font-size: 0.85rem;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .reward-backers i,
+        .reward-delivery i {
+            color: #05ce78;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .tabs-left {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .rewards-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .reward-image {
+                height: 180px;
+            }
+
+            .reward-header-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .reward-pledge-btn {
+                width: 100%;
+                text-align: center;
+                margin-top: 8px;
+            }
+        }
+
+        /* Creator Section */
+        .creator-section {
+            width: 100%;
+            margin: 40px 0;
+        }
+
+        .creator-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+
+        .creator-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e5e7eb;
+        }
+
+        .creator-header {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .creator-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 16px;
+            background: #111;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 3rem;
+            font-weight: 700;
+        }
+
+        .creator-avatar img {
+            width: 70%;
+            height: 70%;
+            object-fit: contain;
+        }
+
+        .creator-info h3 {
+            margin: 0;
+            font-size: 1.6rem;
+            font-weight: 700;
+        }
+
+        .creator-owner {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: #f2f4f7;
+            color: #4b5563;
+            font-size: 0.85rem;
+            margin-top: 8px;
+        }
+
+        .creator-stats {
+            display: flex;
+            gap: 24px;
+            padding: 24px 0;
+            border-top: 1px solid #e5e7eb;
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 24px;
+        }
+
+        .creator-stat-item span {
+            display: block;
+        }
+
+        .creator-stat-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #111;
+        }
+
+        .creator-stat-label {
+            font-size: 0.9rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-top: 4px;
+        }
+
+        .creator-stat-subtext {
+            font-size: 0.85rem;
+            color: #9ca3af;
+        }
+
+        .creator-description {
+            font-size: 1rem;
+            color: #4b5563;
+            margin-bottom: 24px;
+        }
+
+        .creator-actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .creator-button {
+            flex: 1;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            padding: 14px 16px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            background: #fff;
+            color: #4b5563;
+            transition: all 0.2s ease;
+        }
+
+        .creator-button:hover {
+            background: #f9fafb;
+        }
+
+        .creator-button.follow {
+            background: #e5e7eb;
+            border-color: #e5e7eb;
+        }
+
+        .creator-meta {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            font-size: 0.95rem;
+            color: #4b5563;
+        }
+
+        .creator-meta span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .creator-collaborators {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .collaborators-card {
+            padding: 18px;
+            border-radius: 16px;
+            border: 1px solid #e5e7eb;
+            background: #fff;
+        }
+
+        .collaborators-card h4 {
+            margin: 0 0 12px 0;
+            font-size: 1.1rem;
+        }
+
+        .collaborator-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .collaborator-item:first-of-type {
+            border-top: none;
+        }
+
+        .collaborator-avatar {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #111;
+        }
+
+        .collaborator-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .collaborator-info h5 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .collaborator-role {
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+
+        @media (max-width: 992px) {
+            .creator-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .creator-card {
+                padding: 20px;
+            }
+
+            .creator-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .creator-avatar {
+                width: 100px;
+                height: 100px;
+            }
+
+            .creator-actions {
+                flex-direction: column;
+            }
+
+            .creator-button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="row align-items-center justify-content-between">
+                <!-- Left: Logo -->
+                <div class="col-12 col-md-2 text-center text-md-start">
+                    <a href="/">
+                        <img src="logo_light (2).png" alt="Apna Fund Logo" class="logo-img">
+                    </a>
+                </div>
+
+                <!-- Center: Search Bar -->
+                <div class="col-12 col-md-8">
+                    <div class="search-container">
+                        <form class="search-box" method="get" action="http://192.168.1.89:8000/campaigns">
+                            <input type="text" class="search-input" name="name" placeholder="Search projects, creators, and categories..." aria-label="Search">
+                            <button class="search-btn" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Right: Buttons -->
+                <div class="col-12 col-md-2 text-center text-md-end">
+                    <a href="http://192.168.1.89:8000/user/login" class="btn btn-outline-light">Creator Login</a>
+                </div>
+            </div>
+
+            <!-- Mobile Navigation Toggle (Hidden on desktop) -->
+            <div class="mobile-nav-toggle">
+                <button class="nav-toggle" id="navToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+
+            <!-- Mobile Menu (Hidden by default) -->
+            <div class="mobile-menu" id="mobileMenu">
+                <div class="mobile-menu-header">
+                    <div class="mobile-logo">
+                        <img src="logo_light (2).png" alt="Apna Fund Logo" class="mobile-logo-img">
+                    </div>
+                    <button class="mobile-close" id="mobileClose">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="mobile-menu-content">
+                    <div class="mobile-nav-links">
+                        <a href="#" class="mobile-nav-link">Discover</a>
+                        <a href="#" class="mobile-nav-link">Categories</a>
+                        <a href="#" class="mobile-nav-link">How it works</a>
+                        <a href="#" class="mobile-nav-link">Sign in</a>
+                    </div>
+                    
+                    <div class="mobile-cta">
+                        <a href="#" class="mobile-start-fundraiser">Start a fundraiser</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Navigation Tabs -->
+        <div class="campaign-tabs">
+            <nav class="tabs-nav">
+                <div class="tabs-left">
+                    <a href="#campaign" class="tab-link active" data-tab="campaign">Campaign</a>
+                    <a href="#rewards" class="tab-link" data-tab="rewards">Rewards</a>
+                    <a href="#creator" class="tab-link" data-tab="creator">Creator</a>
+                    <a href="#faq" class="tab-link" data-tab="faq">FAQ <span class="tab-badge">15</span></a>
+                    <a href="#comments" class="tab-link" data-tab="comments">Comments <span class="tab-badge">8</span></a>
+                    <a href="#community" class="tab-link" data-tab="community">Community</a>
+                </div>
+            </nav>
+        </div>
+    
+        <!-- Campaign Tab Content -->
+        <div class="fundraiser-description tab-content-section" data-tab-content="campaign">
+            <p>Beloved musician and legendary saxophonist Ron Holloway has been a staple in the DC music scene for
+                over 50 years. He has performed with Warren Haynes Band, Susan Tedeschi, Dizzy Gillespie, Gil
+                Scott-Heron, Root Boy Slim, and many others. In 2014, he formed his own band, The Ron Holloway Band,
+                which has been performing regularly throughout the region.</p>
+    
+            <p>Ron's versatility spans across rock, jam, jazz, bluegrass, and funk genres. His image is immortalized
+                in the D.C. Jazz Heroes Mural in D.C.'s Shaw Neighborhood, a testament to his lasting impact on the
+                local music community.</p>
+    
+            <p>This fundraiser aims to support Ron's medical expenses and ensure he can continue sharing his
+                incredible talent with the world. Your donation will help cover treatment costs and allow him to
+                focus on his recovery while maintaining his musical legacy.</p>
+    
+            <a href="#" class="read-more">Read more</a>
+        </div>
+    
+        <!-- Rewards Tab Content -->
+        <div class="rewards-section tab-content-section" data-tab-content="rewards" style="display: none;">
+            <div class="rewards-grid">
+                <!-- Reward Cards -->
+                <div class="reward-card">
+                    <div class="reward-image">
+                        <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400" alt="Reward 1">
+                    </div>
+                    <div class="reward-details">
+                        <div class="reward-header-row">
+                            <div class="reward-text-content">
+                                <h3 class="reward-title">Premium Support Package</h3>
+                                <p class="reward-price">$50</p>
+                            </div>
+                            <a href="donation-payment.html" class="reward-pledge-btn">Pledge</a>
+                        </div>
+                        <p class="reward-description">Get exclusive updates and priority support for this campaign.</p>
+                        <div class="reward-info">
+                            <span class="reward-backers"><i class="fas fa-users"></i> 125 backers</span>
+                            <span class="reward-delivery"><i class="fas fa-calendar"></i> Feb 2025</span>
+                        </div>
+                    </div>
+                </div>
+    
+                <div class="reward-card">
+                    <div class="reward-image">
+                        <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400" alt="Reward 2">
+                    </div>
+                    <div class="reward-details">
+                        <div class="reward-header-row">
+                            <div class="reward-text-content">
+                                <h3 class="reward-title">Special Edition Package</h3>
+                                <p class="reward-price">$100</p>
+                            </div>
+                            <a href="donation-payment.html" class="reward-pledge-btn">Pledge</a>
+                        </div>
+                        <p class="reward-description">Limited edition items with special recognition.</p>
+                        <div class="reward-info">
+                            <span class="reward-backers"><i class="fas fa-users"></i> 89 backers</span>
+                            <span class="reward-delivery"><i class="fas fa-calendar"></i> Mar 2025</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+        <!-- Creator Tab Content -->
+        <div class="creator-section tab-content-section" data-tab-content="creator" style="display: none;">
+            <div class="creator-grid">
+                <div class="creator-card">
+                    <div class="creator-header">
+                        <div class="creator-avatar">
+                            <img src="https://ksr-ugc.imgix.net/assets/043/042/787/8c0215dfabaa635d20c2e5703bf469c9_original.png?w=120&h=120&fit=crop&v=1699998624&auto=format&frame=1&q=92&s=08a3f7c1d01d150ac60f85bdf34218d6" alt="Fangoria logo">
+                        </div>
+                        <div class="creator-info">
+                            <h3>FANGORIA</h3>
+                            <span class="creator-owner"><i class="fas fa-user-check"></i> Steve Harris</span>
+                        </div>
+                    </div>
+                    <div class="creator-stats">
+                        <div class="creator-stat-item">
+                            <span class="creator-stat-value">1</span>
+                            <span class="creator-stat-label">created project</span>
+                            <span class="creator-stat-subtext">0 backed projects</span>
+                        </div>
+                        <div class="creator-stat-item">
+                            <span class="creator-stat-value">Nov 12 2025</span>
+                            <span class="creator-stat-label">last login</span>
+                        </div>
+                        <div class="creator-stat-item">
+                            <span class="creator-stat-value">Oct 2025</span>
+                            <span class="creator-stat-label">account created</span>
+                        </div>
+                    </div>
+                    <p class="creator-description">
+                        The World's Best Horror and Cult Film Magazine since 1979.
+                    </p>
+                    <div class="creator-actions">
+                        <button class="creator-button">Message</button>
+                        <button class="creator-button follow">Follow</button>
+                    </div>
+                    <div class="creator-meta">
+                        <span><i class="fas fa-globe"></i> fangoria.com</span>
+                        <span><i class="fas fa-map-marker-alt"></i> Las Vegas, NV</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+        <!-- FAQ Tab Content -->
+        <div class="tab-content-section" data-tab-content="faq" style="display: none;">
+            <h3>Frequently Asked Questions</h3>
+            <div class="faq-container">
+                <div class="faq-item">
+                    <div class="faq-question">What is this campaign about?</div>
+                    <div class="faq-answer">This campaign is to fund a special edition sci-fi and fantasy anthology featuring multiple authors.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">When will the rewards be shipped?</div>
+                    <div class="faq-answer">Rewards are expected to ship within 2-3 months after the campaign ends.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">Can I change my pledge?</div>
+                    <div class="faq-answer">Yes, you can increase or decrease your pledge anytime before the campaign ends.</div>
+                </div>
+            </div>
+        </div>
+    
+        <!-- Updates Tab Content -->
+        <div class="tab-content-section" data-tab-content="updates" style="display: none;">
+            <h3>Campaign Updates</h3>
+            <div class="updates-container">
+                <div class="update-item">
+                    <strong>Nov 16, 2025:</strong> Added new story contributions from guest authors.
+                </div>
+                <div class="update-item">
+                    <strong>Nov 14, 2025:</strong> Campaign reached 50% of funding goal.
+                </div>
+            </div>
+        </div>
+    
+        <!-- Comments Tab Content -->
+        <div class="tab-content-section" data-tab-content="comments" style="display: none;">
+            <h3>Comments</h3>
+            <div class="comments-container">
+                <div class="comment-card">
+                    <div class="comment-header">
+                        <div class="comment-avatar">AJ</div>
+                        <div class="comment-meta">
+                            <span class="comment-username">Alex Johnson</span>
+                            <span class="comment-date">Nov 15, 2025</span>
+                        </div>
+                    </div>
+                    <div class="comment-body">
+                        <p>This is an awesome campaign! Really hope it reaches the goal soon. Keep up the great work.</p>
+                    </div>
+                    <div class="comment-actions">
+                        <button class="reply-btn">Reply</button>
+                        <button class="like-btn">Like</button>
+                    </div>
+                </div>
+    
+                <div class="comment-card">
+                    <div class="comment-header">
+                        <div class="comment-avatar">MS</div>
+                        <div class="comment-meta">
+                            <span class="comment-username">Mary Smith</span>
+                            <span class="comment-date">Nov 14, 2025</span>
+                        </div>
+                    </div>
+                    <div class="comment-body">
+                        <p>I pledged! Can't wait to see how this turns out. Best of luck to you.</p>
+                    </div>
+                    <div class="comment-actions">
+                        <button class="reply-btn">Reply</button>
+                        <button class="like-btn">Like</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+        <!-- Community Tab Content -->
+        <div class="tab-content-section" data-tab-content="community" style="display: none;">
+            <h3>Community</h3>
+            <p>Community section will be displayed here.</p>
+        </div>
+    </div>
+    
+    <style>
+        /* Tabs */
+        .tab-content-section { margin-top: 20px; }
+        .tabs-nav a.active { font-weight: bold; color: #05ce78; }
+    
+        /* FAQ */
+        .faq-item { border-bottom: 1px solid #e5e7eb; padding: 10px 0; cursor: pointer; }
+        .faq-question { font-weight: 600; }
+        .faq-answer { display: none; margin-top: 6px; color: #374151; }
+    
+        /* Comments */
+        .comments-container { display: flex; flex-direction: column; gap: 16px; }
+        .comment-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 16px; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+        .comment-header { display: flex; align-items: center; margin-bottom: 8px; }
+        .comment-avatar { width: 32px; height: 32px; background: #05ce78; color: white; font-weight: bold; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 12px; }
+        .comment-meta { display: flex; flex-direction: column; }
+        .comment-username { font-size: 1rem; font-weight: 600; }
+        .comment-date { font-size: 0.85rem; color: #6b7280; }
+        .comment-body p { margin: 0; font-size: 0.95rem; color: #333; line-height: 1.4; }
+        .comment-actions { margin-top: 8px; display: flex; gap: 12px; }
+        .reply-btn, .like-btn { background: none; border: none; color: #05ce78; font-weight: 600; cursor: pointer; padding: 0; }
+        .reply-btn:hover, .like-btn:hover { text-decoration: underline; }
+    </style>
+    
+    <script>
+        // FAQ toggle
+        document.querySelectorAll('.faq-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const answer = item.querySelector('.faq-answer');
+                answer.style.display = answer.style.display === 'block' ? 'none' : 'block';
+            });
+        });
+    
+        // Comment buttons
+        document.querySelectorAll('.reply-btn').forEach(btn => {
+            btn.addEventListener('click', () => alert('Reply clicked!'));
+        });
+        document.querySelectorAll('.like-btn').forEach(btn => {
+            btn.addEventListener('click', () => alert('Like clicked!'));
+        });
+    </script>
+    
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Donate</h4>
+                    <ul>
+                        <li><a href="#">Categories</a></li>
+                        <li><a href="#">Crisis relief</a></li>
+                        <li><a href="#">Social Impact Funds</a></li>
+                        <li><a href="#">Supporter Space</a></li>
+                        <li><a href="#">Nonprofits</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Fundraise</h4>
+                    <ul>
+                        <li><a href="#">How to start a fundraiser</a></li>
+                        <li><a href="#">Fundraising categories</a></li>
+                        <li><a href="#">Team fundraising</a></li>
+                        <li><a href="#">Fundraising Blog</a></li>
+                        <li><a href="#">Charity fundraising</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h4>About</h4>
+                    <ul>
+                        <li><a href="#">How Apna Fund works</a></li>
+                        <li><a href="#">Apna Fund Giving Guarantee</a></li>
+                        <li><a href="#">Supported countries</a></li>
+                        <li><a href="#">Pricing</a></li>
+                        <li><a href="#">Help Center</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Resources</h4>
+                    <ul>
+                        <li><a href="#">Newsroom</a></li>
+                        <li><a href="#">Careers</a></li>
+                        <li><a href="#">Apna Fund.org</a></li>
+                        <li><a href="#">Partnerships</a></li>
+                        <li><a href="#">Pro for nonprofits</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2010-2025 Apna Fund. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Mobile Navigation Toggle
+        const navToggle = document.getElementById('navToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileClose = document.getElementById('mobileClose');
+        
+        // Open mobile menu
+        if (navToggle && mobileMenu) {
+            navToggle.addEventListener('click', function() {
+                mobileMenu.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            });
+        }
+
+        // Close mobile menu
+        if (mobileClose && mobileMenu) {
+            mobileClose.addEventListener('click', function() {
+                mobileMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        }
+
+        // Close mobile menu when clicking outside
+        if (mobileMenu) {
+            mobileMenu.addEventListener('click', function(e) {
+                if (e.target === mobileMenu) {
+                    mobileMenu.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+        }
+
+        // Tab Navigation Functionality
+        const tabLinks = document.querySelectorAll('.tab-link');
+        const tabContentSections = document.querySelectorAll('.tab-content-section');
+        
+        tabLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Remove active class from all tabs
+                tabLinks.forEach(tab => tab.classList.remove('active'));
+                
+                // Add active class to clicked tab
+                this.classList.add('active');
+                
+                // Get the tab name
+                const tabName = this.getAttribute('data-tab');
+                
+                // Hide all tab content sections
+                tabContentSections.forEach(section => {
+                    section.style.display = 'none';
+                });
+                
+                // Show the selected tab content
+                const selectedSection = document.querySelector(`.tab-content-section[data-tab-content="${tabName}"]`);
+                if (selectedSection) {
+                    selectedSection.style.display = 'block';
+                }
+            });
+        });
+        
+        // Show campaign content by default
+        const defaultTab = document.querySelector('[data-tab-content="campaign"]');
+        if (defaultTab) {
+            defaultTab.style.display = 'block';
+        }
+    </script>
+</body>
+
+</html>
+

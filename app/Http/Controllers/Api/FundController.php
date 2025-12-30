@@ -15,15 +15,17 @@ class FundController extends BaseApiController
     {
         $data = $this->getRequestData($request);
 
-        if (empty($data['uid'])) {
+        // Get user ID from authenticated user (token required)
+        $uid = $this->getUserId($request);
+        
+        if (empty($uid)) {
             return response()->json([
                 "ResponseCode" => "401",
                 "Result" => "false",
-                "ResponseMsg" => "Something Went Wrong!"
+                "ResponseMsg" => "Unauthenticated! Please provide a valid token."
             ], 401);
         }
 
-        $uid = $data['uid'];
         $status = $data['status'] ?? 'Pending';
 
         // Map old status values to campaigns table status
@@ -144,7 +146,13 @@ class FundController extends BaseApiController
     {
         $data = $this->getRequestData($request);
 
-        if (empty($data['uid']) || empty($data['fund_id'])) {
+        // Get user ID from authenticated user (token only)
+        $uid = null;
+        if (auth()->check()) {
+            $uid = auth()->user()->id;
+        }
+        
+        if (empty($data['fund_id'])) {
             return response()->json([
                 "ResponseCode" => "401",
                 "Result" => "false",
@@ -152,9 +160,17 @@ class FundController extends BaseApiController
             ], 401);
         }
 
-        $uid = $data['uid'];
         $fund_id = $data['fund_id'];
         $status = $data['status'] ?? 'Home';
+
+        // If status is not 'Home', require authentication
+        if ($status != 'Home' && empty($uid)) {
+            return response()->json([
+                "ResponseCode" => "401",
+                "Result" => "false",
+                "ResponseMsg" => "Unauthorized! Please login first."
+            ], 401);
+        }
 
         // Use campaigns table instead of tbl_fund
         if ($status == 'Home') {
@@ -244,13 +260,13 @@ class FundController extends BaseApiController
         if ($up) {
             while ($updateRow = $up->fetch_assoc()) {
                 if (!$updateRow) break;
-                $ko = [
+            $ko = [
                     "id" => $updateRow["id"],
                     "photo" => empty($updateRow["photo"]) ? [] : (is_string($updateRow["photo"]) ? explode('$;', $updateRow["photo"]) : (is_array($updateRow["photo"]) ? $updateRow["photo"] : [])),
                     "update_desc" => $updateRow["update_desc"] ?? '',
                     "update_date" => $updateRow["update_date"] ?? ''
-                ];
-                $lop[] = $ko;
+            ];
+            $lop[] = $ko;
             }
         }
 
@@ -290,7 +306,20 @@ class FundController extends BaseApiController
         $fund_plan = strip_tags($this->h->real_string($request->input('fund_plan', '')));
         $status = $request->input('status', 'Pending');
         $charity_id = $request->input('charity_id', '');
-        $uid = $request->input('uid');
+        
+        // Get user ID from authenticated user (token only)
+        $uid = null;
+        if (auth()->check()) {
+            $uid = auth()->user()->id;
+        }
+        
+        if (empty($uid)) {
+            return response()->json([
+                "ResponseCode" => "401",
+                "Result" => "false",
+                "ResponseMsg" => "Unauthorized! Please login first. Token required."
+            ], 401);
+        }
 
         $fundsize = (int) $request->input('fundsize', 0);
         $petientsize = (int) $request->input('petientsize', 0);
@@ -372,7 +401,7 @@ class FundController extends BaseApiController
     {
         $data = $this->getRequestData($request);
 
-        if (empty($data['cat_id']) || empty($data['uid'])) {
+        if (empty($data['cat_id'])) {
             return response()->json([
                 "ResponseCode" => "401",
                 "Result" => "false",
@@ -380,22 +409,64 @@ class FundController extends BaseApiController
             ], 401);
         }
 
-        $cat_id = $data['cat_id'];
-        $uid = $data['uid'];
+        $cat_id = (int)$data['cat_id'];
         $timestamp = date("Y-m-d");
 
+        // Use campaigns table instead of tbl_fund
+        // campaigns table: status = 1 (approved), status = 2 (pending), status = 0 (rejected)
+        // For public API, show only approved campaigns (status = 1)
         if ($cat_id != 0) {
-            $sel = $this->h->queryfire("select * from tbl_fund where cat_id=" . $cat_id . " and fund_status='Pending'");
+            $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE category_id=" . $cat_id . " AND status = 1 AND (end_date IS NULL OR end_date >= '" . $timestamp . "') ORDER BY id DESC");
         } else {
-            $sel = $this->h->queryfire("select * from tbl_fund where fund_status='Pending'");
+            $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE status = 1 AND (end_date IS NULL OR end_date >= '" . $timestamp . "') ORDER BY id DESC");
+        }
+
+        // Check if query was successful
+        if (!$sel) {
+            return response()->json([
+                "ResponseCode" => "200",
+                "Result" => "true",
+                "ResponseMsg" => "Home Data Get Successfully!!!",
+                "catwisefund" => []
+            ]);
         }
 
         $cp = [];
         while ($rows = $sel->fetch_assoc()) {
-            if (empty($rows['exp_date']) || $timestamp <= $rows['exp_date']) {
-                $fundData = $this->getFundData($rows);
-                $cp[] = $fundData;
-            }
+            if (!$rows) break;
+            
+            // Get total deposits for this campaign
+            $depositResult = $this->h->queryfire("SELECT COALESCE(SUM(amount), 0) AS total_deposite FROM deposits WHERE campaign_id=" . (int)$rows["id"] . " AND status = 1");
+            $getd = $depositResult ? $depositResult->fetch_assoc() : null;
+            $total_deposite = $getd ? ($getd['total_deposite'] ?? 0) : ($rows['raised_amount'] ?? 0);
+            $goal_amount = $rows['goal_amount'] ?? $rows['target_amount'] ?? 0;
+            
+            // Map campaigns table fields to old API format
+            $fundData = [
+                'id' => $rows['id'],
+                'cat_id' => $rows['category_id'] ?? 0,
+                'title' => $rows['name'] ?? '',
+                'fund_for' => $rows['fund_for'] ?? '',
+                'fund_photos' => $rows['gallery'] ?? '',
+                'exp_date' => $rows['end_date'] ?? '',
+                'fund_amt' => $goal_amount,
+                'fund_story' => $rows['description'] ?? '',
+                'full_address' => $rows['location'] ?? '',
+                'lats' => $rows['latitude'] ?? '',
+                'longs' => $rows['longitude'] ?? '',
+                'fund_date' => $rows['start_date'] ?? $rows['created_at'] ?? '',
+                'patient_photo' => $rows['image'] ?? '',
+                'patient_title' => '',
+                'patient_diagnosis' => '',
+                'fund_plan' => '',
+                'medical_certificate' => '',
+                'reject_comment' => $rows['reject_reason'] ?? '',
+                'fund_status' => $this->mapCampaignStatus($rows['status'] ?? 1, $rows['end_date'] ?? null, $total_deposite, $goal_amount),
+                'total_investment' => $total_deposite,
+                'remain_amt' => max(0, $goal_amount - $total_deposite)
+            ];
+            
+            $cp[] = $fundData;
         }
 
         return response()->json([
@@ -421,18 +492,66 @@ class FundController extends BaseApiController
             ], 401);
         }
 
-        $cid = $this->h->real_string($data['keyword']);
+        $keyword = $this->h->real_string($data['keyword']);
         $timestamp = date("Y-m-d");
 
-        $selpop = $this->h->queryfire("SELECT id , cat_id , title , fund_for , fund_photos , exp_date , fund_amt,fund_story,full_address,lats,longs,
-            fund_date,patient_photo,patient_title,patient_diagnosis,fund_plan,medical_certificate,reject_comment,fund_status
-            FROM `tbl_fund`
-            WHERE fund_status = 'Pending'
-            AND (exp_date IS NULL OR exp_date > $timestamp) and title COLLATE utf8mb4_general_ci like '%" . $cid . "%'");
+        // Search in campaigns table
+        // campaigns table: status = 1 (approved), status = 2 (pending), status = 0 (rejected)
+        // Search in name (title), description (fund_story), and location fields
+        $keywordEscaped = $this->h->real_string($keyword); // Already escaped by real_string
+        $selpop = $this->h->queryfire("SELECT * FROM campaigns 
+            WHERE status = 1 
+            AND (end_date IS NULL OR end_date >= '" . $timestamp . "')
+            AND (
+                name LIKE '%" . $keywordEscaped . "%' 
+                OR description LIKE '%" . $keywordEscaped . "%'
+                OR location LIKE '%" . $keywordEscaped . "%'
+            )
+            ORDER BY id DESC");
+
+        // Check if query was successful
+        if (!$selpop) {
+            return response()->json([
+                "ResponseCode" => "200",
+                "Result" => "true",
+                "ResponseMsg" => "Fund Data Get Successfully!!!",
+                "fundlist" => []
+            ]);
+        }
 
         $listnearby = [];
         while ($pop = $selpop->fetch_assoc()) {
-            $fundData = $this->getFundData($pop);
+            if (!$pop) break;
+            
+            // Get total deposits for this campaign
+            $depositResult = $this->h->queryfire("SELECT COALESCE(SUM(amount), 0) AS total_deposite FROM deposits WHERE campaign_id=" . (int)$pop["id"] . " AND status = 1");
+            $getd = $depositResult ? $depositResult->fetch_assoc() : null;
+            $total_deposite = $getd ? ($getd['total_deposite'] ?? 0) : ($pop['raised_amount'] ?? 0);
+            $goal_amount = $pop['goal_amount'] ?? $pop['target_amount'] ?? 0;
+            
+            // Map campaigns table fields to old API format
+            $fundData = [
+                'id' => $pop['id'],
+                'cat_id' => $pop['category_id'] ?? 0,
+                'title' => $pop['name'] ?? '',
+                'fund_for' => $pop['fund_for'] ?? '',
+                'fund_photos' => $pop['gallery'] ?? '',
+                'exp_date' => $pop['end_date'] ?? '',
+                'fund_amt' => $goal_amount,
+                'fund_story' => $pop['description'] ?? '',
+                'full_address' => $pop['location'] ?? '',
+                'lats' => $pop['latitude'] ?? '',
+                'longs' => $pop['longitude'] ?? '',
+                'fund_date' => $pop['start_date'] ?? $pop['created_at'] ?? '',
+                'patient_photo' => $pop['image'] ?? '',
+                'patient_title' => '',
+                'patient_diagnosis' => '',
+                'fund_plan' => '',
+                'medical_certificate' => '',
+                'reject_comment' => $pop['reject_reason'] ?? '',
+                'fund_status' => $this->mapCampaignStatus($pop['status'] ?? 2, $pop['end_date'] ?? null, $total_deposite, $goal_amount)
+            ];
+            
             $listnearby[] = $fundData;
         }
 

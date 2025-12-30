@@ -4,11 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Play It Forward: The Ron Holloway Fund - Apna Crowdfunding</title>
+    <title>Play It Forward: The Ron Holloway Fund - Apna Fund</title>
     <link rel="stylesheet" href="assets/css/app.css">
     <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="shortcut icon" href="assets/images/fav-icon.png" type="image/png">
+    <link rel="stylesheet" href="styles.css">
     <style>
         body {
             background: #ffffff;
@@ -83,9 +84,12 @@
 
         /* Hide mobile elements on desktop */
         .header-left,
-        .header-right {
+        .header-right,
+        .mobile-search-section {
             display: none;
         }
+
+
 
 
         .search-container {
@@ -421,6 +425,179 @@
             margin-bottom: 20px;
         }
 
+        /* Campaign Tabs */
+        .campaign-tabs {
+            background: #fff;
+            border-bottom: 1px solid #e5e7eb;
+            margin: 30px 0 0 0;
+            width: 100%;
+        }
+
+        .tabs-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .tabs-left {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            flex: 1;
+            overflow-x: visible;
+        }
+
+        .tabs-right {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-left: 106px;
+            padding-right: 0;
+        }
+
+        /* Back This Project Button */
+        .back-project-btn {
+            display: inline-block;
+            background: #05ce78;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+
+        .back-project-btn:hover {
+            background: #04a85f;
+            color: #fff;
+            text-decoration: none;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(5, 206, 120, 0.3);
+        }
+
+        .tab-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 12px 16px;
+            color: #666;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        .tab-link:hover {
+            color: #333;
+        }
+
+        .tab-link.active {
+            color: #000;
+            border-bottom-color: #000;
+            font-weight: 600;
+        }
+
+        .tab-badge {
+            background: #05ce78;
+            color: #fff;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 600;
+            margin-left: 4px;
+            line-height: 1.2;
+        }
+
+        .tab-link.active .tab-badge {
+            background: #000;
+        }
+
+        /* Remind Me Link */
+        .remind-me-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #666;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            padding: 8px 12px;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .remind-me-link:hover {
+            color: #333;
+        }
+
+        .remind-me-link i {
+            font-size: 0.9rem;
+        }
+
+        .remind-me-link.saved {
+            color: #05ce78;
+        }
+
+        .remind-me-link.saved i {
+            color: #05ce78;
+        }
+
+        @media (max-width: 768px) {
+            .campaign-tabs {
+                margin: 20px 0 0 0;
+            }
+
+            .tabs-nav {
+                padding: 0 16px;
+                flex-wrap: wrap;
+            }
+
+            .tabs-left {
+                width: 100%;
+                order: 1;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .tabs-right {
+                margin-left: 0;
+                margin-top: 10px;
+                order: 2;
+                gap: 16px;
+                flex-wrap: wrap;
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .back-project-btn {
+                padding: 8px 16px;
+                font-size: 0.85rem;
+            }
+
+            .tab-link {
+                padding: 10px 12px;
+                font-size: 0.85rem;
+            }
+
+            .tab-badge {
+                font-size: 0.65rem;
+                padding: 1px 5px;
+            }
+
+            .remind-me-link {
+                font-size: 0.85rem;
+                padding: 6px 10px;
+            }
+        }
+
         /* Description */
         .fundraiser-description {
             font-size: 1.1rem;
@@ -501,6 +678,701 @@
             background: #f8f9fa;
             color: #333;
             text-decoration: none;
+        }
+
+        /* Tab Content Sections */
+        .tab-content-section {
+            display: block;
+        }
+
+        .tab-content-section[style*="display: none"] {
+            display: none !important;
+        }
+
+        /* Rewards Section */
+        .rewards-section {
+            width: 100%;
+            margin-bottom: 40px;
+            margin-top: 30px;
+        }
+
+        .rewards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-top: 20px;
+        }
+
+        .reward-card {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border: 1px solid #e5e7eb;
+        }
+
+        .reward-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .reward-image {
+            width: 100%;
+            height: 200px;
+            overflow: hidden;
+            background: #f3f4f6;
+        }
+
+        .reward-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .reward-card:hover .reward-image img {
+            transform: scale(1.05);
+        }
+
+        .reward-details {
+            padding: 20px;
+        }
+
+        .reward-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            gap: 16px;
+        }
+
+        .reward-text-content {
+            flex: 1;
+        }
+
+        .reward-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin: 0 0 8px 0;
+        }
+
+        .reward-price {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #05ce78;
+            margin: 0;
+        }
+
+        .reward-pledge-btn {
+            background: #05ce78;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        .reward-pledge-btn:hover {
+            background: #04a85f;
+            color: #fff;
+            text-decoration: none;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(5, 206, 120, 0.3);
+        }
+
+        .reward-description {
+            font-size: 0.9rem;
+            color: #666;
+            line-height: 1.5;
+            margin: 0 0 16px 0;
+        }
+
+        .reward-info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-top: 16px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .reward-backers,
+        .reward-delivery {
+            font-size: 0.85rem;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .reward-backers i,
+        .reward-delivery i {
+            color: #05ce78;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .rewards-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .reward-image {
+                height: 180px;
+            }
+
+            .reward-header-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .reward-pledge-btn {
+                width: 100%;
+                text-align: center;
+                margin-top: 8px;
+            }
+        }
+
+        .rewards-container {
+            display: grid;
+            grid-template-columns: 300px 1fr 360px;
+            gap: 32px;
+            max-width: 100%;
+        }
+
+        /* Left Sidebar: Rewards List */
+        .rewards-list-sidebar {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e5e7eb;
+            max-height: 900px;
+            overflow-y: auto;
+        }
+
+        .rewards-sidebar-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        .rewards-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .reward-list-item {
+            padding: 16px;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: #f9fafb;
+        }
+
+        .reward-list-item:hover {
+            background: #f3f4f6;
+            border-color: #e5e7eb;
+        }
+
+        .reward-list-item.active {
+            background: #fff;
+            border-color: #05ce78;
+            border-left: 5px solid #05ce78;
+            box-shadow: 0 2px 12px rgba(5, 206, 120, 0.2);
+            position: relative;
+        }
+        
+        .reward-list-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 5px;
+            background: #05ce78;
+            border-radius: 0 2px 2px 0;
+        }
+
+        .reward-list-content {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .reward-list-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .reward-list-price {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #000;
+        }
+
+        .reward-list-items {
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+
+        /* Middle Section: Featured Product */
+        .reward-featured-section {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .reward-featured-banner {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            background: #1a1a1a;
+            color: #fff;
+            padding: 24px 32px;
+            border-radius: 12px;
+            margin-bottom: 0;
+        }
+
+        .reward-banner-left {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .reward-kit-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .reward-banner-badge {
+            background: #05ce78;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            display: inline-block;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .reward-banner-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .reward-free-badge {
+            background: #05ce78;
+            color: #fff;
+            padding: 16px 20px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-width: 100px;
+            min-height: 100px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(5, 206, 120, 0.3);
+        }
+
+        .free-badge-text {
+            font-size: 0.75rem;
+            font-weight: 700;
+            line-height: 1.2;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .free-badge-icon {
+            font-size: 1.5rem;
+            margin-top: 4px;
+        }
+
+        .reward-featured-image {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 16px 0;
+            width: 100%;
+            min-height: 600px;
+        }
+
+        .reward-main-image {
+            width: 100%;
+            height: auto;
+            min-height: 600px;
+            display: block;
+            object-fit: cover;
+        }
+
+        .reward-image-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 40px 50px;
+            pointer-events: none;
+        }
+
+        .reward-overlay-left {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .reward-overlay-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .reward-banner-badge-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .reward-blackfriday-text {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        .reward-popular-badge {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #05ce78;
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
+        .reward-featured-details {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e5e7eb;
+            margin-top: 16px;
+        }
+
+        .reward-featured-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f3f4f6;
+            color: #6b7280;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .reward-featured-badge i {
+            color: #9333ea;
+            font-size: 1rem;
+        }
+
+        .reward-title-price-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+            gap: 20px;
+        }
+
+        .reward-featured-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0;
+            color: #000;
+            flex: 1;
+        }
+
+        .reward-featured-price {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            align-items: flex-end;
+        }
+
+        .reward-price-main {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #000;
+            line-height: 1;
+        }
+
+        .reward-price-sub {
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+
+        .reward-featured-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .reward-stats-column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .reward-stat-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .reward-stat-label {
+            font-size: 0.9rem;
+            color: #000;
+            font-weight: 500;
+        }
+
+        .reward-stat-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #000;
+        }
+
+        .reward-stat-value-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .reward-stat-avatars {
+            display: flex;
+            gap: -6px;
+        }
+
+        .reward-avatar-small {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #05ce78;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 2px solid #fff;
+            margin-left: -6px;
+        }
+
+        .reward-avatar-small:first-child {
+            margin-left: 0;
+        }
+
+        /* Right Sidebar: Product Details */
+        .reward-details-sidebar {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e5e7eb;
+            max-height: 800px;
+            overflow-y: auto;
+        }
+
+        .reward-description-text {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #333;
+            margin-bottom: 16px;
+        }
+
+        .reward-includes-summary {
+            font-size: 0.9rem;
+            color: #555;
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+
+        .reward-imperial-sizing {
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-bottom: 24px;
+        }
+
+        .reward-items-count {
+            margin-bottom: 16px;
+        }
+
+        .reward-items-count h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #000;
+            margin: 0;
+        }
+
+        .reward-items-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .reward-item-detail {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #f9fafb;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .reward-item-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .reward-item-name {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+        }
+
+        .reward-item-quantity {
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+
+        .reward-item-image {
+            width: 80px;
+            height: 80px;
+            flex-shrink: 0;
+        }
+
+        .reward-item-img-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Responsive Design for Rewards */
+        @media (max-width: 1200px) {
+            .rewards-container {
+                grid-template-columns: 260px 1fr 320px;
+                gap: 24px;
+            }
+            
+            .reward-featured-image {
+                padding: 50px 60px;
+                min-height: 450px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .rewards-container {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+
+            .rewards-list-sidebar {
+                max-height: 400px;
+            }
+
+            .reward-details-sidebar {
+                max-height: 500px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .reward-featured-banner {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .reward-kit-title {
+                font-size: 1.5rem;
+            }
+
+            .reward-free-badge {
+                min-width: 60px;
+                min-height: 60px;
+            }
+
+            .reward-featured-image {
+                padding: 40px 30px;
+                min-height: 350px;
+            }
+            
+            .reward-cable-item {
+                width: 100px;
+                height: 10px;
+            }
+            
+            .reward-cable-item:nth-child(1) {
+                width: 150px;
+                height: 12px;
+            }
+            
+            .reward-cable-item:nth-child(2) {
+                width: 130px;
+                height: 10px;
+            }
+            
+            .reward-cable-item:nth-child(3) {
+                width: 120px;
+                height: 10px;
+            }
+            
+            .reward-cable-item:nth-child(4) {
+                width: 100px;
+                height: 8px;
+            }
+            
+            .reward-cable-item:nth-child(5) {
+                width: 90px;
+                height: 8px;
+            }
+            
+            .reward-cable-item:nth-child(6) {
+                width: 85px;
+                height: 8px;
+            }
+            
+            .reward-cable-item:nth-child(7) {
+                width: 80px;
+                height: 6px;
+            }
+
+            .reward-price-main {
+                font-size: 1.5rem;
+            }
         }
 
         /* Sidebar - GoFundMe Style */
@@ -1468,45 +2340,156 @@
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
+                flex-wrap: wrap;
             }
 
-            /* Mobile Search Icon - Left */
+            /* GoFundMe Style Layout */
+            
+            /* Logo - Left (where search icon was) */
             .header-left {
                 flex: 0 0 auto;
                 display: flex;
+                order: 1;
+                justify-content: flex-start;
+                align-items: center;
             }
 
-            .search-icon-btn {
-                background: none;
-                border: none;
-                color: #fff;
-                font-size: 18px;
-                cursor: pointer;
-                padding: 6px;
-                border-radius: 6px;
-                transition: all 0.3s ease;
-            }
-
-            .search-icon-btn:hover {
-                background: rgba(255, 255, 255, 0.1);
-                color: #fff;
-            }
-
-            /* Mobile Logo - Center */
             .main-header .logo {
-                position: absolute;
-                left: 50%;
-                transform: translateX(-50%);
+                position: static;
+                transform: none;
+                margin: 0;
+                padding: 0;
             }
 
             .main-header .logo-img {
-                height: 28px;
+                height: 32px;
+                width: auto;
             }
 
-            /* Mobile Hamburger - Right */
+            /* Center - Empty space */
+            .header-center-empty {
+                flex: 1;
+                order: 2;
+            }
+
+            /* Search Section Below Header */
+            .search-below-header {
+                background: #05ce78;
+                padding: 12px 16px 16px 16px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .search-below-header .search-container {
+                position: relative;
+                width: 100%;
+                max-width: 100%;
+            }
+
+            .search-below-header .search-input {
+                width: 100%;
+                padding: 12px 45px 12px 16px;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                border-radius: 25px;
+                font-size: 16px;
+                background: rgba(255, 255, 255, 0.15);
+                color: #fff;
+                backdrop-filter: blur(10px);
+                outline: none;
+                transition: all 0.3s ease;
+            }
+
+            .search-below-header .search-input::placeholder {
+                color: rgba(255, 255, 255, 0.7);
+                font-size: 16px;
+            }
+
+            .search-below-header .search-input:focus {
+                background: rgba(255, 255, 255, 0.25);
+                border-color: rgba(255, 255, 255, 0.6);
+                box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+            }
+
+            .search-below-header .search-btn {
+                position: absolute;
+                right: 12px;
+                top: 50%;
+                transform: translateY(-50%);
+                background: none;
+                border: none;
+                color: rgba(255, 255, 255, 0.8);
+                font-size: 18px;
+                cursor: pointer;
+                padding: 8px;
+                border-radius: 50%;
+                transition: all 0.3s ease;
+            }
+
+            .search-below-header .search-btn:hover {
+                color: #fff;
+                background: rgba(255, 255, 255, 0.1);
+            }
+
+            /* Hamburger - Right */
             .header-right {
                 flex: 0 0 auto;
                 display: flex;
+                order: 3;
+            }
+
+            /* Search Input - Below header elements, full width */
+            .mobile-search-section {
+                order: 4;
+                width: 100%;
+                margin-top: 16px;
+                padding: 0;
+            }
+
+            .mobile-search-section .search-container {
+                position: relative;
+                width: 100%;
+            }
+
+            .mobile-search-section .search-input {
+                width: 100%;
+                padding: 14px 50px 14px 20px;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                border-radius: 25px;
+                font-size: 16px;
+                background: rgba(255, 255, 255, 0.1);
+                color: #fff;
+                backdrop-filter: blur(10px);
+                outline: none;
+                transition: all 0.3s ease;
+            }
+
+            .mobile-search-section .search-input::placeholder {
+                color: rgba(255, 255, 255, 0.7);
+            }
+
+            .mobile-search-section .search-input:focus {
+                background: rgba(255, 255, 255, 0.2);
+                border-color: rgba(255, 255, 255, 0.5);
+                box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+            }
+
+            .mobile-search-section .search-btn {
+                position: absolute;
+                right: 16px;
+                top: 50%;
+                transform: translateY(-50%);
+                background: none;
+                border: none;
+                color: rgba(255, 255, 255, 0.8);
+                font-size: 18px;
+                cursor: pointer;
+                padding: 8px;
+                border-radius: 50%;
+                transition: all 0.3s ease;
+            }
+
+            .mobile-search-section .search-btn:hover {
+                color: #fff;
+                background: rgba(255, 255, 255, 0.1);
             }
 
             .nav-toggle {
@@ -2216,52 +3199,66 @@
 
 <body>
     <!-- Header -->
-    <header class="main-header">
+    <header class="header">
         <div class="container">
-            <!-- Left Section - Search Icon (Mobile Only) -->
-            <div class="header-left">
-                <button class="search-icon-btn" id="searchToggle">
-                    <i class="fas fa-search"></i>
-                </button>
+            <div class="row align-items-center justify-content-between">
+                <!-- Left: Logo -->
+                <div class="col-12 col-md-2 text-center text-md-start">
+                    <a href="/">
+                        <img src="logo_light (2).png" alt="Apna Fund Logo" class="logo-img">
+                    </a>
+                </div>
+
+                <!-- Center: Search Bar -->
+                <div class="col-12 col-md-8">
+                    <div class="search-container">
+                        <form class="search-box" method="get" action="http://192.168.1.89:8000/campaigns">
+                            <input type="text" class="search-input" name="name" placeholder="Search projects, creators, and categories..." aria-label="Search">
+                            <button class="search-btn" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Right: Buttons -->
+                <div class="col-12 col-md-2 text-center text-md-end">
+                    <a href="http://192.168.1.89:8000/user/login" class="btn btn-outline-light">Creator Login</a>
+                </div>
             </div>
-            
-            <!-- Center - Logo -->
-            <div class="logo">
-                <a href="/">
-                    <img src="assets/images/White Logo.png" alt="Apna Crowdfunding Logo" class="logo-img">
-                </a>
-            </div>
-            
-            <!-- Right Section - Navigation -->
-            <div class="header-right">
+
+            <!-- Mobile Navigation Toggle (Hidden on desktop) -->
+            <div class="mobile-nav-toggle">
                 <button class="nav-toggle" id="navToggle">
                     <i class="fas fa-bars"></i>
                 </button>
             </div>
-            
-            <!-- Hidden Search Section (Desktop) -->
-            <div class="header-center">
-                <div class="search-container">
-                    <input type="text" class="search-input" placeholder="Find fundraisers by person's name, location, title, or keyword">
-                    <button class="search-btn" type="button">
-                        <i class="fas fa-search"></i>
+
+            <!-- Mobile Menu (Hidden by default) -->
+            <div class="mobile-menu" id="mobileMenu">
+                <div class="mobile-menu-header">
+                    <div class="mobile-logo">
+                        <img src="logo_light (2).png" alt="Apna Fund Logo" class="mobile-logo-img">
+                    </div>
+                    <button class="mobile-close" id="mobileClose">
+                        <i class="fas fa-times"></i>
                     </button>
                 </div>
+                
+                <div class="mobile-menu-content">
+                    <div class="mobile-nav-links">
+                        <a href="#" class="mobile-nav-link">Discover</a>
+                        <a href="#" class="mobile-nav-link">Categories</a>
+                        <a href="#" class="mobile-nav-link">How it works</a>
+                        <a href="#" class="mobile-nav-link">Sign in</a>
+                    </div>
+                    
+                    <div class="mobile-cta">
+                        <a href="#" class="mobile-start-fundraiser">Start a fundraiser</a>
+                    </div>
+                </div>
             </div>
-            
-            <nav class="nav-links" id="navLinks">
-                <div class="nav-left">
-                    <a href="#" class="nav-link">Discover</a>
-                    <a href="#" class="nav-link">Categories</a>
-                    <a href="#" class="nav-link">How it works</a>
-                </div>
-                <div class="nav-right">
-                    <a href="#" class="nav-link">Sign in</a>
-                    <a href="#" class="btn-start-fundraiser">Start a fundraiser</a>
-                </div>
-            </nav>
         </div>
-        
     </header>
 
     <!-- Main Fundraiser Section -->
@@ -2302,23 +3299,23 @@
                 <h1 class="banner-title">PLAY IT FORWARD: THE RON HOLLOWAY FUND</h1>
             </div>
 
-            <!-- Organizer Section -->
-            <div class="organizer-section">
-                <div class="organizer-info">
-                    <div class="organizer-avatar">JL</div>
-                    <div class="organizer-details">
-                        <h4>Jenny Langer</h4>
-                        <p>is organizing this fundraiser</p>
+            <!-- Navigation Tabs -->
+            <div class="campaign-tabs">
+                <nav class="tabs-nav">
+                    <div class="tabs-left">
+                        <a href="#campaign" class="tab-link active" data-tab="campaign">Campaign</a>
+                        <a href="#rewards" class="tab-link" data-tab="rewards">Rewards</a>
+                        <a href="#creator" class="tab-link" data-tab="creator">Creator</a>
+                        <a href="#faq" class="tab-link" data-tab="faq">FAQ <span class="tab-badge">15</span></a>
+                        <a href="#updates" class="tab-link" data-tab="updates">Updates <span class="tab-badge">1</span></a>
+                        <a href="#comments" class="tab-link" data-tab="comments">Comments <span class="tab-badge">8</span></a>
+                        <a href="#community" class="tab-link" data-tab="community">Community</a>
                     </div>
-                </div>
-                <div class="donation-protected">
-                    <i class="fas fa-shield-alt"></i>
-                    Donation protected
-                </div>
+                </nav>
             </div>
 
             <!-- Description -->
-            <div class="fundraiser-description">
+            <div class="fundraiser-description tab-content-section" data-tab-content="campaign">
                 <p>Beloved musician and legendary saxophonist Ron Holloway has been a staple in the DC music scene for
                     over 50 years. He has performed with Warren Haynes Band, Susan Tedeschi, Dizzy Gillespie, Gil
                     Scott-Heron, Root Boy Slim, and many others. In 2014, he formed his own band, The Ron Holloway Band,
@@ -2334,6 +3331,92 @@
 
                 <a href="#" class="read-more">Read more</a>
             </div>
+
+            <!-- Rewards Section -->
+            <div class="rewards-section tab-content-section" data-tab-content="rewards" style="display: none;">
+                <div class="rewards-grid">
+                    <div class="reward-card">
+                        <div class="reward-image">
+                            <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400" alt="Reward 1">
+                        </div>
+                        <div class="reward-details">
+                            <div class="reward-header-row">
+                                <div class="reward-text-content">
+                                    <h3 class="reward-title">Premium Support Package</h3>
+                                    <p class="reward-price">$50</p>
+                                </div>
+                                <a href="donation-payment.html" class="reward-pledge-btn">Pledge</a>
+                            </div>
+                            <p class="reward-description">Get exclusive updates and priority support for this campaign.</p>
+                            <div class="reward-info">
+                                <span class="reward-backers"><i class="fas fa-users"></i> 125 backers</span>
+                                <span class="reward-delivery"><i class="fas fa-calendar"></i> Feb 2025</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="reward-card">
+                        <div class="reward-image">
+                            <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400" alt="Reward 2">
+                        </div>
+                        <div class="reward-details">
+                            <div class="reward-header-row">
+                                <div class="reward-text-content">
+                                    <h3 class="reward-title">Special Edition Package</h3>
+                                    <p class="reward-price">$100</p>
+                                </div>
+                                <a href="donation-payment.html" class="reward-pledge-btn">Pledge</a>
+                            </div>
+                            <p class="reward-description">Limited edition items with special recognition.</p>
+                            <div class="reward-info">
+                                <span class="reward-backers"><i class="fas fa-users"></i> 89 backers</span>
+                                <span class="reward-delivery"><i class="fas fa-calendar"></i> Mar 2025</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="reward-card">
+                        <div class="reward-image">
+                            <img src="https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=400" alt="Reward 3">
+                        </div>
+                        <div class="reward-details">
+                            <div class="reward-header-row">
+                                <div class="reward-text-content">
+                                    <h3 class="reward-title">VIP Experience</h3>
+                                    <p class="reward-price">$250</p>
+                                </div>
+                                <a href="donation-payment.html" class="reward-pledge-btn">Pledge</a>
+                            </div>
+                            <p class="reward-description">Exclusive VIP access with personalized experience.</p>
+                            <div class="reward-info">
+                                <span class="reward-backers"><i class="fas fa-users"></i> 45 backers</span>
+                                <span class="reward-delivery"><i class="fas fa-calendar"></i> Apr 2025</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="reward-card">
+                        <div class="reward-image">
+                            <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400" alt="Reward 4">
+                        </div>
+                        <div class="reward-details">
+                            <div class="reward-header-row">
+                                <div class="reward-text-content">
+                                    <h3 class="reward-title">Ultimate Package</h3>
+                                    <p class="reward-price">$500</p>
+                                </div>
+                                <a href="donation-payment.html" class="reward-pledge-btn">Pledge</a>
+                            </div>
+                            <p class="reward-description">Complete package with all benefits and lifetime access.</p>
+                            <div class="reward-info">
+                                <span class="reward-backers"><i class="fas fa-users"></i> 23 backers</span>
+                                <span class="reward-delivery"><i class="fas fa-calendar"></i> May 2025</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
 
             <!-- Engagement -->
             <div class="engagement-section">
@@ -2613,81 +3696,6 @@
                 </div>
             </div>
             
-            <!-- Latest News Link -->
-            <div class="news-link-container mt-4">
-                <a href="#" class="news-link" id="newsLink">
-                    <i class="fas fa-newspaper"></i>
-                    <span>Latest News & Updates</span>
-                    <i class="fas fa-chevron-right"></i>
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- News Popup Modal -->
-    <div class="news-modal" id="newsModal">
-        <div class="news-modal-content">
-            <div class="news-modal-header">
-                <h3>Latest News & Updates</h3>
-                <button class="news-modal-close" id="newsModalClose">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="news-modal-body">
-                <div class="news-cards">
-                    <div class="news-card">
-                        <div class="news-card-header">
-                            <span class="news-date">December 15, 2024</span>
-                            <span class="news-category">Update</span>
-                        </div>
-                        <h4 class="news-title">Fundraiser Reaches 30% of Goal!</h4>
-                        <p class="news-content">We're excited to announce that our fundraiser has reached 30% of the $200,000 goal. Thank you to all the generous donors who have contributed to Ron's medical expenses.</p>
-                        <div class="news-footer">
-                            <span class="news-author">Apna Crowdfunding Team</span>
-                            <span class="news-time">2 hours ago</span>
-                        </div>
-                    </div>
-                    
-                    <div class="news-card">
-                        <div class="news-card-header">
-                            <span class="news-date">December 14, 2024</span>
-                            <span class="news-category">News</span>
-                        </div>
-                        <h4 class="news-title">Ron's Recovery Progress</h4>
-                        <p class="news-content">Great news! Ron's medical team reports positive progress in his treatment. The funds raised are being used effectively for his ongoing care and rehabilitation.</p>
-                        <div class="news-footer">
-                            <span class="news-author">Medical Team</span>
-                            <span class="news-time">1 day ago</span>
-                        </div>
-                    </div>
-                    
-                    <div class="news-card">
-                        <div class="news-card-header">
-                            <span class="news-date">December 13, 2024</span>
-                            <span class="news-category">Community</span>
-                        </div>
-                        <h4 class="news-title">Community Support Event</h4>
-                        <p class="news-content">Local musicians are organizing a benefit concert to support Ron's fundraiser. The event will feature performances from artists who have been inspired by Ron's music.</p>
-                        <div class="news-footer">
-                            <span class="news-author">Music Community</span>
-                            <span class="news-time">2 days ago</span>
-                        </div>
-                    </div>
-                    
-                    <div class="news-card">
-                        <div class="news-card-header">
-                            <span class="news-date">December 12, 2024</span>
-                            <span class="news-category">Milestone</span>
-                        </div>
-                        <h4 class="news-title">500+ Donors Milestone</h4>
-                        <p class="news-content">We've reached an incredible milestone with over 500 donors contributing to Ron's medical fund. This shows the incredible support from the music community.</p>
-                        <div class="news-footer">
-                            <span class="news-author">Apna Crowdfunding Team</span>
-                            <span class="news-time">3 days ago</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -2718,7 +3726,7 @@
                         <i class="fas fa-shield-alt"></i>
                     </div>
                     <h3 class="feature-title">Trusted</h3>
-                    <p class="feature-description">Your donation is protected by the Apna Crowdfunding Giving Guarantee</p>
+                    <p class="feature-description">Your donation is protected by the Apna Fund Giving Guarantee</p>
                 </div>
             </div>
         </div>
@@ -2805,8 +3813,8 @@
                 <div class="footer-section">
                     <h4>About</h4>
                     <ul>
-                        <li><a href="#">How Apna Crowdfunding works</a></li>
-                        <li><a href="#">Apna Crowdfunding Giving Guarantee</a></li>
+                        <li><a href="#">How Apna Fund works</a></li>
+                        <li><a href="#">Apna Fund Giving Guarantee</a></li>
                         <li><a href="#">Supported countries</a></li>
                         <li><a href="#">Pricing</a></li>
                         <li><a href="#">Help Center</a></li>
@@ -2818,7 +3826,7 @@
                     <ul>
                         <li><a href="#">Newsroom</a></li>
                         <li><a href="#">Careers</a></li>
-                        <li><a href="#">Apna Crowdfunding.org</a></li>
+                        <li><a href="#">Apna Fund.org</a></li>
                         <li><a href="#">Partnerships</a></li>
                         <li><a href="#">Pro for nonprofits</a></li>
                     </ul>
@@ -2826,7 +3834,7 @@
             </div>
 
             <div class="footer-bottom">
-                <p>&copy; 2010-2025 Apna Crowdfunding. All rights reserved.</p>
+                <p>&copy; 2010-2025 Apna Fund. All rights reserved.</p>
             </div>
         </div>
     </footer>
@@ -3218,44 +4226,129 @@
                 }, 3000);
             }
 
-            // News Modal Functionality
-            const newsLink = document.getElementById('newsLink');
-            const newsModal = document.getElementById('newsModal');
-            const newsModalClose = document.getElementById('newsModalClose');
-
-            // Open modal
-            newsLink.addEventListener('click', function(e) {
-                e.preventDefault();
-                newsModal.classList.add('show');
+        });
+        
+        // Mobile Navigation Toggle
+        const navToggle = document.getElementById('navToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileClose = document.getElementById('mobileClose');
+        
+        // Open mobile menu
+        if (navToggle && mobileMenu) {
+            navToggle.addEventListener('click', function() {
+                mobileMenu.classList.add('active');
                 document.body.style.overflow = 'hidden'; // Prevent background scrolling
             });
+        }
 
-            // Close modal
-            newsModalClose.addEventListener('click', function() {
-                newsModal.classList.remove('show');
+        // Close mobile menu
+        if (mobileClose && mobileMenu) {
+            mobileClose.addEventListener('click', function() {
+                mobileMenu.classList.remove('active');
                 document.body.style.overflow = ''; // Restore scrolling
             });
+        }
 
-            // Close modal when clicking outside
-            newsModal.addEventListener('click', function(e) {
-                if (e.target === newsModal) {
-                    newsModal.classList.remove('show');
+        // Close mobile menu when clicking on a navigation link
+        const mobileNavLinks = document.querySelectorAll('.mobile-nav-link, .mobile-start-fundraiser');
+        mobileNavLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                mobileMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        });
+
+        // Close mobile menu when clicking outside (on overlay)
+        if (mobileMenu) {
+            mobileMenu.addEventListener('click', function(event) {
+                if (event.target === mobileMenu) {
+                    mobileMenu.classList.remove('active');
                     document.body.style.overflow = '';
                 }
             });
+        }
 
-            // Close modal with Escape key
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape' && newsModal.classList.contains('show')) {
-                    newsModal.classList.remove('show');
-                    document.body.style.overflow = '';
+        // Close mobile menu with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && mobileMenu.classList.contains('active')) {
+                mobileMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+
+        // Search functionality
+        const searchForms = document.querySelectorAll('.search-box');
+        
+        searchForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const searchInput = form.querySelector('.search-input');
+                if (!searchInput.value.trim()) {
+                    e.preventDefault();
+                    searchInput.focus();
+                    return false;
+                }
+                // Form will submit naturally to the action URL
+            });
+        });
+
+        // Tab Navigation Functionality
+        const tabLinks = document.querySelectorAll('.tab-link');
+        const tabContentSections = document.querySelectorAll('.tab-content-section');
+        
+        tabLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Remove active class from all tabs
+                tabLinks.forEach(tab => tab.classList.remove('active'));
+                
+                // Add active class to clicked tab
+                this.classList.add('active');
+                
+                // Get the tab name
+                const tabName = this.getAttribute('data-tab');
+                
+                // Hide all tab content sections
+                tabContentSections.forEach(section => {
+                    section.style.display = 'none';
+                });
+                
+                // Show the selected tab content
+                const selectedSection = document.querySelector(`.tab-content-section[data-tab-content="${tabName}"]`);
+                if (selectedSection) {
+                    selectedSection.style.display = 'block';
+                }
+                
+                // Also hide/show other sections that should be hidden when rewards is active
+                if (tabName === 'rewards') {
+                    // Hide engagement, actions, organizer sections when rewards tab is active
+                    const engagementSection = document.querySelector('.engagement-section');
+                    const actionsSection = document.querySelector('.fundraiser-actions');
+                    const organizerSection = document.querySelectorAll('.organizer-section');
+                    
+                    if (engagementSection) engagementSection.style.display = 'none';
+                    if (actionsSection) actionsSection.style.display = 'none';
+                    organizerSection.forEach(org => {
+                        if (org.closest('.fundraiser-main')) {
+                            org.style.display = 'none';
+                        }
+                    });
+                } else {
+                    // Show all sections when other tabs are active
+                    const engagementSection = document.querySelector('.engagement-section');
+                    const actionsSection = document.querySelector('.fundraiser-actions');
+                    const organizerSection = document.querySelectorAll('.organizer-section');
+                    
+                    if (engagementSection) engagementSection.style.display = 'flex';
+                    if (actionsSection) actionsSection.style.display = 'flex';
+                    organizerSection.forEach(org => {
+                        if (org.closest('.fundraiser-main')) {
+                            org.style.display = 'block';
+                        }
+                    });
                 }
             });
-
-
-
         });
     </script>
 </body>
-
 </html>

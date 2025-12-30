@@ -24,10 +24,24 @@
                                     <div class="upload__img mb-2">
                                         <label for="image{{ $loop->index }}" class="upload__img__btn"><i class="ti ti-camera"></i></label>
 
-                                        <input type="file" id="image{{ $loop->index }}" class="image-upload" name="image_input[{{ @$imgKey }}]" accept=".jpeg, .jpg, .png" @if (!@$data) required @endif>
+                                        <input type="file" id="image{{ $loop->index }}" class="image-upload" name="image_input[{{ @$imgKey }}]" accept=".jpeg, .jpg, .png">
 
                                         <label for="image{{ $loop->index }}" class="upload__img-preview image-preview">
-                                            <img src="{{getImage('assets/images/site/' . $key .'/'. @$data->data_info->$imgKey, @$section->element->images->$imgKey->size) }}" alt="{{ @$data->data_info->{$imgKey.'_alt'} ?? 'image' }}">
+                                            @php
+                                                $currentImage = @$data->data_info[$imgKey] ?? '';
+                                                $imageUrl = '';
+                                                if ($currentImage) {
+                                                    // Check if it's a URL
+                                                    if (filter_var($currentImage, FILTER_VALIDATE_URL)) {
+                                                        $imageUrl = $currentImage;
+                                                    } else {
+                                                        $imageUrl = getImage('assets/images/site/' . $key .'/'. $currentImage, @$section->element->images->$imgKey->size);
+                                                    }
+                                                } else {
+                                                    $imageUrl = getImage('assets/images/site/' . $key .'/'. $currentImage, @$section->element->images->$imgKey->size);
+                                                }
+                                            @endphp
+                                            <img src="{{ $imageUrl }}" alt="{{ @$data->data_info[$imgKey.'_alt'] ?? 'image' }}">
                                         </label>
 
                                         <button type="button" class="btn btn--sm btn--icon btn--danger custom-file-input-clear d-none"><i class="ti ti-circle-x"></i></button>
@@ -43,10 +57,17 @@
                                         @endif
                                     </label>
                                     
+                                    <!-- Image URL Field -->
+                                    <div class="mt-2">
+                                        <label class="form--label">@lang('Or Enter Image URL') ({{ keyToTitle($imgKey) }})</label>
+                                        <input type="url" class="form--control" name="{{ $imgKey }}_url" value="{{ (filter_var(@$data->data_info[$imgKey] ?? '', FILTER_VALIDATE_URL)) ? @$data->data_info[$imgKey] : '' }}" placeholder="@lang('https://example.com/image.jpg')">
+                                        <small class="text-muted">@lang('Leave empty if uploading file above')</small>
+                                    </div>
+                                    
                                     <!-- Image Alt Text Field -->
                                     <div class="mt-2">
                                         <label class="form--label">@lang('Image Alt Text') ({{ keyToTitle($imgKey) }})</label>
-                                        <input type="text" class="form--control" name="{{ $imgKey }}_alt" value="{{ @$data->data_info->{$imgKey.'_alt'} }}" placeholder="@lang('Enter alt text for accessibility')">
+                                        <input type="text" class="form--control" name="{{ $imgKey }}_alt" value="{{ @$data->data_info[$imgKey.'_alt'] ?? '' }}" placeholder="@lang('Enter alt text for accessibility')">
                                     </div>
                                 </div>
                             @endforeach
@@ -69,8 +90,8 @@
                                                     </div>
                                                     <div class="col-lg-9">
                                                         <div class="input--group">
-                                                            <input type="text" class="form--control iconPicker icon" name="{{ $k }}" value="{{ @$data->data_info->$k }}" autocomplete="off" required>
-                                                            <span class="input-group-text input-group-addon" data-icon="ti ti-home" role="iconpicker">@php echo @$data->data_info->$k; @endphp</span>
+                                                            <input type="text" class="form--control iconPicker icon" name="{{ $k }}" value="{{ @$data->data_info[$k] ?? '' }}" autocomplete="off" required>
+                                                            <span class="input-group-text input-group-addon" data-icon="ti ti-home" role="iconpicker">@php echo @$data->data_info[$k] ?? ''; @endphp</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -82,7 +103,7 @@
                                                         <label class="form--label required">{{ __(keyToTitle($k)) }}</label>
                                                     </div>
                                                     <div class="col-lg-9">
-                                                        <textarea class="form--control" name="{{ $k }}" required>{{ @$data->data_info->$k}}</textarea>
+                                                        <textarea class="form--control" name="{{ $k }}" required>{{ @$data->data_info[$k] ?? '' }}</textarea>
                                                     </div>
                                                 </div>
                                             </div>
@@ -93,7 +114,7 @@
                                                         <label class="form--label required">{{ __(keyToTitle($k)) }}</label>
                                                     </div>
                                                     <div class="col-lg-9 editor-wrapper">
-                                                        <textarea class="form--control trumEdit" name="{{ $k }}">{{ @$data->data_info->$k }}</textarea>
+                                                        <textarea class="form--control trumEdit" name="{{ $k }}">{{ @$data->data_info[$k] ?? '' }}</textarea>
                                                     </div>
                                                 </div>
                                             </div>
@@ -108,7 +129,7 @@
                                                     <div class="col-lg-9">
                                                         <select class="form--control form-select" name="{{ @$selectName }}" required>
                                                             @foreach($item->options as $selectItemKey => $selectOption)
-                                                                <option value="{{ $selectItemKey }}" @if(@$data->data_info->$selectName == $selectItemKey) selected @endif>{{ $selectOption }}</option>
+                                                                <option value="{{ $selectItemKey }}" @if((@$data->data_info[$selectName] ?? '') == $selectItemKey) selected @endif>{{ $selectOption }}</option>
                                                             @endforeach
                                                         </select>
                                                     </div>
@@ -118,10 +139,14 @@
                                             <div class="col-12">
                                                 <div class="row g-2 align-items-center">
                                                     <div class="col-lg-3">
-                                                        <label class="form--label required">{{ __(keyToTitle($k)) }}</label>
+                                                        @php
+                                                            // Make title and slug required for dynamic_pages
+                                                            $isRequired = ($key == 'dynamic_pages' && ($k == 'title' || $k == 'slug'));
+                                                        @endphp
+                                                        <label class="form--label {{ $isRequired ? 'required' : '' }}">{{ __(keyToTitle($k)) }}</label>
                                                     </div>
                                                     <div class="col-lg-9">
-                                                        <input type="text" class="form--control" name="{{ $k }}" value="{{@$data->data_info->$k }}" required>
+                                                        <input type="text" class="form--control" name="{{ $k }}" value="{{ @$data->data_info[$k] ?? '' }}" {{ $isRequired ? 'required' : '' }}>
                                                     </div>
                                                 </div>
                                             </div>
@@ -183,6 +208,26 @@
             $('.iconPicker').iconpicker().on('iconpickerSelected', function (e) {
                 $(this).closest('.input--group').find('.iconpicker-input').val(`<i class="${e.iconpickerValue}"></i>`);
             });
+
+            // Update image preview when URL is entered
+            $('input[type="url"][name$="_url"]').on('input', function() {
+                var url = $(this).val();
+                var imgKey = $(this).attr('name').replace('_url', '');
+                var previewImg = $(this).closest('.col-lg-4, .col-md-4, .col-sm-6').find('.image-preview img');
+                
+                if (url && isValidUrl(url)) {
+                    previewImg.attr('src', url);
+                }
+            });
+
+            function isValidUrl(string) {
+                try {
+                    new URL(string);
+                    return true;
+                } catch (_) {
+                    return false;
+                }
+            }
         })(jQuery);
     </script>
 @endpush

@@ -87,11 +87,15 @@
             </div>
 
             <!-- Featured Campaigns Display -->
-            @forelse($featuredCampaigns->chunk(2) as $chunk)
+            @forelse($featuredCampaigns->chunk(3) as $chunk)
                 <div class="row mb-4">
                     @foreach($chunk as $index => $campaign)
                         @php
-                            $colClass = $loop->first && $loop->parent->first ? 'col-12 col-lg-6' : 'col-12 col-md-4';
+                            $colClass = $loop->first && $loop->parent->first ? 'col-12 col-lg-6' : 'col-12 col-md-3';
+                            if($index > 2)
+                            {
+                                $colClass = 'col-12 col-md-4';
+                            }
                         @endphp
                         <div class="{{ $colClass }}">
                             <a href="{{ route('campaign.show', $campaign->slug) }}" class="project-card-link">

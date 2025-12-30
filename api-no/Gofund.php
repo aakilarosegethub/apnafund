@@ -223,6 +223,10 @@ class Gofund {
         return false;
     }
 
+    public function updateData_Api($field, $table, $where) {
+        return $this->updateData($field, $table, $where);
+    }
+
     public function __destruct() {
         if (isset($this->conn)) {
             $this->conn->close();

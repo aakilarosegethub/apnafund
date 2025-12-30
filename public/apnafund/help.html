@@ -4,11 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Help - Apna Crowdfunding</title>
+    <title>Help - Apna Fund</title>
     <link rel="stylesheet" href="assets/css/app.css">
     <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="shortcut icon" href="assets/images/fav-icon.png" type="image/png">
+    <link rel="stylesheet" href="styles.css">
     <style>
         /* Custom styles for help center */
         .help-hero {
@@ -323,28 +324,57 @@
                 <!-- Left: Logo -->
                 <div class="col-12 col-md-2 text-center text-md-start">
                     <a href="/">
-                        <img src="assets/images/White Logo.png" alt="Apna Crowdfunding Logo" class="logo-img"
-                            style="max-height:50px;">
+                        <img src="logo_light (2).png" alt="Apna Fund Logo" class="logo-img">
                     </a>
                 </div>
 
                 <!-- Center: Search Bar -->
                 <div class="col-12 col-md-8">
                     <div class="search-container">
-                        <div class="search-box">
-                            <input type="text" class="search-input"
-                                placeholder="Search projects, creators, and categories..." aria-label="Search">
-                            <button class="search-btn" type="button">
+                        <form class="search-box" method="get" action="http://192.168.1.89:8000/campaigns">
+                            <input type="text" class="search-input" name="name" placeholder="Search projects, creators, and categories..." aria-label="Search">
+                            <button class="search-btn" type="submit">
                                 <i class="fas fa-search"></i>
                             </button>
-                        </div>
+                        </form>
                     </div>
                 </div>
 
                 <!-- Right: Buttons -->
                 <div class="col-12 col-md-2 text-center text-md-end">
-                    <a href="creator.html" class="btn btn-outline-light me-2">Creator</a>
-                    <a href="login.html" class="btn text-white">Login</a>
+                    <a href="http://192.168.1.89:8000/user/login" class="btn btn-outline-light">Creator Login</a>
+                </div>
+            </div>
+
+            <!-- Mobile Navigation Toggle (Hidden on desktop) -->
+            <div class="mobile-nav-toggle">
+                <button class="nav-toggle" id="navToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+
+            <!-- Mobile Menu (Hidden by default) -->
+            <div class="mobile-menu" id="mobileMenu">
+                <div class="mobile-menu-header">
+                    <div class="mobile-logo">
+                        <img src="logo_light (2).png" alt="Apna Fund Logo" class="mobile-logo-img">
+                    </div>
+                    <button class="mobile-close" id="mobileClose">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="mobile-menu-content">
+                    <div class="mobile-nav-links">
+                        <a href="#" class="mobile-nav-link">Discover</a>
+                        <a href="#" class="mobile-nav-link">Categories</a>
+                        <a href="#" class="mobile-nav-link">How it works</a>
+                        <a href="#" class="mobile-nav-link">Sign in</a>
+                    </div>
+                    
+                    <div class="mobile-cta">
+                        <a href="#" class="mobile-start-fundraiser">Start a fundraiser</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -369,19 +399,19 @@
                             <div class="dropdown-content">
                                 <a href="#" class="dropdown-item">
                                     <span>Where can I keep track of my pledges?</span>
-                                    <small class="text-muted">ApnaCrowdfunding Support > Backer questions > Managing your pledge</small>
+                                    <small class="text-muted">ApnaFund Support > Backer questions > Managing your pledge</small>
                                 </a>
                                 <a href="#" class="dropdown-item">
                                     <span>How do I add Late Pledges to my project?</span>
-                                    <small class="text-muted">ApnaCrowdfunding Support > Creator questions > Getting started</small>
+                                    <small class="text-muted">ApnaFund Support > Creator questions > Getting started</small>
                                 </a>
                                 <a href="#" class="dropdown-item">
                                     <span>Setting up your project's pre-launch page</span>
-                                    <small class="text-muted">ApnaCrowdfunding Support > Creator questions > Promoting your project</small>
+                                    <small class="text-muted">ApnaFund Support > Creator questions > Promoting your project</small>
                                 </a>
                                 <a href="#" class="dropdown-item">
                                     <span>What is a Superbacker?</span>
-                                    <small class="text-muted">ApnaCrowdfunding Support > Backer questions > Backing a project</small>
+                                    <small class="text-muted">ApnaFund Support > Backer questions > Backing a project</small>
                                 </a>
                             </div>
                         </div>
@@ -395,14 +425,14 @@
     <section class="help-categories py-5 bg-light">
         <div class="container">
             <div class="row g-4">
-                <!-- ApnaCrowdfunding Basics -->
+                <!-- ApnaFund Basics -->
                 <div class="col-md-6">
                     <div class="category-section bg-white p-4 rounded shadow-sm h-100">
-                        <h4 class="fw-bold mb-4">ApnaCrowdfunding basics</h4>
+                        <h4 class="fw-bold mb-4">ApnaFund basics</h4>
                         <ul class="list-unstyled help-links">
                             <li class="mb-3">
                                 <a href="#" class="text-decoration-none d-flex justify-content-between align-items-center">
-                                    <span>What is ApnaCrowdfunding?</span>
+                                    <span>What is ApnaFund?</span>
                                     <i class="fas fa-arrow-right text-muted"></i>
                                 </a>
                             </li>
@@ -482,7 +512,7 @@
                         <ul class="list-unstyled help-links">
                             <li class="mb-3">
                                 <a href="#" class="text-decoration-none d-flex justify-content-between align-items-center">
-                                    <span>Who can use ApnaCrowdfunding?</span>
+                                    <span>Who can use ApnaFund?</span>
                                     <i class="fas fa-arrow-right text-muted"></i>
                                 </a>
                             </li>
@@ -624,7 +654,7 @@
                     </a>
                 </div>
 
-                <!-- ApnaCrowdfunding Project Updates -->
+                <!-- ApnaFund Project Updates -->
                 <div class="col-md-4">
                     <a href="#" class="resource-card text-decoration-none">
                         <div class="resource-image project-updates">
@@ -666,14 +696,14 @@
             <div class="row align-items-center">
                 <div class="col-md-6">
                     <div class="footer-logo">
-                        <img src="assets/images/White Logo.png" alt="Apna Crowdfunding Logo" class="footer-logo-img">
+                        <img src="assets/images/White Logo.png" alt="Apna Fund Logo" class="footer-logo-img">
                         <p class="footer-tagline">Empowering Dreams, Building Futures</p>
                     </div>
                 </div>
                 <div class="col-md-6 text-end">
                     <div class="footer-info">
-                        <p class="copyright">© 2024 Apna Crowdfunding. All rights reserved.</p>
-                        <p class="email">contact@apnacrowdfunding.com</p>
+                        <p class="copyright">© 2024 Apna Fund. All rights reserved.</p>
+                        <p class="email">contact@apnafund.com</p>
                     </div>
                 </div>
             </div>
@@ -829,6 +859,69 @@
                 });
             });
             
+        });
+        
+        // Mobile Navigation Toggle
+        const navToggle = document.getElementById('navToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileClose = document.getElementById('mobileClose');
+        
+        // Open mobile menu
+        if (navToggle && mobileMenu) {
+            navToggle.addEventListener('click', function() {
+                mobileMenu.classList.add('active');
+                document.body.style.overflow = 'hidden'; // Prevent background scrolling
+            });
+        }
+
+        // Close mobile menu
+        if (mobileClose && mobileMenu) {
+            mobileClose.addEventListener('click', function() {
+                mobileMenu.classList.remove('active');
+                document.body.style.overflow = ''; // Restore scrolling
+            });
+        }
+
+        // Close mobile menu when clicking on a navigation link
+        const mobileNavLinks = document.querySelectorAll('.mobile-nav-link, .mobile-start-fundraiser');
+        mobileNavLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                mobileMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        });
+
+        // Close mobile menu when clicking outside (on overlay)
+        if (mobileMenu) {
+            mobileMenu.addEventListener('click', function(event) {
+                if (event.target === mobileMenu) {
+                    mobileMenu.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+        }
+
+        // Close mobile menu with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && mobileMenu.classList.contains('active')) {
+                mobileMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+
+        // Search functionality
+        const searchForms = document.querySelectorAll('.search-box');
+        
+        searchForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const searchInput = form.querySelector('.search-input');
+                if (!searchInput.value.trim()) {
+                    e.preventDefault();
+                    searchInput.focus();
+                    return false;
+                }
+                // Form will submit naturally to the action URL
+            });
         });
     </script>
 
