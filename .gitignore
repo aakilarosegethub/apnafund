@@ -4,7 +4,7 @@
 /public/hot
 /public/storage
 /storage/*.key
-/vendor
+# /vendor - Commented out to include vendor folder for shared hosting deployment
 .env
 .env.backup
 .env.production
@@ -21,3 +21,4 @@ yarn-error.log
 Archive 2.zip
 vendor.zip
 *.zip
+vendor/stripe/stripe-php/README.md
