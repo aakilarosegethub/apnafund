@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "apnafund-token-based-api",
 		"name": "ApnaFund API - Token Based Authentication",
-		"description": "Complete API collection for ApnaFund with Laravel Sanctum token-based authentication. All protected APIs require Bearer token in Authorization header. No need to send 'uid' in request body for protected APIs.",
+						"description": "Complete API collection for ApnaFund with Laravel Sanctum token-based authentication. All protected APIs require Bearer token in Authorization header. No need to send 'uid' in request body for protected APIs.\n\n**Environment Variables Required:**\n- `base_url`: API base URL (e.g., http://127.0.0.1:8000)\n- `auth_token`: Bearer token for authentication (automatically saved after login/registration)\n\n**Setup Instructions:**\n1. Create a Postman Environment\n2. Add `base_url` and `auth_token` variables\n3. Login/Register to automatically save token to `auth_token` environment variable",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"auth": {
@@ -29,8 +29,8 @@
 									"if (pm.response.code === 200) {",
 									"    var jsonData = pm.response.json();",
 									"    if (jsonData.token) {",
-									"        pm.collectionVariables.set('auth_token', jsonData.token);",
-									"        console.log('Token saved:', jsonData.token);",
+									"        pm.environment.set('auth_token', jsonData.token);",
+									"        console.log('Token saved to environment:', jsonData.token);",
 									"    }",
 									"}"
 								],
@@ -58,7 +58,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["api", "reg_user.php"]
 						},
-						"description": "Register a new user. Returns token in response. Token is automatically saved to collection variable 'auth_token'."
+						"description": "Register a new user. Returns token in response. Token is automatically saved to environment variable 'auth_token'."
 					},
 					"response": [
 						{
@@ -100,8 +100,8 @@
 									"if (pm.response.code === 200) {",
 									"    var jsonData = pm.response.json();",
 									"    if (jsonData.token) {",
-									"        pm.collectionVariables.set('auth_token', jsonData.token);",
-									"        console.log('Token saved:', jsonData.token);",
+									"        pm.environment.set('auth_token', jsonData.token);",
+									"        console.log('Token saved to environment:', jsonData.token);",
 									"    }",
 									"}"
 								],
@@ -129,7 +129,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["api", "user_login.php"]
 						},
-						"description": "Login with mobile/email and password. Returns token in response. Token is automatically saved to collection variable 'auth_token'."
+						"description": "Login with mobile/email and password. Returns token in response. Token is automatically saved to environment variable 'auth_token'."
 					},
 					"response": [
 						{
@@ -222,8 +222,8 @@
 									"if (pm.response.code === 200) {",
 									"    var jsonData = pm.response.json();",
 									"    if (jsonData.token) {",
-									"        pm.collectionVariables.set('auth_token', jsonData.token);",
-									"        console.log('Token saved:', jsonData.token);",
+									"        pm.environment.set('auth_token', jsonData.token);",
+									"        console.log('Token saved to environment:', jsonData.token);",
 									"    }",
 									"}"
 								],
@@ -1154,12 +1154,14 @@
 		{
 			"key": "base_url",
 			"value": "http://127.0.0.1:8000",
-			"type": "string"
+			"type": "string",
+			"description": "API base URL - Set this in your Postman Environment"
 		},
 		{
 			"key": "auth_token",
 			"value": "",
-			"type": "string"
+			"type": "string",
+			"description": "Bearer token for authentication - Automatically saved after login/registration to environment variable"
 		}
 	]
 }
