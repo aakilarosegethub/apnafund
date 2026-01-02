@@ -1,0 +1,2308 @@
+@php
+    $activeTheme = 'themes.green.';
+    $activeThemeTrue = 'themes.green.';
+@endphp
+@extends($activeTheme . 'layouts.green-home')
+@section('style')
+<style>
+body {
+    font-family: Inter, system-ui, sans-serif;
+    background: #f8f9fa;
+    padding-top: 80px;
+}
+
+.main-wrapper {
+    padding-top: 40px;
+    padding-bottom: 60px;
+}
+
+.badge-category {
+    background: #e9f7ef;
+    color: #198754;
+    padding: 6px 14px;
+    border-radius: 50px;
+    font-size: 13px;
+}
+
+.campaign-title {
+    font-weight: 700;
+    margin-top: 10px;
+}
+
+.campaign-subtitle {
+    color: #6c757d;
+    margin-bottom: 20px;
+}
+
+.campaign-image {
+    width: 100%;
+    height: 400px;
+    border-radius: 14px;
+    margin-bottom: 20px;
+    object-fit: cover;
+}
+
+.campaign-author {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.campaign-author img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.campaign-author span {
+    font-size: 14px;
+    color: #6c757d;
+}
+
+.campaign-tabs {
+    margin-top: 20px;
+}
+
+.nav-tabs .nav-link {
+    color: #6c757d;
+    border: none;
+    border-bottom: 2px solid transparent;
+}
+
+.nav-tabs .nav-link.active {
+    color: #198754;
+    border-bottom-color: #198754;
+    font-weight: 600;
+}
+
+.story-content {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    margin-top: 15px;
+}
+
+.funding-box {
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    top: 100px;
+}
+
+.amount {
+    color: #198754;
+    font-weight: 700;
+    font-size: 2rem;
+}
+
+.goal {
+    color: #6c757d;
+    margin-bottom: 15px;
+}
+
+.progress {
+    height: 8px;
+    border-radius: 10px;
+    background: #e9ecef;
+    margin-bottom: 10px;
+}
+
+.progress-bar {
+    background: #198754;
+}
+
+.stats {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+
+.stats span {
+    color: #6c757d;
+    font-size: 14px;
+}
+
+.end-date {
+    font-size: 13px;
+    text-align: center;
+    color: #6c757d;
+    margin-top: 10px;
+}
+
+.tiers h5 {
+    margin-top: 25px;
+    font-weight: 600;
+}
+
+.tier-card {
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 14px;
+    margin-top: 12px;
+}
+
+.tier-card strong {
+    color: #198754;
+    font-size: 1.1rem;
+}
+
+.tier-card .backers {
+    float: right;
+    font-size: 12px;
+    color: #6c757d;
+}
+</style>
+@endsection
+
+@section('content')
+@php
+    $goalAmount = @$campaignData->goal_amount ?? 0;
+    $raisedAmount = @$campaignData->raised_amount ?? 0;
+    
+    // If raised_amount is 0, try to calculate from deposits
+    if ($raisedAmount == 0) {
+        $raisedAmount = $campaignData->deposits()
+            ->where('status', \App\Constants\ManageStatus::PAYMENT_SUCCESS)
+            ->sum('amount');
+    }
+    
+    $percentage = donationPercentage($goalAmount, $raisedAmount);
+    $activeTab = request()->get('tab', 'campaign');
+    $setting = bs();
+@endphp
+
+<main class="container main-wrapper">
+    <div class="row">
+        <!-- LEFT COLUMN -->
+        <div class="col-lg-8">
+            <span class="badge badge-category mb-3">{{ @$campaignData->category->name ?? 'Campaign' }}</span>
+            
+            <h1 class="campaign-title">{{ __(@$campaignData->name) }}</h1>
+            
+            <p class="campaign-subtitle">
+                {{ Str::limit(strip_tags(@$campaignData->description), 150) }}
+            </p>
+            
+            <!-- Campaign Image -->
+            <img src="{{ getImage(getFilePath('campaign') . '/' . @$campaignData->image, getFileSize('campaign')) }}"
+                 class="campaign-image"
+                 alt="{{ @$campaignData->name }}">
+            
+            <!-- AUTHOR -->
+            <div class="campaign-author">
+                @if($campaignData->user->image)
+                    <img src="{{ getImage(getFilePath('userProfile') . '/' . $campaignData->user->image) }}" alt="{{ $campaignData->user->fullname }}">
+                @else
+                    <div style="width: 50px; height: 50px; border-radius: 50%; background: #198754; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600;">
+                        {{ strtoupper(substr($campaignData->user->fullname, 0, 2)) }}
+                    </div>
+                @endif
+                <div>
+                    <strong>{{ $campaignData->user->fullname }}</strong>
+                    <span><i class="fa-solid fa-location-dot"></i> {{ $campaignData->location ?? 'Location not specified' }}</span>
+                </div>
+            </div>
+            
+            <!-- TABS -->
+            <ul class="nav nav-tabs campaign-tabs">
+                <li class="nav-item">
+                    <a class="nav-link {{ $activeTab == 'campaign' ? 'active' : '' }}" href="{{ route('campaign.show', $campaignData->slug) }}?tab=campaign">Campaign Story</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ $activeTab == 'updates' ? 'active' : '' }}" href="{{ route('campaign.show', $campaignData->slug) }}?tab=updates">Updates</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ $activeTab == 'comments' ? 'active' : '' }}" href="{{ route('campaign.show', $campaignData->slug) }}?tab=comments">
+                        Backers ({{ $commentCount }})
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ $activeTab == 'rewards' ? 'active' : '' }}" href="{{ route('campaign.show', $campaignData->slug) }}?tab=rewards">Rewards</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ $activeTab == 'faq' ? 'active' : '' }}" href="{{ route('campaign.show', $campaignData->slug) }}?tab=faq">FAQ</a>
+                </li>
+            </ul>
+            
+            <!-- TAB CONTENT -->
+            @if($activeTab == 'campaign' || !request()->has('tab'))
+            <!-- STORY -->
+            <div class="story-content">
+                @php echo @$campaignData->description @endphp
+            </div>
+            @endif
+            
+            @if($activeTab == 'updates')
+            <div class="story-content">
+                <h5>Campaign Updates</h5>
+                <p class="text-muted">No updates available at this time.</p>
+            </div>
+            @endif
+            
+            @if($activeTab == 'comments')
+            <div class="story-content">
+                <h5>Comments & Reviews</h5>
+                @forelse ($comments as $comment)
+                    <div class="mb-3 pb-3 border-bottom">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <strong>{{ $comment->user ? $comment->user->fullname : $comment->name }}</strong>
+                            @if($comment->rating)
+                                <span class="text-warning">
+                                    @for($i = 1; $i <= 5; $i++)
+                                        @if($i <= $comment->rating)★@else☆@endif
+                                    @endfor
+                                </span>
+                            @endif
+                            <small class="text-muted ms-auto">{{ showDateTime($comment->created_at, 'd M, Y') }}</small>
+                        </div>
+                        @if($comment->title)
+                            <h6 class="mb-2">{{ $comment->title }}</h6>
+                        @endif
+                        <p class="mb-0">{{ $comment->comment }}</p>
+                    </div>
+                @empty
+                    <p class="text-muted">No comments yet. Be the first to comment!</p>
+                @endforelse
+            </div>
+            @endif
+            
+            @if($activeTab == 'rewards')
+            <div class="story-content">
+                <h5>Campaign Rewards</h5>
+                @php
+                    $campaignRewards = $campaignData->rewards()->active()->orderBy('minimum_amount')->get();
+                @endphp
+                @if($campaignRewards->count() > 0)
+                    @foreach($campaignRewards as $reward)
+                        <div class="tier-card">
+                            <strong>{{ $setting->cur_sym }}{{ showAmount($reward->minimum_amount) }}</strong>
+                            <h6 class="mt-2 mb-1">{{ $reward->title }}</h6>
+                            <p class="mb-0 small">{{ $reward->description }}</p>
+                        </div>
+                    @endforeach
+                @else
+                    <p class="text-muted">No rewards available for this campaign.</p>
+                @endif
+            </div>
+            @endif
+            
+            @if($activeTab == 'faq')
+            <div class="story-content">
+                <h5>Frequently Asked Questions</h5>
+                @php
+                    if (!isset($faqs) || $faqs->isEmpty()) {
+                        $faqs = $campaignData->faqs()->orderBy('order')->orderBy('id')->get();
+                    }
+                @endphp
+                @if($faqs && $faqs->count() > 0)
+                    @foreach($faqs as $faq)
+                        <div class="mb-3">
+                            <h6 class="fw-bold">{{ $faq->question }}</h6>
+                            <p class="text-muted">{{ $faq->answer }}</p>
+                        </div>
+                    @endforeach
+                @else
+                    <p class="text-muted">No FAQs available for this campaign.</p>
+                @endif
+            </div>
+            @endif
+        </div>
+        
+        <!-- RIGHT COLUMN -->
+        <div class="col-lg-4">
+            <div class="funding-box sticky-top">
+                <h2 class="amount">{{ $setting->cur_sym }}{{ number_format($raisedAmount, 0) }}</h2>
+                <p class="goal">pledged of {{ $setting->cur_sym }}{{ number_format($goalAmount, 0) }} goal</p>
+                
+                <div class="progress">
+                    <div class="progress-bar" style="width: {{ $percentage }}%"></div>
+                </div>
+                
+                <small class="d-block mb-3">{{ $percentage }}% funded</small>
+                
+                <div class="stats">
+                    <div>
+                        <strong>{{ $donations->count() }}</strong>
+                        <span>backers</span>
+                    </div>
+                    <div>
+                        <strong>
+                            @if($campaignData->end_date)
+                                {{ \Carbon\Carbon::parse($campaignData->end_date)->diffInDays(\Carbon\Carbon::now()) }}
+                            @else
+                                Ongoing
+                            @endif
+                        </strong>
+                        <span>days to go</span>
+                    </div>
+                </div>
+                
+                <a href="{{ route('campaign.donate', $campaignData->slug) }}" class="btn btn-success w-100 mt-3">Back This Project</a>
+                
+                @if($campaignData->end_date)
+                <p class="end-date">
+                    Campaign ends on {{ showDateTime($campaignData->end_date, 'F d, Y') }}
+                </p>
+                @endif
+                
+                <!-- TIERS -->
+                @php
+                    $campaignRewards = $campaignData->rewards()->active()->orderBy('minimum_amount')->limit(4)->get();
+                @endphp
+                @if($campaignRewards->count() > 0)
+                <div class="tiers">
+                    <h5>Support Tiers</h5>
+                    @foreach($campaignRewards as $reward)
+                        <div class="tier-card">
+                            <strong>{{ $setting->cur_sym }}{{ showAmount($reward->minimum_amount) }}</strong>
+                            <p class="mb-1 mt-2 fw-semibold">{{ $reward->title }}</p>
+                            <small class="text-muted">{{ Str::limit($reward->description, 60) }}</small>
+                        </div>
+                    @endforeach
+                </div>
+                @endif
+            </div>
+        </div>
+    </div>
+</main>
+<!-- Main Fundraiser Section -->
+    <div class="fundraiser-container mt-4">
+        <!-- Main Content -->
+        <div class="fundraiser-main">
+            <!-- Hero Banner -->
+            <div class="fundraiser-hero">
+                <h1 class="banner-title">{{ __(@$campaignData->name) }}</h1>
+                <div class="fundraiser-banner">
+                    <div class="banner-overlay">
+                        @if(@$campaignData->youtube_url ?? @$campaign->youtube_url)
+                            <!-- YouTube Video - Simple Direct Embed -->
+                            @php
+                                $youtubeUrl = @$campaignData->youtube_url ?? @$campaign->youtube_url;
+                                $videoId = '';
+                                if (strpos($youtubeUrl, 'youtu.be/') !== false) {
+                                    $videoId = explode('youtu.be/', $youtubeUrl)[1];
+                                    $videoId = explode('?', $videoId)[0];
+                                } elseif (strpos($youtubeUrl, 'youtube.com/watch?v=') !== false) {
+                                    $videoId = explode('v=', $youtubeUrl)[1];
+                                    $videoId = explode('&', $videoId)[0];
+                                } elseif (strpos($youtubeUrl, 'youtube.com/embed/') !== false) {
+                                    $videoId = explode('embed/', $youtubeUrl)[1];
+                                    $videoId = explode('?', $videoId)[0];
+                                }
+                            @endphp
+                            
+                            @if($videoId)
+                                <div style="width: 100%; height: 400px; border-radius: 10px; overflow: hidden; position: relative;">
+                                    <!-- Campaign Image with Play Button (Initially Visible) -->
+                                    <div id="campaign-image-{{ $videoId }}" style="width: 100%; height: 100%; position: relative; display: block;">
+                                        <img src="{{ getImage(getFilePath('campaign') . '/' . (@$campaignData->image ?? @$campaign->image), getFileSize('campaign')) }}" 
+                                             alt="{{ @$campaignData->name ?? @$campaign->name }}" 
+                                             style="width: 100%; height: 100%; object-fit: cover;">
+                                        
+                                        <!-- Play Button Overlay -->
+                                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); border-radius: 50%; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; cursor: pointer;"
+                                             onclick="showVideo('{{ $videoId }}')">
+                                            <i class="fas fa-play" style="font-size: 30px; color: #05ce78; margin-left: 5px;"></i>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- YouTube Video (Initially Hidden) -->
+                                    <div id="youtube-video-{{ $videoId }}" style="width: 100%; height: 100%; display: none;">
+                                        <iframe id="video-iframe-{{ $videoId }}" 
+                                                src="" 
+                                                style="width: 100%; height: 100%; border: none;" 
+                                                frameborder="0" 
+                                                allowfullscreen
+                                                allow="autoplay; encrypted-media">
+                                        </iframe>
+                                    </div>
+                                </div>
+                            @else
+                                <!-- Fallback to campaign image if video ID not found -->
+                                <img src="{{ getImage(getFilePath('campaign') . '/' . (@$campaignData->image ?? @$campaign->image), getFileSize('campaign')) }}" alt="{{ @$campaignData->name ?? @$campaign->name }}">
+                            @endif
+                        @else
+                            <!-- Regular Image Display -->
+                        <img src="{{ getImage(getFilePath('campaign') . '/' . @$campaignData->image, getFileSize('campaign')) }}"
+                                alt="{{ @$campaignData->name }}">
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <!-- Organizer Section -->
+            <div class="organizer-section">
+                <div class="organizer-info">
+                    <a href="{{ route('creator.profile', $campaignData->user->username ?? $campaignData->user->id) }}" style="text-decoration: none; display: flex; align-items: center; gap: 12px;">
+                        <div class="organizer-avatar">
+                            @if($campaignData->user->image)
+                                <img src="{{ getImage(getFilePath('userProfile') . '/' . $campaignData->user->image) }}" alt="{{ $campaignData->user->fullname }}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                            @else
+                                {{ strtoupper(substr($campaignData->user->fullname, 0, 2)) }}
+                            @endif
+                        </div>
+                        <div class="organizer-details">
+                            <h4 style="margin: 0; color: inherit;">{{ $campaignData->user->fullname }}</h4>
+                            <p style="margin: 0;">is organizing this fundraiser</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="donation-protected">
+                    <i class="fas fa-shield-alt"></i>
+                    Donation protected
+                </div>
+            </div>
+
+            <!-- Title Section -->
+            <div class="title-section">
+                <h1 class="banner-title">{{ __(@$campaignData->name) }}</h1>
+            </div>
+
+            <!-- Navigation Tabs -->
+            @php
+                $activeTab = request()->get('tab', 'campaign');
+            @endphp
+            <div class="campaign-tabs">
+                <nav class="tabs-nav">
+                    <div class="tabs-left">
+                        <a href="{{ route('campaign.show', $campaignData->slug) }}?tab=campaign" class="tab-link {{ $activeTab == 'campaign' ? 'active' : '' }}">Campaign</a>
+                        <a href="{{ route('campaign.show', $campaignData->slug) }}?tab=rewards" class="tab-link {{ $activeTab == 'rewards' ? 'active' : '' }}">Rewards</a>
+                        <a href="{{ route('campaign.show', $campaignData->slug) }}?tab=creator" class="tab-link {{ $activeTab == 'creator' ? 'active' : '' }}">Creator</a>
+                        <a href="{{ route('campaign.show', $campaignData->slug) }}?tab=faq" class="tab-link {{ $activeTab == 'faq' ? 'active' : '' }}">FAQ</a>
+                        <a href="{{ route('campaign.show', $campaignData->slug) }}?tab=updates" class="tab-link {{ $activeTab == 'updates' ? 'active' : '' }}">Updates</a>
+                        <a href="{{ route('campaign.show', $campaignData->slug) }}?tab=comments" class="tab-link {{ $activeTab == 'comments' ? 'active' : '' }}">
+                            Comments 
+                            @if($comments->count() > 0)
+                                <span class="tab-badge">{{ $comments->count() }}</span>
+                            @endif
+                        </a>
+                        <a href="{{ route('campaign.show', $campaignData->slug) }}?tab=community" class="tab-link {{ $activeTab == 'community' ? 'active' : '' }}">Community</a>
+                    </div>
+                </nav>
+            </div>
+
+            <!-- Campaign Tab Content (Description) -->
+            @if($activeTab == 'campaign' || !request()->has('tab'))
+            <div class="fundraiser-description tab-content-section" id="campaign-section">
+            <div class="donation-details__desc" data-aos="fade-up" data-aos-duration="1500">
+                @php echo @$campaignData->description @endphp
+            </div>
+                <a href="#" class="read-more">Read more</a>
+            </div>
+
+            <!-- Engagement -->
+            <div class="engagement-section">
+                <div class="engagement-item">
+                    <i class="fas fa-heart"></i>
+                    <span>1</span>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="fundraiser-actions">
+                <a href="{{ url('campaign/' . @$campaignData->slug . '/contribute') }}" class="btn-donate">Contribute</a>
+                <a href="#" class="btn-share" onclick="openShareModal()">Share</a>
+            </div>
+            @endif
+
+            <!-- Organizer Details (Show in campaign and creator tabs) -->
+            @if($activeTab == 'campaign' || $activeTab == 'creator' || !request()->has('tab'))
+            <div class="organizer-section tab-content-section" id="creator-section">
+                <h3>Organizer</h3>
+                <div class="organizer-info">
+                    <a href="{{ route('creator.profile', $campaignData->user->username ?? $campaignData->user->id) }}" style="text-decoration: none; display: flex; align-items: center; gap: 12px;">
+                        <div class="organizer-avatar">
+                            @if($campaignData->user->image)
+                                <img src="{{ getImage(getFilePath('userProfile') . '/' . $campaignData->user->image) }}" alt="{{ $campaignData->user->fullname }}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                            @else
+                                {{ strtoupper(substr($campaignData->user->fullname, 0, 2)) }}
+                            @endif
+                        </div>
+                        <div class="organizer-details">
+                            <h4 style="margin: 0; color: inherit;">{{ $campaignData->user->fullname }}</h4>
+                            <p style="margin: 0;">Organizer</p>
+                            <p style="margin: 0;">{{ $campaignData->user->country_name ?? 'Location not specified' }}</p>
+                        </div>
+                    </a>
+                </div>
+                <a href="{{ route('creator.profile', $campaignData->user->username ?? $campaignData->user->id) }}" class="btn-share">View Profile</a>
+            </div>
+            @endif
+
+            <!-- Reviews and Comments Section (Show in comments tab) -->
+            @if($activeTab == 'comments')
+            <div class="reviews-section tab-content-section" id="comments-section">
+                <h3>Comments & Reviews</h3>
+                <p class="reviews-prompt">Share your thoughts and experiences about this campaign.</p>
+
+                <!-- Review Form -->
+                <div class="review-form-container">
+                    <h4>Write a Comment</h4>
+                    @if(!auth()->check())
+                        <p style="color: #666; font-size: 0.9rem; margin-bottom: 15px;">
+                            <i class="fas fa-info-circle"></i> 
+                            You can comment as a guest. Just fill in your name and email below.
+                        </p>
+                    @endif
+                    <form class="review-form" id="reviewForm" method="POST" action="{{ route('campaign.comment', $campaignData->slug) }}">
+                        @csrf
+
+                        <div class="form-group">
+                            <label for="reviewTitle">Comment Title:</label>
+                            <input type="text" id="reviewTitle" name="title" placeholder="Give your comment a title">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="reviewContent">Your Comment:</label>
+                            <textarea id="reviewContent" name="comment" rows="4"
+                                placeholder="Share your thoughts about this campaign..." required></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="reviewerName">Your Name:</label>
+                            <input type="text" id="reviewerName" name="name" placeholder="Enter your name" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="reviewerEmail">Your Email:</label>
+                            <input type="email" id="reviewerEmail" name="email" placeholder="Enter your email" required>
+                        </div>
+
+                        <button type="submit" class="btn-submit-review">Submit Comment</button>
+                        <button type="button" class="btn-submit-review" onclick="submitFormDirectly()" style="margin-left: 10px; background: #007bff;">Submit Directly (Test)</button>
+                    </form>
+                </div>
+
+                <!-- Reviews Display -->
+                <div class="reviews-display">
+                    <div class="reviews-header">
+                        <div>
+                            <h4>Recent Comments</h4>
+                            @php
+                                $avgRating = $comments->whereNotNull('rating')->avg('rating');
+                                $totalReviews = $comments->whereNotNull('rating')->count();
+                            @endphp
+                            @if($avgRating)
+                            <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9rem;">
+                                    <span style="color: #ffd700;">★★★★★</span> 
+                                    {{ number_format($avgRating, 1) }} average rating 
+                                    ({{ $totalReviews }} {{ $totalReviews == 1 ? 'review' : 'reviews' }})
+                                </p>
+                            @endif
+                        </div>
+                        <div class="reviews-filter">
+                            <select id="filterReviews">
+                                <option value="all">All Reviews</option>
+                                <option value="5">5 Stars</option>
+                                <option value="4">4 Stars</option>
+                                <option value="3">3 Stars</option>
+                                <option value="2">2 Stars</option>
+                                <option value="1">1 Star</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="reviews-list" id="reviewsList">
+                        @forelse ($comments as $comment)
+                            <div class="review-item" data-rating="{{ $comment->rating ?? 0 }}">
+                                <div class="review-header">
+                                    <div class="reviewer-info">
+                                        <div class="reviewer-avatar">
+                                            @if($comment->user && $comment->user->image)
+                                                <img src="{{ getImage(getFilePath('userProfile') . '/' . $comment->user->image) }}" alt="{{ $comment->user->fullname }}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                                            @else
+                                                {{ strtoupper(substr($comment->user ? $comment->user->fullname : $comment->name, 0, 2)) }}
+                                            @endif
+                                        </div>
+                                        <div class="reviewer-details">
+                                            <h5 class="reviewer-name">{{ $comment->user ? $comment->user->fullname : $comment->name }}</h5>
+                                            <div class="review-rating">
+                                                @if($comment->rating)
+                                                    <span class="stars">
+                                                        @for($i = 1; $i <= 5; $i++)
+                                                            @if($i <= $comment->rating)
+                                                                ★
+                                                            @else
+                                                                ☆
+                                                            @endif
+                                                        @endfor
+                                                    </span>
+                                                    <span class="rating-text">{{ $comment->rating }}.0</span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="review-date">{{ showDateTime($comment->created_at, 'd M, Y') }}</div>
+                                </div>
+                                @if($comment->title)
+                                    <h6 class="review-title">{{ $comment->title }}</h6>
+                                @endif
+                                <p class="review-content">{{ $comment->comment }}</p>
+                                <div class="review-actions">
+                                    <button class="btn-like-review">
+                                        <i class="fas fa-thumbs-up"></i>
+                                        <span>0</span>
+                                    </button>
+                                    <button class="btn-reply-review">
+                                        <i class="fas fa-reply"></i>
+                                        Reply
+                                    </button>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="review-item">
+                                <div class="review-content text-center" style="color: #666; font-style: italic; padding: 40px 20px;">
+                                    <i class="fas fa-star" style="font-size: 2rem; color: #ddd; margin-bottom: 15px; display: block;"></i>
+                                    <h5 style="margin-bottom: 10px; color: #333;">No reviews yet</h5>
+                                    <p>Be the first to leave a review and share your experience with this campaign!</p>
+                                </div>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+            @endif
+
+            <!-- Fundraiser Details (Show in campaign tab) -->
+            @if($activeTab == 'campaign' || !request()->has('tab'))
+            <div class="fundraiser-details">
+                <div class="detail-item">
+                    <span>Created 4 d ago</span>
+                    <span>Medical</span>
+                </div>
+                <a href="{{ route('report.fundraiser') }}" class="report-link">
+                    <i class="fas fa-flag"></i>
+                    Report fundraiser
+                </a>
+            </div>
+            @endif
+
+            <!-- FAQ Section (Show in FAQ tab) -->
+            @if($activeTab == 'faq')
+            <div class="faq-section tab-content-section" id="faq-section" style="margin-top: 40px; padding-top: 30px;">
+                <h3 style="font-size: 1.5rem; font-weight: 600; color: #333; margin-bottom: 30px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-question-circle" style="color: #05ce78;"></i>
+                    Frequently Asked Questions
+                </h3>
+                
+                @php
+                    // Use FAQs from controller, or load from campaign if not available
+                    if (!isset($faqs) || $faqs->isEmpty()) {
+                        $faqs = $campaignData->faqs()->orderBy('order')->orderBy('id')->get();
+                    }
+                @endphp
+                
+                @if($faqs && $faqs->count() > 0)
+                    <div class="faq-list" style="display: flex; flex-direction: column; gap: 15px;">
+                        @foreach($faqs as $index => $faq)
+                            <div class="faq-item" style="background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: all 0.3s ease;">
+                                <div class="faq-question" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-bottom: 0;" onclick="toggleFaq({{ $index }})">
+                                    <h4 style="font-size: 1.1rem; font-weight: 600; color: #333; margin: 0; flex: 1; padding-right: 20px;">{{ $faq->question }}</h4>
+                                    <i class="fas fa-chevron-down faq-icon" id="faq-icon-{{ $index }}" style="color: #05ce78; font-size: 1rem; transition: transform 0.3s ease;"></i>
+                                </div>
+                                <div class="faq-answer" id="faq-answer-{{ $index }}" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease; padding-top: 0;">
+                                    <p style="color: #666; line-height: 1.6; margin: 15px 0 0 0; font-size: 0.95rem;">{{ $faq->answer }}</p>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="no-faqs" style="text-align: center; padding: 60px 20px; color: #888;">
+                        <i class="fas fa-question-circle" style="font-size: 3rem; color: #ddd; margin-bottom: 20px; display: block;"></i>
+                        <h4 style="margin-bottom: 10px; color: #333;">No FAQs Available</h4>
+                        <p>This campaign doesn't have any frequently asked questions yet.</p>
+                    </div>
+                @endif
+            </div>
+            @endif
+
+            <!-- Rewards Section (Show in rewards tab only if not already shown above) -->
+            @if($activeTab == 'rewards')
+            <div class="rewards-section tab-content-section" id="rewards-section">
+                <div class="rewards-header">
+                    <h3 class="rewards-title">
+                        <i class="fas fa-gift"></i>
+                        Campaign Rewards
+                    </h3>
+                    @auth
+                        @if(auth()->id() == $campaignData->user_id)
+                            <div class="rewards-actions">
+                                <button class="btn-add-reward" onclick="openRewardModal()">
+                                    <i class="fas fa-plus"></i>
+                                    Add More Rewards
+                                </button>
+                                <a href="{{ route('user.rewards.index', $campaignData->slug) }}" class="btn-manage-rewards">
+                                    <i class="fas fa-cog"></i>
+                                    Manage All Rewards
+                                </a>
+                            </div>
+                        @endif
+                    @endauth
+                </div>
+                
+                <div class="rewards-grid" id="rewardsGrid">
+                    @php
+                        $campaignRewards = $campaignData->rewards()->active()->orderBy('minimum_amount')->get();
+                    @endphp
+                    
+                    @if($campaignRewards->count() > 0)
+                        @foreach($campaignRewards as $reward)
+                            <div class="reward-card" data-reward-id="{{ $reward->id }}">
+                                <div class="reward-header">
+                                    <h4 class="reward-title">{{ $reward->title }}</h4>
+                                    <span class="reward-amount">{{ $setting->cur_sym . showAmount($reward->minimum_amount) }}</span>
+                                </div>
+                                
+                                @if($reward->image)
+                                    <div class="reward-image">
+                                        <img src="{{ getImage(getFilePath('reward') . '/' . $reward->image, getThumbSize('reward')) }}" 
+                                             alt="{{ $reward->title }}">
+                                    </div>
+                                @endif
+                                
+                                <div class="reward-content">
+                                    <p class="reward-description">{{ $reward->description }}</p>
+                                    
+                                    <div class="reward-details">
+                                        <div class="reward-type">
+                                            <i class="fas fa-{{ $reward->type == 'physical' ? 'box' : 'download' }}"></i>
+                                            {{ ucfirst($reward->type) }} Reward
+                                        </div>
+                                        
+                                        @if($reward->quantity)
+                                            <div class="reward-quantity">
+                                                <i class="fas fa-layer-group"></i>
+                                                {{ $reward->getRemainingQuantity() }} left
+                                            </div>
+                                        @endif
+                                    </div>
+                                    
+                                    @if($reward->terms_conditions)
+                                        <div class="reward-terms">
+                                            <small>{{ $reward->terms_conditions }}</small>
+                                        </div>
+                                    @endif
+                                </div>
+                                
+                                <div class="reward-actions">
+                                    <a href="{{ route('campaign.donate', $campaignData->slug) }}?reward={{ $reward->id }}" 
+                                       class="btn-get-reward">
+                                        Get This Reward
+                                    </a>
+                                    
+                                    @auth
+                                        @if(auth()->id() == $campaignData->user_id)
+                                            <div class="reward-admin-actions">
+                                                <button class="btn-edit-reward" onclick="editReward({{ $reward->id }})">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn-delete-reward" onclick="deleteReward({{ $reward->id }})">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        @endif
+                                    @endauth
+                                </div>
+                            </div>
+                        @endforeach
+                    @else
+                        <div class="no-rewards">
+                            <i class="fas fa-gift"></i>
+                            <h4>No Rewards Available</h4>
+                            <p>This campaign doesn't have any rewards yet.</p>
+                            @auth
+                                @if(auth()->id() == $campaignData->user_id)
+                                    <button class="btn-add-first-reward" onclick="openRewardModal()">
+                                        <i class="fas fa-plus"></i>
+                                        Add Your First Reward
+                                    </button>
+                                @endif
+                            @endauth
+                        </div>
+                    @endif
+                </div>
+            </div>
+            @endif
+        </div>
+
+        <!-- Sidebar -->
+        <div class="fundraiser-sidebar">
+            <!-- Progress Card -->
+            <div class="sidebar-card mt-5">
+                <div class="progress-section">
+                    <div class="progress-text">
+                        <h3 class="progress-title">{{ $setting->cur_sym . showAmount($raisedAmount) }} raised</h3>
+                        <div class="progress-subtitle align-items-center">
+                            <span>{{ $percentage . '%' }} of goal</span>
+                            <span>{{ showAmount($goalAmount).$setting->cur_sym }} goal</span>
+                        </div>
+                    </div>
+                    <div class="progress-circle">
+                        <svg viewBox="0 0 100 100" class="progress-ring">
+                            <circle class="progress-ring-bg" cx="50" cy="50" r="40" stroke-width="8" fill="none" stroke="#e8e8e8"/>
+                            <circle 
+                                class="progress-ring-fill" 
+                                cx="50" cy="50" r="40" 
+                                stroke-width="8" 
+                                fill="none" 
+                                stroke="#05ce78" 
+                                stroke-linecap="round" 
+                                stroke-dasharray="251.2" 
+                                stroke-dashoffset="{{ 251.2 - (251.2 * floatval($percentage) / 100) }}"
+                            />
+                        </svg>
+                        {}
+                        <span class="progress-percentage">{{ $percentage . '%' }}</span>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <a href="#" class="btn-share-card" onclick="openShareModal()">Share</a>
+                    <a href="{{ url('campaign/' . @$campaignData->slug . '/contribute') }}" class="btn-donate-card">Contribute now</a>
+                </div>
+
+                <div class="donation-stats">
+                    <i class="fas fa-chart-line"></i>
+                    <span>{{ $donations->count() }} people just donated</span>
+                </div>
+
+                <div class="recent-donations">
+                    @forelse ($donations as $donation)
+                        <div class="donation-item">
+                            <div class="donation-info">
+                                <i class="fas fa-heart" style="color: #666; font-size: 0.9rem;"></i>
+                                <div class="donation-details">
+                                    <span class="donation-name">{{ __($donation->donorName) }}</span>
+                                    <span class="donation-amount">{{ $setting->cur_sym . showAmount($donation->amount) }}</span>
+                                </div>
+                            </div>
+                            <span class="donation-type">
+                                @if($loop->first)
+                                    Recent donation
+                                @elseif($donation->amount == $donations->max('amount'))
+                                    Top donation
+                                @else
+                                    {{ diffForHumans($donation->created_at) }}
+                                @endif
+                            </span>
+                        </div>
+                    @empty
+                        <div class="donation-item">
+                            <div class="donation-info">
+                                <i class="fas fa-heart" style="color: #666; font-size: 0.9rem;"></i>
+                                <div class="donation-details">
+                                    <span class="donation-name">No donations yet</span>
+                                    <span class="donation-amount">Be the first!</span>
+                                </div>
+                            </div>
+                            <span class="donation-type">Start donating</span>
+                        </div>
+                    @endforelse
+                    
+                    @if($donations->count() > 0)
+                        <div class="donation-actions">
+                            <button class="donation-action-btn" id="showAllDonations">See all</button>
+                            <button class="donation-action-btn" id="showTopDonations">
+                                <i class="fas fa-star"></i>
+                                See top
+                            </button>
+                        </div>
+                    @endif
+                </div>
+            </div>
+            
+            <!-- Latest News Link -->
+            <div class="news-link-container mt-4">
+                <a href="#" class="news-link" id="newsLink">
+                    <i class="fas fa-newspaper"></i>
+                    <span>Latest News & Updates</span>
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Donations Modal -->
+    <div class="donations-modal" id="donationsModal">
+        <div class="donations-modal-content">
+            <div class="donations-modal-header">
+                <h3 id="donationsModalTitle">All Donations</h3>
+                <button class="donations-modal-close" id="closeDonationsModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="donations-modal-body">
+                <div id="donationsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reward Modal -->
+    <div class="reward-modal" id="rewardModal">
+        <div class="reward-modal-content">
+            <div class="reward-modal-header">
+                <h3 id="rewardModalTitle">Add New Reward</h3>
+                <button class="reward-modal-close" id="closeRewardModal" onclick="closeRewardModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="reward-modal-body">
+                <form id="rewardForm" enctype="multipart/form-data">
+                    @csrf
+                    <input type="hidden" id="rewardId" name="reward_id">
+                    <input type="hidden" id="campaignSlug" name="campaign_slug" value="{{ $campaignData->slug }}">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="rewardTitle">Reward Title *</label>
+                            <input type="text" id="rewardTitle" name="title" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="rewardAmount">Minimum Amount *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">{{ $setting->cur_sym }}</span>
+                                <input type="number" id="rewardAmount" name="minimum_amount" step="0.01" min="1" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="rewardDescription">Description *</label>
+                        <textarea id="rewardDescription" name="description" rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="rewardType">Reward Type *</label>
+                            <select id="rewardType" name="type" required>
+                                <option value="">Select Type</option>
+                                <option value="physical">Physical Reward</option>
+                                <option value="digital">Digital Reward</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="rewardQuantity">Available Quantity</label>
+                            <input type="number" id="rewardQuantity" name="quantity" min="1" placeholder="Leave empty for unlimited">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="rewardColor">Color Theme *</label>
+                            <select id="rewardColor" name="color_theme" required>
+                                <option value="">Select Color</option>
+                                <option value="primary">Primary (Blue)</option>
+                                <option value="success">Success (Green)</option>
+                                <option value="warning">Warning (Yellow)</option>
+                                <option value="danger">Danger (Red)</option>
+                                <option value="info">Info (Cyan)</option>
+                                <option value="secondary">Secondary (Gray)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="rewardImage">Reward Image</label>
+                            <input type="file" id="rewardImage" name="image" accept="image/*">
+                            <div id="imagePreview" class="image-preview" style="display: none;">
+                                <img id="previewImg" class="preview-image">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="rewardTerms">Terms & Conditions</label>
+                        <textarea id="rewardTerms" name="terms_conditions" rows="2" placeholder="Any special terms or conditions for this reward"></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel" onclick="closeRewardModal()">Cancel</button>
+                        <button type="submit" class="btn-save">Save Reward</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Modal -->
+    <div class="share-modal" id="shareModal">
+        <div class="share-modal-content">
+            <div class="share-modal-header">
+                <h3>Share Campaign</h3>
+                <button class="share-modal-close" id="closeShareModal" onclick="closeShareModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="share-modal-body">
+
+                <!-- Share URL Section -->
+                <div class="share-url-section">
+                    <h4>Campaign Link</h4>
+                    <div class="url-input-group">
+                        <input type="text" id="shareUrl" value="{{ url('campaign/' . @$campaignData->slug) }}" readonly>
+                        <button class="copy-btn" onclick="copyShareUrl()">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Social Platforms -->
+                <div class="social-platforms">
+                    <h4>Share on Social Media</h4>
+                    <div class="platforms-grid">
+                        <a href="#" class="platform-btn facebook" onclick="shareOnFacebook()">
+                            <i class="fab fa-facebook-f platform-icon"></i>
+                            <span class="platform-name">Facebook</span>
+                        </a>
+                        <a href="#" class="platform-btn twitter" onclick="shareOnTwitter()">
+                            <i class="fab fa-twitter platform-icon"></i>
+                            <span class="platform-name">Twitter</span>
+                        </a>
+                        <a href="#" class="platform-btn whatsapp" onclick="shareOnWhatsApp()">
+                            <i class="fab fa-whatsapp platform-icon"></i>
+                            <span class="platform-name">WhatsApp</span>
+                        </a>
+                        <a href="#" class="platform-btn telegram" onclick="shareOnTelegram()">
+                            <i class="fab fa-telegram platform-icon"></i>
+                            <span class="platform-name">Telegram</span>
+                        </a>
+                        <a href="#" class="platform-btn email" onclick="shareViaEmail(); return false;">
+                            <i class="fas fa-envelope platform-icon"></i>
+                            <span class="platform-name">Email</span>
+                        </a>
+                        <a href="#" class="platform-btn linkedin" onclick="shareOnLinkedIn()">
+                            <i class="fab fa-linkedin-in platform-icon"></i>
+                            <span class="platform-name">LinkedIn</span>
+                        </a>
+                        <a href="#" class="platform-btn instagram" onclick="shareOnInstagram(); return false;">
+                            <i class="fab fa-instagram platform-icon"></i>
+                            <span class="platform-name">Instagram</span>
+                        </a>
+                        <a href="#" class="platform-btn reddit" onclick="shareOnReddit()">
+                            <i class="fab fa-reddit-alien platform-icon"></i>
+                            <span class="platform-name">Reddit</span>
+                        </a>
+                        <a href="#" class="platform-btn pinterest" onclick="shareOnPinterest()">
+                            <i class="fab fa-pinterest platform-icon"></i>
+                            <span class="platform-name">Pinterest</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection
+
+@push('page-style-lib')
+    <link rel="stylesheet" href="{{ asset($activeThemeTrue . 'css/select2.css') }}">
+@endpush
+
+@push('page-style')
+    <style>
+        .anonymous-alert-text .alert {
+            background-color: #cff4fc !important;
+        }
+
+        .select2-results__option {
+            padding-left: 16px;
+        }
+
+        /* Share Modal Styles */
+        .share-modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .share-modal-content {
+            background-color: #fff;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .share-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 25px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .share-modal-header h3 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .share-modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #666;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .share-modal-close:hover {
+            background: #f8f9fa;
+            color: #333;
+        }
+
+        .share-modal-body {
+            padding: 25px;
+        }
+
+        .share-option {
+            margin-bottom: 25px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .input-group button {
+            padding: 12px 20px;
+            background: #05ce78;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .input-group button:hover {
+            background: #04a85f;
+        }
+
+        .social-share-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+        }
+
+        .social-share-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: white;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .social-share-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            color: white;
+            text-decoration: none;
+        }
+
+        .social-share-btn.facebook { background: #1877f2; }
+        .social-share-btn.twitter { background: #1da1f2; }
+        .social-share-btn.whatsapp { background: #25d366; }
+        .social-share-btn.telegram { background: #0088cc; }
+        .social-share-btn.email { background: #ea4335; }
+
+        .social-share-btn i {
+            font-size: 1.1rem;
+        }
+
+        @media (max-width: 768px) {
+            .share-modal-content {
+                margin: 10% auto;
+                width: 95%;
+            }
+            
+            .social-share-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 15px 20px;
+            z-index: 10000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            max-width: 300px;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toast-success {
+            border-left: 4px solid #05ce78;
+        }
+
+        .toast-error {
+            border-left: 4px solid #dc3545;
+        }
+
+        .toast i {
+            font-size: 1.2rem;
+        }
+
+        .toast-success i {
+            color: #05ce78;
+        }
+
+        .toast-error i {
+            color: #dc3545;
+        }
+    </style>
+@endpush
+
+@push('page-script-lib')
+@endpush
+
+@push('page-script')
+    <script>
+        // Define share modal functions in global scope immediately (before jQuery)
+        (function() {
+            window.openShareModal = function() {
+                const modal = document.getElementById('shareModal');
+                if (!modal) {
+                    console.error('Share modal not found');
+                    return;
+                }
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+                
+                // Trigger animation after display is set
+                setTimeout(() => {
+                    modal.classList.add('show');
+                }, 10);
+            };
+
+            window.closeShareModal = function() {
+                const modal = document.getElementById('shareModal');
+                if (!modal) return;
+                modal.classList.remove('show');
+                document.body.style.overflow = 'auto';
+                
+                // Hide modal after animation completes
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                }, 400);
+            };
+            
+            window.copyShareUrl = function() {
+                const shareUrl = document.getElementById('shareUrl');
+                if (!shareUrl) return;
+                shareUrl.select();
+                shareUrl.setSelectionRange(0, 99999);
+                
+                try {
+                    document.execCommand('copy');
+                    if (typeof showToast === 'function') {
+                        showToast('success', 'Link copied to clipboard!');
+                    } else {
+                        alert('Link copied to clipboard!');
+                    }
+                } catch (err) {
+                    // Fallback for modern browsers
+                    navigator.clipboard.writeText(shareUrl.value).then(function() {
+                        if (typeof showToast === 'function') {
+                            showToast('success', 'Link copied to clipboard!');
+                        } else {
+                            alert('Link copied to clipboard!');
+                        }
+                    }).catch(function() {
+                        if (typeof showToast === 'function') {
+                            showToast('error', 'Failed to copy link');
+                        } else {
+                            alert('Failed to copy link');
+                        }
+                    });
+                }
+            };
+
+            // Social Sharing Functions (Global Scope)
+            window.shareOnFacebook = function() {
+                const url = encodeURIComponent(document.getElementById('shareUrl').value);
+                const title = encodeURIComponent('{{ @$campaignData->name }}');
+                const description = encodeURIComponent('Test');
+                const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${title}`;
+                window.open(shareUrl, '_blank', 'width=600,height=400');
+            };
+
+            window.shareOnTwitter = function() {
+                const url = encodeURIComponent(document.getElementById('shareUrl').value);
+                const title = encodeURIComponent('{{ @$campaignData->name }}');
+                const shareUrl = `https://twitter.com/intent/tweet?url=${url}&text=${title}`;
+                window.open(shareUrl, '_blank', 'width=600,height=400');
+            };
+
+            window.shareOnWhatsApp = function() {
+                const url = encodeURIComponent(document.getElementById('shareUrl').value);
+                const title = encodeURIComponent('{{ @$campaignData->name }}');
+                const shareUrl = `https://wa.me/?text=${title}%20${url}`;
+                window.open(shareUrl, '_blank');
+            };
+
+            window.shareOnTelegram = function() {
+                const url = encodeURIComponent(document.getElementById('shareUrl').value);
+                const title = encodeURIComponent('{{ @$campaignData->name }}');
+                const shareUrl = `https://t.me/share/url?url=${url}&text=${title}`;
+                window.open(shareUrl, '_blank');
+            };
+
+            window.shareViaEmail = function() {
+                const url = document.getElementById('shareUrl').value;
+                const title = '{{ @$campaignData->name }}';
+                const subject = encodeURIComponent(`Check out this campaign: ${title}`);
+                const body = encodeURIComponent(`I found this interesting campaign and thought you might want to check it out:\n\n${title}\n\n${url}`);
+                const shareUrl = `mailto:?subject=${subject}&body=${body}`;
+                window.location.href = shareUrl;
+                return false;
+            };
+
+            window.shareOnLinkedIn = function() {
+                const url = encodeURIComponent(document.getElementById('shareUrl').value);
+                const title = encodeURIComponent('{{ @$campaignData->name }}');
+                const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${url}`;
+                window.open(shareUrl, '_blank', 'width=600,height=400');
+            };
+
+            window.shareOnInstagram = function() {
+                // Copy the link to clipboard first
+                if (typeof window.copyShareUrl === 'function') {
+                    window.copyShareUrl();
+                }
+                
+                // Show a more detailed message
+                setTimeout(() => {
+                    if (typeof showToast === 'function') {
+                        showToast('info', 'Link copied! Open Instagram and paste it in your story or post.');
+                    } else {
+                        alert('Link copied! Open Instagram and paste it in your story or post.');
+                    }
+                }, 1000);
+                
+                return false;
+            };
+
+            window.shareOnReddit = function() {
+                const url = encodeURIComponent(document.getElementById('shareUrl').value);
+                const title = encodeURIComponent('{{ @$campaignData->name }}');
+                const shareUrl = `https://reddit.com/submit?url=${url}&title=${title}`;
+                window.open(shareUrl, '_blank', 'width=600,height=400');
+            };
+
+            window.shareOnPinterest = function() {
+                const url = encodeURIComponent(document.getElementById('shareUrl').value);
+                const title = encodeURIComponent('{{ @$campaignData->name }}');
+                const image = encodeURIComponent('{{ getImage(getFilePath("campaign") . "/" . @$campaignData->image, getFileSize("campaign")) }}');
+                const shareUrl = `https://pinterest.com/pin/create/button/?url=${url}&media=${image}&description=${title}`;
+                window.open(shareUrl, '_blank', 'width=600,height=400');
+            };
+        })();
+    </script>
+    <script>
+        (function ($) {
+            'use strict'
+
+            $('select[name=country]').change(function() {
+                $('input[name=mobile_code]').val($('select[name=country] :selected').data('mobile_code'));
+                $('.mobile-code').text('+' + $('select[name=country] :selected').data('mobile_code'));
+            });
+
+            $('input[name=mobile_code]').val($('select[name=country] :selected').data('mobile_code'));
+            $('.mobile-code').text('+' + $('select[name=country] :selected').data('mobile_code'));
+
+            $('#anonymousDonation').on('change', function () {
+                if ($(this).is(':checked')) {
+                    $('.anonymous-alert-text').removeClass('d-none')
+                } else {
+                    $('.anonymous-alert-text').addClass('d-none')
+                }
+            })
+
+            $('[name=gateway]').change(function() {
+                if (!$('[name=gateway]').val()) {
+                    $('.preview-details').addClass('d-none')
+
+                    return false
+                }
+
+                var resource       = $('[name=gateway] option:selected').data('gateway')
+                var fixed_charge   = parseFloat(resource.fixed_charge)
+                var percent_charge = parseFloat(resource.percent_charge)
+                var rate           = parseFloat(resource.rate)
+
+                $('.min').text(parseFloat(resource.min_amount).toFixed(2))
+                $('.max').text(parseFloat(resource.max_amount).toFixed(2))
+
+                var amount = parseFloat($('[name=amount]').val())
+
+                if (!amount) amount = 0
+
+                if (amount <= 0) {
+                    $('.preview-details').addClass('d-none')
+
+                    return false
+                }
+
+                $('.preview-details').removeClass('d-none')
+
+                var charge = parseFloat(fixed_charge + (amount * percent_charge / 100)).toFixed(2)
+                $('.charge').text(charge)
+
+                var payable = parseFloat(parseFloat(amount) + parseFloat(charge)).toFixed(2)
+                $('.payable').text(payable)
+
+                var final_amount = (parseFloat(parseFloat(amount) + parseFloat(charge)) * rate).toFixed(2)
+                $('.final_amount').text(final_amount)
+
+                if (resource.currency != '{{ $setting->site_cur }}') {
+                    var rateElement = `<span>@lang('Conversion Rate')</span> <span class="fw-bold">1 {{ __($setting->site_cur) }} = <span class="rate">${rate}</span> <span class="method_currency">${resource.currency}</span></span>`;
+
+                    $('.rate-element').html(rateElement)
+                    $('.rate-element').removeClass('d-none')
+                    $('.rate-element').addClass('d-flex')
+                    $('.in-site-cur').removeClass('d-none')
+                    $('.in-site-cur').addClass('d-flex')
+                } else {
+                    $('.rate-element').html('')
+                    $('.rate-element').addClass('d-none')
+                    $('.rate-element').removeClass('d-flex')
+                    $('.in-site-cur').addClass('d-none')
+                    $('.in-site-cur').removeClass('d-flex')
+                }
+
+                $('.method_currency').text(resource.currency)
+                $('[name=currency]').val(resource.currency)
+            })
+
+            $('[name=amount]').on('input', function() {
+                $('[name=gateway]').change()
+            })
+
+            $(document).on('change', '[name=donationAmount]', function () {
+                $('[name=gateway]').change()
+            })
+
+            // Pre-fill form with user data if logged in
+            @if(auth()->check())
+                $(document).ready(function() {
+                    $('#reviewerName').val('{{ auth()->user()->fullname }}');
+                    $('#reviewerEmail').val('{{ auth()->user()->email }}');
+                    $('#reviewerName, #reviewerEmail').prop('readonly', true);
+                });
+            @endif
+
+            // Review Form Submission
+            $('#reviewForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                console.log('Form submission started...');
+                
+                // Basic validation
+                var name = $('#reviewerName').val().trim();
+                var email = $('#reviewerEmail').val().trim();
+                var comment = $('#reviewContent').val().trim();
+                
+                console.log('Form data:', {name: name, email: email, comment: comment});
+                
+                if (!name) {
+                    showToast('error', 'Please enter your name.');
+                    return false;
+                }
+                
+                if (!email) {
+                    showToast('error', 'Please enter your email.');
+                    return false;
+                }
+                
+                if (!comment) {
+                    showToast('error', 'Please enter your comment.');
+                    return false;
+                }
+                
+                // Basic email validation
+                var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    showToast('error', 'Please enter a valid email address.');
+                    return false;
+                }
+                
+                var formData = new FormData(this);
+                var submitBtn = $(this).find('button[type="submit"]');
+                var originalText = submitBtn.text();
+                
+                // Disable submit button
+                submitBtn.prop('disabled', true).text('Submitting...');
+                
+                // Get CSRF token from meta tag or form
+                var csrfToken = $('meta[name="csrf-token"]').attr('content') || $('input[name="_token"]').val();
+                
+                $.ajax({
+                    url: $(this).attr('action'),
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    beforeSend: function() {
+                        console.log('Submitting comment form...');
+                    },
+                    success: function(response) {
+                        console.log('Comment submission success:', response);
+                        
+                        // Show success toast with icon
+                        var message = response.message || 'Comment submitted successfully! Please wait for admin approval.';
+                        
+                        // Enhanced toast notification
+                        if (typeof showToast === 'function') {
+                        showToast('success', message);
+                        } else {
+                            // Fallback toast notification
+                            showToastNotification('success', message);
+                        }
+                        
+                        // Reset form
+                        $('#reviewForm')[0].reset();
+                        
+                        // Reload page after a short delay to show new comment
+                        setTimeout(function() {
+                            location.reload();
+                        }, 3000);
+                    },
+                    error: function(xhr) {
+                        console.error('Comment submission error:', xhr);
+                        var message = 'An error occurred while submitting your comment.';
+                        if (xhr.responseJSON && xhr.responseJSON.errors) {
+                            var errors = xhr.responseJSON.errors;
+                            var errorMessages = [];
+                            for (var field in errors) {
+                                errorMessages.push(errors[field][0]);
+                            }
+                            message = errorMessages.join(', ');
+                        } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                            message = xhr.responseJSON.message;
+                        } else if (xhr.status === 419) {
+                            message = 'Session expired. Please refresh the page and try again.';
+                        } else if (xhr.status === 422) {
+                            message = 'Please check your form data and try again.';
+                        }
+                        // Show error toast
+                        if (typeof showToast === 'function') {
+                        showToast('error', message);
+                        } else {
+                            showToastNotification('error', message);
+                        }
+                        
+                        // Don't submit form normally on error, just show error message
+                        console.log('Comment submission failed:', message);
+                    },
+                    complete: function() {
+                        // Re-enable submit button
+                        submitBtn.prop('disabled', false).text(originalText);
+                    }
+                });
+            });
+
+            // Review Filtering
+            $('#filterReviews').on('change', function() {
+                var selectedRating = $(this).val();
+                var reviewItems = $('.review-item');
+                
+                if (selectedRating === 'all') {
+                    reviewItems.show();
+                } else {
+                    reviewItems.hide();
+                    reviewItems.filter('[data-rating="' + selectedRating + '"]').show();
+                }
+            });
+
+            // Toast Notification Function (Enhanced)
+            function showToast(type, message) {
+                // Remove any existing toasts first
+                $('.toast-notification').remove();
+                
+                // Create toast element with icon
+                var icon = '';
+                if (type === 'success') {
+                    icon = '<i class="fas fa-check-circle" style="margin-right: 10px;"></i>';
+                } else if (type === 'error') {
+                    icon = '<i class="fas fa-exclamation-circle" style="margin-right: 10px;"></i>';
+                } else if (type === 'info') {
+                    icon = '<i class="fas fa-info-circle" style="margin-right: 10px;"></i>';
+                }
+                
+                var toast = $('<div class="toast-notification ' + type + '" style="display: flex; align-items: center;">' + icon + '<span>' + message + '</span></div>');
+                
+                // Add to page
+                $('body').append(toast);
+                
+                // Animate in
+                setTimeout(function() {
+                    toast.css('transform', 'translateX(0)');
+                }, 100);
+                
+                // Remove after 5 seconds
+                setTimeout(function() {
+                    toast.css('transform', 'translateX(100%)');
+                    setTimeout(function() {
+                        toast.remove();
+                    }, 300);
+                }, 5000);
+            }
+            
+            // Fallback toast notification function
+            function showToastNotification(type, message) {
+                var toast = document.createElement('div');
+                toast.className = 'toast-notification ' + type;
+                toast.style.cssText = 'position: fixed; top: 20px; right: 20px; padding: 15px 20px; border-radius: 8px; color: #fff; font-weight: 600; z-index: 9999; max-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transform: translateX(100%); transition: transform 0.3s ease; display: flex; align-items: center;';
+                
+                if (type === 'success') {
+                    toast.style.backgroundColor = '#05ce78';
+                    toast.innerHTML = '<i class="fas fa-check-circle" style="margin-right: 10px;"></i><span>' + message + '</span>';
+                } else if (type === 'error') {
+                    toast.style.backgroundColor = '#dc3545';
+                    toast.innerHTML = '<i class="fas fa-exclamation-circle" style="margin-right: 10px;"></i><span>' + message + '</span>';
+                } else {
+                    toast.style.backgroundColor = '#333';
+                    toast.innerHTML = '<i class="fas fa-info-circle" style="margin-right: 10px;"></i><span>' + message + '</span>';
+                }
+                
+                document.body.appendChild(toast);
+                
+                setTimeout(function() {
+                    toast.style.transform = 'translateX(0)';
+                }, 100);
+                
+                setTimeout(function() {
+                    toast.style.transform = 'translateX(100%)';
+                    setTimeout(function() {
+                        if (toast.parentNode) {
+                            toast.parentNode.removeChild(toast);
+                        }
+                    }, 300);
+                }, 5000);
+            }
+
+            // Load more reviews functionality
+            var skip = {{ $comments->count() }};
+            var loading = false;
+            
+            function loadMoreReviews() {
+                if (loading) return;
+                
+                loading = true;
+                var loadMoreBtn = $('<button class="btn-load-more">Loading more reviews...</button>');
+                
+                if ($('.btn-load-more').length === 0) {
+                    $('#reviewsList').after(loadMoreBtn);
+                }
+                
+                $.ajax({
+                    url: '{{ route("campaign.comment.fetch", $campaignData->slug) }}',
+                    type: 'GET',
+                    data: { skip: skip },
+                    success: function(response) {
+                        if (response.html) {
+                            $('#reviewsList').append(response.html);
+                            skip += 5;
+                            
+                            if (response.remaining_comments <= 0) {
+                                $('.btn-load-more').remove();
+                            }
+                        }
+                    },
+                    error: function() {
+                        showToast('error', 'Failed to load more reviews.');
+                    },
+                    complete: function() {
+                        loading = false;
+                        $('.btn-load-more').remove();
+                    }
+                });
+            }
+            
+            // Add load more button if there are more reviews
+            @if($commentCount > $comments->count())
+                var loadMoreBtn = $('<button class="btn-load-more">Load More Reviews</button>');
+                $('#reviewsList').after(loadMoreBtn);
+                
+                $(document).on('click', '.btn-load-more', function() {
+                    loadMoreReviews();
+                });
+            @endif
+
+            // Donations Modal Functionality
+            var donationsData = @json($donations);
+            
+            // Show all donations
+            $('#showAllDonations').on('click', function() {
+                showDonationsModal('All Donations', donationsData);
+            });
+            
+            // Show top donations
+            $('#showTopDonations').on('click', function() {
+                var topDonations = [...donationsData].sort((a, b) => parseFloat(b.amount) - parseFloat(a.amount));
+                showDonationsModal('Top Donations', topDonations);
+            });
+            
+            // Close modal
+            $('#closeDonationsModal').on('click', function() {
+                $('#donationsModal').removeClass('show');
+            });
+            
+            // Close modal when clicking outside
+            $('#donationsModal').on('click', function(e) {
+                if (e.target === this) {
+                    $(this).removeClass('show');
+                }
+            });
+            
+            function showDonationsModal(title, donations) {
+                $('#donationsModalTitle').text(title);
+                var html = '';
+                
+                if (donations.length > 0) {
+                    donations.forEach(function(donation) {
+                        var donorName = donation.donorName || 'Anonymous';
+                        var donorInitials = donorName.split(' ').map(n => n[0]).join('').toUpperCase();
+                        var donationDate = new Date(donation.created_at).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                        });
+                        
+                        html += `
+                            <div class="modal-donation-item">
+                                <div class="modal-donation-info">
+                                    <div class="modal-donation-avatar">
+                                        ${donorInitials}
+                                    </div>
+                                    <div class="modal-donation-details">
+                                        <div class="modal-donation-name">${donorName}</div>
+                                        <div class="modal-donation-date">${donationDate}</div>
+                                    </div>
+                                </div>
+                                <div class="modal-donation-amount">
+                                    {{ $setting->cur_sym }}${parseFloat(donation.amount).toLocaleString()}
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    html = `
+                        <div class="modal-donation-item">
+                            <div style="text-align: center; width: 100%; color: #666; font-style: italic; padding: 20px;">
+                                No donations found
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                $('#donationsList').html(html);
+                $('#donationsModal').addClass('show');
+            }
+
+            // Share Modal Functions - Swipe Up Animation (moved to global scope below)
+
+            
+                
+            // Close modal when clicking outside
+            document.addEventListener('DOMContentLoaded', function() {
+                const modal = document.getElementById('shareModal');
+                if (modal) {
+                    modal.addEventListener('click', function(event) {
+                        if (event.target === this) {
+                            closeShareModal();
+                        }
+                    });
+                }
+            });
+
+            // Close modal with Escape key
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    closeShareModal();
+                }
+            });
+
+            // Touch/swipe gestures for mobile
+            let startY = 0;
+            let currentY = 0;
+            let isDragging = false;
+            const modal = document.getElementById('shareModal');
+            const modalContent = document.querySelector('.share-modal-content');
+
+            modal.addEventListener('touchstart', function(e) {
+                startY = e.touches[0].clientY;
+                isDragging = true;
+            });
+
+            modal.addEventListener('touchmove', function(e) {
+                if (!isDragging) return;
+                currentY = e.touches[0].clientY;
+                const diff = currentY - startY;
+                
+                if (diff > 0) {
+                    modalContent.style.transform = `translateY(${Math.min(diff, 100)}px)`;
+                }
+            });
+
+            modal.addEventListener('touchend', function(e) {
+                if (!isDragging) return;
+                isDragging = false;
+                
+                const diff = currentY - startY;
+                if (diff > 100) {
+                    closeShareModal();
+                } else {
+                    modalContent.style.transform = 'translateY(0)';
+                }
+            });
+
+            // Toast notification function
+            function showToast(type, message) {
+                const toast = document.createElement('div');
+                toast.className = `toast toast-${type}`;
+                toast.innerHTML = `
+                    <div class="toast-content">
+                        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                        <span>${message}</span>
+                    </div>
+                `;
+                
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.classList.add('show');
+                }, 100);
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => {
+                        document.body.removeChild(toast);
+                    }, 300);
+                }, 3000);
+            }
+
+        })(jQuery)
+
+        // Direct form submission function (for testing)
+        function submitFormDirectly() {
+            var name = document.getElementById('reviewerName').value.trim();
+            var email = document.getElementById('reviewerEmail').value.trim();
+            var comment = document.getElementById('reviewContent').value.trim();
+            
+            if (!name || !email || !comment) {
+                showToast('error', 'Please fill in all required fields.');
+                return;
+            }
+            
+            // Basic email validation
+            var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showToast('error', 'Please enter a valid email address.');
+                return;
+            }
+            
+            console.log('Submitting form directly...');
+            document.getElementById('reviewForm').submit();
+        }
+
+        // Form validation function
+        function validateCommentForm() {
+            var name = document.getElementById('reviewerName').value.trim();
+            var email = document.getElementById('reviewerEmail').value.trim();
+            var comment = document.getElementById('reviewContent').value.trim();
+            
+            if (!name) {
+                showToast('error', 'Please enter your name.');
+                return false;
+            }
+            
+            if (!email) {
+                showToast('error', 'Please enter your email.');
+                return false;
+            }
+            
+            if (!comment) {
+                showToast('error', 'Please enter your comment.');
+                return false;
+            }
+            
+            // Basic email validation
+            var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showToast('error', 'Please enter a valid email address.');
+                return false;
+            }
+            
+            return true;
+        }
+
+        // Global showToast function
+        function showToast(type, message) {
+            const toast = document.createElement('div');
+            toast.className = `toast-notification ${type}`;
+            toast.innerHTML = message;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.transform = 'translateX(0)';
+            }, 100);
+            
+            setTimeout(() => {
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (document.body.contains(toast)) {
+                        document.body.removeChild(toast);
+                    }
+                }, 300);
+            }, 5000);
+        }
+
+        // Simple function to show video
+        function showVideo(videoId) {
+            // Hide campaign image
+            const imageDiv = document.getElementById('campaign-image-' + videoId);
+            if (imageDiv) {
+                imageDiv.style.display = 'none';
+            }
+            
+            // Show YouTube video
+            const videoDiv = document.getElementById('youtube-video-' + videoId);
+            const iframe = document.getElementById('video-iframe-' + videoId);
+            
+            if (videoDiv && iframe) {
+                videoDiv.style.display = 'block';
+                
+                // Set iframe source with autoplay
+                iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&showinfo=0&controls=1&mute=0`;
+            }
+        }
+        
+        // Share Modal Functions are now defined at the top of the script section
+
+            // Event listeners for share modal
+            document.addEventListener('DOMContentLoaded', function() {
+                const closeBtn = document.getElementById('closeShareModal');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', closeShareModal);
+                }
+            });
+
+            // Reward Modal Functions
+            function openRewardModal() {
+                const modal = document.getElementById('rewardModal');
+                modal.style.display = 'block';
+                document.body.style.overflow = 'hidden';
+                
+                // Reset form
+                document.getElementById('rewardForm').reset();
+                document.getElementById('rewardModalTitle').textContent = 'Add New Reward';
+                document.getElementById('rewardId').value = '';
+                document.getElementById('imagePreview').style.display = 'none';
+            }
+
+            function closeRewardModal() {
+                const modal = document.getElementById('rewardModal');
+                modal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+
+            function editReward(rewardId) {
+                // Fetch reward data and populate form
+                fetch(`/user/campaign/{{ $campaignData->slug }}/rewards/${rewardId}/edit`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const reward = data.reward;
+                            document.getElementById('rewardModalTitle').textContent = 'Edit Reward';
+                            document.getElementById('rewardId').value = reward.id;
+                            document.getElementById('rewardTitle').value = reward.title;
+                            document.getElementById('rewardDescription').value = reward.description;
+                            document.getElementById('rewardAmount').value = reward.minimum_amount;
+                            document.getElementById('rewardType').value = reward.type;
+                            document.getElementById('rewardQuantity').value = reward.quantity || '';
+                            document.getElementById('rewardColor').value = reward.color_theme;
+                            document.getElementById('rewardTerms').value = reward.terms_conditions || '';
+                            
+                            // Show existing image if available
+                            if (reward.image) {
+                                const preview = document.getElementById('imagePreview');
+                                const previewImg = document.getElementById('previewImg');
+                                previewImg.src = reward.image_url;
+                                preview.style.display = 'block';
+                            }
+                            
+                            openRewardModal();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching reward:', error);
+                        alert('Error loading reward data');
+                    });
+            }
+
+            function deleteReward(rewardId) {
+                if (confirm('Are you sure you want to delete this reward?')) {
+                    fetch(`/user/campaign/{{ $campaignData->slug }}/rewards/${rewardId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Remove reward card from DOM
+                            const rewardCard = document.querySelector(`[data-reward-id="${rewardId}"]`);
+                            if (rewardCard) {
+                                rewardCard.remove();
+                            }
+                            
+                            // Check if no rewards left
+                            const rewardsGrid = document.getElementById('rewardsGrid');
+                            if (rewardsGrid.children.length === 0) {
+                                location.reload(); // Reload to show no rewards message
+                            }
+                        } else {
+                            alert('Error deleting reward');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error deleting reward:', error);
+                        alert('Error deleting reward');
+                    });
+                }
+            }
+
+            // Image preview functionality
+            document.getElementById('rewardImage').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                const preview = document.getElementById('imagePreview');
+                const previewImg = document.getElementById('previewImg');
+                
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImg.src = e.target.result;
+                        preview.style.display = 'block';
+                    }
+                    reader.readAsDataURL(file);
+                } else {
+                    preview.style.display = 'none';
+                }
+            });
+
+            // Form submission
+            document.getElementById('rewardForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const rewardId = document.getElementById('rewardId').value;
+                const isEdit = rewardId !== '';
+                
+                const url = isEdit 
+                    ? `/user/campaign/{{ $campaignData->slug }}/rewards/${rewardId}/update`
+                    : `/user/campaign/{{ $campaignData->slug }}/rewards/store`;
+                
+                fetch(url, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        closeRewardModal();
+                        location.reload(); // Reload to show updated rewards
+                    } else {
+                        alert('Error saving reward: ' + (data.message || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error saving reward:', error);
+                    alert('Error saving reward');
+                });
+            });
+
+            // Close modal when clicking outside
+            document.getElementById('rewardModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeRewardModal();
+                }
+            });
+
+            // FAQ Toggle Functionality
+            function toggleFaq(index) {
+                const answer = document.getElementById('faq-answer-' + index);
+                const icon = document.getElementById('faq-icon-' + index);
+                const faqItem = answer ? answer.closest('.faq-item') : null;
+                
+                if (!answer || !icon) return;
+                
+                if (answer.style.maxHeight && answer.style.maxHeight !== '0px') {
+                    // Close
+                    answer.style.maxHeight = '0px';
+                    answer.style.paddingTop = '0';
+                    icon.style.transform = 'rotate(0deg)';
+                    if (faqItem) {
+                        faqItem.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                    }
+                } else {
+                    // Open
+                    answer.style.maxHeight = answer.scrollHeight + 'px';
+                    answer.style.paddingTop = '15px';
+                    icon.style.transform = 'rotate(180deg)';
+                    if (faqItem) {
+                        faqItem.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)';
+                    }
+                }
+            }
+
+            // Initialize FAQ items - close all by default
+            document.addEventListener('DOMContentLoaded', function() {
+                const faqItems = document.querySelectorAll('.faq-item');
+                faqItems.forEach((item, index) => {
+                    const answer = document.getElementById('faq-answer-' + index);
+                    if (answer) {
+                        answer.style.maxHeight = '0px';
+                    }
+                });
+
+                // Auto-scroll to active tab section on page load
+                const urlParams = new URLSearchParams(window.location.search);
+                const activeTab = urlParams.get('tab') || 'campaign';
+                
+                // Wait a bit for page to fully render
+                setTimeout(function() {
+                    scrollToTabSection(activeTab);
+                }, 300);
+            });
+
+            // Function to scroll to tab section
+            function scrollToTabSection(tabName) {
+                let targetElement = null;
+                
+                switch(tabName) {
+                    case 'campaign':
+                        targetElement = document.getElementById('campaign-section') || document.querySelector('.fundraiser-description.tab-content-section');
+                        break;
+                    case 'rewards':
+                        targetElement = document.getElementById('rewards-section') || document.querySelector('.rewards-section.tab-content-section');
+                        break;
+                    case 'creator':
+                        // Find organizer section
+                        targetElement = document.getElementById('creator-section') || document.querySelector('.organizer-section.tab-content-section');
+                        if (!targetElement) {
+                            targetElement = document.querySelector('.organizer-section');
+                        }
+                        break;
+                    case 'faq':
+                        targetElement = document.getElementById('faq-section') || document.querySelector('.faq-section.tab-content-section');
+                        break;
+                    case 'comments':
+                        targetElement = document.getElementById('comments-section') || document.querySelector('.reviews-section.tab-content-section');
+                        break;
+                    case 'updates':
+                    case 'community':
+                        // These sections might not exist yet, scroll to tabs
+                        targetElement = document.querySelector('.campaign-tabs');
+                        break;
+                    default:
+                        targetElement = document.getElementById('campaign-section') || document.querySelector('.fundraiser-description.tab-content-section');
+                }
+                
+                if (targetElement) {
+                    // Calculate offset for sticky header/tabs
+                    const tabsHeight = document.querySelector('.campaign-tabs')?.offsetHeight || 0;
+                    const headerHeight = document.querySelector('.main-header')?.offsetHeight || 0;
+                    const offset = tabsHeight + headerHeight + 20; // 20px extra padding
+                    
+                    const elementPosition = targetElement.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - offset;
+                    
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            }
+
+            // Also scroll when tab links are clicked (before navigation)
+            document.querySelectorAll('.tab-link').forEach(function(link) {
+                link.addEventListener('click', function(e) {
+                    // Get tab name from URL
+                    const href = this.getAttribute('href');
+                    if (href && href.includes('tab=')) {
+                        const tabMatch = href.match(/tab=([^&]+)/);
+                        if (tabMatch) {
+                            const tabName = tabMatch[1];
+                            // Small delay to let page start loading
+                            setTimeout(function() {
+                                scrollToTabSection(tabName);
+                            }, 100);
+                        }
+                    }
+                });
+            });
+    </script>
+@endpush

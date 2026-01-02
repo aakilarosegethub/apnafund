@@ -22,7 +22,14 @@ class SiteController extends Controller
             $arr                   = explode('/', $theme);
             $themeName             = end($arr);
             $themes[$key]['name']  = $themeName;
-            $themes[$key]['image'] = url('resources/views/themes/primary/'.$themeName.'.jpg');
+            // Check if theme preview image exists in public directory
+            $publicImagePath = public_path('assets/images/themes/'.$themeName.'.jpg');
+            if (file_exists($publicImagePath)) {
+                $themes[$key]['image'] = asset('assets/images/themes/'.$themeName.'.jpg');
+            } else {
+                // Use default placeholder image
+                $themes[$key]['image'] = asset('assets/admin/images/light.png');
+            }
         }
 
         return view('admin.site.themes', compact('pageTitle', 'themes'));

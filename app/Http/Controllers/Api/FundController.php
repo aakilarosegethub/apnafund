@@ -466,7 +466,7 @@ class FundController extends BaseApiController
                 'remain_amt' => max(0, $goal_amount - $total_deposite)
             ];
             
-            $cp[] = $fundData;
+                $cp[] = $fundData;
         }
 
         return response()->json([

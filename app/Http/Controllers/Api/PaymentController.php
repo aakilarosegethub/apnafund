@@ -27,9 +27,9 @@ class PaymentController extends BaseApiController
         
         $myarray = array();
         if ($sel->num_rows > 0) {
-            while ($row = $sel->fetch_assoc()) {
+        while ($row = $sel->fetch_assoc()) {
                 if (!$row) break;
-                $myarray[] = $row;
+            $myarray[] = $row;
             }
         }
 

@@ -20,12 +20,12 @@ class CategoryController extends BaseApiController
         $sel = $this->h->queryfire("select * from categories where status=1 order by id asc");
         
         if ($sel && $sel->num_rows > 0) {
-            while ($row = $sel->fetch_assoc()) {
+        while ($row = $sel->fetch_assoc()) {
                 if (!$row) break;
                 $pol = array();
-                $pol['id'] = $row['id'];
+            $pol['id'] = $row['id'];
                 $pol['title'] = $row['name'] ?? $row['title'] ?? ''; // Use 'name' field from categories table
-                $c[] = $pol;
+            $c[] = $pol;
             }
         }
 

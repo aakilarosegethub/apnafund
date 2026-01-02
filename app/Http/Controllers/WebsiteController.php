@@ -25,7 +25,8 @@ class WebsiteController extends Controller
     {
 
         parent::__construct();
-        $this->activeTheme = 'themes.apnafund.';
+        // Get active theme from database dynamically
+        $this->activeTheme = activeTheme();
         // You can add any initialization code here if needed
     }
     function home() {
@@ -44,7 +45,6 @@ class WebsiteController extends Controller
                 \Log::error('Error fetching featured campaigns', ['error' => $e->getMessage()]);
                 $featuredCampaigns = collect(); // Empty collection if error
             }
-
             return view($this->activeTheme .'page.home', compact('pageTitle', 'heroContent', 'infoBannerContent', 'featuredProjectsContent', 'featuredCampaigns'));
         } catch (\Exception $e) {
             \Log::error('Home page error', [
@@ -143,7 +143,7 @@ class WebsiteController extends Controller
     function campaignShow($slug) {
 
         $pageTitle        = 'Campaign Details';
-        $campaignData     = Campaign::with('rewards')->where('slug', $slug)->approve()->firstOrFail();
+        $campaignData     = Campaign::with(['rewards', 'deposits'])->where('slug', $slug)->approve()->firstOrFail();
         $comments         = Comment::with('user')->where('campaign_id', $campaignData->id)->approve()->latest()->limit(6)->get();
 
         $commentCount     = Comment::where('campaign_id', $campaignData->id)->approve()->count();

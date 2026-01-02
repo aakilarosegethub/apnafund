@@ -18,7 +18,7 @@ class FaqController extends BaseApiController
         
         $op = array();
         if ($check && $check->num_rows > 0) {
-            while ($row = $check->fetch_assoc()) {
+        while ($row = $check->fetch_assoc()) {
                 if (!$row) break;
                 
                 // Parse JSON data_info to get question and answer
