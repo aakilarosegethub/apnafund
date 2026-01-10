@@ -1,28 +1,50 @@
 <!-- NAVBAR -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
 <nav class="navbar navbar-expand-lg bg-white fixed-top shadow-sm">
   <div class="container">
-    <a class="navbar-brand" href="{{ route('home') }}">FundGreen</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-controls="nav" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon">
-        <i class="fas fa-bars"></i>
-      </span>
+
+    <!-- Logo -->
+    <a href="{{ route('home') }}" class="navbar-brand">
+      <img 
+        src="{{ asset('assets/universal/images/logoFavicon/logo_light.png') }}" 
+        alt="Apna Crowdfunding Logo"
+        style="max-height:68px;">
+    </a>
+
+    <!-- Hamburger -->
+    <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+      <span class="navbar-toggler-icon"></span>
     </button>
-    <div id="nav" class="collapse navbar-collapse">
-      <ul class="navbar-nav ms-auto align-items-lg-center">
-        <li class="nav-item"><a class="nav-link" href="{{ route('campaign') }}">Explore</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ route('campaign') }}">Categories</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ url('about') }}">How it Works</a></li>
+
+    <!-- Collapsible Content -->
+    <div class="collapse navbar-collapse" id="mainNav">
+
+      <!-- Center Search with Icon (END) -->
+      <div class="mx-lg-auto my-3 my-lg-0" style="max-width:420px; width:100%;">
+        <form class="position-relative">
+          <input 
+            type="text" 
+            class="form-control rounded-pill ps-4 pe-5"
+            placeholder="Search campaigns..."
+          >
+          <i class="fas fa-search position-absolute top-50 end-0 translate-middle-y me-3 text-muted"></i>
+        </form>
+      </div>
+
+      <!-- Right Button -->
+      <div class="ms-lg-3 text-lg-end">
         @auth
-        <li class="nav-item">
-          <a class="btn btn-success ms-lg-3" href="{{ route('user.campaign.new') }}">Start a Campaign</a>
-        </li>
+          <a class="btn btn-success rounded-pill px-4 w-100 w-lg-auto" href="{{ route('start.project') }}">
+            Start a Campaign
+          </a>
         @else
-        <li class="nav-item">
-          <a class="btn btn-success ms-lg-3" href="{{ route('user.login') }}">Start a Campaign</a>
-        </li>
+          <a class="btn btn-success rounded-pill px-4 w-100 w-lg-auto" href="{{ route('user.login') }}">
+            Start a Campaign
+          </a>
         @endauth
-      </ul>
+      </div>
+
     </div>
   </div>
 </nav>
-

@@ -28,6 +28,11 @@ Route::get('/csrf-token', function () {
 // API routes for email verification (no CSRF required)
 Route::post('/api/verify-email', 'App\Http\Controllers\User\AuthorizationController@emailVerificationApi')->name('api.verify.email');
 
+// Redirect /user/campaign/new to /start-project
+Route::get('/user/campaign/new', function () {
+    return redirect()->route('start.project');
+})->name('user.campaign.new.redirect');
+
 Route::controller('WebsiteController')->group(function () {
     Route::get('/', 'home')->name('home');
     Route::get('home-new', 'homeNew')->name('home.new');
@@ -194,6 +199,7 @@ Route::prefix('api')->group(function () {
     Route::match(['get', 'post'], '/forget_password.php', [AuthController::class, 'forgetPassword']);
     Route::match(['get', 'post'], '/social_login.php', [AuthController::class, 'socialLogin']);
     Route::match(['get', 'post'], '/mobile_check.php', [AuthController::class, 'checkMobile']);
+    Route::match(['get', 'post'], '/verify_email_otp.php', [AuthController::class, 'verifyEmailOTP']);
 
     // OTP APIs (Public)
     Route::match(['get', 'post'], '/msg_otp.php', [OTPController::class, 'msgOTP']);

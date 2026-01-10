@@ -12,7 +12,7 @@
     <!-- Icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 
-    <style>
+<style>
         body {
             font-family: Inter, system-ui, sans-serif;
             background: #f8f9fa;
@@ -249,21 +249,21 @@
     </style>
 </head>
 <body>
-    @php
-        $goalAmount = @$campaignData->goal_amount ?? 0;
-        $raisedAmount = @$campaignData->raised_amount ?? 0;
-        
-        if ($raisedAmount == 0) {
-            $raisedAmount = $campaignData->deposits()
-                ->where('status', \App\Constants\ManageStatus::PAYMENT_SUCCESS)
-                ->sum('amount');
-        }
-        
-        $percentage = donationPercentage($goalAmount, $raisedAmount);
+@php
+            $goalAmount = @$campaignData->goal_amount ?? 0;
+            $raisedAmount = @$campaignData->raised_amount ?? 0;
+            
+            if ($raisedAmount == 0) {
+                $raisedAmount = $campaignData->deposits()
+                    ->where('status', \App\Constants\ManageStatus::PAYMENT_SUCCESS)
+                    ->sum('amount');
+            }
+            
+            $percentage = donationPercentage($goalAmount, $raisedAmount);
         $activeTab = request()->get('tab', 'campaign');
         $setting = bs();
-    @endphp
-
+                            @endphp
+                            
     <!-- ================= NAVBAR ================= -->
     <nav class="navbar navbar-expand-lg bg-white border-bottom fixed-top">
         <div class="container">
@@ -282,12 +282,12 @@
                 <i class="fa-solid fa-magnifying-glass"></i>
                 <i class="fa-regular fa-user"></i>
                 @auth
-                    <a href="{{ route('user.campaign.new') }}" class="btn btn-success px-4 rounded-pill">Start a Campaign</a>
+                    <a href="{{ route('start.project') }}" class="btn btn-success px-4 rounded-pill">Start a Campaign</a>
                 @else
                     <a href="{{ route('user.login') }}" class="btn btn-success px-4 rounded-pill">Start a Campaign</a>
                 @endauth
-            </div>
-        </div>
+                                    </div>
+                                </div>
     </nav>
 
     <!-- ================= MAIN ================= -->
@@ -304,24 +304,24 @@
                 </p>
 
                 <!-- ✅ IMAGE FIXED HERE -->
-                <img src="{{ getImage(getFilePath('campaign') . '/' . @$campaignData->image, getFileSize('campaign')) }}"
+                        <img src="{{ getImage(getFilePath('campaign') . '/' . @$campaignData->image, getFileSize('campaign')) }}"
                      class="campaign-image"
-                     alt="{{ @$campaignData->name }}">
+                                alt="{{ @$campaignData->name }}">
 
                 <!-- AUTHOR -->
                 <div class="campaign-author">
-                    @if($campaignData->user->image)
+                            @if($campaignData->user->image)
                         <img src="{{ getImage(getFilePath('userProfile') . '/' . $campaignData->user->image) }}" alt="{{ $campaignData->user->fullname }}">
-                    @else
+                            @else
                         <div style="width: 50px; height: 50px; border-radius: 50%; background: #198754; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600;">
-                            {{ strtoupper(substr($campaignData->user->fullname, 0, 2)) }}
+                                {{ strtoupper(substr($campaignData->user->fullname, 0, 2)) }}
                         </div>
-                    @endif
+                            @endif
                     <div>
                         <strong>{{ $campaignData->user->fullname }}</strong>
                         <span><i class="fa-solid fa-location-dot"></i> {{ $campaignData->location ?? 'Location not specified' }}</span>
-                    </div>
-                </div>
+                        </div>
+                        </div>
 
                 <!-- TABS -->
                 <ul class="nav nav-tabs campaign-tabs">
@@ -363,15 +363,15 @@
                                             <a href="{{ route('user.rewards.index', $campaignData->slug) }}" class="btn btn-outline-success btn-sm">
                                                 <i class="fas fa-cog"></i>
                                                 Manage Rewards
-                                            </a>
-                                        </div>
+                    </a>
+                </div>
                                     @endif
                                 @endauth
-                            </div>
-                            
+            </div>
+
                             @php
                                 $campaignRewards = $campaignData->rewards()->active()->orderBy('minimum_amount')->get();
-                            @endphp
+            @endphp
                             
                             @if($campaignRewards->count() > 0)
                                 <div class="row g-4">
@@ -383,12 +383,12 @@
                                                          class="card-img-top" 
                                                          alt="{{ $reward->title }}"
                                                          style="height: 200px; object-fit: cover;">
-                                                @endif
+                            @endif
                                                 <div class="card-body">
                                                     <div class="d-flex justify-content-between align-items-start mb-2">
                                                         <h5 class="card-title mb-0">{{ $reward->title }}</h5>
                                                         <span class="badge bg-success">{{ $setting->site_currency_sym }}{{ number_format($reward->minimum_amount, 0) }}</span>
-                                                    </div>
+                    </div>
                                                     <p class="card-text text-muted">{{ $reward->description }}</p>
                                                     
                                                     <div class="d-flex gap-3 mb-3">
@@ -402,21 +402,21 @@
                                                                 {{ $reward->getRemainingQuantity() }} left
                                                             </small>
                                                         @endif
-                                                    </div>
-                                                    
+            </div>
+
                                                     @if($reward->terms_conditions)
                                                         <div class="mb-3">
                                                             <small class="text-muted">{{ $reward->terms_conditions }}</small>
-                                                        </div>
+            </div>
                                                     @endif
                                                     
                                                     <a href="{{ route('campaign.donate', $campaignData->slug) }}?reward={{ $reward->id }}" 
                                                        class="btn btn-success w-100">
                                                         Get This Reward
                                                     </a>
-                                                </div>
-                                            </div>
-                                        </div>
+                </div>
+            </div>
+            </div>
                                     @endforeach
                                 </div>
                             @else
@@ -430,155 +430,155 @@
                                                 <i class="fas fa-plus"></i>
                                                 Add Your First Reward
                                             </a>
-                                        @endif
-                                    @endauth
-                                </div>
                             @endif
+                                    @endauth
                         </div>
-                    @endif
+                            @endif
+            </div>
+            @endif
 
                     <!-- Comments Section -->
-                    @if($activeTab == 'comments')
-                        <h3>Comments & Reviews</h3>
+            @if($activeTab == 'comments')
+                <h3>Comments & Reviews</h3>
                         <p class="text-muted mb-4">Share your thoughts and experiences about this campaign.</p>
 
-                        <!-- Review Form -->
+                <!-- Review Form -->
                         <div class="mb-4 p-3 bg-light rounded">
-                            <h4>Write a Comment</h4>
-                            @if(!auth()->check())
-                                <p style="color: #666; font-size: 0.9rem; margin-bottom: 15px;">
-                                    <i class="fas fa-info-circle"></i> 
-                                    You can comment as a guest. Just fill in your name and email below.
-                                </p>
-                            @endif
-                            <form class="review-form" id="reviewForm" method="POST" action="{{ route('campaign.comment', $campaignData->slug) }}">
-                                @csrf
+                    <h4>Write a Comment</h4>
+                    @if(!auth()->check())
+                        <p style="color: #666; font-size: 0.9rem; margin-bottom: 15px;">
+                            <i class="fas fa-info-circle"></i> 
+                            You can comment as a guest. Just fill in your name and email below.
+                        </p>
+                    @endif
+                    <form class="review-form" id="reviewForm" method="POST" action="{{ route('campaign.comment', $campaignData->slug) }}">
+                        @csrf
                                 <div class="mb-3">
                                     <label for="reviewTitle" class="form-label">Comment Title:</label>
                                     <input type="text" class="form-control" id="reviewTitle" name="title" placeholder="Give your comment a title">
-                                </div>
+                        </div>
                                 <div class="mb-3">
                                     <label for="reviewContent" class="form-label">Your Comment:</label>
                                     <textarea class="form-control" id="reviewContent" name="comment" rows="4" placeholder="Share your thoughts about this campaign..." required></textarea>
-                                </div>
+                        </div>
                                 <div class="mb-3">
                                     <label for="reviewerName" class="form-label">Your Name:</label>
                                     <input type="text" class="form-control" id="reviewerName" name="name" placeholder="Enter your name" required>
-                                </div>
+                        </div>
                                 <div class="mb-3">
                                     <label for="reviewerEmail" class="form-label">Your Email:</label>
                                     <input type="email" class="form-control" id="reviewerEmail" name="email" placeholder="Enter your email" required>
-                                </div>
-                                <button type="submit" class="btn btn-success">Submit Comment</button>
-                            </form>
                         </div>
+                                <button type="submit" class="btn btn-success">Submit Comment</button>
+                    </form>
+                </div>
 
-                        <!-- Reviews Display -->
-                        <div class="reviews-display">
+                <!-- Reviews Display -->
+                <div class="reviews-display">
                             <div class="d-flex justify-content-between align-items-center mb-4">
-                                <div>
-                                    <h4>Recent Comments</h4>
-                                    @php
-                                        $avgRating = $comments->whereNotNull('rating')->avg('rating');
-                                        $totalReviews = $comments->whereNotNull('rating')->count();
-                                    @endphp
-                                    @if($avgRating)
+                        <div>
+                            <h4>Recent Comments</h4>
+                            @php
+                                $avgRating = $comments->whereNotNull('rating')->avg('rating');
+                                $totalReviews = $comments->whereNotNull('rating')->count();
+                            @endphp
+                            @if($avgRating)
                                         <p class="text-muted mb-0">
-                                            <span style="color: #ffd700;">★★★★★</span> 
-                                            {{ number_format($avgRating, 1) }} average rating 
-                                            ({{ $totalReviews }} {{ $totalReviews == 1 ? 'review' : 'reviews' }})
-                                        </p>
-                                    @endif
-                                </div>
-                            </div>
+                                    <span style="color: #ffd700;">★★★★★</span> 
+                                    {{ number_format($avgRating, 1) }} average rating 
+                                    ({{ $totalReviews }} {{ $totalReviews == 1 ? 'review' : 'reviews' }})
+                                </p>
+                            @endif
+                        </div>
+                    </div>
 
                             <div class="reviews-list">
-                                @forelse ($comments as $comment)
+                        @forelse ($comments as $comment)
                                     <div class="mb-4 pb-4 border-bottom">
                                         <div class="d-flex align-items-start gap-3 mb-2">
                                             <div class="flex-shrink-0">
-                                                @if($comment->user && $comment->user->image)
-                                                    <img src="{{ getImage(getFilePath('userProfile') . '/' . $comment->user->image) }}" alt="{{ $comment->user->fullname }}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
-                                                @else
+                                            @if($comment->user && $comment->user->image)
+                                                <img src="{{ getImage(getFilePath('userProfile') . '/' . $comment->user->image) }}" alt="{{ $comment->user->fullname }}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                                            @else
                                                     <div style="width: 40px; height: 40px; border-radius: 50%; background: #198754; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600;">
-                                                        {{ strtoupper(substr($comment->user ? $comment->user->fullname : $comment->name, 0, 2)) }}
+                                                {{ strtoupper(substr($comment->user ? $comment->user->fullname : $comment->name, 0, 2)) }}
                                                     </div>
-                                                @endif
-                                            </div>
+                                            @endif
+                                        </div>
                                             <div class="flex-grow-1">
                                                 <h5 class="mb-1">{{ $comment->user ? $comment->user->fullname : $comment->name }}</h5>
                                                 @if($comment->rating)
                                                     <div class="mb-2">
                                                         <span style="color: #ffd700;">
-                                                            @for($i = 1; $i <= 5; $i++)
+                                                        @for($i = 1; $i <= 5; $i++)
                                                                 @if($i <= $comment->rating)★@else☆@endif
-                                                            @endfor
-                                                        </span>
+                                                        @endfor
+                                                    </span>
                                                         <span class="ms-2">{{ $comment->rating }}.0</span>
                                                     </div>
                                                 @endif
                                                 <small class="text-muted">{{ showDateTime($comment->created_at, 'd M, Y') }}</small>
                                             </div>
-                                        </div>
-                                        @if($comment->title)
+                                </div>
+                                @if($comment->title)
                                             <h6 class="mb-2">{{ $comment->title }}</h6>
-                                        @endif
+                                @endif
                                         <p class="mb-0">{{ $comment->comment }}</p>
-                                    </div>
-                                @empty
+                            </div>
+                        @empty
                                     <div class="text-center py-5">
                                         <i class="fas fa-star" style="font-size: 2rem; color: #ddd; margin-bottom: 15px;"></i>
                                         <h5 class="mb-2">No reviews yet</h5>
                                         <p class="text-muted">Be the first to leave a review and share your experience with this campaign!</p>
-                                    </div>
-                                @endforelse
                             </div>
-                        </div>
-                    @endif
+                        @endforelse
+                </div>
+            </div>
+            @endif
 
                     <!-- FAQ Section -->
                     @if($activeTab == 'faqs' || $activeTab == 'faq')
                         <h3 class="mb-4">
                             <i class="fas fa-question-circle text-success"></i>
-                            Frequently Asked Questions
-                        </h3>
-                        
-                        @php
-                            if (!isset($faqs) || $faqs->isEmpty()) {
-                                $faqs = $campaignData->faqs()->orderBy('order')->orderBy('id')->get();
-                            }
-                        @endphp
-                        
-                        @if($faqs && $faqs->count() > 0)
+                    Frequently Asked Questions
+                </h3>
+                
+                @php
+                    if (!isset($faqs) || $faqs->isEmpty()) {
+                        $faqs = $campaignData->faqs()->orderBy('order')->orderBy('id')->get();
+                    }
+                @endphp
+                
+                @if($faqs && $faqs->count() > 0)
                             <div class="faq-list">
-                                @foreach($faqs as $index => $faq)
+                        @foreach($faqs as $index => $faq)
                                     <div class="faq-item mb-3 p-3 bg-white border rounded" style="cursor: pointer;" onclick="toggleFaq({{ $index }})">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <h5 class="mb-0">{{ $faq->question }}</h5>
                                             <i class="fas fa-chevron-down faq-icon" id="faq-icon-{{ $index }}"></i>
-                                        </div>
+                                </div>
                                         <div class="faq-answer mt-3" id="faq-answer-{{ $index }}" style="display: none;">
                                             <p class="text-muted mb-0">{{ $faq->answer }}</p>
-                                        </div>
-                                    </div>
-                                @endforeach
+                                </div>
                             </div>
-                        @else
+                        @endforeach
+                    </div>
+                @else
                             <div class="text-center py-5">
                                 <i class="fas fa-question-circle" style="font-size: 3rem; color: #ddd; margin-bottom: 20px;"></i>
                                 <h4 class="mb-2">No FAQs Available</h4>
                                 <p class="text-muted">This campaign doesn't have any frequently asked questions yet.</p>
-                            </div>
-                        @endif
-                    @endif
+                    </div>
+                @endif
+            @endif
 
                     <!-- Updates Tab -->
                     @if($activeTab == 'updates')
                         <p class="text-muted">No updates available at this time.</p>
-                    @endif
+                        @endif
 
-                </div>
-            </div>
+                                </div>
+                                    </div>
 
             <!-- RIGHT COLUMN -->
             <div class="col-lg-4">
@@ -588,15 +588,15 @@
 
                     <div class="progress">
                         <div class="progress-bar" style="width: {{ $percentage }}%"></div>
-                    </div>
-
+                                        </div>
+                                        
                     <small class="funded-text">{{ round($percentage) }}% funded</small>
 
                     <div class="stats">
                         <div>
                             <strong>{{ $campaignData->deposits ? $campaignData->deposits->count() : ($donations ? $donations->count() : 0) }}</strong>
                             <span>backers</span>
-                        </div>
+                                        </div>
                         <div>
                             <strong>
                                 @if($campaignData->end_date)
@@ -612,17 +612,17 @@
                                     @endif
                                 @else
                                     N/A
-                                @endif
+                                        @endif
                             </strong>
                             <span>
                                 @if($campaignData->end_date && \Carbon\Carbon::parse($campaignData->end_date)->isPast())
                                     days ago
-                                @else
+                    @else
                                     days to go
                                 @endif
                             </span>
                         </div>
-                    </div>
+        </div>
 
                     <a href="{{ route('campaign.donate', $campaignData->slug) }}" class="btn btn-success w-100 mt-3">Back This Project</a>
 
@@ -642,24 +642,24 @@
                                             <div>
                                                 <div class="fw-semibold">{{ __($donation->donorName) }}</div>
                                                 <small class="text-muted">
-                                                    @if($loop->first)
-                                                        Recent donation
-                                                    @elseif($donation->amount == $donations->max('amount'))
-                                                        Top donation
-                                                    @else
-                                                        {{ diffForHumans($donation->created_at) }}
-                                                    @endif
+                                @if($loop->first)
+                                    Recent donation
+                                @elseif($donation->amount == $donations->max('amount'))
+                                    Top donation
+                                @else
+                                    {{ diffForHumans($donation->created_at) }}
+                                @endif
                                                 </small>
-                                            </div>
-                                        </div>
+                        </div>
+                                </div>
                                         <div class="text-success fw-bold">
                                             {{ $setting->site_currency_sym }}{{ number_format($donation->amount, 0) }}
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
+                            </div>
                         </div>
-                    </div>
+                        </div>
+                            @endforeach
+                </div>
+            </div>
                     @else
                     <div class="recent-donations mt-4 pt-4 border-top">
                         <h6 class="mb-3 fw-semibold">
@@ -668,8 +668,8 @@
                         </h6>
                         <div class="text-center py-3">
                             <p class="text-muted mb-0 small">No donations yet. Be the first!</p>
-                        </div>
-                    </div>
+            </div>
+        </div>
                     @endif
 
                     @if($campaignData->end_date)
@@ -688,13 +688,13 @@
                                 <span class="backers">{{ $reward->backers_count ?? 0 }} backers</span>
                                 <p>{{ $reward->name }}</p>
                                 <small>{{ Str::limit($reward->description, 60) }}</small>
-                            </div>
-                        @endforeach
-                    </div>
-                    @endif
-                </div>
             </div>
-        </div>
+                        @endforeach
+                        </div>
+                    @endif
+                            </div>
+                        </div>
+                    </div>
     </main>
 
     <!-- ================= FOOTER ================= -->
@@ -707,8 +707,8 @@
                 <div class="col-md-3">
                     <h6>FundGreen</h6>
                     <p>{{ @$footerContent->data_info->footer_text ?? 'Empowering dreams through community-driven crowdfunding.' }}</p>
-                </div>
-
+                    </div>
+                    
                 <div class="col-md-3">
                     <h6>Explore</h6>
                     <ul>
@@ -717,8 +717,8 @@
                         <li><a href="{{ route('campaign') }}" style="color: #6c757d; text-decoration: none;">Success Stories</a></li>
                         <li><a href="{{ route('campaign') }}" style="color: #6c757d; text-decoration: none;">Featured</a></li>
                     </ul>
-                </div>
-
+                    </div>
+                    
                 <div class="col-md-3">
                     <h6>Support</h6>
                     <ul>
@@ -727,8 +727,8 @@
                         <li><a href="{{ url('contact') }}" style="color: #6c757d; text-decoration: none;">Contact Us</a></li>
                         <li style="color: #6c757d;">Trust & Safety</li>
                     </ul>
-                </div>
-
+                    </div>
+                    
                 <div class="col-md-3">
                     <h6>Company</h6>
                     <ul>
@@ -737,13 +737,13 @@
                         <li style="color: #6c757d;">Press</li>
                         <li><a href="http://apnacrowdfunding.com/blog" style="color: #6c757d; text-decoration: none;">Blog</a></li>
                     </ul>
-                </div>
-            </div>
+        </div>
+    </div>
 
             <div class="footer-bottom">
                 © {{ date('Y') }} FundGreen. {{ @$footerContent->data_info->copyright_text ?? 'All rights reserved.' }}
             </div>
-        </div>
+                    </div>
     </footer>
 
     <!-- Bootstrap JS -->
@@ -758,7 +758,7 @@
             if (answer.style.display === 'none' || answer.style.display === '') {
                 answer.style.display = 'block';
                 icon.style.transform = 'rotate(180deg)';
-            } else {
+                    } else {
                 answer.style.display = 'none';
                 icon.style.transform = 'rotate(0deg)';
             }
@@ -799,7 +799,7 @@
         }
 
         // Comment Form Submission with AJAX
-        $(document).ready(function() {
+                $(document).ready(function() {
             $('#reviewForm').on('submit', function(e) {
                 e.preventDefault();
                 
@@ -865,8 +865,8 @@
                         submitBtn.prop('disabled', false).html(originalText);
                     }
                 });
+                });
             });
-        });
     </script>
 </body>
 </html>
