@@ -135,6 +135,21 @@
                                                     </div>
                                                 </div>
                                             </div>
+                                        @elseif(is_object($item) && isset($item->name) && isset($item->options))
+                                            <div class="col-12">
+                                                <div class="row g-2 align-items-center">
+                                                    <div class="col-lg-3">
+                                                        <label class="form--label required">{{ __(keyToTitle($item->name)) }}</label>
+                                                    </div>
+                                                    <div class="col-lg-9">
+                                                        <select class="form--control form-select" name="{{ $item->name }}" required>
+                                                            @foreach((array)$item->options as $selectItemKey => $selectOption)
+                                                                <option value="{{ $selectItemKey }}" @if((@$data->data_info[$item->name] ?? '') == $selectItemKey) selected @endif>{{ $selectOption }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         @else
                                             <div class="col-12">
                                                 <div class="row g-2 align-items-center">

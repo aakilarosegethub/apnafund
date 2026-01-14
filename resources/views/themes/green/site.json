@@ -398,5 +398,30 @@
             "url": "text",
             "modal": true
         }
+    },
+    "footer_menu": {
+        "builder": true,
+        "no_selection": true,
+        "name": "Footer Menu",
+        "element": {
+            "menu_label": "text",
+            "slug": "text",
+            "section_type": {
+                "name": "section_type",
+                "options": {
+                    "about": "About",
+                    "support": "Support",
+                    "more_from_apnacrowdfunding": "More from Apnacrowdfunding"
+                }
+            },
+            "status": {
+                "name": "status",
+                "options": {
+                    "1": "Active",
+                    "0": "Inactive"
+                }
+            },
+            "modal": false
+        }
     }
 }

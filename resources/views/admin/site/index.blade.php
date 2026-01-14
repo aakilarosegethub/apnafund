@@ -236,6 +236,8 @@
                                 <th>{{ __(keyToTitle($k)) }}</th>
                             @elseif($k == 'select')
                                 <th>{{keyToTitle(@$section->element->$k->name)}}</th>
+                            @elseif(is_object($type) && isset($type->name) && isset($type->options))
+                                <th>{{ __(keyToTitle($type->name)) }}</th>
                             @endif
                         @endif
                     @endforeach
@@ -281,7 +283,19 @@
                                     @endif
                                 @elseif($k == 'select')
                                     @php $dataVal = @$section->element->$k->name; @endphp
-                                    <td>{{ @$data->data_info[$dataVal] ?? '' }}</td>
+                                    @php 
+                                        $selectValue = @$data->data_info[$dataVal] ?? '';
+                                        $selectOptions = @$section->element->$k->options ?? [];
+                                        $displayValue = isset($selectOptions[$selectValue]) ? $selectOptions[$selectValue] : $selectValue;
+                                    @endphp
+                                    <td>{{ $displayValue }}</td>
+                                @elseif(is_object($type) && isset($type->name) && isset($type->options))
+                                    @php 
+                                        $selectValue = @$data->data_info[$type->name] ?? '';
+                                        $selectOptions = (array) $type->options;
+                                        $displayValue = isset($selectOptions[$selectValue]) ? $selectOptions[$selectValue] : $selectValue;
+                                    @endphp
+                                    <td>{{ $displayValue }}</td>
                                 @endif
                             @endif
                         @endforeach
@@ -374,6 +388,21 @@
                                                     <div class="col-sm-8">
                                                         <select class="form--control form-select" name="{{ @$section->element->$k->name }}" required>
                                                             @foreach($section->element->$k->options as $selectKey => $options)
+                                                                <option value="{{ $selectKey }}">{{ $options }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @elseif(is_object($type) && isset($type->name) && isset($type->options))
+                                            <div class="col-12">
+                                                <div class="row gy-2">
+                                                    <div class="col-sm-4">
+                                                        <label class="col-form--label required">{{ __(keyToTitle($type->name)) }}</label>
+                                                    </div>
+                                                    <div class="col-sm-8">
+                                                        <select class="form--control form-select" name="{{ $type->name }}" required>
+                                                            @foreach((array)$type->options as $selectKey => $options)
                                                                 <option value="{{ $selectKey }}">{{ $options }}</option>
                                                             @endforeach
                                                         </select>
@@ -500,6 +529,21 @@
                                                     <div class="col-sm-8">
                                                         <select class="form--control form-select" name="{{ @$section->element->$k->name }}" required>
                                                             @foreach($section->element->$k->options as $selectKey => $options)
+                                                                <option value="{{ $selectKey }}">{{ $options }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @elseif(is_object($type) && isset($type->name) && isset($type->options))
+                                            <div class="col-12">
+                                                <div class="row gy-2">
+                                                    <div class="col-sm-4">
+                                                        <label class="col-form--label required">{{ __(keyToTitle($type->name)) }}</label>
+                                                    </div>
+                                                    <div class="col-sm-8">
+                                                        <select class="form--control form-select" name="{{ $type->name }}" required>
+                                                            @foreach((array)$type->options as $selectKey => $options)
                                                                 <option value="{{ $selectKey }}">{{ $options }}</option>
                                                             @endforeach
                                                         </select>
