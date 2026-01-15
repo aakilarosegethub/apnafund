@@ -1,15 +1,103 @@
+@php
+if(isset($_GET['test'])){   die('home');
+}
+@endphp
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>FundGreen – Crowdfunding</title>
+<title>@yield('title', bs('site_name') ?? 'ApnaCrowdfunding')</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="csrf-token" content="{{ csrf_token() }}">
+
+@php
+    $seo = \App\Models\SiteData::where('data_key', 'seo.data')->first();
+    $seoData = $seo ? (is_array($seo->data_info) ? (object)$seo->data_info : $seo->data_info) : null;
+@endphp
+
+@php
+    // Get page-specific SEO data if available
+    $pageSeo = null;
+    $currentSection = request()->segment(1);
+    if ($currentSection) {
+        $pageSeoData = \App\Models\SiteData::where('data_key', $currentSection . '.seo')->first();
+        $pageSeo = $pageSeoData ? (is_array($pageSeoData->data_info) ? (object)$pageSeoData->data_info : $pageSeoData->data_info) : null;
+    }
+@endphp
+
+@if($seoData || $pageSeo)
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="{{ $pageSeo->meta_description ?? $seoData->description ?? '' }}">
+    <meta name="keywords" content="{{ $pageSeo->meta_keywords ?? (isset($seoData->keywords) && is_array($seoData->keywords) ? implode(',', $seoData->keywords) : '') }}">
+    
+    @if($pageSeo && $pageSeo->meta_author)
+        <meta name="author" content="{{ $pageSeo->meta_author }}">
+    @endif
+    
+    @if($pageSeo && $pageSeo->meta_robots)
+        <meta name="robots" content="{{ $pageSeo->meta_robots }}">
+    @else
+        <meta name="robots" content="index, follow">
+    @endif
+    
+    @if($pageSeo && $pageSeo->canonical_url)
+        <link rel="canonical" href="{{ $pageSeo->canonical_url }}">
+    @else
+        <link rel="canonical" href="{{ url()->current() }}">
+    @endif
+    
+    @if($pageSeo && $pageSeo->meta_viewport)
+        <meta name="viewport" content="{{ $pageSeo->meta_viewport }}">
+    @else
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    @endif
+    
+    @if($pageSeo && $pageSeo->meta_charset)
+        <meta charset="{{ $pageSeo->meta_charset }}">
+    @else
+        <meta charset="UTF-8">
+    @endif
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{{ $pageSeo->meta_title ?? $seoData->social_title ?? bs('site_name') ?? 'ApnaCrowdfunding' }}">
+    <meta property="og:description" content="{{ $seoData->social_description ?? $pageSeo->meta_description ?? $seoData->description ?? '' }}">
+    @if(isset($seoData->image) && $seoData->image)
+        @php
+            $seoImage = filter_var($seoData->image, FILTER_VALIDATE_URL) 
+                ? $seoData->image 
+                : getImage(getFilePath('seo') . '/' . $seoData->image, getFileSize('seo'));
+        @endphp
+        <meta property="og:image" content="{{ $seoImage }}">
+    @endif
+    <meta property="og:url" content="{{ url()->current() }}">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $pageSeo->meta_title ?? $seoData->social_title ?? bs('site_name') ?? 'ApnaCrowdfunding' }}">
+    <meta name="twitter:description" content="{{ $seoData->social_description ?? $pageSeo->meta_description ?? $seoData->description ?? '' }}">
+    @if(isset($seoData->image) && $seoData->image)
+        <meta name="twitter:image" content="{{ $seoImage ?? '' }}">
+    @endif
+@else
+    <!-- Default Meta Tags -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="{{ url()->current() }}">
+@endif
 
 <!-- Bootstrap -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
 <!-- Google Font -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Icons -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+
+@stack('styles')
 
 <style>
 :root{
@@ -29,6 +117,21 @@ body{
 .navbar-brand{
   font-weight:700;
   color:var(--green)!important;
+  display: flex;
+  align-items: center;
+  padding: 0;
+}
+.navbar-brand img{
+  height: 40px;
+  max-width: 180px;
+  object-fit: contain;
+  display: block;
+}
+@media(max-width:768px){
+  .navbar-brand img{
+    height: 35px;
+    max-width: 150px;
+  }
 }
 
 /* HERO */
@@ -156,19 +259,83 @@ span{
     padding:5px 14px;
   }
 }
+/* =========================
+   HERO SECTION FIX
+========================= */
+
+.hero{
+  position: relative;
+  color: #ffffff;
+  padding: 120px 0 100px;
+  overflow: hidden;
+}
+
+/* Overlay ONLY for background */
+.hero::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    rgba(0,0,0,0.65) 0%,
+    rgba(0,0,0,0.55) 30%,
+    rgba(0,0,0,0.30) 45%,
+    rgba(0,0,0,0.05) 55%,
+    rgba(0,0,0,0.00) 100%
+  );
+  z-index: 1;
+}
+
+/* Content above overlay */
+.hero .container{
+  position: relative;
+  z-index: 2;
+}
+
+/* Heading clarity */
+.hero h1{
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #ffffff;
+  text-shadow: 0 6px 18px rgba(0,0,0,0.45);
+}
+
+/* First word highlight (Crowd / By / For) */
+.hero h1 span{
+  color: #2ecc71;
+}
+
+/* Description */
+.hero p{
+  font-size: 1.05rem;
+  max-width: 580px;
+  color: #f1f1f1;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* Button fix */
+.hero .btn{
+  font-weight: 600;
+}
+
 </style>
 </head>
 <body>
 
 <!-- NAVBAR -->
-@include('themes.green.partials.header-new')
+@include(activeTheme() . 'partials.header-new')
 
 <!-- CONTENT -->
 @yield('content')
 
 <!-- FOOTER -->
-@include('themes.green.partials.footer-new')
+@include(activeTheme() . 'partials.footer-new')
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+@stack('scripts')
+@stack('page-script')
 </body>
 </html>

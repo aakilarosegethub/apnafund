@@ -203,14 +203,14 @@ SHOW INDEXES FROM `site_data`;
 -- - routes/web.php
 -- - app/Http/Controllers/WebsiteController.php
 -- - app/Http/Controllers/Admin/SiteController.php
--- - resources/views/themes/apnafund/site.json
+-- - resources/views/themes/ApnaCrowdfunding/site.json
 -- - resources/views/themes/primary/site.json
 -- - resources/views/admin/site/element.blade.php
 -- - resources/views/admin/site/index.blade.php
--- - resources/views/themes/apnafund/page/contact.blade.php
--- - resources/views/themes/apnafund/page/creatorProfile.blade.php
--- - resources/views/themes/apnafund/page/businessResources.blade.php
--- - resources/views/themes/apnafund/partials/blog-part.blade.php
+-- - resources/views/themes/ApnaCrowdfunding/page/contact.blade.php
+-- - resources/views/themes/ApnaCrowdfunding/page/creatorProfile.blade.php
+-- - resources/views/themes/ApnaCrowdfunding/page/businessResources.blade.php
+-- - resources/views/themes/ApnaCrowdfunding/partials/blog-part.blade.php
 -- - resources/views/partials/seo.blade.php
 --
 -- =====================================================

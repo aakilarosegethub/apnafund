@@ -1,8 +1,8 @@
 {
 	"info": {
-		"_postman_id": "apnafund-mobile-api",
-		"name": "ApnaFund Mobile API",
-		"description": "Complete API collection for ApnaFund Mobile App",
+		"_postman_id": "ApnaCrowdfunding-mobile-api",
+		"name": "ApnaCrowdfunding Mobile API",
+		"description": "Complete API collection for ApnaCrowdfunding Mobile App",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [

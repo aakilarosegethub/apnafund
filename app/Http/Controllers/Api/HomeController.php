@@ -66,34 +66,23 @@ class HomeController extends BaseApiController
         // Get categories from categories table using Laravel DB query
         $c = [];
         try {
-            // Try with status='active' first (Laravel migration uses 'active' as status)
-            $categories = DB::table('categories')
-                ->where('status', 'active')
-                ->orWhere('status', 1)
-                ->orderBy('id', 'asc')
-                ->get();
+            // Use raw SQL query to handle cases where status column might not exist
+            // Try with status filter first, if it fails, get all categories
+            try {
+                $sel = $this->h->queryfire("SELECT * FROM categories WHERE (status = 'active' OR status = 1) ORDER BY id ASC");
+            } catch (\Exception $e) {
+                // If status column doesn't exist, get all categories
+                $sel = $this->h->queryfire("SELECT * FROM categories ORDER BY id ASC");
+            }
             
-            if ($categories->count() > 0) {
-                foreach ($categories as $row) {
+            if ($sel) {
+                while ($row = $sel->fetch_assoc()) {
+                    if (!$row) break;
                     $pol = [];
-                    $pol['id'] = $row->id;
+                    $pol['id'] = $row['id'];
                     // Use 'name' column from categories table, fallback to 'title' if exists
-                    $pol['title'] = isset($row->name) ? $row->name : (isset($row->title) ? $row->title : '');
+                    $pol['title'] = isset($row['name']) ? $row['name'] : (isset($row['title']) ? $row['title'] : '');
                     $c[] = $pol;
-                }
-            } else {
-                // If no categories found, try getting all categories
-                $categories = DB::table('categories')
-                    ->orderBy('id', 'asc')
-                    ->get();
-                
-                if ($categories->count() > 0) {
-                    foreach ($categories as $row) {
-                        $pol = [];
-                        $pol['id'] = $row->id;
-                        $pol['title'] = isset($row->name) ? $row->name : (isset($row->title) ? $row->title : '');
-                        $c[] = $pol;
-                    }
                 }
             }
         } catch (\Exception $e) {
@@ -104,21 +93,24 @@ class HomeController extends BaseApiController
         // Get banners from banners table using Laravel DB query
         $cps = [];
         try {
-            $banners = DB::table('banners')
-                ->where('status', 'active')
-                ->orderBy('order', 'asc')
-                ->orderBy('id', 'desc')
-                ->limit(5)
-                ->get();
+            // Use raw SQL query to handle cases where status column might not exist
+            // Try with status filter first, if it fails, get all banners
+            try {
+                $sel = $this->h->queryfire("SELECT * FROM banners WHERE (status = 'active' OR status = 1) ORDER BY `order` ASC, id DESC LIMIT 5");
+            } catch (\Exception $e) {
+                // If status column doesn't exist, get all banners
+                $sel = $this->h->queryfire("SELECT * FROM banners ORDER BY `order` ASC, id DESC LIMIT 5");
+            }
             
-            if ($banners->count() > 0) {
-                foreach ($banners as $banner) {
+            if ($sel) {
+                while ($row = $sel->fetch_assoc()) {
+                    if (!$row) break;
                     $cps[] = [
-                        'id' => $banner->id,
-                        'title' => $banner->title ?? '',
-                        'fund_photos' => $banner->image ? url($banner->image) : '',
-                        'link' => $banner->link ?? '',
-                        'description' => $banner->description ?? '',
+                        'id' => $row['id'],
+                        'title' => $row['title'] ?? '',
+                        'fund_photos' => $row['image'] ? url($row['image']) : '',
+                        'link' => $row['link'] ?? '',
+                        'description' => $row['description'] ?? '',
                     ];
                 }
             }
@@ -145,42 +137,25 @@ class HomeController extends BaseApiController
                     $donatersResult = $funded ? $funded->fetch_assoc() : null;
                     $total_donaters = $donatersResult ? ($donatersResult['total_donaters'] ?? 0) : 0;
                     
-                    // Handle gallery - it's JSON array in campaigns
-                    $gallery = [];
-                    if (!empty($rows['gallery'])) {
-                        $galleryData = is_string($rows['gallery']) ? json_decode($rows['gallery'], true) : $rows['gallery'];
-                        $gallery = is_array($galleryData) ? $galleryData : [];
-                    }
-                    // Add main image to gallery if exists
-                    if (!empty($rows['image']) && !in_array($rows['image'], $gallery)) {
-                        array_unshift($gallery, $rows['image']);
-                    }
-                    
-                    $pols = [
-                        'id' => $rows['id'],
-                        'cat_id' => $rows['category_id'] ?? 0,
-                        'title' => $rows['name'] ?? '',
-                        'fund_for' => '', // Not in campaigns table
-                        'fund_photos' => !empty($gallery) ? $gallery : (!empty($rows['image']) ? [$rows['image']] : []),
-                        'exp_date' => $rows['end_date'] ?? '',
-                        'fund_amt' => $goal_amount,
-                        'full_address' => $rows['location'] ?? '',
-                        'lats' => '', // Not in campaigns table
-                        'longs' => '', // Not in campaigns table
-                        'fund_story' => $rows['description'] ?? '',
-                        'fund_date' => $rows['start_date'] ?? '',
-                        'patient_photo' => [], // Not in campaigns table
-                        'patient_title' => '', // Not in campaigns table
-                        'patient_diagnosis' => '', // Not in campaigns table
-                        'fund_plan' => '', // Not in campaigns table
-                        'medical_certificate' => [], // Not in campaigns table
-                        'reject_comment' => '', // Not in campaigns table
-                        'fund_status' => $rows['status'] ?? '',
-                        'total_investment' => $total_deposite,
-                        'remain_amt' => $remain_amt,
+                    // Use helper function to format campaign data
+                    $pols = $this->formatCampaignData($rows, [
+                        'fund_for' => '',
+                        'patient_photo' => [],
                         'total_donaters' => $total_donaters,
                         'donaterlist' => $this->getDonaterList($rows['id'])
-                    ];
+                    ]);
+                    
+                    // Override specific fields for feature funds
+                    $pols['lats'] = '';
+                    $pols['longs'] = '';
+                    $pols['patient_title'] = '';
+                    $pols['patient_diagnosis'] = '';
+                    $pols['fund_plan'] = '';
+                    $pols['medical_certificate'] = [];
+                    $pols['reject_comment'] = '';
+                    $pols['fund_status'] = $rows['status'] ?? '';
+                    $pols['remain_amt'] = $remain_amt;
+                    
                     $cp[] = $pols;
                 }
             }
@@ -203,42 +178,27 @@ class HomeController extends BaseApiController
                 $donatersResult = $funded ? $funded->fetch_assoc() : null;
                 $total_donaters = $donatersResult ? ($donatersResult['total_donaters'] ?? 0) : 0;
                 
-                // Handle gallery
-                $gallery = [];
-                if (!empty($pop['gallery'])) {
-                    $galleryData = is_string($pop['gallery']) ? json_decode($pop['gallery'], true) : $pop['gallery'];
-                    $gallery = is_array($galleryData) ? $galleryData : [];
-                }
-                if (!empty($pop['image']) && !in_array($pop['image'], $gallery)) {
-                    array_unshift($gallery, $pop['image']);
-                }
-                
-                $goal_amount = $pop['goal_amount'] ?? $pop['target_amount'] ?? 0;
-                $popular = [
-                    'id' => $campaignId,
-                    'cat_id' => $pop['category_id'] ?? 0,
-                    'title' => $pop['name'] ?? '',
+                // Use helper function to format campaign data
+                $popular = $this->formatCampaignData($pop, [
                     'fund_for' => '',
-                    'fund_photos' => !empty($gallery) ? $gallery : (!empty($pop['image']) ? [$pop['image']] : []),
-                    'exp_date' => $pop['end_date'] ?? '',
-                    'fund_amt' => $goal_amount,
-                    'full_address' => $pop['location'] ?? '',
-                    'lats' => '',
-                    'longs' => '',
-                    'fund_story' => $pop['description'] ?? '',
-                    'fund_date' => $pop['start_date'] ?? '',
                     'patient_photo' => [],
-                    'patient_title' => '',
-                    'patient_diagnosis' => '',
-                    'fund_plan' => '',
-                    'medical_certificate' => [],
-                    'reject_comment' => '',
-                    'fund_status' => $pop['status'] ?? '',
-                    'total_investment' => $pop['total_deposite'] ?? 0,
-                    'remain_amt' => $goal_amount - ($pop['total_deposite'] ?? 0),
                     'total_donaters' => $total_donaters,
                     'donaterlist' => $this->getDonaterList($campaignId)
-                ];
+                ]);
+                
+                // Override specific fields for popular funds
+                $popular['id'] = $campaignId;
+                $popular['lats'] = '';
+                $popular['longs'] = '';
+                $popular['patient_title'] = '';
+                $popular['patient_diagnosis'] = '';
+                $popular['fund_plan'] = '';
+                $popular['medical_certificate'] = [];
+                $popular['reject_comment'] = '';
+                $popular['fund_status'] = $pop['status'] ?? '';
+                $popular['total_investment'] = $pop['total_deposite'] ?? 0;
+                $popular['remain_amt'] = $popular['fund_amt'] - ($pop['total_deposite'] ?? 0);
+                
                 $listpopular[] = $popular;
             }
         }
@@ -266,53 +226,31 @@ class HomeController extends BaseApiController
             $fundsWithDistance = array_slice($fundsWithDistance, 0, 5);
             
             foreach ($fundsWithDistance as $pop) {
-                $depositResult = $this->h->queryfire("SELECT COALESCE(SUM(amount), 0) AS total_deposite FROM deposits WHERE campaign_id=" . (int)$pop["id"] . " AND status = 1");
-                $getd = $depositResult ? $depositResult->fetch_assoc() : null;
-                $total_deposite = $getd ? ($getd['total_deposite'] ?? 0) : ($pop['raised_amount'] ?? 0);
                 $funded = $this->h->queryfire("SELECT COUNT(DISTINCT user_id) as total_donaters FROM deposits WHERE campaign_id=" . (int)$pop['id'] . " AND status = 1");
                 $donatersResult = $funded ? $funded->fetch_assoc() : null;
                 $total_donaters = $donatersResult ? ($donatersResult['total_donaters'] ?? 0) : 0;
                 
                 $distance = $pop['distance'] ?? 0;
                 
-                // Handle gallery
-                $gallery = [];
-                if (!empty($pop['gallery'])) {
-                    $galleryData = is_string($pop['gallery']) ? json_decode($pop['gallery'], true) : $pop['gallery'];
-                    $gallery = is_array($galleryData) ? $galleryData : [];
-                }
-                if (!empty($pop['image']) && !in_array($pop['image'], $gallery)) {
-                    array_unshift($gallery, $pop['image']);
-                }
-                
-                $goal_amount = $pop['goal_amount'] ?? $pop['target_amount'] ?? 0;
-                
-                $populars = [
-                    'id' => $pop['id'] ?? '',
-                    'cat_id' => $pop['category_id'] ?? 0,
-                    'title' => $pop['name'] ?? '',
+                // Use helper function to format campaign data
+                $populars = $this->formatCampaignData($pop, [
                     'fund_for' => '',
-                    'fund_photos' => !empty($gallery) ? $gallery : (!empty($pop['image']) ? [$pop['image']] : []),
-                    'exp_date' => $pop['end_date'] ?? '',
-                    'fund_amt' => $goal_amount,
-                    'full_address' => $pop['location'] ?? '',
-                    'lats' => '',
-                    'longs' => '',
-                    'fund_story' => $pop['description'] ?? '',
-                    'fund_date' => $pop['start_date'] ?? '',
                     'patient_photo' => [],
-                    'patient_title' => '',
-                    'patient_diagnosis' => '',
-                    'fund_plan' => '',
-                    'medical_certificate' => [],
-                    'reject_comment' => '',
-                    'fund_status' => $pop['status'] ?? '',
-                    'fund_distance' => $distance > 0 ? $distance . ' KM' : '',
-                    'total_investment' => $total_deposite,
-                    'remain_amt' => $goal_amount - $total_deposite,
                     'total_donaters' => $total_donaters,
-                    'donaterlist' => $this->getDonaterList($pop['id'])
-                ];
+                    'donaterlist' => $this->getDonaterList($pop['id']),
+                    'fund_distance' => $distance > 0 ? $distance . ' KM' : ''
+                ]);
+                
+                // Override specific fields for nearby funds
+                $populars['lats'] = '';
+                $populars['longs'] = '';
+                $populars['patient_title'] = '';
+                $populars['patient_diagnosis'] = '';
+                $populars['fund_plan'] = '';
+                $populars['medical_certificate'] = [];
+                $populars['reject_comment'] = '';
+                $populars['fund_status'] = $pop['status'] ?? '';
+                
                 $listnearby[] = $populars;
             }
         }

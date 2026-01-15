@@ -174,6 +174,20 @@
 
                     @stack('divend')
 
+                    @if($key == 'footer_menu')
+                        <div class="col-12">
+                            <div class="row g-2 align-items-center">
+                                <div class="col-lg-3">
+                                    <label class="form--label">@lang('Sort Order')</label>
+                                </div>
+                                <div class="col-lg-9">
+                                    <input type="number" class="form--control" name="sort_order" value="{{ @$data->data_info['sort_order'] ?? 0 }}" min="0" placeholder="@lang('Enter sort order (lower numbers appear first)')">
+                                    <small class="text--muted">@lang('Lower numbers appear first. Default: 0')</small>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
                     <div class="col-12">
                         <div class="d-flex justify-content-center">
                             <button class="btn btn--base px-4" type="submit">@lang('Submit')</button>

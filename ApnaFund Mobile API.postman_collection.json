@@ -1,8 +1,8 @@
 {
 	"info": {
 		"_postman_id": "0e462112-15a6-4cbf-a17f-eafb0c74499b",
-		"name": "ApnaFund Mobile API",
-		"description": "Complete API collection for ApnaFund Mobile App",
+		"name": "ApnaCrowdfunding Mobile API",
+		"description": "Complete API collection for ApnaCrowdfunding Mobile App",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "1136625",
 		"_collection_link": "https://galactic-resonance-220061.postman.co/workspace/972c0ed0-c097-4117-89e3-12117bd6ba08/collection/1136625-0e462112-15a6-4cbf-a17f-eafb0c74499b?action=share&source=collection_link&creator=1136625"

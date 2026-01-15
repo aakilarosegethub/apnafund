@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
 
-class WebsiteController extends Controller
+class WishlistController extends Controller
 {
     public function __construct()
     {

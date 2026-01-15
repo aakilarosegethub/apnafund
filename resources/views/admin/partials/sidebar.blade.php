@@ -24,6 +24,12 @@
             </a>
         </li>
         <li class="sidebar-item">
+            <a href="{{ route('admin.header-categories.index') }}" class="sidebar-link {{ navigationActive('admin.header-categories.index', 2) }}">
+                <span class="nav-icon"><i class="ti ti-menu-2"></i></span>
+                <span class="sidebar-txt">@lang('Header Categories')</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
             <a href="{{ route('admin.banners.index') }}" class="sidebar-link {{ navigationActive('admin.banners*', 2) }}">
                 <span class="nav-icon"><i class="ti ti-photo"></i></span>
                 <span class="sidebar-txt">@lang('Banners')</span>

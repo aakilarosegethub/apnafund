@@ -25,6 +25,7 @@ class Deposit extends Model
         'trx',
         'status',
         'campaign_id',
+        'reward_id',
         'email',
         'phone',
         'name'
@@ -52,6 +53,14 @@ class Deposit extends Model
     public function campaign()
     {
         return $this->belongsTo(Campaign::class, 'campaign_id', 'id');
+    }
+
+    /**
+     * Get the reward that was selected for this deposit.
+     */
+    public function reward()
+    {
+        return $this->belongsTo(Reward::class, 'reward_id', 'id');
     }
 
     // Scope

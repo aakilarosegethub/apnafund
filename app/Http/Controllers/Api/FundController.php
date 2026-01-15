@@ -59,51 +59,24 @@ class FundController extends BaseApiController
             $charity_tinno = "";
             $charity_img = "";
             
-            // Handle gallery - it's JSON array in campaigns
-            $gallery = [];
-            if (!empty($row['gallery'])) {
-                $galleryData = is_string($row['gallery']) ? json_decode($row['gallery'], true) : $row['gallery'];
-                $gallery = is_array($galleryData) ? $galleryData : [];
-            }
-            // Add main image to gallery if exists
-            if (!empty($row['image']) && !in_array($row['image'], $gallery)) {
-                array_unshift($gallery, $row['image']);
-            }
-
-            // Get total deposits for this campaign (only successful payments)
-            $depositResult = $this->h->queryfire("SELECT COALESCE(SUM(amount), 0) AS total_deposite FROM deposits WHERE campaign_id=" . (int)$row["id"] . " AND status = 1");
-            $getd = $depositResult ? $depositResult->fetch_assoc() : null;
-            $total_deposite = $getd ? ($getd['total_deposite'] ?? 0) : ($row['raised_amount'] ?? 0);
-            $goal_amount = $row['goal_amount'] ?? $row['target_amount'] ?? 0;
-
-            // Map campaigns table fields to old API format
-            $pol = [
-                'id' => $row['id'],
-                'cat_id' => $row['category_id'] ?? 0,
+            // Use helper function to format campaign data (gallery handling is done in helper)
+            $pol = $this->formatCampaignData($row, [
                 'charity_name' => $charity_name,
                 'charity_tinno' => $charity_tinno,
                 'charity_img' => $charity_img,
-                'title' => $row['name'] ?? '',
-                'fund_for' => '', // Not in campaigns table
-                'fund_photos' => !empty($gallery) ? $gallery : (!empty($row['image']) ? [$row['image']] : []),
-                'exp_date' => !empty($row['end_date']) ? $row['end_date'] : "",
-                'fund_amt' => $goal_amount,
-                'full_address' => $row['location'] ?? '',
-                'lats' => '', // Not in campaigns table
-                'longs' => '', // Not in campaigns table
-                'fund_story' => $row['description'] ?? '',
-                'fund_date' => !empty($row['start_date']) ? $row['start_date'] : ($row['created_at'] ?? ''),
                 'patient_photo' => [], // Not in campaigns table
-                'patient_title' => '', // Not in campaigns table
-                'patient_diagnosis' => '', // Not in campaigns table
-                'fund_plan' => '', // Not in campaigns table
-                'medical_certificate' => [], // Not in campaigns table
-                'reject_comment' => '', // Not in campaigns table
-                'fund_status' => $this->mapCampaignStatus($row['status'] ?? 0, $row['end_date'] ?? null, $total_deposite, $goal_amount)
-            ];
-
-            $pol['total_investment'] = $total_deposite;
-            $pol['remain_amt'] = $goal_amount - $total_deposite;
+                'fund_for' => '' // Not in campaigns table
+            ]);
+            
+            // Override specific fields for fundList
+            $pol['lats'] = '';
+            $pol['longs'] = '';
+            $pol['patient_title'] = '';
+            $pol['patient_diagnosis'] = '';
+            $pol['fund_plan'] = '';
+            $pol['medical_certificate'] = [];
+            $pol['reject_comment'] = '';
+            
             $c[] = $pol;
         }
 
@@ -115,29 +88,6 @@ class FundController extends BaseApiController
         ]);
     }
 
-    /**
-     * Map campaigns table status to old fund_status format
-     */
-    private function mapCampaignStatus($status, $endDate, $raisedAmount, $goalAmount)
-    {
-        // campaigns: 0 = rejected, 1 = approved, 2 = pending
-        // old format: Pending, Cancelled, Completed
-        if ($status == 0) {
-            return 'Cancelled';
-        } elseif ($status == 2) {
-            return 'Pending';
-        } elseif ($status == 1) {
-            // Check if completed
-            if ($endDate && strtotime($endDate) < time()) {
-                return 'Completed';
-            }
-            if ($goalAmount > 0 && $raisedAmount >= $goalAmount) {
-                return 'Completed';
-            }
-            return 'Pending';
-        }
-        return 'Pending';
-    }
 
     /**
      * Get Fund by ID
@@ -199,58 +149,33 @@ class FundController extends BaseApiController
             $charity_tinno = "";
             $charity_img = "";
 
-            // Handle gallery - it's JSON array in campaigns
-            $gallery = [];
-            if (!empty($row['gallery'])) {
-                $galleryData = is_string($row['gallery']) ? json_decode($row['gallery'], true) : $row['gallery'];
-                $gallery = is_array($galleryData) ? $galleryData : [];
-            }
-            // Add main image to gallery if exists
-            if (!empty($row['image']) && !in_array($row['image'], $gallery)) {
-                array_unshift($gallery, $row['image']);
-            }
-
-            // Get total deposits for this campaign (only successful payments)
-            $depositResult = $this->h->queryfire("SELECT COALESCE(SUM(amount), 0) AS total_deposite FROM deposits WHERE campaign_id=" . (int)$row["id"] . " AND status = 1");
-            $getd = $depositResult ? $depositResult->fetch_assoc() : null;
-            $total_deposite = $getd ? ($getd['total_deposite'] ?? 0) : ($row['raised_amount'] ?? 0);
-            $goal_amount = $row['goal_amount'] ?? $row['target_amount'] ?? 0;
-
-            // Map campaigns table fields to old API format
-            $pol = [
-                'id' => $row['id'],
-                'cat_id' => $row['category_id'] ?? 0,
-                'charity_name' => $charity_name,
-                'charity_tinno' => $charity_tinno,
-                'charity_img' => $charity_img,
-                'title' => $row['name'] ?? '',
-                'fund_for' => '', // Not in campaigns table
-                'fund_photos' => !empty($gallery) ? $gallery : (!empty($row['image']) ? [$row['image']] : []),
-                'exp_date' => !empty($row['end_date']) ? $row['end_date'] : "",
-                'fund_amt' => $goal_amount,
-                'full_address' => $row['location'] ?? '',
-                'lats' => '', // Not in campaigns table
-                'longs' => '', // Not in campaigns table
-                'fund_story' => $row['description'] ?? '',
-                'fund_date' => !empty($row['start_date']) ? $row['start_date'] : ($row['created_at'] ?? ''),
-                'patient_photo' => ['images/default.png'], // Not in campaigns table
-                'patient_title' => '', // Not in campaigns table
-                'patient_diagnosis' => '', // Not in campaigns table
-                'fund_plan' => '', // Not in campaigns table
-                'medical_certificate' => [], // Not in campaigns table
-                'reject_comment' => '', // Not in campaigns table
-                'fund_status' => $this->mapCampaignStatus($row['status'] ?? 0, $row['end_date'] ?? null, $total_deposite, $goal_amount),
-                'status' => $row['status'] ?? 0
-            ];
-
-            $pol['total_investment'] = $total_deposite;
-            $pol['remain_amt'] = sprintf("%.2f", $goal_amount - $total_deposite);
-
             // Get total donaters count
             $funded = $this->h->queryfire("SELECT COUNT(DISTINCT user_id) as total_donaters FROM deposits WHERE campaign_id=" . (int)$row['id'] . " AND status = 1");
             $donatersResult = $funded ? $funded->fetch_assoc() : null;
-            $pol['total_donaters'] = $donatersResult ? ($donatersResult['total_donaters'] ?? 0) : 0;
-            $pol['donaterlist'] = $this->getDonaterList($row['id'], true);
+            $total_donaters = $donatersResult ? ($donatersResult['total_donaters'] ?? 0) : 0;
+
+            // Use helper function to format campaign data (gallery handling is done in helper)
+            $pol = $this->formatCampaignData($row, [
+                'charity_name' => $charity_name,
+                'charity_tinno' => $charity_tinno,
+                'charity_img' => $charity_img,
+                'patient_photo' => ['images/default.png'],
+                'fund_for' => '', // Not in campaigns table
+                'status' => $row['status'] ?? 0,
+                'total_donaters' => $total_donaters,
+                'donaterlist' => $this->getDonaterList($row['id'], true)
+            ]);
+
+            // Override specific fields for fundById
+            $pol['lats'] = '';
+            $pol['longs'] = '';
+            $pol['patient_title'] = '';
+            $pol['patient_diagnosis'] = '';
+            $pol['fund_plan'] = '';
+            $pol['medical_certificate'] = [];
+            $pol['reject_comment'] = '';
+            $pol['remain_amt'] = sprintf("%.2f", $pol['remain_amt']);
+            
             $c[] = $pol;
         }
 
@@ -435,36 +360,8 @@ class FundController extends BaseApiController
         while ($rows = $sel->fetch_assoc()) {
             if (!$rows) break;
             
-            // Get total deposits for this campaign
-            $depositResult = $this->h->queryfire("SELECT COALESCE(SUM(amount), 0) AS total_deposite FROM deposits WHERE campaign_id=" . (int)$rows["id"] . " AND status = 1");
-            $getd = $depositResult ? $depositResult->fetch_assoc() : null;
-            $total_deposite = $getd ? ($getd['total_deposite'] ?? 0) : ($rows['raised_amount'] ?? 0);
-            $goal_amount = $rows['goal_amount'] ?? $rows['target_amount'] ?? 0;
-            
-            // Map campaigns table fields to old API format
-            $fundData = [
-                'id' => $rows['id'],
-                'cat_id' => $rows['category_id'] ?? 0,
-                'title' => $rows['name'] ?? '',
-                'fund_for' => $rows['fund_for'] ?? '',
-                'fund_photos' => $rows['gallery'] ?? '',
-                'exp_date' => $rows['end_date'] ?? '',
-                'fund_amt' => $goal_amount,
-                'fund_story' => $rows['description'] ?? '',
-                'full_address' => $rows['location'] ?? '',
-                'lats' => $rows['latitude'] ?? '',
-                'longs' => $rows['longitude'] ?? '',
-                'fund_date' => $rows['start_date'] ?? $rows['created_at'] ?? '',
-                'patient_photo' => $rows['image'] ?? '',
-                'patient_title' => '',
-                'patient_diagnosis' => '',
-                'fund_plan' => '',
-                'medical_certificate' => '',
-                'reject_comment' => $rows['reject_reason'] ?? '',
-                'fund_status' => $this->mapCampaignStatus($rows['status'] ?? 1, $rows['end_date'] ?? null, $total_deposite, $goal_amount),
-                'total_investment' => $total_deposite,
-                'remain_amt' => max(0, $goal_amount - $total_deposite)
-            ];
+            // Use helper function to format campaign data
+            $fundData = $this->formatCampaignData($rows);
             
                 $cp[] = $fundData;
         }
@@ -523,34 +420,10 @@ class FundController extends BaseApiController
         while ($pop = $selpop->fetch_assoc()) {
             if (!$pop) break;
             
-            // Get total deposits for this campaign
-            $depositResult = $this->h->queryfire("SELECT COALESCE(SUM(amount), 0) AS total_deposite FROM deposits WHERE campaign_id=" . (int)$pop["id"] . " AND status = 1");
-            $getd = $depositResult ? $depositResult->fetch_assoc() : null;
-            $total_deposite = $getd ? ($getd['total_deposite'] ?? 0) : ($pop['raised_amount'] ?? 0);
-            $goal_amount = $pop['goal_amount'] ?? $pop['target_amount'] ?? 0;
-            
-            // Map campaigns table fields to old API format
-            $fundData = [
-                'id' => $pop['id'],
-                'cat_id' => $pop['category_id'] ?? 0,
-                'title' => $pop['name'] ?? '',
-                'fund_for' => $pop['fund_for'] ?? '',
-                'fund_photos' => $pop['gallery'] ?? '',
-                'exp_date' => $pop['end_date'] ?? '',
-                'fund_amt' => $goal_amount,
-                'fund_story' => $pop['description'] ?? '',
-                'full_address' => $pop['location'] ?? '',
-                'lats' => $pop['latitude'] ?? '',
-                'longs' => $pop['longitude'] ?? '',
-                'fund_date' => $pop['start_date'] ?? $pop['created_at'] ?? '',
-                'patient_photo' => $pop['image'] ?? '',
-                'patient_title' => '',
-                'patient_diagnosis' => '',
-                'fund_plan' => '',
-                'medical_certificate' => '',
-                'reject_comment' => $pop['reject_reason'] ?? '',
-                'fund_status' => $this->mapCampaignStatus($pop['status'] ?? 2, $pop['end_date'] ?? null, $total_deposite, $goal_amount)
-            ];
+            // Use helper function to format campaign data
+            $fundData = $this->formatCampaignData($pop, [
+                'patient_photo' => $pop['image'] ?? ''
+            ]);
             
             $listnearby[] = $fundData;
         }

@@ -1,6 +1,6 @@
 @php
-    $activeTheme = 'themes.apnafund.';
-    $activeThemeTrue = 'themes.apnafund.';
+    $activeTheme = 'themes.ApnaCrowdfunding.';
+    $activeThemeTrue = 'themes.ApnaCrowdfunding.';
 @endphp
 @extends($activeTheme . 'layouts.dashboard')
 @section('style')

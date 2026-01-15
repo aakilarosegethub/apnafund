@@ -411,7 +411,8 @@
                 "options": {
                     "about": "About",
                     "support": "Support",
-                    "more_from_apnacrowdfunding": "More from Apnacrowdfunding"
+                    "more_from_apnacrowdfunding": "More from Apnacrowdfunding",
+                    "down_section": "Down Section"
                 }
             },
             "status": {

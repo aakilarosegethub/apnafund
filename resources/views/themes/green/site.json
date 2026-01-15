@@ -390,6 +390,11 @@
         "no_selection": true,
         "name": "Footer Section",
         "content": {
+            "images": {
+                "footer_logo": {
+                    "size": "180x40"
+                }
+            },
             "footer_text": "textarea",
             "copyright_text": "text"
         },
@@ -411,7 +416,8 @@
                 "options": {
                     "about": "About",
                     "support": "Support",
-                    "more_from_apnacrowdfunding": "More from Apnacrowdfunding"
+                    "more_from_apnacrowdfunding": "More from Apnacrowdfunding",
+                    "down_section": "Down Section"
                 }
             },
             "status": {

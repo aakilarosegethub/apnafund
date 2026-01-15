@@ -95,10 +95,10 @@
                                                 <div class="col-12">
                                                     <div class="row g-2 align-items-center">
                                                         <div class="col-lg-3">
-                                                            <label class="form--label required">{{ __(keyToTitle($k)) }}</label>
+                                                            <label class="form--label {{ ($key == 'footer' && $k == 'footer_text') ? '' : 'required' }}">{{ __(keyToTitle($k)) }}</label>
                                                         </div>
                                                         <div class="col-lg-9">
-                                                            <textarea class="form--control" name="{{ $k }}" required>{{ @$content->data_info[$k] ?? '' }}</textarea>
+                                                            <textarea class="form--control" name="{{ $k }}" {{ ($key == 'footer' && $k == 'footer_text') ? '' : 'required' }}>{{ @$content->data_info[$k] ?? '' }}</textarea>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -181,6 +181,44 @@
                                                    placeholder="@lang('Enter keywords separated by commas')">
                                             <small class="text--muted">@lang('Example: crowdfunding, donations, charity, help')</small>
                                         </div>
+                                        <div class="col-12">
+                                            <label class="form--label">@lang('Meta Author')</label>
+                                            <input type="text" class="form--control" name="seo_meta_author" 
+                                                   value="{{ @$seoContent->data_info->meta_author ?? '' }}" 
+                                                   placeholder="@lang('Enter author name')">
+                                            <small class="text--muted">@lang('Website author name')</small>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form--label">@lang('Meta Robots')</label>
+                                            <select class="form--control form-select" name="seo_meta_robots">
+                                                <option value="index, follow" {{ (@$seoContent->data_info->meta_robots ?? 'index, follow') == 'index, follow' ? 'selected' : '' }}>Index, Follow</option>
+                                                <option value="index, nofollow" {{ (@$seoContent->data_info->meta_robots ?? '') == 'index, nofollow' ? 'selected' : '' }}>Index, NoFollow</option>
+                                                <option value="noindex, follow" {{ (@$seoContent->data_info->meta_robots ?? '') == 'noindex, follow' ? 'selected' : '' }}>NoIndex, Follow</option>
+                                                <option value="noindex, nofollow" {{ (@$seoContent->data_info->meta_robots ?? '') == 'noindex, nofollow' ? 'selected' : '' }}>NoIndex, NoFollow</option>
+                                            </select>
+                                            <small class="text--muted">@lang('Search engine indexing instructions')</small>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form--label">@lang('Canonical URL')</label>
+                                            <input type="url" class="form--control" name="seo_canonical_url" 
+                                                   value="{{ @$seoContent->data_info->canonical_url ?? '' }}" 
+                                                   placeholder="@lang('https://example.com')">
+                                            <small class="text--muted">@lang('Preferred URL for this page')</small>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form--label">@lang('Meta Viewport')</label>
+                                            <input type="text" class="form--control" name="seo_meta_viewport" 
+                                                   value="{{ @$seoContent->data_info->meta_viewport ?? 'width=device-width, initial-scale=1' }}" 
+                                                   placeholder="@lang('width=device-width, initial-scale=1')">
+                                            <small class="text--muted">@lang('Default: width=device-width, initial-scale=1')</small>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form--label">@lang('Meta Charset')</label>
+                                            <input type="text" class="form--control" name="seo_meta_charset" 
+                                                   value="{{ @$seoContent->data_info->meta_charset ?? 'UTF-8' }}" 
+                                                   placeholder="@lang('UTF-8')">
+                                            <small class="text--muted">@lang('Default: UTF-8')</small>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -205,6 +243,17 @@
                     <h3 class="title">@lang('Items')</h3>
 
                     <div class="d-flex flex-wrap gap-2 justify-content-center align-items-center">
+                        @if($key == 'footer_menu' && isset($section->element->section_type))
+                            <form method="GET" action="{{ route('admin.site.sections', $key) }}" class="d-inline">
+                                <select name="section_type" class="form--control form--control--sm" onchange="this.form.submit()">
+                                    <option value="">@lang('All Section Types')</option>
+                                    @foreach($section->element->section_type->options as $optionKey => $optionValue)
+                                        <option value="{{ $optionKey }}" {{ $sectionTypeFilter == $optionKey ? 'selected' : '' }}>{{ $optionValue }}</option>
+                                    @endforeach
+                                </select>
+                            </form>
+                        @endif
+                        
                         <div class="input--group">
                             <input type="search" class="form--control form--control--sm" name="search_table" placeholder="@lang('Search')...">
                             <button class="btn btn--sm btn--icon btn--base" type="submit"><i class="ti ti-search"></i></button>
@@ -242,6 +291,7 @@
                         @endif
                     @endforeach
 
+                    <th>@lang('Sort Order')</th>
                     <th>@lang('Action')</th>
                 </tr>
                 </thead>
@@ -299,6 +349,10 @@
                                 @endif
                             @endif
                         @endforeach
+
+                        <td>
+                            <span class="badge badge--base">{{ @$data->data_info['sort_order'] ?? 0 }}</span>
+                        </td>
 
                         <td>
                             <div class="d-flex justify-content-end gap-2">
@@ -478,6 +532,20 @@
                                         @endif
                                     @endif
                                 @endforeach
+                                
+                                @if($key == 'footer_menu')
+                                    <div class="col-12">
+                                        <div class="row gy-2">
+                                            <div class="col-sm-4">
+                                                <label class="col-form--label">@lang('Sort Order')</label>
+                                            </div>
+                                            <div class="col-sm-8">
+                                                <input type="number" class="form--control" name="sort_order" value="0" min="0" placeholder="@lang('Enter sort order (lower numbers appear first)')">
+                                                <small class="text--muted">@lang('Lower numbers appear first. Default: 0')</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                         <div class="modal-footer d-flex justify-content-end gap-2">
@@ -619,6 +687,20 @@
                                         @endif
                                     @endif
                                 @endforeach
+                                
+                                @if($key == 'footer_menu')
+                                    <div class="col-12">
+                                        <div class="row gy-2">
+                                            <div class="col-sm-4">
+                                                <label class="col-form--label">@lang('Sort Order')</label>
+                                            </div>
+                                            <div class="col-sm-8">
+                                                <input type="number" class="form--control" name="sort_order" value="0" min="0" placeholder="@lang('Enter sort order (lower numbers appear first)')">
+                                                <small class="text--muted">@lang('Lower numbers appear first. Default: 0')</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                         <div class="modal-footer d-flex justify-content-end gap-2">
@@ -687,6 +769,11 @@
                         iconElement.html(value)
                     }
                 });
+                
+                // Handle sort_order separately if it exists
+                if (obj.sort_order !== undefined) {
+                    modal.find('[name=sort_order]').val(obj.sort_order);
+                }
 
                 ckEditorInitiate()
 

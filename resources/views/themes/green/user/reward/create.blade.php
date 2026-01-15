@@ -67,7 +67,7 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                 <div class="form-group required-field">
-                                    <label for="minimumAmount" class="form-label">@lang('Minimum Donation Amount')</label>
+                                    <label for="minimumAmount" class="form-label">@lang('Minimum Contribution Amount')</label>
                                     <div class="input-group">
                                                 <span class="input-group-text">{{ $setting->cur_sym }}</span>
                                         <input type="number" class="form-control" name="minimum_amount" id="minimumAmount"

@@ -22,7 +22,6 @@ class RewardController extends Controller
         $rewards = $campaign->rewards()->active()->orderBy('minimum_amount')->get();
 
         $pageTitle = 'Campaign Rewards';
-        
         return view($this->activeTheme . 'user.reward.index', compact('pageTitle', 'campaign', 'rewards'));
     }
 

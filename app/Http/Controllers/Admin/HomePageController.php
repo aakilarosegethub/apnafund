@@ -53,30 +53,89 @@ class HomePageController extends Controller
         // Handle background image upload
         if ($request->hasFile('hero_background_image')) {
             try {
-                $path = 'assets/images/site/home';
+                $path = public_path('assets/images/site/home');
                 if (!file_exists($path)) {
-                    mkdir($path, 0755, true);
+                    if (!mkdir($path, 0755, true)) {
+                        throw new \Exception('Failed to create directory: ' . $path);
+                    }
+                }
+                
+                // Check if directory is writable
+                if (!is_writable($path)) {
+                    throw new \Exception('Directory is not writable: ' . $path);
+                }
+                
+                // Delete old image if exists
+                if ($heroContent && $heroContent->data_info) {
+                    $oldImage = is_array($heroContent->data_info) 
+                        ? ($heroContent->data_info['hero_background_image'] ?? null)
+                        : ($heroContent->data_info->hero_background_image ?? null);
+                    
+                    if ($oldImage) {
+                        $oldImagePath = $path . '/' . $oldImage;
+                        if (file_exists($oldImagePath)) {
+                            @unlink($oldImagePath);
+                        }
+                    }
                 }
                 
                 $image = $request->file('hero_background_image');
-                $imageName = 'hero_bg_' . time() . '.' . $image->getClientOriginalExtension();
                 
-                Image::make($image)->resize(1920, 1080)->save($path . '/' . $imageName);
+                // Validate file
+                if (!$image->isValid()) {
+                    throw new \Exception('Invalid file uploaded');
+                }
+                
+                $imageName = 'hero_bg_' . time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+                $fullPath = $path . '/' . $imageName;
+                
+                // Try to resize with Image library, fallback to direct move if fails
+                try {
+                    $img = Image::make($image);
+                    $img->resize(1920, 1080, function ($constraint) {
+                        $constraint->aspectRatio();
+                        $constraint->upsize();
+                    });
+                    $img->save($fullPath, 90); // Save with 90% quality
+                    
+                    // Verify file was saved
+                    if (!file_exists($fullPath)) {
+                        throw new \Exception('File was not saved successfully');
+                    }
+                } catch (\Exception $imgExp) {
+                    // Fallback: just move the file without resize
+                    if (!$image->move($path, $imageName)) {
+                        throw new \Exception('Failed to move uploaded file');
+                    }
+                }
                 
                 $data['hero_background_image'] = $imageName;
             } catch (\Exception $exp) {
-                $toast[] = ['error', 'Unable to upload hero background image'];
-                return back()->withToasts($toast);
+                \Log::error('Hero image upload error', [
+                    'error' => $exp->getMessage(),
+                    'trace' => $exp->getTraceAsString()
+                ]);
+                $toast[] = ['error', 'Unable to upload hero background image: ' . $exp->getMessage()];
+                return back()->withToasts($toast)->withInput();
             }
         } else {
             // Keep existing image if no new image uploaded
-            if ($heroContent && isset($heroContent->data_info->hero_background_image)) {
-                $data['hero_background_image'] = $heroContent->data_info->hero_background_image;
+            if ($heroContent && $heroContent->data_info) {
+                $existingImage = is_array($heroContent->data_info) 
+                    ? ($heroContent->data_info['hero_background_image'] ?? null)
+                    : ($heroContent->data_info->hero_background_image ?? null);
+                
+                if ($existingImage) {
+                    $data['hero_background_image'] = $existingImage;
+                }
             }
         }
 
         $heroContent->data_info = $data;
         $heroContent->save();
+
+        // Refresh to get updated data
+        $heroContent->refresh();
 
         // Clear any related cache
         cache()->forget('home.hero');
@@ -94,6 +153,12 @@ class HomePageController extends Controller
             'info_item_2_text' => 'required|string|max:255',
             'info_item_3_icon' => 'required|string|max:50',
             'info_item_3_text' => 'required|string|max:255',
+            'stat_1_value' => 'nullable|numeric',
+            'stat_1_label' => 'nullable|string|max:255',
+            'stat_2_value' => 'nullable|numeric',
+            'stat_2_label' => 'nullable|string|max:255',
+            'stat_3_value' => 'nullable|numeric',
+            'stat_3_label' => 'nullable|string|max:255',
         ]);
 
         $infoBannerContent = SiteData::where('data_key', 'home.info_banner')->first();
@@ -111,6 +176,14 @@ class HomePageController extends Controller
             'info_item_3_icon' => $request->info_item_3_icon,
             'info_item_3_text' => $request->info_item_3_text,
         ];
+
+        // Add stats (use existing values if not provided)
+        $data['stat_1_value'] = $request->stat_1_value ?? ($infoBannerContent && isset($infoBannerContent->data_info->stat_1_value) ? $infoBannerContent->data_info->stat_1_value : 12000000);
+        $data['stat_1_label'] = $request->stat_1_label ?? ($infoBannerContent && isset($infoBannerContent->data_info->stat_1_label) ? $infoBannerContent->data_info->stat_1_label : 'Total Funded');
+        $data['stat_2_value'] = $request->stat_2_value ?? ($infoBannerContent && isset($infoBannerContent->data_info->stat_2_value) ? $infoBannerContent->data_info->stat_2_value : 2500);
+        $data['stat_2_label'] = $request->stat_2_label ?? ($infoBannerContent && isset($infoBannerContent->data_info->stat_2_label) ? $infoBannerContent->data_info->stat_2_label : 'Successful Projects');
+        $data['stat_3_value'] = $request->stat_3_value ?? ($infoBannerContent && isset($infoBannerContent->data_info->stat_3_value) ? $infoBannerContent->data_info->stat_3_value : 50);
+        $data['stat_3_label'] = $request->stat_3_label ?? ($infoBannerContent && isset($infoBannerContent->data_info->stat_3_label) ? $infoBannerContent->data_info->stat_3_label : 'Active Backers');
 
         $infoBannerContent->data_info = $data;
         $infoBannerContent->save();

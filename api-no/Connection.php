@@ -32,7 +32,7 @@ if (!defined('DB_PASS')) {
     define('DB_PASS', ''); // Change this to your database password (empty for XAMPP default)
 }
 if (!defined('DB_NAME')) {
-    define('DB_NAME', 'apnafund'); // Change this to your database name
+    define('DB_NAME', 'ApnaCrowdfunding'); // Change this to your database name
 }
 if (!isset($apiKey)) {
     $apiKey = 'google_map_key';

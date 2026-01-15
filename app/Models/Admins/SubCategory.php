@@ -19,6 +19,7 @@ class SubCategory extends Model
         'slug',
         'description',
         'status',
+        'sort_order',
     ];
 
     /**

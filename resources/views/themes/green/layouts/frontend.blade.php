@@ -1,6 +1,7 @@
 @extends($activeTheme . 'layouts.app')
 @php
     $activeTheme = activeTheme();
+    
     $activeThemeTrue = activeTheme();
     $themeColors = getThemeColors();
     $dashboardStats = getDashboardStats();
@@ -17,20 +18,22 @@
 
 @if ($setting->language)
     @php $languages = App\Models\Language::active()->get() @endphp
-@endif
 
+@endif
 @section('content')
+@section('frontend')
     @php
     
         $isHomePage = request()->routeIs('home') || request()->path() === '/';
        
     @endphp
+    
 
     @if($isHomePage)
-        @include($activeTheme.'partials.header')
+        @include($activeTheme.'partials.header-new')
     @else
 
-        @include($activeTheme.'partials.header')
+        @include($activeTheme.'partials.header-new')
     @endif
 
 
@@ -47,7 +50,7 @@
     @endphp
 
     @if(!request()->routeIs('campaign.donate'))
-        @include($activeTheme.'partials.footer')
+        @include(activeTheme() . 'partials.footer-new')
     @endif
 
 

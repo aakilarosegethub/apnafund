@@ -268,20 +268,27 @@ class UserController extends Controller
     function donationHistory() {
         $pageTitle = 'My Donations';
         $deposits  = auth()->user()->deposits()
-                    ->with(['gateway', 'campaign'])
+                    ->with(['gateway', 'campaign', 'reward'])
                     ->index()
-                    ->latest()
-                    ->searchable(['trx'])
+                    ->latest();
+        
+        // Filter by reward if requested
+        if (request('filter') == 'reward') {
+            $deposits = $deposits->whereNotNull('reward_id');
+        }
+        
+        $deposits = $deposits->searchable(['trx'])
                     ->paginate(getPaginate());
 
-        return view($this->activeTheme . 'user.donation.sendLog', compact('pageTitle', 'deposits'));
+        $emptyMessage = 'No donations found';
+        return view($this->activeTheme . 'user.donation.sendLog', compact('pageTitle', 'deposits', 'emptyMessage'));
     }
 
     function donationReceived() {
         $pageTitle = 'Received Donations';
         $campaigns = auth()->user()->campaigns()->pluck('id');
         $donations = Deposit::whereIn('campaign_id', $campaigns)
-                            ->with(['user', 'gateway', 'campaign'])
+                            ->with(['user', 'gateway', 'campaign', 'reward'])
                             ->done()
                             ->latest()
                             ->searchable(['trx'])
@@ -294,12 +301,121 @@ class UserController extends Controller
         $pageTitle    = 'Transactions';
         $remarks      = Transaction::distinct('remark')->orderBy('remark')->get('remark');
         $transactions = Transaction::where('user_id', auth()->id())
+                                    ->with(['deposit.reward', 'deposit.campaign', 'reward'])
                                     ->searchable(['trx'])
                                     ->filter(['remark'])
                                     ->orderBy('id', 'desc')
                                     ->paginate(getPaginate());
 
-        return view($this->activeTheme . 'user.page.transactions', compact('pageTitle', 'transactions', 'remarks'));
+        $emptyMessage = 'No transactions found';
+        return view($this->activeTheme . 'user.page.transactions', compact('pageTitle', 'transactions', 'remarks', 'emptyMessage'));
+    }
+
+    function rewardsTracking() {
+        $pageTitle = 'Rewards Tracking';
+        $filter = request('filter', 'received'); // received or paid
+        
+        if ($filter == 'received') {
+            // Rewards received by creator (donation_received transactions)
+            // Get unique transaction IDs first to avoid duplicates
+            $transactionIds = Transaction::where('user_id', auth()->id())
+                ->where('remark', 'donation_received')
+                ->where(function($query) {
+                    $query->whereNotNull('reward_id')
+                          ->orWhereHas('deposit', function($q) {
+                              $q->whereNotNull('reward_id');
+                          });
+                })
+                ->pluck('id')
+                ->unique()
+                ->toArray();
+            
+            // Now get the transactions with relationships
+            if (empty($transactionIds)) {
+                $transactions = Transaction::where('id', 0)->paginate(getPaginate()); // Empty result
+            } else {
+                $transactions = Transaction::whereIn('id', $transactionIds)
+                    ->with(['reward', 'deposit.campaign', 'deposit.user', 'deposit.reward'])
+                    ->latest()
+                    ->paginate(getPaginate());
+            }
+            
+            // Update reward_id from deposit if not set
+            foreach ($transactions as $transaction) {
+                if (!$transaction->reward_id && $transaction->deposit && $transaction->deposit->reward_id) {
+                    $transaction->reward_id = $transaction->deposit->reward_id;
+                    $transaction->save();
+                }
+            }
+        } else {
+            // Rewards paid by contributor (donation_given transactions)
+            // Get unique transaction IDs first to avoid duplicates
+            $transactionIds = Transaction::where('user_id', auth()->id())
+                ->where('remark', 'donation_given')
+                ->where(function($query) {
+                    $query->whereNotNull('reward_id')
+                          ->orWhereHas('deposit', function($q) {
+                              $q->whereNotNull('reward_id');
+                          });
+                })
+                ->pluck('id')
+                ->unique()
+                ->toArray();
+            
+            // Now get the transactions with relationships
+            if (empty($transactionIds)) {
+                $transactions = Transaction::where('id', 0)->paginate(getPaginate()); // Empty result
+            } else {
+                $transactions = Transaction::whereIn('id', $transactionIds)
+                    ->with(['reward', 'deposit.campaign', 'deposit.reward'])
+                    ->latest()
+                    ->paginate(getPaginate());
+            }
+            
+            // Update reward_id from deposit if not set
+            foreach ($transactions as $transaction) {
+                if (!$transaction->reward_id && $transaction->deposit && $transaction->deposit->reward_id) {
+                    $transaction->reward_id = $transaction->deposit->reward_id;
+                    $transaction->save();
+                }
+            }
+        }
+
+        $emptyMessage = 'No rewards found';
+        
+        return view($this->activeTheme . 'user.rewards.index', compact('pageTitle', 'transactions', 'filter', 'emptyMessage'));
+    }
+
+    function fulfillReward() {
+        $this->validate(request(), [
+            'trx' => 'required|string',
+            'note' => 'nullable|string|max:500',
+        ]);
+
+        $trx = request('trx');
+        $transaction = Transaction::where('trx', $trx)
+            ->where('remark', 'donation_received')
+            ->where('user_id', auth()->id())
+            ->whereNotNull('reward_id')
+            ->where('reward_fulfilled', false)
+            ->first();
+
+        if (!$transaction) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Transaction not found or already fulfilled'
+            ], 404);
+        }
+
+        $transaction->reward_fulfilled = true;
+        $transaction->reward_fulfilled_at = now();
+        $transaction->reward_fulfillment_note = request('note');
+        $transaction->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Reward marked as fulfilled successfully'
+        ]);
     }
 
     function fileDownload() {

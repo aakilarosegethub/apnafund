@@ -764,6 +764,12 @@ function getDashboardNavigation(): array {
             'route' => 'user.dashboard'
         ],
         [
+            'id' => 'rewards',
+            'title' => __('Rewards'),
+            'icon' => 'ti ti-gift',
+            'route' => 'user.rewards'
+        ],
+        [
             'id' => 'create',
             'title' => __('Create Campaign'),
             'icon' => 'fas fa-rocket',
@@ -780,12 +786,6 @@ function getDashboardNavigation(): array {
             'title' => __('Analytics'),
             'icon' => 'fas fa-chart-pie',
             'route' => 'user.transactions'
-        ],
-        [
-            'id' => 'rewards',
-            'title' => __('Contributions'),
-            'icon' => 'fas fa-heart',
-            'route' => 'user.donation.history'
         ],
         [
             'id' => 'settings',

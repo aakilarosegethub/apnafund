@@ -586,13 +586,19 @@ class WebsiteController extends Controller
 
         $pageTitle = 'Start Your Project';
         
-        // Get categories for campaign creation
-        $categories = Category::active()->orderBy('name')->get();
+        // Get categories for campaign creation - sorted by sort_order, then name
+        $categories = Category::active()
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
         
-        // Get subcategories (if table exists)
+        // Get subcategories (if table exists) - only active, sorted by sort_order, then name
         $subcategories = collect([]);
         if (\Schema::hasTable('sub_categories')) {
-            $subcategories = \App\Models\Admins\SubCategory::orderBy('name')->get();
+            $subcategories = \App\Models\Admins\SubCategory::where('status', 'active')
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get();
         }
         
         // Get site settings
@@ -652,7 +658,8 @@ class WebsiteController extends Controller
             return redirect()->route('start.project')->with('error', 'Please select category and subcategory first.');
         }
 
-        return view($this->activeTheme . 'page.projectLocation', compact('pageTitle'));
+        // Force green theme for this page
+        return view('themes.green.page.projectLocation', compact('pageTitle'));
     }
 
     function saveProjectLocation(\Illuminate\Http\Request $request) {
@@ -693,7 +700,8 @@ class WebsiteController extends Controller
             return redirect()->route('start.project')->with('error', 'Please complete all steps first.');
         }
 
-        return view($this->activeTheme . 'page.projectTerms', compact('pageTitle'));
+        // Force green theme for this page
+        return view('themes.green.page.projectTerms', compact('pageTitle'));
     }
 
     function createCampaignFromSession(\Illuminate\Http\Request $request) {
@@ -1208,5 +1216,58 @@ class WebsiteController extends Controller
                 ]
             ]
         ];
+    }
+
+    /**
+     * Display page by slug from theme pages folder
+     * 
+     * @param string $slug
+     * @return \Illuminate\View\View|\Illuminate\Http\Response
+     */
+    function pageBySlug($slug) {
+        try {
+            // Get active theme
+            $activeTheme = activeTheme();
+            
+            // Build view path
+            $viewPath = $activeTheme . 'page.' . $slug;
+            
+            // Check if view exists
+            if (!view()->exists($viewPath)) {
+                abort(404, 'Page not found');
+            }
+            
+            $pageTitle = ucfirst(str_replace('-', ' ', $slug));
+            
+            // Prepare variables based on slug
+            $variables = ['pageTitle' => $pageTitle];
+            
+            // Special handling for contact page
+            if ($slug === 'contact') {
+                $user = auth()->user();
+                $contactContent = getSiteData('contact_us.content', true);
+                $contactElements = getSiteData('contact_us.element', false, null, true) ?? collect();
+                $pageSEO = getPageSEO('contact_us');
+                
+                $variables = array_merge($variables, compact('user', 'contactContent', 'contactElements', 'pageSEO'));
+            }
+            
+            // Return the view with cache-busting headers to prevent old page from showing
+            $response = response()->view($viewPath, $variables);
+            $response->header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
+            $response->header('Pragma', 'no-cache');
+            $response->header('Expires', '0');
+            
+            return $response;
+            
+        } catch (\Exception $e) {
+            \Log::error('Page by slug error', [
+                'slug' => $slug,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            abort(404, 'Page not found');
+        }
     }
 }

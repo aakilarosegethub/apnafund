@@ -90,33 +90,80 @@ class SettingController extends Controller
         $path = getFilePath('logoFavicon');
         $fullPath = public_path($path);
         
+        // Create entire directory path if it doesn't exist
+        if (!file_exists($fullPath)) {
+            if (!mkdir($fullPath, 0755, true)) {
+                \Log::error('Failed to create directory: ' . $fullPath);
+                $toast[] = ['error', 'Failed to create directory. Please check permissions.'];
+                return back()->withToasts($toast);
+            }
+            \Log::info('Created directory: ' . $fullPath);
+        }
+        
+        // Ensure directory is writable
+        if (!is_writable($fullPath)) {
+            if (!chmod($fullPath, 0755)) {
+                \Log::error('Failed to set directory permissions: ' . $fullPath);
+                $toast[] = ['error', 'Directory is not writable. Please check permissions.'];
+                return back()->withToasts($toast);
+            }
+            \Log::info('Fixed directory permissions: ' . $fullPath);
+        }
+        
         // Debug: Log path info
         \Log::info('Path Debug:', [
             'relative_path' => $path,
             'full_path' => $fullPath,
             'path_exists' => file_exists($fullPath),
-            'is_writable' => is_writable(dirname($fullPath)),
+            'path_writable' => is_writable($fullPath),
         ]);
 
         if (request()->hasFile('logo_light')) {
             try {
-                if (!file_exists($fullPath)) {
-                    mkdir($fullPath, 0755, true);
-                    \Log::info('Created directory: ' . $fullPath);
+                $logoPath = $fullPath . '/logo_light.png';
+                // dd($logoPath);
+                
+                // STEP 1: Remove old file completely if exists
+                if (file_exists($logoPath)) {
+                    if (!unlink($logoPath)) {
+                        \Log::warning('Could not delete old logo_light.png, but continuing...');
+                    } else {
+                        \Log::info('Deleted old logo_light.png');
+                    }
+                    clearstatcache(true, $logoPath);
                 }
                 
-                $logoPath = $fullPath . '/logo_light.png';
-                Image::make(request('logo_light'))->save($logoPath);
+                // STEP 2: Save new logo
+                $image = Image::make(request('logo_light'));
+                $image->save($logoPath, 90);
+                
+                // STEP 3: Set proper file permissions
+                if (!chmod($logoPath, 0644)) {
+                    \Log::warning('Could not set permissions for logo_light.png');
+                }
+                
+                // STEP 4: Clear cache
+                clearstatcache(true, $logoPath);
+                
+                // Verify file was saved
+                if (!file_exists($logoPath)) {
+                    throw new \Exception('File was not saved successfully');
+                }
                 
                 \Log::info('Logo Light Upload Success:', [
                     'file_path' => $logoPath,
-                    'file_exists_after_save' => file_exists($logoPath),
-                    'file_size' => file_exists($logoPath) ? filesize($logoPath) : 0,
+                    'file_exists' => file_exists($logoPath),
+                    'file_size' => filesize($logoPath),
+                    'is_readable' => is_readable($logoPath),
+                    'permissions' => substr(sprintf('%o', fileperms($logoPath)), -4),
                 ]);
                 
                 $toast[] = ['success', 'Light logo uploaded successfully'];
             } catch (\Exception $exp) {
-                \Log::error('Light Logo Upload Error: ' . $exp->getMessage());
+                \Log::error('Light Logo Upload Error: ' . $exp->getMessage(), [
+                    'trace' => $exp->getTraceAsString(),
+                    'full_path' => $fullPath,
+                ]);
                 $toast[] = ['error', 'Unable to upload light logo: ' . $exp->getMessage()];
                 return back()->withToasts($toast);
             }
@@ -124,23 +171,49 @@ class SettingController extends Controller
 
         if (request()->hasFile('logo_dark')) {
             try {
-                if (!file_exists($fullPath)) {
-                    mkdir($fullPath, 0755, true);
-                    \Log::info('Created directory: ' . $fullPath);
+                $logoPath = $fullPath . '/logo_dark.png';
+                
+                // STEP 1: Remove old file completely if exists
+                if (file_exists($logoPath)) {
+                    if (!unlink($logoPath)) {
+                        \Log::warning('Could not delete old logo_dark.png, but continuing...');
+                    } else {
+                        \Log::info('Deleted old logo_dark.png');
+                    }
+                    clearstatcache(true, $logoPath);
                 }
                 
-                $logoPath = $fullPath . '/logo_dark.png';
-                Image::make(request('logo_dark'))->save($logoPath);
+                // STEP 2: Save new logo
+                $image = Image::make(request('logo_dark'));
+                $image->save($logoPath, 90);
+                
+                // STEP 3: Set proper file permissions
+                if (!chmod($logoPath, 0644)) {
+                    \Log::warning('Could not set permissions for logo_dark.png');
+                }
+                
+                // STEP 4: Clear cache
+                clearstatcache(true, $logoPath);
+                
+                // Verify file was saved
+                if (!file_exists($logoPath)) {
+                    throw new \Exception('File was not saved successfully');
+                }
                 
                 \Log::info('Logo Dark Upload Success:', [
                     'file_path' => $logoPath,
-                    'file_exists_after_save' => file_exists($logoPath),
-                    'file_size' => file_exists($logoPath) ? filesize($logoPath) : 0,
+                    'file_exists' => file_exists($logoPath),
+                    'file_size' => filesize($logoPath),
+                    'is_readable' => is_readable($logoPath),
+                    'permissions' => substr(sprintf('%o', fileperms($logoPath)), -4),
                 ]);
                 
                 $toast[] = ['success', 'Dark logo uploaded successfully'];
             } catch (\Exception $exp) {
-                \Log::error('Dark Logo Upload Error: ' . $exp->getMessage());
+                \Log::error('Dark Logo Upload Error: ' . $exp->getMessage(), [
+                    'trace' => $exp->getTraceAsString(),
+                    'full_path' => $fullPath,
+                ]);
                 $toast[] = ['error', 'Unable to upload dark logo: ' . $exp->getMessage()];
                 return back()->withToasts($toast);
             }
@@ -148,24 +221,50 @@ class SettingController extends Controller
 
         if (request()->hasFile('favicon')) {
             try {
-                if (!file_exists($fullPath)) {
-                    mkdir($fullPath, 0755, true);
-                    \Log::info('Created directory: ' . $fullPath);
-                }
-                
                 $size = explode('x', getFileSize('favicon'));
                 $faviconPath = $fullPath . '/favicon.png';
-                Image::make(request('favicon'))->resize($size[0], $size[1])->save($faviconPath);
+                
+                // STEP 1: Remove old file completely if exists
+                if (file_exists($faviconPath)) {
+                    if (!unlink($faviconPath)) {
+                        \Log::warning('Could not delete old favicon.png, but continuing...');
+                    } else {
+                        \Log::info('Deleted old favicon.png');
+                    }
+                    clearstatcache(true, $faviconPath);
+                }
+                
+                // STEP 2: Save new favicon
+                $image = Image::make(request('favicon'));
+                $image->resize($size[0], $size[1])->save($faviconPath, 90);
+                
+                // STEP 3: Set proper file permissions
+                if (!chmod($faviconPath, 0644)) {
+                    \Log::warning('Could not set permissions for favicon.png');
+                }
+                
+                // STEP 4: Clear cache
+                clearstatcache(true, $faviconPath);
+                
+                // Verify file was saved
+                if (!file_exists($faviconPath)) {
+                    throw new \Exception('File was not saved successfully');
+                }
                 
                 \Log::info('Favicon Upload Success:', [
                     'file_path' => $faviconPath,
-                    'file_exists_after_save' => file_exists($faviconPath),
-                    'file_size' => file_exists($faviconPath) ? filesize($faviconPath) : 0,
+                    'file_exists' => file_exists($faviconPath),
+                    'file_size' => filesize($faviconPath),
+                    'is_readable' => is_readable($faviconPath),
+                    'permissions' => substr(sprintf('%o', fileperms($faviconPath)), -4),
                 ]);
                 
                 $toast[] = ['success', 'Favicon uploaded successfully'];
             } catch (\Exception $exp) {
-                \Log::error('Favicon Upload Error: ' . $exp->getMessage());
+                \Log::error('Favicon Upload Error: ' . $exp->getMessage(), [
+                    'trace' => $exp->getTraceAsString(),
+                    'full_path' => $fullPath,
+                ]);
                 $toast[] = ['error', 'Unable to upload the favicon: ' . $exp->getMessage()];
                 return back()->withToasts($toast);
             }

@@ -13,4 +13,20 @@ class Transaction extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    /**
+     * Get the deposit associated with this transaction.
+     */
+    public function deposit()
+    {
+        return $this->hasOne(Deposit::class, 'trx', 'trx');
+    }
+
+    /**
+     * Get the reward associated with this transaction.
+     */
+    public function reward()
+    {
+        return $this->belongsTo(Reward::class, 'reward_id', 'id');
+    }
 }

@@ -6,6 +6,7 @@
             <thead>
                 <tr>
                     <th>@lang('Name')</th>
+                    <th>@lang('Sort')</th>
                     <th>@lang('Parent Category')</th>
                     <th>@lang('Status')</th>
                     <th>@lang('Action')</th>
@@ -16,6 +17,9 @@
                     <tr>
                         <td>
                             <span class="fw-bold">{{ __($subcategory->name) }}</span>
+                        </td>
+                        <td>
+                            <span class="fw-bold">{{ $subcategory->sort_order ?? 0 }}</span>
                         </td>
                         <td>
                             <span class="badge badge--info">{{ __($subcategory->category->name ?? 'N/A') }}</span>
@@ -92,6 +96,10 @@
                                 <label class="form--label required">@lang('Subcategory Name')</label>
                                 <input type="text" class="form--control" name="name" required placeholder="@lang('Enter subcategory name')">
                             </div>
+                            <div class="col-12">
+                                <label class="form--label">@lang('Sort Order')</label>
+                                <input type="number" class="form--control" name="sort_order" min="0" placeholder="@lang('e.g. 1, 2, 3')">
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer gap-2">
@@ -131,6 +139,10 @@
                                 <label class="form--label required">@lang('Subcategory Name')</label>
                                 <input type="text" class="form--control" name="name" id="editName" required placeholder="@lang('Enter subcategory name')">
                             </div>
+                            <div class="col-12">
+                                <label class="form--label">@lang('Sort Order')</label>
+                                <input type="number" class="form--control" name="sort_order" id="editSortOrder" min="0" placeholder="@lang('e.g. 1, 2, 3')">
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer gap-2">
@@ -146,11 +158,33 @@
 @endsection
 
 @push('breadcrumb')
-    <x-searchForm placeholder="Name" />
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+        <x-searchForm placeholder="Name" />
 
-    <button type="button" class="btn btn--sm btn--base addBtn">
-        <i class="ti ti-circle-plus"></i> @lang('Add New')
-    </button>
+        <form method="GET" action="{{ route('admin.subcategories.index') }}" class="d-flex flex-wrap align-items-center gap-2">
+            <label class="form--label mb-0">@lang('Category')</label>
+            <select name="category_id" class="form--control form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">@lang('All')</option>
+                @foreach($categories as $category)
+                    <option value="{{ $category->id }}" @selected(request('category_id') == $category->id)>{{ __($category->name) }}</option>
+                @endforeach
+            </select>
+
+            <label class="form--label mb-0">@lang('Sort By')</label>
+            <select name="sort_by" class="form--control form-select form-select-sm" onchange="this.form.submit()">
+                <option value="sort_order" @selected(request('sort_by', 'sort_order') === 'sort_order')>@lang('Sort Order')</option>
+                <option value="id" @selected(request('sort_by') === 'id')>@lang('ID')</option>
+            </select>
+            <select name="sort_dir" class="form--control form-select form-select-sm" onchange="this.form.submit()">
+                <option value="asc" @selected(request('sort_dir', 'asc') === 'asc')>@lang('ASC')</option>
+                <option value="desc" @selected(request('sort_dir') === 'desc')>@lang('DESC')</option>
+            </select>
+        </form>
+
+        <button type="button" class="btn btn--sm btn--base addBtn">
+            <i class="ti ti-circle-plus"></i> @lang('Add New')
+        </button>
+    </div>
 @endpush
 
 @push('page-script')
@@ -170,6 +204,7 @@
 
                 editModal.find('#editName').val(resource.name)
                 editModal.find('#editCategoryId').val(resource.category_id)
+                editModal.find('#editSortOrder').val(resource.sort_order ?? 0)
                 editModal.find('form').attr('action', formAction)
                 editModal.modal('show')
             })

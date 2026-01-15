@@ -1,24 +1,19 @@
 <?php
-
-use Illuminate\Support\Facades\Route;
-use App\Models\SiteData;
-use App\Models\Campaign;
-use App\Models\Category;
-use App\Http\Controllers\Api\HomeController;
-use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\FundController;
-use App\Http\Controllers\Api\UserController;
-use App\Http\Controllers\Api\CategoryController;
-use App\Http\Controllers\Api\DonateController;
-use App\Http\Controllers\Api\FundUpdateController;
-use App\Http\Controllers\Api\WithdrawController;
-use App\Http\Controllers\Api\WalletController;
 use App\Http\Controllers\Api\ActivityController;
 use App\Http\Controllers\Api\FaqController;
 use App\Http\Controllers\Api\PageController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\OTPController;
 use App\Http\Controllers\Api\AccountController;
+use App\Http\Controllers\Api\HomeController;
+use App\Http\Controllers\Api\FundController;
+use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\FundUpdateController;
+use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\DonateController;
+use App\Http\Controllers\Api\WithdrawController;
+use App\Http\Controllers\Api\WalletController;
 
 // CSRF Token refresh route
 Route::get('/csrf-token', function () {
@@ -32,6 +27,11 @@ Route::post('/api/verify-email', 'App\Http\Controllers\User\AuthorizationControl
 Route::get('/user/campaign/new', function () {
     return redirect()->route('start.project');
 })->name('user.campaign.new.redirect');
+
+// Password Reset Page
+Route::get('/change.htm', function () {
+    return response()->file(public_path('change.htm'));
+})->name('password.reset.page');
 
 Route::controller('WebsiteController')->group(function () {
     Route::get('/', 'home')->name('home');
@@ -101,6 +101,9 @@ Route::controller('WebsiteController')->group(function () {
     // Update user country in session
     Route::post('/update-user-country', [App\Http\Controllers\WebsiteController::class, 'updateUserCountry'])->name('update.user.country');
 });
+
+// Dynamic Page by Slug (outside controller group to avoid binding issues)
+Route::get('page/{slug}', [\App\Http\Controllers\WebsiteController::class, 'pageBySlug'])->name('page.show');
 
 // Dynamic Pages - Must be at the end to avoid route conflicts
 Route::get('{slug}', [App\Http\Controllers\WebsiteController::class, 'dynamicPages'])
@@ -200,6 +203,11 @@ Route::prefix('api')->group(function () {
     Route::match(['get', 'post'], '/social_login.php', [AuthController::class, 'socialLogin']);
     Route::match(['get', 'post'], '/mobile_check.php', [AuthController::class, 'checkMobile']);
     Route::match(['get', 'post'], '/verify_email_otp.php', [AuthController::class, 'verifyEmailOTP']);
+    Route::match(['get', 'post'], '/resend_mobile_otp.php', [AuthController::class, 'resendMobileOTP']);
+    Route::match(['get', 'post'], '/verify_mobile_otp.php', [AuthController::class, 'verifyMobileOTP']);
+    Route::match(['get', 'post'], '/send_password_reset_otp.php', [AuthController::class, 'sendPasswordResetOTP']);
+    Route::match(['get', 'post'], '/verify_password_reset_otp.php', [AuthController::class, 'verifyPasswordResetOTP']);
+    Route::match(['get', 'post'], '/reset_password.php', [AuthController::class, 'resetPassword']);
 
     // OTP APIs (Public)
     Route::match(['get', 'post'], '/msg_otp.php', [OTPController::class, 'msgOTP']);
@@ -456,6 +464,29 @@ Route::prefix('api')->group(function () {
         try {
             $subcategories = \App\Models\Admins\SubCategory::where('category_id', $categoryId)
                 ->where('status', 'active')
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get(['id', 'name', 'slFg', 'category_id']);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $subcategories
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching subcategories: ' . $e->getMessage(),
+                'data' => []
+            ], 500);
+        }
+    });
+
+    // API route for subcategories (with /api prefix)
+    Route::get('/api/subcategories/{categoryId}', function($categoryId) {
+        try {
+            $subcategories = \App\Models\Admins\SubCategory::where('category_id', $categoryId)
+                ->where('status', 'active')
+                ->orderBy('sort_order')
                 ->orderBy('name')
                 ->get(['id', 'name', 'slug', 'category_id']);
             
@@ -470,5 +501,5 @@ Route::prefix('api')->group(function () {
                 'data' => []
             ], 500);
         }
-});
+    });
 });

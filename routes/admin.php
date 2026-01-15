@@ -71,6 +71,14 @@ Route::middleware(['admin'])->group(function () {
         Route::post('delete/{id}', 'delete')->name('delete');
     });
 
+    // Header Category Management
+    Route::controller('HeaderCategoryController')->prefix('header-categories')->name('header-categories.')->group(function () {
+        Route::get('index', 'index')->name('index');
+        Route::post('store/{id?}', 'store')->name('store');
+        Route::post('status/{id}', 'status')->name('status');
+        Route::post('delete/{id}', 'delete')->name('delete');
+    });
+
     // Campaign
     Route::controller('CampaignController')->prefix('campaigns')->name('campaigns.')->group(function () {
         Route::get('index', 'index')->name('index');
@@ -165,6 +173,11 @@ Route::middleware(['admin'])->group(function () {
         Route::get('cancelled', 'cancelled')->name('cancelled');
         Route::post('approve/{id}', 'approve')->name('approve');
         Route::post('reject/{id}', 'reject')->name('reject');
+    });
+
+    // Rewards Tracking
+    Route::controller('DepositController')->prefix('rewards')->name('rewards.')->group(function () {
+        Route::get('tracking', 'rewardsTracking')->name('tracking');
     });
 
     // Withdrawal Management

@@ -1,6 +1,6 @@
 # Campaign Show Blade File - Git History
 
-## File: `resources/views/themes/apnafund/page/campaignShow.blade.php`
+## File: `resources/views/themes/ApnaCrowdfunding/page/campaignShow.blade.php`
 
 ---
 
@@ -47,7 +47,7 @@
 
 ---
 
-#### 5. **9e85f5c** - "Update apnafund project with new features and improvements"
+#### 5. **9e85f5c** - "Update ApnaCrowdfunding project with new features and improvements"
 - **Date:** Thu Aug 21, 2025 (4 months ago)
 - **Author:** Rsheel shehzad
 - **Changes:**
@@ -86,13 +86,13 @@
 
 ```bash
 # See what was added in the rewards commit
-git show 343ef2c -- resources/views/themes/apnafund/page/campaignShow.blade.php
+git show 343ef2c -- resources/views/themes/ApnaCrowdfunding/page/campaignShow.blade.php
 
 # See recent changes
-git show 1124e48 -- resources/views/themes/apnafund/page/campaignShow.blade.php
+git show 1124e48 -- resources/views/themes/ApnaCrowdfunding/page/campaignShow.blade.php
 
 # Compare two commits
-git diff 558b64b..343ef2c -- resources/views/themes/apnafund/page/campaignShow.blade.php
+git diff 558b64b..343ef2c -- resources/views/themes/ApnaCrowdfunding/page/campaignShow.blade.php
 ```
 
 ---

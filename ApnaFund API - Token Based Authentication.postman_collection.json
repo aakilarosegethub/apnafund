@@ -1,11 +1,11 @@
 {
 	"info": {
-		"_postman_id": "3e860299-f271-4438-875f-b25c664743ca",
+		"_postman_id": "a2e3b48e-242c-489e-a83f-ba69acf25c9d",
 		"name": "ApnaFund API - Token Based Authentication",
 		"description": "Complete API collection for ApnaFund with Laravel Sanctum token-based authentication. All protected APIs require Bearer token in Authorization header. No need to send 'uid' in request body for protected APIs.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "1136625",
-		"_collection_link": "https://galactic-resonance-220061.postman.co/workspace/My-Workspace~972c0ed0-c097-4117-89e3-12117bd6ba08/collection/1136625-3e860299-f271-4438-875f-b25c664743ca?action=share&source=collection_link&creator=1136625"
+		"_collection_link": "https://galactic-resonance-220061.postman.co/workspace/My-Workspace~972c0ed0-c097-4117-89e3-12117bd6ba08/collection/1136625-a2e3b48e-242c-489e-a83f-ba69acf25c9d?action=share&source=collection_link&creator=1136625"
 	},
 	"item": [
 		{
@@ -1363,6 +1363,97 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "register OTP verification",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "email",
+							"value": "raheelshehzad188@gmail.com",
+							"type": "text"
+						},
+						{
+							"key": "code",
+							"value": "785221",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://192.168.1.43:8000/api/verify_email_otp.php",
+					"protocol": "http",
+					"host": [
+						"192",
+						"168",
+						"1",
+						"43"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"verify_email_otp.php"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "User register",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "name",
+							"value": "John Doe",
+							"type": "text"
+						},
+						{
+							"key": "email",
+							"value": "raheelshehzad188@gmail.com",
+							"type": "text"
+						},
+						{
+							"key": "mobile",
+							"value": "1234567890",
+							"type": "text"
+						},
+						{
+							"key": "password",
+							"value": "password123",
+							"type": "text"
+						},
+						{
+							"key": "ccode",
+							"value": "US",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://192.168.1.43:8000/api/reg_user.php",
+					"protocol": "http",
+					"host": [
+						"192",
+						"168",
+						"1",
+						"43"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"reg_user.php"
+					]
+				}
+			},
+			"response": []
 		}
 	],
 	"auth": {

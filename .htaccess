@@ -1,13 +1,13 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase /apnafund/
+    RewriteBase /ApnaCrowdfunding/
 
     # # =====================================
     # # 1️⃣ BYPASS Laravel for CORE PHP API
     # # URL: /api/file.php
     # # =====================================
-    # RewriteCond %{REQUEST_URI} ^/apnafund/api/
-    # RewriteCond %{DOCUMENT_ROOT}/apnafund/api -d
+    # RewriteCond %{REQUEST_URI} ^/ApnaCrowdfunding/api/
+    # RewriteCond %{DOCUMENT_ROOT}/ApnaCrowdfunding/api -d
     # RewriteRule ^ - [L]
 
     # =====================================
@@ -27,7 +27,7 @@
     # =====================================
     # API Routes - Route all API calls to Laravel (even if file exists)
     # =====================================
-    RewriteCond %{REQUEST_URI} ^/apnafund/api/
+    RewriteCond %{REQUEST_URI} ^/ApnaCrowdfunding/api/
     RewriteRule ^api/(.*)$ public/index.php [L,QSA]
 
     # =====================================

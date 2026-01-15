@@ -108,6 +108,9 @@ Route::middleware('auth')->name('user.')->namespace('User')->group(function () {
             Route::post('/{rewardId}/toggle-status', 'toggleStatus')->name('toggle.status');
         });
 
+        // Reward Fulfillment
+        Route::post('reward/fulfill', 'UserController@fulfillReward')->name('reward.fulfill');
+
         // User Operation
         Route::controller('UserController')->group(function () {
             // KYC Dashboard
@@ -141,6 +144,9 @@ Route::middleware('auth')->name('user.')->namespace('User')->group(function () {
                 Route::get('history', 'donationHistory')->name('history');
                 Route::get('received', 'donationReceived')->name('received');
             });
+
+            // Rewards Tracking
+            Route::get('rewards', 'rewardsTracking')->name('rewards');
 
             Route::get('transactions', 'transactions')->name('transactions');
 

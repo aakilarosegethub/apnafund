@@ -318,49 +318,22 @@ class DonateController extends BaseApiController
             $dona = $donaQuery ? $donaQuery->fetch_assoc() : null;
             $total_donate = $dona ? ($dona['total_amount'] ?? 0) : 0;
 
-            // Handle gallery - it's JSON array in campaigns
-            $gallery = [];
-            if (!empty($sel['gallery'])) {
-                $galleryData = is_string($sel['gallery']) ? json_decode($sel['gallery'], true) : $sel['gallery'];
-                $gallery = is_array($galleryData) ? $galleryData : [];
-            }
-            // Add main image to gallery if exists
-            if (!empty($sel['image']) && !in_array($sel['image'], $gallery)) {
-                array_unshift($gallery, $sel['image']);
-            }
+            // Use helper function to format campaign data
+            $pol = $this->formatCampaignData($sel, [
+                'patient_photo' => ['images/default.png'],
+                'fund_for' => '',
+                'total_donate' => $total_donate
+            ]);
 
-            $goal_amount = $sel['goal_amount'] ?? $sel['target_amount'] ?? 0;
-            
-            // Map campaigns table fields to old API format
-            $pol = [
-                'id' => $sel['id'],
-                'cat_id' => $sel['category_id'] ?? 0,
-                'title' => $sel['name'] ?? '',
-                'fund_for' => '', // Not in campaigns table
-                'fund_photos' => !empty($gallery) ? $gallery : (!empty($sel['image']) ? [$sel['image']] : []),
-                'exp_date' => !empty($sel['end_date']) ? $sel['end_date'] : "",
-                'fund_amt' => $goal_amount,
-                'total_donate' => $total_donate,
-                'full_address' => $sel['location'] ?? '',
-                'lats' => '', // Not in campaigns table
-                'longs' => '', // Not in campaigns table
-                'fund_story' => $sel['description'] ?? '',
-                'fund_date' => !empty($sel['start_date']) ? $sel['start_date'] : ($sel['created_at'] ?? ''),
-                'patient_photo' => ['images/default.png'], // Not in campaigns table
-                'patient_title' => '', // Not in campaigns table
-                'patient_diagnosis' => '', // Not in campaigns table
-                'fund_plan' => '', // Not in campaigns table
-                'medical_certificate' => [], // Not in campaigns table
-                'reject_comment' => '', // Not in campaigns table
-                'fund_status' => $this->mapCampaignStatus($sel['status'] ?? 0, $sel['end_date'] ?? null, 0, $goal_amount)
-            ];
-
-            // Get total deposits for this campaign
-            $getdQuery = $this->h->queryfire("SELECT COALESCE(SUM(`amount`), 0) AS total_deposite FROM deposits WHERE campaign_id=" . $sel["id"] . " AND status = 1");
-            $getd = $getdQuery ? $getdQuery->fetch_assoc() : null;
-            $total_deposite = $getd ? ($getd['total_deposite'] ?? 0) : ($sel['raised_amount'] ?? 0);
-            $pol['total_investment'] = $total_deposite;
-            $pol['remain_amt'] = sprintf("%.2f", $goal_amount - $total_deposite);
+            // Override specific fields for myDonateFundList
+            $pol['lats'] = '';
+            $pol['longs'] = '';
+            $pol['patient_title'] = '';
+            $pol['patient_diagnosis'] = '';
+            $pol['fund_plan'] = '';
+            $pol['medical_certificate'] = [];
+            $pol['reject_comment'] = '';
+            $pol['remain_amt'] = sprintf("%.2f", $pol['remain_amt']);
             $c[] = $pol;
         }
 
@@ -372,28 +345,5 @@ class DonateController extends BaseApiController
         ]);
     }
 
-    /**
-     * Map campaigns table status to old fund_status format
-     */
-    private function mapCampaignStatus($status, $endDate, $raisedAmount, $goalAmount)
-    {
-        // campaigns: 0 = rejected, 1 = approved, 2 = pending
-        // old format: Pending, Cancelled, Completed
-        if ($status == 0) {
-            return 'Cancelled';
-        } elseif ($status == 2) {
-            return 'Pending';
-        } elseif ($status == 1) {
-            // Check if completed
-            if ($endDate && strtotime($endDate) < time()) {
-                return 'Completed';
-            }
-            if ($goalAmount > 0 && $raisedAmount >= $goalAmount) {
-                return 'Completed';
-            }
-            return 'Pending';
-        }
-        return 'Pending';
-    }
 }
 

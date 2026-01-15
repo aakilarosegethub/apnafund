@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Admins\SubCategory;
 use App\Traits\Searchable;
 use App\Traits\UniversalStatus;
 use Illuminate\Database\Eloquent\Model;
@@ -17,5 +18,13 @@ class Category extends Model
     public function campaigns(): HasMany
     {
         return $this->hasMany(Campaign::class);
+    }
+
+    /**
+     * Get the subcategories for the category.
+     */
+    public function subcategories(): HasMany
+    {
+        return $this->hasMany(SubCategory::class, 'category_id');
     }
 }

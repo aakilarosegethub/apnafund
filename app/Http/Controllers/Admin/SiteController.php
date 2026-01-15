@@ -52,11 +52,36 @@ class SiteController extends Controller
         }
 
         $content   = SiteData::where('data_key', $key . '.content')->orderBy('id','desc')->first();
-        $elements  = SiteData::where('data_key', $key . '.element')->orderBy('id','desc')->get();
+        
+        // Get elements with filtering and sorting
+        $elementsQuery = SiteData::where('data_key', $key . '.element');
+        
+        // Filter by section_type if provided
+        $sectionTypeFilter = request('section_type');
+        if ($sectionTypeFilter) {
+            // Use JSON path extraction for MySQL compatibility
+            $elementsQuery->whereRaw("JSON_EXTRACT(data_info, '$.section_type') = ?", [$sectionTypeFilter]);
+        }
+        
+        // Get all elements first, then filter and sort in PHP
+        $allElements = $elementsQuery->get();
+        
+        // Filter by section_type in PHP if needed (more reliable)
+        if ($sectionTypeFilter) {
+            $allElements = $allElements->filter(function($item) use ($sectionTypeFilter) {
+                return isset($item->data_info['section_type']) && $item->data_info['section_type'] == $sectionTypeFilter;
+            });
+        }
+        
+        // Order by sort_order (from data_info JSON), then by id
+        $elements = $allElements->sortBy(function($item) {
+            return $item->data_info['sort_order'] ?? 999999;
+        })->values();
+        
         $seoContent = SiteData::where('data_key', $key . '.seo')->first();
         $pageTitle = $section->name ;
 
-        return view('admin.site.index', compact('section', 'content', 'elements', 'seoContent', 'key', 'pageTitle'));
+        return view('admin.site.index', compact('section', 'content', 'elements', 'seoContent', 'key', 'pageTitle', 'sectionTypeFilter'));
     }
 
     function content($key) {
@@ -67,10 +92,15 @@ class SiteController extends Controller
             abort(404);
         }
 
+        // Special handling for 'seo' key which is not in site.json
+        if ($key == 'seo' && $type == 'data') {
+            return $this->saveSeoData($purifier);
+        }
+
         $imgJson           = @getPageSections()->$key->$type->images;
         $validationRule    = [];
         $validationMessage = [];
-        $excludeFromValidation = ['_token', 'video', 'key', 'status', 'type', 'id', 'image_url', 'seo_meta_title', 'seo_meta_description', 'seo_meta_keywords'];
+        $excludeFromValidation = ['_token', 'video', 'key', 'status', 'type', 'id', 'image_url', 'seo_meta_title', 'seo_meta_description', 'seo_meta_keywords', 'sort_order'];
         
         // Add image URL and alt fields to exclusion list
         if ($imgJson) {
@@ -103,7 +133,12 @@ class SiteController extends Controller
                 } else {
                     $validationRule[$inputField] = 'nullable';
                 }
-            } else {
+            } 
+            // For footer section, footer_text is optional
+            elseif ($key == 'footer' && $type == 'content' && $inputField == 'footer_text') {
+                $validationRule[$inputField] = 'nullable';
+            } 
+            else {
                 $validationRule[$inputField] = 'required';
             }
         }
@@ -115,8 +150,26 @@ class SiteController extends Controller
         
         // Get all inputs except excluded fields
         $valInputs = request()->except(array_merge($excludeFromValidation, ['image_input']));
+        
+        // Handle sort_order separately (allow 0)
+        if (request()->has('sort_order')) {
+            $sortOrder = request('sort_order');
+            $inputContentValue['sort_order'] = is_numeric($sortOrder) ? (int)$sortOrder : 0;
+        }
 
         foreach ($valInputs as $keyName => $input) {
+            // Skip sort_order as it's already handled above
+            if ($keyName == 'sort_order') {
+                continue;
+            }
+            
+            // For footer section, allow empty footer_text to be saved
+            if ($key == 'footer' && $type == 'content' && $keyName == 'footer_text') {
+                // Allow empty string for footer_text
+                $inputContentValue[$keyName] = $input === null ? '' : htmlspecialchars_decode($purifier->purify($input));
+                continue;
+            }
+            
             // Skip empty values but allow 0 and false
             if ($input === null || $input === '') {
                 continue;
@@ -218,12 +271,8 @@ class SiteController extends Controller
                     if (request()->hasFile('image_input.' . $imgKey)) {
                         $imgData = request()->file('image_input.' . $imgKey);
                         if (!$imgData || !$imgData->isValid()) {
-                            dd([
-                                'status' => 'error',
-                                'message' => 'Image selected but invalid',
-                                'imgKey' => $imgKey,
-                                'error' => $imgData ? $imgData->getError() : 'File object is null'
-                            ]);
+                            // Skip invalid image, continue with other content
+                            continue;
                         }
                     } 
                     // Alternative: check if image_input is an array
@@ -231,39 +280,11 @@ class SiteController extends Controller
                         $allFiles = request()->file('image_input');
                         if (is_array($allFiles) && isset($allFiles[$imgKey]) && $allFiles[$imgKey]) {
                             $imgData = $allFiles[$imgKey];
-                            if ($imgData->isValid()) {
-                                dd([
-                                    'status' => 'selected',
-                                    'message' => 'Image is selected and valid (via array)',
-                                    'imgKey' => $imgKey,
-                                    'filename' => $imgData->getClientOriginalName(),
-                                    'size' => $imgData->getSize(),
-                                    'mimeType' => $imgData->getMimeType()
-                                ]);
-                            } else {
-                                dd([
-                                    'status' => 'error',
-                                    'message' => 'Image selected but invalid (via array)',
-                                    'imgKey' => $imgKey,
-                                    'error' => $imgData->getError()
-                                ]);
+                            if (!$imgData->isValid()) {
+                                // Skip invalid image, continue with other content
+                                continue;
                             }
                         }
-                    }
-                    
-                    // If no file selected
-                    if (!$imgData) {
-                        dd([
-                            'status' => 'error',
-                            'message' => 'Image not selected',
-                            'imgKey' => $imgKey,
-                            'debug' => [
-                                'hasFile_dot' => request()->hasFile('image_input.' . $imgKey),
-                                'hasFile_array' => request()->hasFile('image_input'),
-                                'allFiles' => array_keys(request()->allFiles()),
-                                'image_input_type' => gettype(request()->file('image_input'))
-                            ]
-                        ]);
                     }
                     
                     $imgUrl = @request()->input($imgKey . '_url');
@@ -427,10 +448,13 @@ class SiteController extends Controller
                             }
                         }
                     } 
-                    // Priority 3: Keep existing value if no new input
-                    else if (isset($content->data_info[$imgKey])) {
-                        $existingValue = $content->data_info[$imgKey];
-                            $inputContentValue[$imgKey] = $existingValue;
+                    // Priority 3: Keep existing value if no new input (no file uploaded and no URL provided)
+                    else {
+                        // If no new image uploaded and no URL provided, keep existing image
+                        if (isset($content->data_info[$imgKey])) {
+                            $inputContentValue[$imgKey] = $content->data_info[$imgKey];
+                        }
+                        // If no existing image, don't set anything (field will remain empty)
                     }
                     
                     // Handle alt text
@@ -479,6 +503,11 @@ class SiteController extends Controller
                 'meta_title' => request('seo_meta_title') ?? '',
                 'meta_description' => request('seo_meta_description') ?? '',
                 'meta_keywords' => request('seo_meta_keywords') ?? '',
+                'meta_author' => request('seo_meta_author') ?? '',
+                'meta_robots' => request('seo_meta_robots') ?? 'index, follow',
+                'canonical_url' => request('seo_canonical_url') ?? '',
+                'meta_viewport' => request('seo_meta_viewport') ?? 'width=device-width, initial-scale=1',
+                'meta_charset' => request('seo_meta_charset') ?? 'UTF-8',
             ];
 
             $existingSeoData = $seoContent->data_info ?? [];
@@ -549,5 +578,66 @@ class SiteController extends Controller
         }
 
         return fileUploader($image, $path, $size, $oldImage, $thumb);
+    }
+
+    protected function saveSeoData($purifier) {
+        // Validate SEO data
+        request()->validate([
+            'keywords' => 'required|array',
+            'description' => 'required',
+            'social_title' => 'required',
+            'social_description' => 'required',
+            'image_input' => 'nullable|image|mimes:png,jpg,jpeg',
+            'image_alt' => 'nullable|string',
+        ]);
+
+        // Get or create SEO data
+        $seo = SiteData::where('data_key', 'seo.data')->first();
+        
+        if (!$seo) {
+            $seo = new SiteData();
+            $seo->data_key = 'seo.data';
+            $seo->data_info = [];
+        }
+
+        // Prepare data
+        $dataInfo = is_array($seo->data_info) ? $seo->data_info : (array)$seo->data_info;
+        
+        // Handle keywords
+        $dataInfo['keywords'] = request('keywords', []);
+        
+        // Handle text fields
+        $dataInfo['description'] = htmlspecialchars_decode($purifier->purify(request('description')));
+        $dataInfo['social_title'] = htmlspecialchars_decode($purifier->purify(request('social_title')));
+        $dataInfo['social_description'] = htmlspecialchars_decode($purifier->purify(request('social_description')));
+        
+        // Handle image
+        if (request()->hasFile('image_input')) {
+            try {
+                $oldImage = $dataInfo['image'] ?? null;
+                $dataInfo['image'] = fileUploader(
+                    request('image_input'), 
+                    getFilePath('seo'), 
+                    getFileSize('seo'), 
+                    $oldImage
+                );
+            } catch (Exception $exp) {
+                $toast[] = ['error', 'Image upload failed'];
+                return back()->withToasts($toast)->withInput();
+            }
+        }
+        // If no new image, keep existing image value
+        
+        // Handle image alt text
+        if (request()->has('image_alt')) {
+            $dataInfo['image_alt'] = request('image_alt');
+        }
+        
+        // Save SEO data
+        $seo->data_info = $dataInfo;
+        $seo->save();
+
+        $toast[] = ['success', 'SEO settings updated successfully'];
+        return back()->withToasts($toast);
     }
 }

@@ -1,6 +1,10 @@
 @extends('admin.layouts.master')
 
 @section('master')
+    @php
+        $seoData = is_array($seo->data_info ?? []) ? ($seo->data_info ?? []) : (array)($seo->data_info ?? []);
+        $keywords = $seoData['keywords'] ?? [];
+    @endphp
     <div class="col-12">
         <div class="custom--card">
             <div class="card-body">
@@ -15,8 +19,8 @@
                             <div class="col-12">
                                 <label class="form--label required">@lang('Meta Keywords')</label>
                                 <select class="form--control select-2" name="keywords[]" multiple="multiple" required>
-                                    @if(@$seo->data_info->keywords)
-                                        @foreach($seo->data_info->keywords as $option)
+                                    @if(!empty($keywords) && is_array($keywords))
+                                        @foreach($keywords as $option)
                                             <option value="{{ $option }}" selected>{{ __($option) }}</option>
                                         @endforeach
                                     @endif
@@ -24,15 +28,15 @@
                             </div>
                             <div class="col-12">
                                 <label class="form--label required">@lang('Social Title')</label>
-                                <input type="text" class="form--control" name="social_title" value="{{ @$seo->data_info->social_title }}" required>
+                                <input type="text" class="form--control" name="social_title" value="{{ @$seoData['social_title'] ?? '' }}" required>
                             </div>
                             <div class="col-12">
                                 <label class="form--label required">@lang('Meta Description')</label>
-                                <textarea name="description" class="form--control" required>{{ @$seo->data_info->description }}</textarea>
+                                <textarea name="description" class="form--control" required>{{ @$seoData['description'] ?? '' }}</textarea>
                             </div>
                             <div class="col-12">
                                 <label class="form--label required">@lang('Social Description')</label>
-                                <textarea class="form--control" name="social_description" required>{{ @$seo->data_info->social_description }}</textarea>
+                                <textarea class="form--control" name="social_description" required>{{ @$seoData['social_description'] ?? '' }}</textarea>
                             </div>
                         </div>
                     </div>
@@ -41,7 +45,11 @@
                             <label for="seo" class="upload__img__btn"><i class="ti ti-camera"></i></label>
                             <input type="file" id="seo" class="image-upload" name="image_input" accept=".png, .jpg, .jpeg">
                             <label for="seo" class="upload__img-preview image-preview">
-                                <img src="{{ getImage(getFilePath('seo').'/'. @$seo->data_info->image, getFileSize('seo')) }}" alt="{{ @$seo->data_info->image_alt ?? 'seo-image' }}">
+                                @php
+                                    $seoImage = @$seoData['image'] ?? '';
+                                    $seoImageUrl = $seoImage ? (filter_var($seoImage, FILTER_VALIDATE_URL) ? $seoImage : getImage(getFilePath('seo').'/'. $seoImage, getFileSize('seo'))) : getImage(getFilePath('seo').'/', getFileSize('seo'));
+                                @endphp
+                                <img src="{{ $seoImageUrl }}" alt="{{ @$seoData['image_alt'] ?? 'seo-image' }}">
                             </label>
                             <button type="button" class="btn btn--sm btn--icon btn--danger custom-file-input-clear d-none"><i class="ti ti-circle-x"></i></button>
                         </div>
@@ -50,7 +58,7 @@
                         <!-- SEO Image Alt Text Field -->
                         <div class="mt-2">
                             <label class="form--label">@lang('SEO Image Alt Text')</label>
-                            <input type="text" class="form--control" name="image_alt" value="{{ @$seo->data_info->image_alt }}" placeholder="@lang('Enter alt text for SEO image')">
+                            <input type="text" class="form--control" name="image_alt" value="{{ @$seoData['image_alt'] ?? '' }}" placeholder="@lang('Enter alt text for SEO image')">
                         </div>
                     </div>
 

@@ -1,6 +1,6 @@
 @php
-    $activeTheme = 'themes.apnafund.';
-    $activeThemeTrue = 'themes.apnafund.';
+    $activeTheme = 'themes.ApnaCrowdfunding.';
+    $activeThemeTrue = 'themes.ApnaCrowdfunding.';
     
     // Check if campaign belongs to current user
     if (isset($campaign) && $campaign->user_id !== auth()->id()) {

@@ -342,5 +342,124 @@ class BaseApiController extends Controller
     {
         return auth()->user();
     }
+
+    /**
+     * Map campaigns table status to old fund_status format
+     */
+    protected function mapCampaignStatus($status, $endDate, $raisedAmount, $goalAmount)
+    {
+        // campaigns: 0 = rejected, 1 = approved, 2 = pending
+        // old format: Pending, Cancelled, Completed
+        if ($status == 0) {
+            return 'Cancelled';
+        } elseif ($status == 2) {
+            return 'Pending';
+        } elseif ($status == 1) {
+            // Check if completed
+            if ($endDate && strtotime($endDate) < time()) {
+                return 'Completed';
+            }
+            if ($goalAmount > 0 && $raisedAmount >= $goalAmount) {
+                return 'Completed';
+            }
+            return 'Pending';
+        }
+        return 'Pending';
+    }
+
+    /**
+     * Helper function to format campaign data for API response
+     * Takes campaign row from database and returns formatted array
+     * 
+     * @param array $rows Campaign row from database
+     * @param array $options Optional parameters for customization
+     * @return array Formatted campaign data
+     */
+    protected function formatCampaignData($rows, $options = [])
+    {
+        // Get total deposits for this campaign (only successful payments)
+        $depositResult = $this->h->queryfire("SELECT COALESCE(SUM(amount), 0) AS total_deposite FROM deposits WHERE campaign_id=" . (int)$rows["id"] . " AND status = 1");
+        $getd = $depositResult ? $depositResult->fetch_assoc() : null;
+        $total_deposite = $getd ? ($getd['total_deposite'] ?? 0) : ($rows['raised_amount'] ?? 0);
+        $goal_amount = $rows['goal_amount'] ?? $rows['target_amount'] ?? 0;
+
+        // Handle gallery - it's JSON array in campaigns
+        $gallery = [];
+        if (!empty($rows['gallery'])) {
+            $galleryData = is_string($rows['gallery']) ? json_decode($rows['gallery'], true) : $rows['gallery'];
+            $gallery = is_array($galleryData) ? $galleryData : [];
+        }
+        // Add main image to gallery if exists
+        if (!empty($rows['image']) && !in_array($rows['image'], $gallery)) {
+            array_unshift($gallery, $rows['image']);
+        }
+
+        // Default patient_photo handling - can be overridden in options
+        $patient_photo = $options['patient_photo'] ?? (!empty($rows['image']) ? $rows['image'] : 'default.jpg');
+        
+        // Format fund_photos - can be overridden in options
+        // If not provided in options, use processed gallery array, or empty array
+        if (isset($options['fund_photos'])) {
+            $fund_photos = $options['fund_photos'];
+        } else {
+            $fund_photos = !empty($gallery) ? $gallery : (!empty($rows['image']) ? [$rows['image']] : []);
+        }
+
+        // fund_for can be overridden in options
+        $fund_for = $options['fund_for'] ?? ($rows['fund_for'] ?? '');
+
+        // Build the formatted array
+        $fundData = [
+            'id' => $rows['id'],
+            'cat_id' => $rows['category_id'] ?? 0,
+            'title' => $rows['name'] ?? '',
+            'fund_for' => $fund_for,
+            'fund_photos' => $fund_photos,
+            'exp_date' => $rows['end_date'] ?? '',
+            'fund_amt' => $goal_amount,
+            'fund_story' => $rows['description'] ?? '',
+            'full_address' => $rows['location'] ?? '',
+            'lats' => $rows['latitude'] ?? '',
+            'longs' => $rows['longitude'] ?? '',
+            'fund_date' => $rows['start_date'] ?? $rows['created_at'] ?? '',
+            'patient_photo' => $patient_photo,
+            'patient_title' => '',
+            'patient_diagnosis' => '',
+            'fund_plan' => '',
+            'medical_certificate' => '',
+            'reject_comment' => $rows['reject_reason'] ?? '',
+            'fund_status' => $this->mapCampaignStatus($rows['status'] ?? 1, $rows['end_date'] ?? null, $total_deposite, $goal_amount),
+            'total_investment' => $total_deposite,
+            'remain_amt' => max(0, $goal_amount - $total_deposite)
+        ];
+
+        // Add optional fields if provided
+        if (isset($options['charity_name'])) {
+            $fundData['charity_name'] = $options['charity_name'];
+        }
+        if (isset($options['charity_tinno'])) {
+            $fundData['charity_tinno'] = $options['charity_tinno'];
+        }
+        if (isset($options['charity_img'])) {
+            $fundData['charity_img'] = $options['charity_img'];
+        }
+        if (isset($options['status'])) {
+            $fundData['status'] = $options['status'];
+        }
+        if (isset($options['total_donaters'])) {
+            $fundData['total_donaters'] = $options['total_donaters'];
+        }
+        if (isset($options['donaterlist'])) {
+            $fundData['donaterlist'] = $options['donaterlist'];
+        }
+        if (isset($options['total_donate'])) {
+            $fundData['total_donate'] = $options['total_donate'];
+        }
+        if (isset($options['fund_distance'])) {
+            $fundData['fund_distance'] = $options['fund_distance'];
+        }
+
+        return $fundData;
+    }
 }
 

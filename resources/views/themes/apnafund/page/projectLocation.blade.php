@@ -2,7 +2,7 @@
     $activeTheme = 'themes.apnafund.';
     $activeThemeTrue = 'themes.apnafund.';
 @endphp
-@extends($activeTheme . 'layouts.frontend')
+@extends($activeTheme . 'layouts.blank')
 
 @section('style')
 <style>

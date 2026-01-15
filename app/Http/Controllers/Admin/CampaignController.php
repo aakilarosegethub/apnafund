@@ -75,8 +75,16 @@ class CampaignController extends Controller
         $campaign   = Campaign::findOrFail($id);
         $totalDonor = $campaign->deposits()->done()->count();
         $comments   = $campaign->comments()->with('user')->paginate(getPaginate());
+        
+        // Get reward claims (deposits with rewards)
+        $rewardClaims = $campaign->deposits()
+            ->whereNotNull('reward_id')
+            ->where('status', ManageStatus::PAYMENT_SUCCESS)
+            ->with(['reward', 'user'])
+            ->latest()
+            ->paginate(getPaginate());
 
-        return view('admin.campaign.details', compact('pageTitle', 'backRoute', 'campaign', 'comments', 'totalDonor'));
+        return view('admin.campaign.details', compact('pageTitle', 'backRoute', 'campaign', 'comments', 'totalDonor', 'rewardClaims'));
     }
 
     function updateStatus($id, $type) {

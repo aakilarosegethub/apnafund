@@ -1,8 +1,8 @@
 {
 	"info": {
-		"_postman_id": "apnafund-token-based-api",
-		"name": "ApnaFund API - Token Based Authentication",
-						"description": "Complete API collection for ApnaFund with Laravel Sanctum token-based authentication. All protected APIs require Bearer token in Authorization header. No need to send 'uid' in request body for protected APIs.\n\n**Environment Variables Required:**\n- `base_url`: API base URL (e.g., http://127.0.0.1:8000)\n- `auth_token`: Bearer token for authentication (automatically saved after login/registration)\n\n**Setup Instructions:**\n1. Create a Postman Environment\n2. Add `base_url` and `auth_token` variables\n3. Login/Register to automatically save token to `auth_token` environment variable",
+		"_postman_id": "ApnaCrowdfunding-token-based-api",
+		"name": "ApnaCrowdfunding API - Token Based Authentication",
+						"description": "Complete API collection for ApnaCrowdfunding with Laravel Sanctum token-based authentication. All protected APIs require Bearer token in Authorization header. No need to send 'uid' in request body for protected APIs.\n\n**Environment Variables Required:**\n- `base_url`: API base URL (e.g., http://127.0.0.1:8000)\n- `auth_token`: Bearer token for authentication (automatically saved after login/registration)\n\n**Setup Instructions:**\n1. Create a Postman Environment\n2. Add `base_url` and `auth_token` variables\n3. Login/Register to automatically save token to `auth_token` environment variable",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"auth": {

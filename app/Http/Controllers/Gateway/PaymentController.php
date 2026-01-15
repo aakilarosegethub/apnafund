@@ -72,6 +72,30 @@ class PaymentController extends Controller
             return back()->withToasts($toast);
         }
 
+        // Validate reward if provided
+        $rewardId = request('reward_id') ?: request('reward');
+        $reward = null;
+        if ($rewardId) {
+            $reward = $campaign->rewards()->where('id', $rewardId)->where('is_active', true)->first();
+            if (!$reward) {
+                $toast[] = ['error', 'Selected reward is not available'];
+                return back()->withToasts($toast);
+            }
+            
+            // Check if reward is available (not sold out)
+            if (!$reward->isAvailable()) {
+                $toast[] = ['error', 'This reward is no longer available'];
+                return back()->withToasts($toast);
+            }
+            
+            // Check if donation amount meets minimum requirement
+            if ($amount < $reward->minimum_amount) {
+                $setting = gs();
+                $toast[] = ['error', 'Donation amount must be at least ' . $setting->cur_sym . showAmount($reward->minimum_amount) . ' for this reward'];
+                return back()->withToasts($toast);
+            }
+        }
+
         $charge       = $gatewayData->fixed_charge + (($amount * $gatewayData->percent_charge) / 100);
         $payable      = $amount + $charge;
         $final_amount = $payable * $gatewayData->rate;
@@ -98,6 +122,7 @@ class PaymentController extends Controller
         $deposit->phone           = $userPhone;
         $deposit->country         = $userCountry;
         $deposit->receiver_id     = $campaign->user->id;
+        $deposit->reward_id       = $rewardId ? $rewardId : null;
         $deposit->method_code     = $gatewayData->method_code;
         $deposit->amount          = $amount;
         $deposit->method_currency = strtoupper($gatewayData->currency);
@@ -166,6 +191,15 @@ class PaymentController extends Controller
             $campaign->raised_amount += $deposit->amount;
             $campaign->save();
 
+            // Update reward claimed count if reward was selected
+            if ($deposit->reward_id) {
+                $reward = \App\Models\Reward::find($deposit->reward_id);
+                if ($reward && $reward->quantity !== null) {
+                    $reward->claimed_count = ($reward->claimed_count ?? 0) + 1;
+                    $reward->save();
+                }
+            }
+
             $campaignAuthor           = $campaign->user;
             $campaignAuthor->balance += $deposit->amount;
             $campaignAuthor->save();
@@ -178,7 +212,7 @@ class PaymentController extends Controller
             $transaction->post_balance = $user->balance ?? 0;
             $transaction->trx_type     = '-';
             $transaction->trx          = $deposit->trx;
-            $transaction->details      = 'Donation Via ' . $deposit->gatewayCurrency()->name;
+            $transaction->details      = 'Contribution Via ' . $deposit->gatewayCurrency()->name;
             $transaction->remark       = 'donation_given';
             $transaction->save();
 
@@ -190,8 +224,10 @@ class PaymentController extends Controller
             $transaction->post_balance = $campaignAuthor->balance ?? 0;
             $transaction->trx_type     = '+';
             $transaction->trx          = $deposit->trx;
-            $transaction->details      = 'Donation received for a campaign';
+            $transaction->details      = 'Contribution received for a campaign';
             $transaction->remark       = 'donation_received';
+            $transaction->reward_id   = $deposit->reward_id; // Add reward_id for tracking
+            $transaction->reward_fulfilled = false; // Default to not fulfilled
             $transaction->save();
 
             if (!$isManual) {

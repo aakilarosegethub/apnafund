@@ -1,6 +1,6 @@
 # Campaign Show Blade File - Revert Guide
 
-## File: `resources/views/themes/apnafund/page/campaignShow.blade.php`
+## File: `resources/views/themes/ApnaCrowdfunding/page/campaignShow.blade.php`
 
 ---
 
@@ -26,7 +26,7 @@
    - **Date:** 2025-08-25 18:41 (4 months ago)
    - **Changes:** Custom code management
 
-5. **9e85f5c** - "Update apnafund project with new features and improvements"
+5. **9e85f5c** - "Update ApnaCrowdfunding project with new features and improvements"
    - **Date:** 2025-08-21 12:26 (4 months ago)
    - **Changes:** General updates
 
@@ -44,7 +44,7 @@ Agar aap latest commit (1124e48) ko revert karna chahte hain:
 
 ```bash
 # Revert latest commit changes for this file only
-git checkout 343ef2c -- resources/views/themes/apnafund/page/campaignShow.blade.php
+git checkout 343ef2c -- resources/views/themes/ApnaCrowdfunding/page/campaignShow.blade.php
 git commit -m "Revert campaignShow.blade.php to previous version"
 ```
 
@@ -52,7 +52,7 @@ Ya phir:
 
 ```bash
 # Restore file to previous commit state
-git restore --source=343ef2c -- resources/views/themes/apnafund/page/campaignShow.blade.php
+git restore --source=343ef2c -- resources/views/themes/ApnaCrowdfunding/page/campaignShow.blade.php
 ```
 
 ---
@@ -63,13 +63,13 @@ Kisi specific commit par jaane ke liye:
 
 ```bash
 # Option A: View file at specific commit (temporary, doesn't change working directory)
-git show 343ef2c:resources/views/themes/apnafund/page/campaignShow.blade.php > temp_file.blade.php
+git show 343ef2c:resources/views/themes/ApnaCrowdfunding/page/campaignShow.blade.php > temp_file.blade.php
 
 # Option B: Checkout file from specific commit
-git checkout 343ef2c -- resources/views/themes/apnafund/page/campaignShow.blade.php
+git checkout 343ef2c -- resources/views/themes/ApnaCrowdfunding/page/campaignShow.blade.php
 
 # Option C: Restore from specific commit
-git restore --source=343ef2c -- resources/views/themes/apnafund/page/campaignShow.blade.php
+git restore --source=343ef2c -- resources/views/themes/ApnaCrowdfunding/page/campaignShow.blade.php
 ```
 
 ---
@@ -84,8 +84,8 @@ git checkout -b revert-campaign-show 343ef2c
 
 # Or checkout specific file only
 git checkout -b feature-branch
-git checkout 343ef2c -- resources/views/themes/apnafund/page/campaignShow.blade.php
-git add resources/views/themes/apnafund/page/campaignShow.blade.php
+git checkout 343ef2c -- resources/views/themes/ApnaCrowdfunding/page/campaignShow.blade.php
+git add resources/views/themes/ApnaCrowdfunding/page/campaignShow.blade.php
 git commit -m "Revert to previous version"
 ```
 
@@ -97,13 +97,13 @@ Pehle dekh lo kya changes hain:
 
 ```bash
 # See what changed in latest commit
-git diff 343ef2c..1124e48 -- resources/views/themes/apnafund/page/campaignShow.blade.php
+git diff 343ef2c..1124e48 -- resources/views/themes/ApnaCrowdfunding/page/campaignShow.blade.php
 
 # See file at specific commit
-git show 343ef2c:resources/views/themes/apnafund/page/campaignShow.blade.php | less
+git show 343ef2c:resources/views/themes/ApnaCrowdfunding/page/campaignShow.blade.php | less
 
 # Compare with current file
-git diff HEAD -- resources/views/themes/apnafund/page/campaignShow.blade.php
+git diff HEAD -- resources/views/themes/ApnaCrowdfunding/page/campaignShow.blade.php
 ```
 
 ---
@@ -114,10 +114,10 @@ git diff HEAD -- resources/views/themes/apnafund/page/campaignShow.blade.php
 
 ```bash
 # Step 1: See what will be reverted
-git diff HEAD~1..HEAD -- resources/views/themes/apnafund/page/campaignShow.blade.php
+git diff HEAD~1..HEAD -- resources/views/themes/ApnaCrowdfunding/page/campaignShow.blade.php
 
 # Step 2: Revert to previous version
-git checkout HEAD~1 -- resources/views/themes/apnafund/page/campaignShow.blade.php
+git checkout HEAD~1 -- resources/views/themes/ApnaCrowdfunding/page/campaignShow.blade.php
 
 # Step 3: Review changes
 git diff --staged
@@ -134,7 +134,7 @@ Agar aap rewards section se pehle wala version chahte hain:
 
 ```bash
 # Go back to commit before rewards section (558b64b)
-git checkout 558b64b -- resources/views/themes/apnafund/page/campaignShow.blade.php
+git checkout 558b64b -- resources/views/themes/ApnaCrowdfunding/page/campaignShow.blade.php
 git commit -m "Revert to version before rewards section"
 ```
 
@@ -146,7 +146,7 @@ Agar aap sirf kuch specific changes ko revert karna chahte hain:
 
 ```bash
 # Interactive revert
-git checkout -p 343ef2c -- resources/views/themes/apnafund/page/campaignShow.blade.php
+git checkout -p 343ef2c -- resources/views/themes/ApnaCrowdfunding/page/campaignShow.blade.php
 ```
 
 ---
@@ -176,22 +176,22 @@ git stash pop
 
 ```bash
 # View full history
-git log --oneline -- resources/views/themes/apnafund/page/campaignShow.blade.php
+git log --oneline -- resources/views/themes/ApnaCrowdfunding/page/campaignShow.blade.php
 
 # View specific commit
-git show 343ef2c -- resources/views/themes/apnafund/page/campaignShow.blade.php
+git show 343ef2c -- resources/views/themes/ApnaCrowdfunding/page/campaignShow.blade.php
 
 # Revert to previous commit (latest undo)
-git checkout HEAD~1 -- resources/views/themes/apnafund/page/campaignShow.blade.php
+git checkout HEAD~1 -- resources/views/themes/ApnaCrowdfunding/page/campaignShow.blade.php
 
 # Revert to specific commit
-git checkout 343ef2c -- resources/views/themes/apnafund/page/campaignShow.blade.php
+git checkout 343ef2c -- resources/views/themes/ApnaCrowdfunding/page/campaignShow.blade.php
 
 # See what changed between commits
-git diff 343ef2c..1124e48 -- resources/views/themes/apnafund/page/campaignShow.blade.php
+git diff 343ef2c..1124e48 -- resources/views/themes/ApnaCrowdfunding/page/campaignShow.blade.php
 
 # View file at specific commit
-git show 343ef2c:resources/views/themes/apnafund/page/campaignShow.blade.php
+git show 343ef2c:resources/views/themes/ApnaCrowdfunding/page/campaignShow.blade.php
 ```
 
 ---
@@ -218,12 +218,12 @@ git show 343ef2c:resources/views/themes/apnafund/page/campaignShow.blade.php
 
 1. **Pehle dekh lo kya changes hain:**
    ```bash
-   git diff 343ef2c..HEAD -- resources/views/themes/apnafund/page/campaignShow.blade.php
+   git diff 343ef2c..HEAD -- resources/views/themes/ApnaCrowdfunding/page/campaignShow.blade.php
    ```
 
 2. **Agar latest commit ko revert karna hai:**
    ```bash
-   git checkout 343ef2c -- resources/views/themes/apnafund/page/campaignShow.blade.php
+   git checkout 343ef2c -- resources/views/themes/ApnaCrowdfunding/page/campaignShow.blade.php
    git commit -m "Revert to previous version"
    ```
 

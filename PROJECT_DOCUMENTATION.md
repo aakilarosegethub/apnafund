@@ -1437,7 +1437,7 @@ chmod -R 755 bootstrap/cache
 ## Appendix A: File Structure Overview
 
 ```
-apnafund/
+ApnaCrowdfunding/
 ├── app/
 │   ├── Console/          # Artisan commands
 │   ├── Constants/        # Application constants

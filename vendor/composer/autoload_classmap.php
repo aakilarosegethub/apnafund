@@ -149,6 +149,7 @@ return array(
     'App\\Http\\Controllers\\User\\UserController' => $baseDir . '/app/Http/Controllers/User/UserController.php',
     'App\\Http\\Controllers\\User\\WithdrawController' => $baseDir . '/app/Http/Controllers/User/WithdrawController.php',
     'App\\Http\\Controllers\\WebsiteController' => $baseDir . '/app/Http/Controllers/WebsiteController.php',
+    'App\\Http\\Controllers\\WishlistController' => $baseDir . '/app/Http/Controllers/WishlistController.php',
     'App\\Http\\Kernel' => $baseDir . '/app/Http/Kernel.php',
     'App\\Http\\Middleware\\AllowRegistration' => $baseDir . '/app/Http/Middleware/AllowRegistration.php',
     'App\\Http\\Middleware\\Authenticate' => $baseDir . '/app/Http/Middleware/Authenticate.php',

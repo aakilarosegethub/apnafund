@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Models\User;
 use App\Models\Deposit;
 use App\Models\Gateway;
+use App\Models\Transaction;
 use App\Constants\ManageStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Gateway\PaymentController;
@@ -51,9 +52,9 @@ class DepositController extends Controller
 
     protected function donationData($scope = null, $summary = false) {
         if ($scope) {
-            $deposits = Deposit::with(['gateway', 'user', 'campaign'])->$scope();
+            $deposits = Deposit::with(['gateway', 'user', 'campaign', 'reward'])->$scope();
         } else {
-            $deposits = Deposit::with(['gateway', 'user', 'campaign']);
+            $deposits = Deposit::with(['gateway', 'user', 'campaign', 'reward']);
         }
 
         $deposits = $deposits->searchable(['receiver_id', 'trx', 'user:username', 'campaign:name'])->dateFilter();
@@ -136,5 +137,30 @@ class DepositController extends Controller
         $toast[] = ['success', 'Donation rejection success'];
 
         return back()->withToasts($toast);
+    }
+
+    function rewardsTracking() {
+        $pageTitle = 'Rewards Tracking';
+        $filter = request('filter', 'all'); // all, received, paid, pending, fulfilled
+        
+        $transactions = Transaction::whereNotNull('reward_id')
+            ->with(['reward', 'deposit.campaign', 'deposit.user', 'user'])
+            ->latest();
+        
+        // Apply filters
+        if ($filter == 'received') {
+            $transactions = $transactions->where('remark', 'donation_received');
+        } elseif ($filter == 'paid') {
+            $transactions = $transactions->where('remark', 'donation_given');
+        } elseif ($filter == 'pending') {
+            $transactions = $transactions->where('reward_fulfilled', false);
+        } elseif ($filter == 'fulfilled') {
+            $transactions = $transactions->where('reward_fulfilled', true);
+        }
+        
+        $transactions = $transactions->paginate(getPaginate());
+        
+        $emptyMessage = 'No rewards found';
+        return view('admin.page.rewards', compact('pageTitle', 'transactions', 'filter', 'emptyMessage'));
     }
 }

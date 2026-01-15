@@ -1,6 +1,6 @@
 # Campaign Show Page - Sections Structure
 
-## File: `resources/views/themes/apnafund/page/campaignShow.blade.php`
+## File: `resources/views/themes/ApnaCrowdfunding/page/campaignShow.blade.php`
 
 ### Page Sections Overview
 
