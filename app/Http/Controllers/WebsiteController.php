@@ -38,6 +38,9 @@ class WebsiteController extends Controller
             $infoBannerContent = SiteData::where('data_key', 'home.info_banner')->first();
             $featuredProjectsContent = SiteData::where('data_key', 'home.featured_projects')->first();
             
+            // Get counter elements dynamically from admin
+            $counterElements = getSiteData('counter.element', false, null, true);
+            
             // Get featured campaigns (approved and featured, regardless of date status)
             try {
                 $featuredCampaigns = Campaign::commonQuery()->approve()->featured()->latest()->limit(6)->get();
@@ -45,7 +48,7 @@ class WebsiteController extends Controller
                 \Log::error('Error fetching featured campaigns', ['error' => $e->getMessage()]);
                 $featuredCampaigns = collect(); // Empty collection if error
             }
-            return view($this->activeTheme .'page.home', compact('pageTitle', 'heroContent', 'infoBannerContent', 'featuredProjectsContent', 'featuredCampaigns'));
+            return view($this->activeTheme .'page.home', compact('pageTitle', 'heroContent', 'infoBannerContent', 'featuredProjectsContent', 'featuredCampaigns', 'counterElements'));
         } catch (\Exception $e) {
             \Log::error('Home page error', [
                 'error' => $e->getMessage(),
@@ -533,17 +536,49 @@ class WebsiteController extends Controller
         return view($this->activeTheme . 'page.stories', compact('pageTitle', 'successElements', 'pageSEO'));
     }
 
-    function storyShow($id) {
-        $pageTitle = 'Story Details';
-        $storyData = SiteData::findOrFail($id);
+    function storyShow($slug) {
+        // Try to find by slug first, then fallback to ID for backward compatibility
+        $storyData = SiteData::where('data_key', 'success_story.element')
+            ->where(function($query) use ($slug) {
+                $query->whereRaw("JSON_EXTRACT(data_info, '$.slug') = ?", [$slug])
+                      ->orWhere('id', $slug); // Fallback for old URLs with ID
+            })
+            ->first();
+        
+        if (!$storyData) {
+            abort(404, 'Story not found');
+        }
+        
+        // Get story data info
+        $storyInfo = is_array($storyData->data_info) ? $storyData->data_info : (array)$storyData->data_info;
+        
+        // Set page title from meta_title or title
+        $pageTitle = $storyInfo['meta_title'] ?? $storyInfo['title'] ?? 'Story Details';
 
-        $seoContents['keywords']           = $storyData->data_info->meta_keywords ?? [];
-        $seoContents['social_title']       = $storyData->data_info->title;
-        $seoContents['social_description'] = strLimit($storyData->data_info->details, 150);
-        $seoContents['description']        = strLimit($storyData->data_info->details, 150);
-        $imageSize                         = '855x475';
-        $seoContents['image']              = getImage('assets/images/site/success_story/' . $storyData->data_info->image, $imageSize);
-        $seoContents['image_size']         = $imageSize;
+        // Prepare SEO contents
+        $seoContents = [];
+        $seoContents['meta_title'] = $storyInfo['meta_title'] ?? $storyInfo['title'] ?? 'Story Details';
+        $seoContents['meta_description'] = $storyInfo['meta_description'] ?? strLimit(strip_tags($storyInfo['details'] ?? ''), 150);
+        $seoContents['meta_keywords'] = $storyInfo['meta_keywords'] ?? '';
+        
+        // Social sharing
+        $seoContents['social_title'] = $storyInfo['meta_title'] ?? $storyInfo['title'] ?? 'Story Details';
+        $seoContents['social_description'] = $storyInfo['meta_description'] ?? strLimit(strip_tags($storyInfo['details'] ?? ''), 150);
+        $seoContents['description'] = $storyInfo['meta_description'] ?? strLimit(strip_tags($storyInfo['details'] ?? ''), 150);
+        
+        // Keywords as array
+        if (!empty($seoContents['meta_keywords'])) {
+            $seoContents['keywords'] = is_array($seoContents['meta_keywords']) 
+                ? $seoContents['meta_keywords'] 
+                : array_map('trim', explode(',', $seoContents['meta_keywords']));
+        } else {
+            $seoContents['keywords'] = [];
+        }
+        
+        // Image
+        $imageSize = '855x475';
+        $seoContents['image'] = getImage('assets/images/site/success_story/' . ($storyInfo['image'] ?? ''), $imageSize);
+        $seoContents['image_size'] = $imageSize;
 
         $moreStories = SiteData::where('data_key', 'success_story.element')->whereNot('id', $id)->limit(3)->get();
 
@@ -1239,8 +1274,25 @@ class WebsiteController extends Controller
             
             $pageTitle = ucfirst(str_replace('-', ' ', $slug));
             
+            // Fetch SEO data for this page slug from page_seo section
+            $pageSeoData = null;
+            $allPageSeo = SiteData::where('data_key', 'page_seo.element')->get();
+            
+            foreach ($allPageSeo as $seoItem) {
+                $seoInfo = is_array($seoItem->data_info) ? $seoItem->data_info : (array)$seoItem->data_info;
+                if (isset($seoInfo['slug']) && $seoInfo['slug'] == $slug) {
+                    $pageSeoData = $seoInfo;
+                    break;
+                }
+            }
+            
+            // If SEO data found, update page title
+            if ($pageSeoData && isset($pageSeoData['meta_title'])) {
+                $pageTitle = $pageSeoData['meta_title'];
+            }
+            
             // Prepare variables based on slug
-            $variables = ['pageTitle' => $pageTitle];
+            $variables = ['pageTitle' => $pageTitle, 'pageSeoData' => $pageSeoData];
             
             // Special handling for contact page
             if ($slug === 'contact') {

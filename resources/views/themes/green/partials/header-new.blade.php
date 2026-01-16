@@ -33,6 +33,71 @@
     }
 }
 
+/* Search Container */
+.search-container {
+    position: relative;
+    width: 100%;
+}
+
+.search-box {
+    position: relative;
+    width: 100%;
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 50px 12px 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 15px;
+    outline: none;
+    transition: all 0.3s ease;
+    background: #fff;
+    color: #000;
+}
+
+.search-input:focus {
+    border-color: #05ce78;
+    box-shadow: 0 0 0 2px rgba(5, 206, 120, 0.2);
+}
+
+.search-input::placeholder {
+    color: #999;
+}
+
+.search-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #666;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px;
+    transition: color 0.3s ease;
+}
+
+.search-btn:hover {
+    color: #05ce78;
+}
+
+/* Mobile adjustments for search */
+@media (max-width: 768px) {
+    .search-input {
+        font-size: 16px;
+        padding: 12px 45px 12px 16px;
+    }
+}
+
+@media (max-width: 576px) {
+    .search-input {
+        font-size: 15px;
+        padding: 10px 40px 10px 14px;
+    }
+}
+
 </style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
@@ -46,7 +111,7 @@
       <a href="{{ route('home') }}" class="navbar-brand me-3">
         <img 
           src="{{ asset('assets/universal/images/logoFavicon/logo_light.png') }}" 
-          alt="Apna Crowdfunding Logo"
+          alt="{{ bs('site_name') ?? 'Apna Crowdfunding' }} Logo"
           style="max-height:68px;">
       </a>
 
@@ -60,14 +125,14 @@
 
         <!-- Center Search -->
         <div class="mx-lg-auto my-3 my-lg-0" style="max-width:420px; width:100%;">
-          <form class="position-relative">
-            <input 
-              type="text" 
-              class="form-control rounded-pill ps-4 pe-5"
-              placeholder="Search campaigns..."
-            >
-            <i class="fas fa-search position-absolute top-50 end-0 translate-middle-y me-3 text-muted"></i>
-          </form>
+          <div class="search-container">
+            <form class="search-box" method="get" action="{{ url('campaigns') }}">
+              <input type="text" class="search-input" name="name" placeholder="Search projects, creators, and categories..." aria-label="Search">
+              <button class="search-btn" type="submit">
+                <i class="fas fa-search"></i>
+              </button>
+            </form>
+          </div>
         </div>
 
         <!-- Right Button -->
@@ -112,3 +177,25 @@
 
   </div>
 </nav>
+
+@push('scripts')
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Handle search form in header
+    const searchForms = document.querySelectorAll('.search-box');
+    searchForms.forEach(function(form) {
+      const searchInput = form.querySelector('.search-input');
+      
+      if (searchInput) {
+        // Submit on Enter key (form will auto-submit, but we can add validation)
+        searchInput.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter' && !searchInput.value.trim()) {
+            e.preventDefault();
+            return false;
+          }
+        });
+      }
+    });
+  });
+</script>
+@endpush

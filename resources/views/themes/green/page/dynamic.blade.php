@@ -2,15 +2,15 @@
     $activeTheme = activeTheme();
     $activeThemeTrue = activeTheme();
 @endphp
-@extends($activeTheme . 'layouts.frontend')
+@extends($activeTheme . 'layouts.green-home')
 
-@section('frontend')
-    <div class="dynamic-page py-120">
+@section('content')
+    <div class="dynamic-page" style="padding: 80px 0; background: #f9fafb;">
         <div class="container">
-            <div class="row gy-5 justify-content-center align-items-center">
+            <div class="row justify-content-center">
                 <div class="col-lg-10">
-                    <div class="card custom--card" data-aos="fade-up" data-aos-duration="1500">
-                        <div class="card-body dynamic-page--details">
+                    <div class="card" style="border: none; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,.06);">
+                        <div class="card-body dynamic-page--details" style="padding: 40px;">
                             @if(isset($page->data_info['title']))
                                 <h1 class="page-title mb-4">{{ __($page->data_info['title']) }}</h1>
                             @endif
@@ -32,20 +32,21 @@
 @push('page-style')
     <style>
         .dynamic-page--details .page-title {
-            font-size: 2.5rem;
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
             font-weight: 700;
-            color: hsl(var(--black)/0.9);
+            color: #111827;
             margin-bottom: 1.5rem;
         }
 
         .dynamic-page--details h1, h2, h3, h4, h5, h6 {
             margin-bottom: .5rem;
-            color: hsl(var(--black)/0.6);
+            color: #111827;
             font-weight: 600;
         }
 
         .dynamic-page--details p {
-            color: hsl(var(--secondary));
+            color: #6b7280;
+            line-height: 1.7;
         }
 
         .dynamic-page--details p:not(:last-child) {

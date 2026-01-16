@@ -1,14 +1,21 @@
 
+@php
+    // Get global SEO data for charset and viewport
+    $seo = \App\Models\SiteData::where('data_key', 'seo.data')->first();
+    $seoData = $seo ? (is_array($seo->data_info) ? (object)$seo->data_info : $seo->data_info) : null;
+    $metaCharset = $seoData->meta_charset ?? 'UTF-8';
+    $metaViewport = $seoData->meta_viewport ?? 'width=device-width, initial-scale=1.0';
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="{{ $metaCharset }}">
+    <meta name="viewport" content="{{ $metaViewport }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $setting->siteName(__($pageTitle)) }}</title>
 
-        @include('partials.seo')
+    @include($activeTheme . 'partials.seo')
     <link rel="stylesheet" href="{{ asset('apnafund/assets/bootstrap/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ asset('assets/universal/css/iziToast.min.css') }}">

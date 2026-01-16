@@ -62,7 +62,81 @@
                         </div>
                     </div>
 
+                    <!-- SEO Meta Tags Section -->
                     <div class="col-12 order-3">
+                        <div class="custom--card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="ti ti-seo text--primary"></i>
+                                    @lang('SEO Meta Tags')
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form--label">@lang('Meta Title')</label>
+                                        <input type="text" class="form--control" name="meta_title" 
+                                               value="{{ @$seoData['meta_title'] ?? '' }}" 
+                                               placeholder="@lang('Enter meta title for this page')">
+                                        <small class="text--muted">@lang('Recommended: 50-60 characters')</small>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form--label">@lang('HTML Meta Description')</label>
+                                        <textarea class="form--control" name="meta_description" rows="3" 
+                                                  placeholder="@lang('Enter meta description for HTML meta tag')">{{ @$seoData['meta_description'] ?? '' }}</textarea>
+                                        <small class="text--muted">@lang('Recommended: 150-160 characters')</small>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form--label">@lang('HTML Meta Keywords')</label>
+                                        <input type="text" class="form--control" name="meta_keywords" 
+                                               value="{{ @$seoData['meta_keywords'] ?? '' }}" 
+                                               placeholder="@lang('Enter keywords separated by commas for HTML meta tag')">
+                                        <small class="text--muted">@lang('Example: crowdfunding, donations, charity, help')</small>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form--label">@lang('Meta Author')</label>
+                                        <input type="text" class="form--control" name="meta_author" 
+                                               value="{{ @$seoData['meta_author'] ?? '' }}" 
+                                               placeholder="@lang('Enter author name')">
+                                        <small class="text--muted">@lang('Website author name')</small>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form--label">@lang('Meta Robots')</label>
+                                        <select class="form--control form-select" name="meta_robots">
+                                            <option value="index, follow" {{ (@$seoData['meta_robots'] ?? 'index, follow') == 'index, follow' ? 'selected' : '' }}>Index, Follow</option>
+                                            <option value="index, nofollow" {{ (@$seoData['meta_robots'] ?? '') == 'index, nofollow' ? 'selected' : '' }}>Index, NoFollow</option>
+                                            <option value="noindex, follow" {{ (@$seoData['meta_robots'] ?? '') == 'noindex, follow' ? 'selected' : '' }}>NoIndex, Follow</option>
+                                            <option value="noindex, nofollow" {{ (@$seoData['meta_robots'] ?? '') == 'noindex, nofollow' ? 'selected' : '' }}>NoIndex, NoFollow</option>
+                                        </select>
+                                        <small class="text--muted">@lang('Search engine indexing instructions')</small>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form--label">@lang('Canonical URL')</label>
+                                        <input type="url" class="form--control" name="canonical_url" 
+                                               value="{{ @$seoData['canonical_url'] ?? '' }}" 
+                                               placeholder="@lang('https://example.com')">
+                                        <small class="text--muted">@lang('Preferred URL for this page')</small>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form--label">@lang('Meta Viewport')</label>
+                                        <input type="text" class="form--control" name="meta_viewport" 
+                                               value="{{ @$seoData['meta_viewport'] ?? 'width=device-width, initial-scale=1' }}" 
+                                               placeholder="@lang('width=device-width, initial-scale=1')">
+                                        <small class="text--muted">@lang('Default: width=device-width, initial-scale=1')</small>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form--label">@lang('Meta Charset')</label>
+                                        <input type="text" class="form--control" name="meta_charset" 
+                                               value="{{ @$seoData['meta_charset'] ?? 'UTF-8' }}" 
+                                               placeholder="@lang('UTF-8')">
+                                        <small class="text--muted">@lang('Default: UTF-8')</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 order-4">
                         <div class="d-flex justify-content-center">
                             <button class="btn btn--base px-4" type="submit">@lang('Submit')</button>
                         </div>
@@ -72,3 +146,21 @@
         </div>
     </div>
 @endsection
+
+@push('page-script')
+    <script>
+        (function ($) {
+            "use strict";
+            
+            // Initialize Select2 for keywords
+            if ($('.select-2').length) {
+                $('.select-2').select2({
+                    tags: true,
+                    tokenSeparators: [','],
+                    placeholder: '@lang("Enter keywords and press Enter")',
+                    allowClear: true
+                });
+            }
+        })(jQuery);
+    </script>
+@endpush

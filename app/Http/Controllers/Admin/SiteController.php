@@ -102,6 +102,12 @@ class SiteController extends Controller
         $validationMessage = [];
         $excludeFromValidation = ['_token', 'video', 'key', 'status', 'type', 'id', 'image_url', 'seo_meta_title', 'seo_meta_description', 'seo_meta_keywords', 'sort_order'];
         
+        // For page_seo and schema_markup, don't exclude meta fields and slug from validation
+        // For footer_menu, don't exclude slug from validation
+        if ($key != 'page_seo' && $key != 'schema_markup' && $key != 'footer_menu') {
+            $excludeFromValidation = array_merge($excludeFromValidation, ['meta_title', 'meta_description', 'meta_keywords', 'slug']);
+        }
+        
         // Add image URL and alt fields to exclusion list
         if ($imgJson) {
             foreach ($imgJson as $imgKey => $imgValue) {
@@ -134,10 +140,30 @@ class SiteController extends Controller
                     $validationRule[$inputField] = 'nullable';
                 }
             } 
+            // For page_seo, slug is required, other fields are optional
+            elseif ($key == 'page_seo' && $type == 'element') {
+                if ($inputField == 'slug') {
+                    $validationRule[$inputField] = 'required';
+                } else {
+                    $validationRule[$inputField] = 'nullable';
+                }
+            }
+            // For schema_markup, slug is required, other fields are optional
+            elseif ($key == 'schema_markup' && $type == 'element') {
+                if ($inputField == 'slug') {
+                    $validationRule[$inputField] = 'required';
+                } else {
+                    $validationRule[$inputField] = 'nullable';
+                }
+            }
             // For footer section, footer_text is optional
             elseif ($key == 'footer' && $type == 'content' && $inputField == 'footer_text') {
                 $validationRule[$inputField] = 'nullable';
-            } 
+            }
+            // For success_story, slug and meta fields are optional
+            elseif ($key == 'success_story' && $type == 'element' && in_array($inputField, ['slug', 'meta_title', 'meta_description', 'meta_keywords'])) {
+                $validationRule[$inputField] = 'nullable';
+            }
             else {
                 $validationRule[$inputField] = 'required';
             }
@@ -170,7 +196,209 @@ class SiteController extends Controller
                 continue;
             }
             
-            // Skip empty values but allow 0 and false
+            // Handle slug generation for success_story
+            if ($key == 'success_story' && $type == 'element' && $keyName == 'slug') {
+                if (empty($input) && isset($valInputs['title']) && !empty($valInputs['title'])) {
+                    // Auto-generate slug from title if not provided
+                    $input = slug($valInputs['title']);
+                } elseif (!empty($input)) {
+                    // Clean and format the provided slug
+                    $input = slug($input);
+                }
+                
+                // Ensure slug is unique
+                if (!empty($input)) {
+                    $existingSlug = SiteData::where('data_key', $key . '.element')
+                        ->where('id', '!=', request('id'))
+                        ->whereRaw("JSON_EXTRACT(data_info, '$.slug') = ?", [$input])
+                        ->first();
+                    
+                    if ($existingSlug) {
+                        $counter = 1;
+                        $baseSlug = $input;
+                        do {
+                            $input = $baseSlug . '-' . $counter;
+                            $existingSlug = SiteData::where('data_key', $key . '.element')
+                                ->where('id', '!=', request('id'))
+                                ->whereRaw("JSON_EXTRACT(data_info, '$.slug') = ?", [$input])
+                                ->first();
+                            $counter++;
+                        } while ($existingSlug && $counter < 1000);
+                    }
+                }
+                
+                if (!empty($input)) {
+                    $inputContentValue[$keyName] = $input;
+                }
+                continue;
+            }
+            
+            // Handle slug for page_seo - ensure it's unique and properly formatted
+            if ($key == 'page_seo' && $type == 'element' && $keyName == 'slug') {
+                if (!empty($input)) {
+                    // Clean and format the provided slug
+                    $input = slug($input);
+                    
+                    // Ensure slug is unique
+                    $existingSlug = SiteData::where('data_key', $key . '.element')
+                        ->where('id', '!=', request('id'))
+                        ->whereRaw("JSON_EXTRACT(data_info, '$.slug') = ?", [$input])
+                        ->first();
+                    
+                    if ($existingSlug) {
+                        $counter = 1;
+                        $baseSlug = $input;
+                        do {
+                            $input = $baseSlug . '-' . $counter;
+                            $existingSlug = SiteData::where('data_key', $key . '.element')
+                                ->where('id', '!=', request('id'))
+                                ->whereRaw("JSON_EXTRACT(data_info, '$.slug') = ?", [$input])
+                                ->first();
+                            $counter++;
+                        } while ($existingSlug && $counter < 1000);
+                    }
+                    
+                    $inputContentValue[$keyName] = $input;
+                } else {
+                    // Slug is required, but if empty, set empty string for page_seo
+                    $inputContentValue[$keyName] = '';
+                }
+                continue;
+            }
+            
+            // Handle slug for schema_markup - preserve forward slashes (e.g., "page/about")
+            if ($key == 'schema_markup' && $type == 'element' && $keyName == 'slug') {
+                if (!empty($input)) {
+                    // For schema_markup, don't use slug() function as it removes forward slashes
+                    // Just trim and clean the input, but preserve forward slashes
+                    $input = trim($input);
+                    // Remove only leading/trailing slashes, but keep internal ones
+                    $input = trim($input, '/');
+                    
+                    // Ensure slug is unique (check with the exact input)
+                    $existingSlug = SiteData::where('data_key', $key . '.element')
+                        ->where('id', '!=', request('id'))
+                        ->whereRaw("JSON_EXTRACT(data_info, '$.slug') = ?", [$input])
+                        ->first();
+                    
+                    if ($existingSlug) {
+                        $counter = 1;
+                        $baseSlug = $input;
+                        do {
+                            $input = $baseSlug . '-' . $counter;
+                            $existingSlug = SiteData::where('data_key', $key . '.element')
+                                ->where('id', '!=', request('id'))
+                                ->whereRaw("JSON_EXTRACT(data_info, '$.slug') = ?", [$input])
+                                ->first();
+                            $counter++;
+                        } while ($existingSlug && $counter < 1000);
+                    }
+                    
+                    $inputContentValue[$keyName] = $input;
+                } else {
+                    // Slug is required, but if empty, set empty string for schema_markup
+                    $inputContentValue[$keyName] = '';
+                }
+                continue;
+            }
+            
+            // Handle slug for footer_menu - ensure it's unique and properly formatted
+            if ($key == 'footer_menu' && $type == 'element' && $keyName == 'slug') {
+                // Always process slug field for footer_menu, even if empty
+                if (!empty($input)) {
+                    // Clean and format the provided slug
+                    $input = slug($input);
+                    
+                    // Ensure slug is unique within footer_menu
+                    $existingSlug = SiteData::where('data_key', $key . '.element')
+                        ->where('id', '!=', request('id'))
+                        ->whereRaw("JSON_EXTRACT(data_info, '$.slug') = ?", [$input])
+                        ->first();
+                    
+                    if ($existingSlug) {
+                        $counter = 1;
+                        $baseSlug = $input;
+                        do {
+                            $input = $baseSlug . '-' . $counter;
+                            $existingSlug = SiteData::where('data_key', $key . '.element')
+                                ->where('id', '!=', request('id'))
+                                ->whereRaw("JSON_EXTRACT(data_info, '$.slug') = ?", [$input])
+                                ->first();
+                            $counter++;
+                        } while ($existingSlug && $counter < 1000);
+                    }
+                    
+                    $inputContentValue[$keyName] = $input;
+                } else {
+                    // For footer_menu, if slug is empty, set empty string
+                    $inputContentValue[$keyName] = '';
+                }
+                continue;
+            }
+            
+            // For page_seo, process all fields (including empty ones)
+            if ($key == 'page_seo' && $type == 'element') {
+                if (gettype($input) == 'array') {
+                    $inputContentValue[$keyName] = $input;
+                    continue;
+                }
+                
+                // Allow empty strings for optional fields
+                if ($input === null) {
+                    $input = '';
+                }
+                $purified = htmlspecialchars_decode($purifier->purify($input));
+                $inputContentValue[$keyName] = $purified;
+                continue;
+            }
+            
+            // For schema_markup, process all fields (including empty ones)
+            if ($key == 'schema_markup' && $type == 'element') {
+                if (gettype($input) == 'array') {
+                    $inputContentValue[$keyName] = $input;
+                    continue;
+                }
+                
+                // For schema_json, don't purify (keep JSON as is)
+                if ($keyName == 'schema_json') {
+                    if ($input === null) {
+                        $input = '';
+                    }
+                    // Don't purify JSON, keep it as raw
+                    $inputContentValue[$keyName] = $input;
+                } else {
+                    // Allow empty strings for optional fields
+                    if ($input === null) {
+                        $input = '';
+                    }
+                    $purified = htmlspecialchars_decode($purifier->purify($input));
+                    $inputContentValue[$keyName] = $purified;
+                }
+                continue;
+            }
+            
+            // For footer_menu, process all fields (slug is already handled above, skip it here)
+            if ($key == 'footer_menu' && $type == 'element') {
+                // Skip slug as it's already handled above
+                if ($keyName == 'slug') {
+                    continue;
+                }
+                
+                if (gettype($input) == 'array') {
+                    $inputContentValue[$keyName] = $input;
+                    continue;
+                }
+                
+                // Process all fields including empty ones for footer_menu
+                if ($input === null) {
+                    $input = '';
+                }
+                $purified = htmlspecialchars_decode($purifier->purify($input));
+                $inputContentValue[$keyName] = $purified;
+                continue;
+            }
+            
+            // Skip empty values but allow 0 and false (for other sections)
             if ($input === null || $input === '') {
                 continue;
             }
@@ -467,7 +695,13 @@ class SiteController extends Controller
 
         // Merge with existing data to preserve fields not in the form
         $existingData = is_array($content->data_info) ? $content->data_info : [];
-        $content->data_info = array_merge($existingData, $inputContentValue);
+        
+        // For page_seo, schema_markup, and footer_menu, replace all data (don't merge, replace completely)
+        if (($key == 'page_seo' || $key == 'schema_markup' || $key == 'footer_menu') && $type == 'element') {
+            $content->data_info = $inputContentValue;
+        } else {
+            $content->data_info = array_merge($existingData, $inputContentValue);
+        }
         
         // Ensure data_info is properly set
         if (empty($content->data_info)) {
@@ -631,6 +865,32 @@ class SiteController extends Controller
         // Handle image alt text
         if (request()->has('image_alt')) {
             $dataInfo['image_alt'] = request('image_alt');
+        }
+        
+        // Handle meta tags fields
+        if (request()->has('meta_title')) {
+            $dataInfo['meta_title'] = htmlspecialchars_decode($purifier->purify(request('meta_title')));
+        }
+        if (request()->has('meta_description')) {
+            $dataInfo['meta_description'] = htmlspecialchars_decode($purifier->purify(request('meta_description')));
+        }
+        if (request()->has('meta_keywords')) {
+            $dataInfo['meta_keywords'] = htmlspecialchars_decode($purifier->purify(request('meta_keywords')));
+        }
+        if (request()->has('meta_author')) {
+            $dataInfo['meta_author'] = htmlspecialchars_decode($purifier->purify(request('meta_author')));
+        }
+        if (request()->has('meta_robots')) {
+            $dataInfo['meta_robots'] = request('meta_robots');
+        }
+        if (request()->has('canonical_url')) {
+            $dataInfo['canonical_url'] = htmlspecialchars_decode($purifier->purify(request('canonical_url')));
+        }
+        if (request()->has('meta_viewport')) {
+            $dataInfo['meta_viewport'] = htmlspecialchars_decode($purifier->purify(request('meta_viewport')));
+        }
+        if (request()->has('meta_charset')) {
+            $dataInfo['meta_charset'] = htmlspecialchars_decode($purifier->purify(request('meta_charset')));
         }
         
         // Save SEO data

@@ -120,8 +120,8 @@
         <div class="row justify-content-center mb-5">
             <div class="col-lg-8">
                 <div class="section-heading text-center">
-                    <h2>{{ __(@$contactContent->data_info->section_heading ?? 'Contact Us') }}</h2>
-                    <p>{{ __(@$contactContent->data_info->description ?? 'Get in touch with us. We\'d love to hear from you.') }}</p>
+                    <h2>{{ __(@$contactContent->data_info['section_heading'] ?? 'Contact Us') }}</h2>
+                    <p>{{ __(@$contactContent->data_info['description'] ?? 'Get in touch with us. We\'d love to hear from you.') }}</p>
                 </div>
             </div>
         </div>
@@ -142,7 +142,7 @@
         <div class="row g-4">
             <div class="col-lg-6">
                 <div class="contact-card contact-form-card">
-                    <h3>{{ __(@$contactContent->data_info->form_heading ?? 'Send us a Message') }}</h3>
+                    <h3>{{ __(@$contactContent->data_info['form_heading'] ?? 'Send us a Message') }}</h3>
                     <form action="{{ route('contact') }}" method="POST" class="row g-3">
                         @csrf
                         <div class="col-sm-6">
@@ -162,7 +162,7 @@
                             <textarea name="message" class="form-control" rows="6" required>{{ old('message') }}</textarea>
                         </div>
                         <div class="col-12">
-                            <button type="submit" class="btn btn-success">{{ __(@$contactContent->data_info->form_button_name ?? 'Send Message') }}</button>
+                            <button type="submit" class="btn btn-success">{{ __(@$contactContent->data_info['form_button_name'] ?? 'Send Message') }}</button>
                         </div>
                     </form>
                 </div>
@@ -170,7 +170,7 @@
             <div class="col-lg-6">
                 <div class="contact-map-card">
                     <div class="contact-map">
-                        <iframe src="https://maps.google.com/maps?hl=en&amp;q={{ @$contactContent->data_info->latitude ?? '0' }},%20{{ @$contactContent->data_info->longitude ?? '0' }}+({{ @$setting->site_name ?? 'ApnaCrowdfunding' }})&amp;t=&amp;z=14&amp;ie=UTF8&amp;iwloc=B&amp;output=embed" loading="lazy" allowfullscreen></iframe>
+                        <iframe src="https://maps.google.com/maps?hl=en&amp;q={{ @$contactContent->data_info['latitude'] ?? '0' }},%20{{ @$contactContent->data_info['longitude'] ?? '0' }}+({{ @$setting->site_name ?? 'ApnaCrowdfunding' }})&amp;t=&amp;z=14&amp;ie=UTF8&amp;iwloc=B&amp;output=embed" loading="lazy" allowfullscreen></iframe>
                     </div>
                 </div>
             </div>

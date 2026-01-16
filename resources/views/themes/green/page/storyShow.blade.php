@@ -1,6 +1,25 @@
 @php
     $activeTheme = activeTheme();
     $activeThemeTrue = activeTheme();
+    
+    // Prepare SEO data for meta tags - this will be used by the SEO partial
+    $storyInfo = is_array($storyData->data_info) ? $storyData->data_info : (array)$storyData->data_info;
+    
+    // Set seoData variable that the SEO partial expects
+    $seoData = (object)[
+        'meta_title' => $seoContents['meta_title'] ?? $storyInfo['title'] ?? 'Story Details',
+        'meta_description' => $seoContents['meta_description'] ?? strLimit(strip_tags($storyInfo['details'] ?? ''), 150),
+        'meta_keywords' => $seoContents['meta_keywords'] ?? '',
+        'social_title' => $seoContents['social_title'] ?? $storyInfo['title'] ?? 'Story Details',
+        'social_description' => $seoContents['social_description'] ?? strLimit(strip_tags($storyInfo['details'] ?? ''), 150),
+        'description' => $seoContents['description'] ?? strLimit(strip_tags($storyInfo['details'] ?? ''), 150),
+        'image' => $seoContents['image'] ?? getImage('assets/images/site/success_story/' . ($storyInfo['image'] ?? ''), '855x475'),
+        'image_size' => $seoContents['image_size'] ?? '855x475',
+        'keywords' => is_array($seoContents['keywords'] ?? []) ? $seoContents['keywords'] : []
+    ];
+    
+    // Also set pageTitle for the layout
+    $pageTitle = $seoData->meta_title;
 @endphp
 @extends($activeTheme . 'layouts.frontend')
 
@@ -80,7 +99,11 @@
                                     <div class="related-card-body">
                                         <h4 class="related-card-title">{{ __(strLimit(@$moreStory->data_info->title, 45)) }}</h4>
                                         <p class="related-card-text">{{ __(strLimit(@$moreStory->data_info->details, 100)) }}</p>
-                                        <a href="{{ route('stories.show', @$moreStory->id) }}" class="related-card-link">@lang('Read more') <i class="fas fa-arrow-right"></i></a>
+                                        @php
+                                            $moreStoryInfo = is_array($moreStory->data_info) ? $moreStory->data_info : (array)$moreStory->data_info;
+                                            $moreStorySlug = $moreStoryInfo['slug'] ?? $moreStory->id;
+                                        @endphp
+                                        <a href="{{ route('stories.show', $moreStorySlug) }}" class="related-card-link">@lang('Read more') <i class="fas fa-arrow-right"></i></a>
                                     </div>
                                 </div>
                             </div>

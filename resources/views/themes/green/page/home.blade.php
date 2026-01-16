@@ -80,6 +80,61 @@
 </section>
 
 <!-- STATS -->
+@if(isset($counterElements) && $counterElements->count() > 0)
+@php
+  $counterCount = $counterElements->count();
+  // Determine column class based on number of items
+  $colClass = 'col-md-4'; // Default for 3 items
+  if ($counterCount == 1) {
+    $colClass = 'col-md-12';
+  } elseif ($counterCount == 2) {
+    $colClass = 'col-md-6';
+  } elseif ($counterCount == 3) {
+    $colClass = 'col-md-4';
+  } elseif ($counterCount == 4) {
+    $colClass = 'col-md-3';
+  } elseif ($counterCount >= 5) {
+    $colClass = 'col-md-3 col-lg-2';
+  }
+@endphp
+<section class="py-5 bg-white">
+  <div class="container">
+    <div class="row text-center g-4">
+      @foreach($counterElements as $counter)
+        @php
+          $counterData = is_array($counter->data_info) ? $counter->data_info : (array)$counter->data_info;
+          $counterDigit = $counterData['counter_digit'] ?? 0;
+          $counterTitle = $counterData['title'] ?? '';
+          
+          // Format the counter digit
+          $formattedValue = $counterDigit;
+          if (is_numeric($counterDigit)) {
+            // Check if it's in millions
+            if ($counterDigit >= 1000000) {
+              $formattedValue = '$' . number_format($counterDigit / 1000000, 1) . 'M+';
+            }
+            // Check if it's in thousands
+            elseif ($counterDigit >= 1000) {
+              $formattedValue = number_format($counterDigit / 1000, 0) . 'K+';
+            }
+            // Regular number
+            else {
+              $formattedValue = number_format($counterDigit, 0) . '+';
+            }
+          }
+        @endphp
+        <div class="{{ $colClass }}">
+          <div class="stats-box">
+            <h4>{{ $formattedValue }}</h4>
+            <p>{{ $counterTitle }}</p>
+          </div>
+        </div>
+      @endforeach
+    </div>
+  </div>
+</section>
+@else
+<!-- Fallback to old stats if counter elements not available -->
 <section class="py-5 bg-white">
   <div class="container">
     <div class="row text-center g-4">
@@ -104,6 +159,7 @@
     </div>
   </div>
 </section>
+@endif
 
 <!-- CATEGORIES -->
 @php

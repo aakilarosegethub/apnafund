@@ -4,6 +4,14 @@
     <div class="col-12">
         <div class="custom--card">
             <div class="card-body">
+                @if($key == 'page_seo' || $key == 'footer_menu' || $key == 'schema_markup')
+                    <div class="mb-3">
+                        <a href="{{ route('admin.site.sections', $key) }}" class="btn btn--base btn--sm">
+                            <i class="ti ti-arrow-left"></i> @lang('Back')
+                        </a>
+                    </div>
+                @endif
+                
                 <form class="row g-4" action="{{ route('admin.site.sections.content', $key) }}" method="POST" enctype="multipart/form-data">
                     @csrf
 
@@ -100,10 +108,21 @@
                                             <div class="col-12">
                                                 <div class="row g-2 align-items-center">
                                                     <div class="col-lg-3">
-                                                        <label class="form--label required">{{ __(keyToTitle($k)) }}</label>
+                                                        @php
+                                                            // Make fields optional for page_seo and schema_markup
+                                                            $isRequired = ($key != 'page_seo' && $key != 'schema_markup');
+                                                            // For schema_json, add rows and placeholder
+                                                            $isSchemaJson = ($key == 'schema_markup' && $k == 'schema_json');
+                                                        @endphp
+                                                        <label class="form--label {{ $isRequired ? 'required' : '' }}">{{ __(keyToTitle($k)) }}</label>
                                                     </div>
                                                     <div class="col-lg-9">
-                                                        <textarea class="form--control" name="{{ $k }}" required>{{ @$data->data_info[$k] ?? '' }}</textarea>
+                                                        @if($isSchemaJson)
+                                                            <textarea class="form--control" name="{{ $k }}" rows="15" placeholder='{"@context": "https://schema.org", "@type": "Organization", "name": "Your Company", ...}' style="font-family: monospace; font-size: 13px;">{{ @$data->data_info[$k] ?? '' }}</textarea>
+                                                            <small class="text--muted d-block mt-1">@lang('Enter valid JSON-LD schema markup. Example: {"@context": "https://schema.org", "@type": "Organization", ...}')</small>
+                                                        @else
+                                                            <textarea class="form--control" name="{{ $k }}" {{ $isRequired ? 'required' : '' }}>{{ @$data->data_info[$k] ?? '' }}</textarea>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             </div>
@@ -156,7 +175,13 @@
                                                     <div class="col-lg-3">
                                                         @php
                                                             // Make title and slug required for dynamic_pages
-                                                            $isRequired = ($key == 'dynamic_pages' && ($k == 'title' || $k == 'slug'));
+                                                            // Make slug required for page_seo and schema_markup
+                                                            $isRequired = false;
+                                                            if ($key == 'dynamic_pages' && ($k == 'title' || $k == 'slug')) {
+                                                                $isRequired = true;
+                                                            } elseif (($key == 'page_seo' || $key == 'schema_markup') && $k == 'slug') {
+                                                                $isRequired = true;
+                                                            }
                                                         @endphp
                                                         <label class="form--label {{ $isRequired ? 'required' : '' }}">{{ __(keyToTitle($k)) }}</label>
                                                     </div>
@@ -183,6 +208,62 @@
                                 <div class="col-lg-9">
                                     <input type="number" class="form--control" name="sort_order" value="{{ @$data->data_info['sort_order'] ?? 0 }}" min="0" placeholder="@lang('Enter sort order (lower numbers appear first)')">
                                     <small class="text--muted">@lang('Lower numbers appear first. Default: 0')</small>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if($key == 'success_story')
+                        <!-- Slug Field for Success Story -->
+                        <div class="col-12">
+                            <div class="row g-2 align-items-center">
+                                <div class="col-lg-3">
+                                    <label class="form--label">@lang('Slug')</label>
+                                </div>
+                                <div class="col-lg-9">
+                                    <input type="text" class="form--control" name="slug" id="story_slug" value="{{ @$data->data_info['slug'] ?? '' }}" placeholder="@lang('Enter URL-friendly slug (e.g., my-success-story)')">
+                                    <small class="text--muted">@lang('Leave empty to auto-generate from title. Use lowercase letters, numbers, and hyphens only.')</small>
+                                    <button type="button" class="btn btn--sm btn--base mt-2" id="generate_slug_btn">@lang('Generate from Title')</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- SEO Fields for Success Story -->
+                        <div class="col-12 mt-4">
+                            <h5 class="mb-3">@lang('SEO Settings')</h5>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <div class="row g-2 align-items-center">
+                                        <div class="col-lg-3">
+                                            <label class="form--label">@lang('Meta Title')</label>
+                                        </div>
+                                        <div class="col-lg-9">
+                                            <input type="text" class="form--control" name="meta_title" value="{{ @$data->data_info['meta_title'] ?? '' }}" placeholder="@lang('Enter meta title for SEO')">
+                                            <small class="text--muted">@lang('Recommended: 50-60 characters')</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="row g-2 align-items-center">
+                                        <div class="col-lg-3">
+                                            <label class="form--label">@lang('Meta Description')</label>
+                                        </div>
+                                        <div class="col-lg-9">
+                                            <textarea class="form--control" name="meta_description" rows="3" placeholder="@lang('Enter meta description for SEO')">{{ @$data->data_info['meta_description'] ?? '' }}</textarea>
+                                            <small class="text--muted">@lang('Recommended: 150-160 characters')</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="row g-2 align-items-center">
+                                        <div class="col-lg-3">
+                                            <label class="form--label">@lang('Meta Keywords')</label>
+                                        </div>
+                                        <div class="col-lg-9">
+                                            <input type="text" class="form--control" name="meta_keywords" value="{{ @$data->data_info['meta_keywords'] ?? '' }}" placeholder="@lang('Enter keywords separated by commas')">
+                                            <small class="text--muted">@lang('Example: success story, crowdfunding, campaign')</small>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -222,14 +303,165 @@
         (function ($) {
             "use strict";
 
+            // Custom Upload Adapter for CKEditor
+            function MyUploadAdapter(loader) {
+                this.loader = loader;
+            }
+
+            MyUploadAdapter.prototype.upload = function() {
+                return this.loader.file
+                    .then(file => new Promise((resolve, reject) => {
+                        const data = new FormData();
+                        data.append('upload', file);
+
+                        fetch('{{ route("admin.admin.upload.file") }}', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: data
+                        })
+                        .then(response => response.json())
+                        .then(result => {
+                            if (result.uploaded && result.url) {
+                                resolve({
+                                    default: result.url
+                                });
+                            } else {
+                                reject(result.error ? result.error.message : 'Upload failed');
+                            }
+                        })
+                        .catch(error => {
+                            reject('Upload failed: ' + error);
+                        });
+                    }));
+            };
+
+            MyUploadAdapter.prototype.abort = function() {
+                // Handle abort if needed
+            };
+
             if ($(".trumEdit")[0]) {
                 $('.editor-wrapper').find('.ck-editor').remove();
                 window.editors = {};
+                
+                // Configure FileRepository globally before creating editors
+                ClassicEditor.builtinPlugins.map(plugin => {
+                    if (plugin.pluginName === 'FileRepository') {
+                        plugin.prototype.createUploadAdapter = function(loader) {
+                            return new MyUploadAdapter(loader);
+                        };
+                    }
+                });
+                
                 document.querySelectorAll('.trumEdit').forEach((node, index) => {
+                    // Create editor with custom upload adapter
                     ClassicEditor
-                        .create(node)
+                        .create(node, {
+                            image: {
+                                toolbar: [
+                                    'imageTextAlternative',
+                                    'toggleImageCaption',
+                                    'imageStyle:inline',
+                                    'imageStyle:block',
+                                    'imageStyle:side',
+                                    'linkImage'
+                                ],
+                                upload: {
+                                    types: ['png', 'jpg', 'jpeg', 'gif', 'webp']
+                                }
+                            },
+                            toolbar: {
+                                items: [
+                                    'heading', '|',
+                                    'bold', 'italic', 'link', '|',
+                                    'bulletedList', 'numberedList', '|',
+                                    'outdent', 'indent', '|',
+                                    'imageUpload', 'blockQuote', 'insertTable', '|',
+                                    'undo', 'redo'
+                                ]
+                            }
+                        })
                         .then(newEditor => {
+                            // Set up custom upload adapter for this editor instance
+                            const fileRepository = newEditor.plugins.get('FileRepository');
+                            fileRepository.createUploadAdapter = function(loader) {
+                                return new MyUploadAdapter(loader);
+                            };
+                            
+                            // Handle base64 and external images - convert to server URLs
+                            newEditor.model.document.on('change:data', () => {
+                                setTimeout(() => {
+                                    const viewFragment = newEditor.getData();
+                                    const parser = new DOMParser();
+                                    const doc = parser.parseFromString(viewFragment, 'text/html');
+                                    const images = doc.querySelectorAll('img');
+                                    
+                                    images.forEach(async (img) => {
+                                        const imgSrc = img.getAttribute('src');
+                                        // Check if it's a base64 image or external URL
+                                        if (imgSrc && (imgSrc.startsWith('data:image/') || (imgSrc.startsWith('http') && !imgSrc.includes(window.location.origin)))) {
+                                            try {
+                                                let uploadUrl = imgSrc;
+                                                
+                                                // If base64, convert to blob and upload
+                                                if (imgSrc.startsWith('data:image/')) {
+                                                    const response = await fetch(imgSrc);
+                                                    const blob = await response.blob();
+                                                    const formData = new FormData();
+                                                    formData.append('upload', blob, 'image.png');
+                                                    
+                                                    const uploadResponse = await fetch('{{ route("admin.admin.upload.file") }}', {
+                                                        method: 'POST',
+                                                        headers: {
+                                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                                        },
+                                                        body: formData
+                                                    });
+                                                    
+                                                    const uploadData = await uploadResponse.json();
+                                                    if (uploadData.uploaded && uploadData.url) {
+                                                        uploadUrl = uploadData.url;
+                                                    } else {
+                                                        return;
+                                                    }
+                                                } else {
+                                                    // External URL - use external upload endpoint
+                                                    const response = await fetch('{{ route("admin.admin.upload.external-image") }}', {
+                                                        method: 'POST',
+                                                        headers: {
+                                                            'Content-Type': 'application/json',
+                                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                                        },
+                                                        body: JSON.stringify({
+                                                            external_url: imgSrc
+                                                        })
+                                                    });
+                                                    
+                                                    const data = await response.json();
+                                                    if (data.success && data.url) {
+                                                        uploadUrl = data.url;
+                                                    } else {
+                                                        return;
+                                                    }
+                                                }
+                                                
+                                                // Replace image source with server URL
+                                                const currentContent = newEditor.getData();
+                                                const updatedContent = currentContent.replace(imgSrc, uploadUrl);
+                                                newEditor.setData(updatedContent);
+                                            } catch (error) {
+                                                console.error('Error uploading image:', error);
+                                            }
+                                        }
+                                    });
+                                }, 100);
+                            });
+                            
                             window.editors[index] = newEditor;
+                        })
+                        .catch(error => {
+                            console.error('Error initializing CKEditor:', error);
                         });
                 });
             }
@@ -257,6 +489,29 @@
                     return false;
                 }
             }
+
+            // Slug generation for success story
+            @if($key == 'success_story')
+            $('#generate_slug_btn').on('click', function() {
+                var title = $('input[name="title"]').val();
+                if (title) {
+                    // Simple slug generation (you can enhance this)
+                    var slug = title.toLowerCase()
+                        .replace(/[^\w\s-]/g, '') // Remove special characters
+                        .replace(/\s+/g, '-')     // Replace spaces with hyphens
+                        .replace(/-+/g, '-')      // Replace multiple hyphens with single
+                        .trim();
+                    $('#story_slug').val(slug);
+                }
+            });
+
+            // Auto-generate slug when title changes (if slug is empty)
+            $('input[name="title"]').on('blur', function() {
+                if (!$('#story_slug').val()) {
+                    $('#generate_slug_btn').click();
+                }
+            });
+            @endif
         })(jQuery);
     </script>
 @endpush

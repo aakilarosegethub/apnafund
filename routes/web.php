@@ -55,6 +55,10 @@ Route::controller('WebsiteController')->group(function () {
     Route::get('upcoming-campaigns', 'upcomingCampaigns')->name('upcoming');
     Route::get('upcoming-campaign/{slug}', 'upcomingCampaignShow')->name('upcoming.show');
 
+    // Success Stories
+    Route::get('stories', 'stories')->name('stories');
+    Route::get('stories/{slug}', 'storyShow')->name('stories.show');
+
     // Business Resources
     Route::get('business-resources', 'businessResources')->name('business.resources');
 

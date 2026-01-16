@@ -13,17 +13,77 @@
     $userMenuItems = getUserMenuItems();
     
 @endphp
+@php
+    // Get global SEO data
+    $seo = \App\Models\SiteData::where('data_key', 'seo.data')->first();
+    $seoData = $seo ? (is_array($seo->data_info) ? (object)$seo->data_info : $seo->data_info) : null;
+    $metaCharset = $seoData->meta_charset ?? 'UTF-8';
+    $metaViewport = $seoData->meta_viewport ?? 'width=device-width, initial-scale=1.0';
+    
+    // Get page-specific SEO data if available
+    $pageSeo = null;
+    $currentSection = request()->segment(1);
+    if ($currentSection) {
+        $pageSeoData = \App\Models\SiteData::where('data_key', $currentSection . '.seo')->first();
+        $pageSeo = $pageSeoData ? (is_array($pageSeoData->data_info) ? (object)$pageSeoData->data_info : $pageSeoData->data_info) : null;
+    }
+    
+    // Get meta title with fallback
+    $metaTitle = $pageSeo->meta_title ?? $seoData->meta_title ?? (getBusinessDashboardTitle() . ' - ' . bs('site_name'));
+    
+    // Get meta description
+    $metaDescription = $pageSeo->meta_description ?? $seoData->meta_description ?? $seoData->description ?? '';
+    
+    // Get meta keywords
+    $metaKeywords = '';
+    if ($pageSeo && isset($pageSeo->meta_keywords) && $pageSeo->meta_keywords) {
+        $metaKeywords = $pageSeo->meta_keywords;
+    } elseif ($seoData && isset($seoData->meta_keywords) && $seoData->meta_keywords) {
+        $metaKeywords = $seoData->meta_keywords;
+    } elseif ($seoData && isset($seoData->keywords) && is_array($seoData->keywords)) {
+        $metaKeywords = implode(',', $seoData->keywords);
+    }
+    
+    // Get meta author
+    $metaAuthor = $pageSeo->meta_author ?? $seoData->meta_author ?? null;
+    
+    // Get meta robots
+    $metaRobots = $pageSeo->meta_robots ?? $seoData->meta_robots ?? 'index, follow';
+    
+    // Get canonical URL
+    $canonicalUrl = $pageSeo->canonical_url ?? $seoData->canonical_url ?? url()->current();
+@endphp
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="{{ $metaCharset }}">
   <meta name="csrf-token" content="{{ csrf_token() }}">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="{{ $metaViewport }}">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ getBusinessDashboardTitle() }} - {{ bs('site_name') }}</title>
+    <title>{{ $metaTitle }}</title>
+    
+    @if($seoData || $pageSeo)
+        <!-- SEO Meta Tags -->
+        @if($metaDescription)
+            <meta name="description" content="{{ $metaDescription }}">
+        @endif
+        
+        @if($metaKeywords)
+            <meta name="keywords" content="{{ $metaKeywords }}">
+        @endif
+        
+        @if($metaAuthor)
+            <meta name="author" content="{{ $metaAuthor }}">
+        @endif
+        
+        <meta name="robots" content="{{ $metaRobots }}">
+        <link rel="canonical" href="{{ $canonicalUrl }}">
+    @else
+        <!-- Default Meta Tags -->
+        <meta name="robots" content="index, follow">
+        <link rel="canonical" href="{{ url()->current() }}">
+    @endif
     <link rel="stylesheet" href="{{ asset('apnafund/assets/css/app.css') }}">
     <link rel="stylesheet" href="{{ asset('apnafund/assets/bootstrap/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
