@@ -111,7 +111,7 @@
       <a href="{{ route('home') }}" class="navbar-brand me-3">
         <img 
           src="{{ asset('assets/universal/images/logoFavicon/logo_light.png') }}" 
-          alt="{{ bs('site_name') ?? 'Apna Crowdfunding' }} Logo"
+          alt="{{ bs('site_name') ?? 'Apna Crowdfunding' }}"
           style="max-height:68px;">
       </a>
 

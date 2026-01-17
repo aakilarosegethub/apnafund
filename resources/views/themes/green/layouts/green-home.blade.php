@@ -164,6 +164,9 @@ if(isset($_GET['test'])){   die('home');
     <meta name="robots" content="{{ $metaRobots }}">
     <link rel="canonical" href="{{ $canonicalUrl }}">
     
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="{{ getSiteFavicon() }}" type="image/png">
+    
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="{{ $pageSeo->og_title ?? $pageSeo->meta_title ?? $seoData->meta_title ?? $seoData->social_title ?? bs('site_name') ?? 'ApnaCrowdfunding' }}">
@@ -193,6 +196,9 @@ if(isset($_GET['test'])){   die('home');
     <!-- Default Meta Tags -->
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="{{ url()->current() }}">
+    
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="{{ getSiteFavicon() }}" type="image/png">
 @endif
 
 @if($schemaMarkup && isset($schemaMarkup['schema_json']) && !empty($schemaMarkup['schema_json']))

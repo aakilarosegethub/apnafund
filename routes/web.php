@@ -36,7 +36,10 @@ Route::get('/change.htm', function () {
 Route::controller('WebsiteController')->group(function () {
     Route::get('/', 'home')->name('home');
     Route::get('home-new', 'homeNew')->name('home.new');
-    Route::get('about', 'aboutUs')->name('about.us');
+    Route::get('about-us', 'aboutUs')->name('about.us');
+    Route::get('about', function () {
+        return redirect('/about-us');
+    })->name('about.redirect');
     Route::get('faq', 'faq')->name('faq');
     Route::get('creators', 'creators')->name('creators');
     Route::get('campaigns', 'campaigns')->name('campaign');
@@ -59,7 +62,8 @@ Route::controller('WebsiteController')->group(function () {
     Route::get('stories', 'stories')->name('stories');
     Route::get('stories/{slug}', 'storyShow')->name('stories.show');
 
-    // Business Resources
+    // Business Resources / Creator Hub
+    Route::get('creator-hub', 'businessResources')->name('creator.hub');
     Route::get('business-resources', 'businessResources')->name('business.resources');
 
     // Start Project
@@ -106,8 +110,54 @@ Route::controller('WebsiteController')->group(function () {
     Route::post('/update-user-country', [App\Http\Controllers\WebsiteController::class, 'updateUserCountry'])->name('update.user.country');
 });
 
+// Redirect /page/about to /about-us
+Route::get('page/about', function () {
+    return redirect('/about-us');
+})->name('page.about.redirect');
+
+// Redirect /page/forwardfunds to /forwardfunds
+Route::get('page/forwardfunds', function () {
+    return redirect('/forwardfunds');
+})->name('page.forwardfunds.redirect');
+
+// Redirect /page/press to /press
+Route::get('page/press', function () {
+    return redirect('/press');
+})->name('page.press.redirect');
+
+// Redirect /page/rules to /rules
+Route::get('page/rules', function () {
+    return redirect('/rules');
+})->name('page.rules.redirect');
+
+// Redirect /page/charter to /our-mission
+Route::get('page/charter', function () {
+    return redirect('/our-mission');
+})->name('page.charter.redirect');
+
 // Dynamic Page by Slug (outside controller group to avoid binding issues)
 Route::get('page/{slug}', [\App\Http\Controllers\WebsiteController::class, 'pageBySlug'])->name('page.show');
+
+// Specific routes for pages with view files (before catch-all dynamic route)
+Route::get('rules', function(\Illuminate\Http\Request $request) {
+    $controller = app(\App\Http\Controllers\WebsiteController::class);
+    return $controller->pageBySlug('rules');
+})->name('rules');
+Route::get('forwardfunds', function(\Illuminate\Http\Request $request) {
+    $controller = app(\App\Http\Controllers\WebsiteController::class);
+    return $controller->pageBySlug('forwardfunds');
+})->name('forwardfunds');
+Route::get('press', function(\Illuminate\Http\Request $request) {
+    $controller = app(\App\Http\Controllers\WebsiteController::class);
+    return $controller->pageBySlug('press');
+})->name('press');
+Route::get('our-mission', function(\Illuminate\Http\Request $request) {
+    $controller = app(\App\Http\Controllers\WebsiteController::class);
+    return $controller->pageBySlug('charter');
+})->name('our.mission');
+Route::get('charter', function () {
+    return redirect('/our-mission');
+})->name('charter.redirect');
 
 // Dynamic Pages - Must be at the end to avoid route conflicts
 Route::get('{slug}', [App\Http\Controllers\WebsiteController::class, 'dynamicPages'])

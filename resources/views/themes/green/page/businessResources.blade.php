@@ -2,9 +2,9 @@
     $activeTheme = activeTheme();
     $activeThemeTrue = activeTheme();
 @endphp
-@extends($activeTheme . 'layouts.frontend')
+@extends($activeTheme . 'layouts.green-home')
 
-@section('frontend')
+@section('content')
     <!-- Resource Hub Main Content -->
     <div class="resource-hub-container">
         <div class="resource-hub-sections">
