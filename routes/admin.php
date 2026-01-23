@@ -89,6 +89,8 @@ Route::middleware(['admin'])->group(function () {
         Route::get('upcoming', 'upcoming')->name('upcoming');
         Route::get('expired', 'expired')->name('expired');
         Route::get('details/{id}', 'details')->name('details');
+        Route::get('edit/{id}', 'edit')->name('edit');
+        Route::post('update/{id}', 'update')->name('update');
         Route::post('status-update/{id}/{type}', 'updateStatus')->name('status.update');
         Route::post('featured-update/{id}', 'updateFeatured')->name('featured.update');
     });
@@ -307,6 +309,7 @@ Route::middleware(['admin'])->group(function () {
     Route::post('hero/update', 'updateHero')->name('hero.update');
     Route::post('info-banner/update', 'updateInfoBanner')->name('info-banner.update');
     Route::post('featured-projects/update', 'updateFeaturedProjects')->name('featured-projects.update');
+    Route::post('trending-campaign/update', 'updateTrendingCampaign')->name('trending-campaign.update');
 });
 
 Route::controller('CustomCodeController')->prefix('customcode')->name('customcode.')->group(function() {

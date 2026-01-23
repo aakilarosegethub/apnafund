@@ -297,7 +297,7 @@ class AuthController extends BaseApiController
         $token = $user->createToken('auth_token')->plainTextToken;
 
         // Get user data in the expected format
-        $c = $this->h->queryfire("select id, firstname, lastname, email, mobile, country_code as ccode, status, created_at as rdate, balance as wallet, image as profile_pic from users where id=" . $user->id . "");
+        $c = $this->h->queryfire("select id, firstname, lastname, email, mobile, country_code as ccode, status, created_at as rdate, balance as wallet, image as profile_pic, ec from users where id=" . $user->id . "");
         $c = $c->fetch_assoc();
         
         // Combine firstname and lastname as name for API response
@@ -309,9 +309,13 @@ class AuthController extends BaseApiController
             }
         }
 
+        // Determine email verification status (email_ver: 1 if verified, 0 if not verified)
+        $emailVer = (isset($c['ec']) && $c['ec'] == ManageStatus::VERIFIED) ? 1 : 0;
+
         return response()->json([
             "UserLogin" => $c,
             "token" => $token,
+            "email_ver" => $emailVer,
             "ResponseCode" => "200",
             "Result" => "true",
             "ResponseMsg" => "Login successfully!"
@@ -668,16 +672,20 @@ class AuthController extends BaseApiController
         $token = $user->createToken('auth_token')->plainTextToken;
 
         // Get user data
-        $c = $this->h->queryfire("select id, firstname, lastname, email, mobile, country_code as ccode, status, created_at as rdate, balance as wallet, image as profile_pic from users where email='" . $email . "'");
+        $c = $this->h->queryfire("select id, firstname, lastname, email, mobile, country_code as ccode, status, created_at as rdate, balance as wallet, image as profile_pic, ec from users where email='" . $email . "'");
         $c = $c->fetch_assoc();
         
         if ($c) {
             $c['name'] = trim(($c['firstname'] ?? '') . ' ' . ($c['lastname'] ?? ''));
         }
 
+        // Determine email verification status (email_ver: 1 if verified, 0 if not verified)
+        $emailVer = (isset($c['ec']) && $c['ec'] == ManageStatus::VERIFIED) ? 1 : 0;
+
         return response()->json([
             "UserLogin" => $c,
             "token" => $token,
+            "email_ver" => $emailVer,
             "ResponseCode" => "200",
             "Result" => "true",
             "ResponseMsg" => "Login successfully!"

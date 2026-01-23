@@ -7,237 +7,261 @@
 @section('content')
 <style type="text/css">
     body{
-    font-family: Arial, sans-serif;
-    color:#222;
-}
+        font-family: Arial, sans-serif;
+        color:#222;
+    }
 
-/* HERO IMAGE */
-.hero-img img{
-    width:100%;
-    height:600px;
-    object-fit:cover;
-}
+    .italic-text {
+        font-style: italic;
+    }
 
-/* COLOR BLOCKS */
-.blue-box{
-    background:#1a2bdc;
-    color:#fff;
-    padding:80px 20px;
-    text-align:center;
-    font-size:28px;
-    font-weight:600;
-}
+    /* HERO IMAGE */
+    .hero-img{
+        position: relative;
+    }
 
-.peach-box{
-    background:#ff8a65;
-    padding:60px 20px;
-    text-align:center;
-    font-size:22px;
-}
+    .hero-img img{
+        width:100%;
+        height:600px;
+        object-fit:cover;
+    }
 
-.pink-box{
-    background:#ff5a7d;
-    color:#fff;
-    padding:60px 20px;
-    text-align:center;
-}
+    .hero-overlay{
+        position:absolute;
+        top:50%;
+        left:50%;
+        transform:translate(-50%, -50%);
+        color:#fff;
+        text-align:center;
+        background:rgba(0,0,0,0.45);
+        padding:30px 50px;
+        border-radius:6px;
+    }
 
-.deep-blue-box{
-    background:#2949ff;
-    color:#fff;
-    padding:80px 20px;
-    text-align:center;
-}
+    .hero-overlay h1{
+        font-size:42px;
+        font-weight:700;
+        margin-bottom:10px;
+    }
 
-/* SECTIONS */
-.section{
-    padding:80px 0;
-}
+    .hero-overlay p{
+        font-size:18px;
+        margin:0;
+    }
 
-.section h2{
-    font-size:28px;
-    font-weight:600;
-}
+    /* COLOR BLOCKS */
+    .blue-box{
+        background:#1a2bdc;
+        color:#fff;
+        padding:80px 20px;
+        text-align:center;
+        font-size:28px;
+        font-weight:600;
+    }
 
-.section p{
-    font-size:16px;
-    line-height:1.7;
-    color:#555;
-}
+    .peach-box{
+        background:#ff8a65;
+        padding:60px 20px;
+        text-align:center;
+        font-size:22px;
+    }
 
-.btn-outline{
-    border:1px solid #222;
-    background:none;
-    padding:8px 18px;
-    font-size:14px;
-}
-.new img{
-    height: 1050px;
-    width: 100%;
-    object-fit: cover;
-}
+    .pink-box{
+        background:#ff5a7d;
+        color:#fff;
+        padding:60px 20px;
+        text-align:center;
+    }
+
+    .deep-blue-box{
+        background:#2949ff;
+        color:#fff;
+        padding:80px 20px;
+        text-align:center;
+    }
+
+    .section{
+        padding:80px 0;
+    }
+
+    .section h2{
+        font-size:28px;
+        font-weight:600;
+    }
+
+    .section p{
+        font-size:16px;
+        line-height:1.7;
+        color:#555;
+    }
+
+    .new img{
+        height:1050px;
+        width:100%;
+        object-fit:cover;
+    }
 </style>
-
 
 <!-- HERO IMAGE -->
 <div class="hero-img">
-    <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f" alt="">
+    <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f"
+         alt="About ApnaCrowdfunding reward-based crowdfunding platform supporting creators and startups">
+    <div class="hero-overlay">
+        <h1>About Us</h1>
+        <p>Together, We Can Bring Your Idea or Dream to Life</p>
+    </div>
 </div>
 
-<!-- MISSION -->
+<!-- TITLE -->
 <div class="blue-box">
-   Bringing Big Ideas to Life, Together.
-
+    Together, We Can Bring Your Idea Or Dream to Life
 </div>
 
 <!-- INTRO -->
 <div class="container section">
+    <h2>ApnaCrowdfunding – Reward-Based Crowdfunding</h2>
     <p>
-       ApnaCrowdfunding exists to turn ideas into action. Inspired by global reward-based crowdfunding platforms like Kickstarter, we’ve built a space designed for our own communities — where creators, entrepreneurs, changemakers and dreamers connect with people who believe in them.
-Whether it’s a startup idea, a social cause, a creative project, or a personal mission, ApnaCrowdfunding helps you find supporters who want to see your idea succeed. Because powerful ideas shouldn’t stay stuck in notebooks — they deserve a chance to grow, be seen and be supported.
-
+        We are proud to be the creators of 
+        <a href="https://apnacrowdfunding.com/" class="italic-text"><em>ApnaCrowdfunding</em></a>,
+        a first-of-its-kind, community-driven platform designed to bring reward-based crowdfunding
+        to underserved and underdeveloped countries.
+        <br><br>
+        Our platform is built for people with ideas and dreams but limited access to capital.
+        <em>ApnaCrowdfunding</em> bridges this gap by empowering creators, startups, non-profits,
+        and changemakers with the tools and support they need to turn vision into reality.
+        <br><br>
+        As a trusted crowdfunding website, we connect passionate innovators with supporters
+        who believe in meaningful change. Inspired by global crowdfunding platforms,
+        our mission focuses on local empowerment and long-term impact.
     </p>
 </div>
 
-<!-- COMMUNITY IMAGE -->
+<!-- IMAGE -->
+<!-- IMAGE -->
 <div class="container-fluid p-0 new">
-    <img src="https://images.unsplash.com/photo-1517486808906-6ca8b3f04846" class="w-100" alt="">
+    <img src="https://images.unsplash.com/photo-1517486808906-6ca8b3f04846"
+         class="w-100"
+         alt="Community-driven crowdfunding platform empowering nonprofits and entrepreneurs">
 </div>
 
-<!-- QUOTE -->
+<!-- WHO WE ARE -->
 <div class="peach-box">
-   ApnaCrowdfunding connects your vision with people who believe in you and want to see you succeed.
+    Who We Are – A Trusted Crowdfunding Website
 </div>
 
-<!-- OUR COMMUNITY -->
+<div class="container section">
+    <p>
+        <span class="italic-text"><em>ApnaCrowdfunding</em></span> is a creator-first crowdfunding website
+        built on transparency, independence, and community trust.
+        We remove barriers that prevent great ideas from being discovered and supported.
+        Unlike traditional funding models, our platform allows creators to retain full control
+        while supporters directly back projects they believe in.
+    </p>
+</div>
+
+<!-- WHAT WE DO -->
 <div class="container section">
     <div class="row">
         <div class="col-md-5">
-            <h2>Powered by Community
-</h2>
-        </div>
-        <div class="col-md-7">
-            <p>Every successful campaign starts close to home, friends, family, early believers. From there, Momentum builds. Support grows. Stories spread.
-That’s the power of community.
-Our growing network of backers spans cities, countries and cultures, united by a simple idea: when we support each other, incredible things can happen.
-“Crowdfunding isn’t just about money, it's about people standing behind an idea.”
-
-            </p>
-        </div>
-    </div>
-</div>
-
-<!-- OUR MISSION -->
-<div class="container section">
-    <div class="row">
-        <div class="col-md-5">
-            <h2>Our mission.</h2>
+            <h2>What We Do</h2>
         </div>
         <div class="col-md-7">
             <p>
-                Our mission is to help bring meaningful projects to life.
-We believe creativity, innovation and social progress are essential to a thriving society. Everyone deserves access to opportunity, not just those with privilege, connections, or capital.
-ApnaCrowdfunding is built to:
-Empower independent creators
-
-
-Support innovation at every level
-
-
-Encourage social impact and equality
-
-
-Give communities a voice in shaping the future
-
-
-We’re here to put power where it belongs in the hands of people with ideas and purpose.
-
+                ApnaCrowdfunding connects ideas with funding through modern crowdfunding platforms.
+                Creators launch campaigns, share their stories, and gain support through crowd fundraising,
+                crowd financing, and community sharing.
+                Supporters discover meaningful projects and help bring promising ideas to life.
             </p>
-       
         </div>
     </div>
 </div>
 
-<!-- STATS -->
+<!-- MISSION -->
 <div class="pink-box">
-    <h3>Transparency – Honest storytelling and clear expectations
-</h3>
-
+    Our Mission – Powering Crowd-Sourced Funding
 </div>
 
-<!-- OUR TEAM -->
+<div class="container section">
+    <p>
+        Our mission is to support innovation and progress through crowd-sourced funding.
+        We believe opportunity should be accessible to everyone—not just those with capital or connections.
+        By strengthening crowdfunding sources and encouraging group funding,
+        we empower communities to shape the future together.
+    </p>
+</div>
+
+<!-- WHO WE HELP -->
 <div class="container section">
     <div class="row">
         <div class="col-md-5">
-            <h2>Our team.</h2>
+            <h2>Who We Help</h2>
         </div>
         <div class="col-md-7">
+            <ul>
+                <li>Independent creators and entrepreneurs</li>
+                <li>Startups and early-stage ideas</li>
+                <li>Social causes and crowdfunding for nonprofits</li>
+            </ul>
             <p>
-                We’re a team of builders, designers, writers, technologists and dreamers who believe in the power of collective action.
-Many of us are creators ourselves. We’ve launched ideas, supported causes and backed campaigns we believe in. We know how vulnerable it feels to put your idea out into the world and how powerful it feels when people say “yes.”
-That’s why we’re here.
-
-
-            </p>
-       
-        </div>
-    </div>
-</div>
-
-<!-- OUR HISTORY -->
-<div class="container section">
-    <div class="row">
-        <div class="col-md-5">
-            <h2>Our Journey
-</h2>
-        </div>
-        <div class="col-md-7">
-            <p>
-               ApnaCrowdfunding was created with a simple belief:
-Great ideas shouldn’t fail because of lack of access.
-Since our beginning, we’ve focused on building a platform that’s easy to use, fair and creator-friendly that grows alongside its community.
-And this is just the start.
-
+                As an inclusive alternative to traditional non-profit crowdfunding platforms,
+                we support non-profits, community initiatives, and purpose-driven projects
+                through one reliable crowdfunding website.
             </p>
         </div>
     </div>
 </div>
 
-<!-- STORY -->
+<!-- COMMUNITY -->
 <div class="deep-blue-box">
- 
-    <br><br>
- 
+    Powered by Community and Crowd Sharing
 </div>
 
-<!-- PROJECT UPDATES -->
+<div class="container section">
+    <p>
+        Successful projects grow through crowd sharing.
+        Every campaign begins with early believers and expands as stories spread.
+        Our global network proves that crowdfunding is about people standing behind ideas—not just money.
+    </p>
+</div>
 
-
-<!-- CREATIVE INDEPENDENT -->
-
-
-<!-- PRESS -->
-
-
-<!-- JUMP IN -->
+<!-- WHY US -->
 <div class="container section">
     <div class="row">
         <div class="col-md-5">
-            <h2>Jump in.</h2>
+            <h2>Why Choose Us</h2>
         </div>
         <div class="col-md-7">
+            <ul>
+                <li>Simple and easy campaign creation</li>
+                <li>Transparent and fair processes</li>
+                <li>Community-first project discovery</li>
+                <li>Complete creator independence</li>
+            </ul>
             <p>
-                Ready to support ideas you believe in?
-Browse live campaigns and become part of something meaningful.
-Have an idea you’re ready to share?
-Start your campaign and invite the world to join you.
-ApnaCrowdfunding Your idea. Our community. Shared success.
-
+                We aim to stand among the best crowdfunding sites by focusing on people, not profits,
+                and by building a trusted crowdfunding platform for long-term impact.
             </p>
-            <button class="btn-otline mt-3">Discover projects</button>
         </div>
     </div>
 </div>
 
+<!-- CTA -->
+<div class="container section">
+    <div class="row">
+        <div class="col-md-5">
+            <h2>Start Your Crowdfunding Campaign Today</h2>
+        </div>
+        <div class="col-md-7">
+            <p>
+                Whether you want to support an idea or launch your own campaign,
+                <span class="italic-text"><em>ApnaCrowdfunding</em></span> gives you the tools,
+                reach, and community to succeed.
+                <br><br>
+                <strong>Your idea. Our community. Shared success.</strong>
+            </p>
+            <button class="btn-otline mt-3">Discover Projects</button>
+        </div>
+    </div>
+</div>
 
 @endsection

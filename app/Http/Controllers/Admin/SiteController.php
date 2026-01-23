@@ -45,10 +45,41 @@ class SiteController extends Controller
     }
 
     function sections($key) {
-        $section = @getPageSections()->$key;
+        try {
+            $sections = getPageSections();
+            
+            // Convert to array for easier checking
+            $sectionsArray = (array)$sections;
+            $section = $sectionsArray[$key] ?? null;
+            
+            // If not found as object property, try accessing as object
+            if (!$section && is_object($sections)) {
+                $section = $sections->$key ?? null;
+            }
 
-        if (!$section) {
-            abort(404);
+            if (!$section) {
+                // Log for debugging
+                $availableSections = array_keys($sectionsArray);
+                \Log::error('Section not found in site.json', [
+                    'key' => $key,
+                    'available_sections' => $availableSections,
+                    'active_theme' => bs('active_theme'),
+                    'json_path' => resource_path('views/') . str_replace('.', '/', activeTheme()) . 'site.json'
+                ]);
+                
+                $errorMessage = "Section '{$key}' not found in site.json.";
+                $errorMessage .= " Available sections: " . implode(', ', $availableSections);
+                $errorMessage .= " | Active theme: " . bs('active_theme');
+                
+                abort(404, $errorMessage);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Error loading sections', [
+                'key' => $key,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            abort(500, "Error loading section: " . $e->getMessage());
         }
 
         $content   = SiteData::where('data_key', $key . '.content')->orderBy('id','desc')->first();
@@ -102,9 +133,8 @@ class SiteController extends Controller
         $validationMessage = [];
         $excludeFromValidation = ['_token', 'video', 'key', 'status', 'type', 'id', 'image_url', 'seo_meta_title', 'seo_meta_description', 'seo_meta_keywords', 'sort_order'];
         
-        // For page_seo and schema_markup, don't exclude meta fields and slug from validation
-        // For footer_menu, don't exclude slug from validation
-        if ($key != 'page_seo' && $key != 'schema_markup' && $key != 'footer_menu') {
+        // For page_seo, schema_markup, footer_menu, and dynamic_pages, don't exclude slug from validation
+        if ($key != 'page_seo' && $key != 'schema_markup' && $key != 'footer_menu' && $key != 'dynamic_pages') {
             $excludeFromValidation = array_merge($excludeFromValidation, ['meta_title', 'meta_description', 'meta_keywords', 'slug']);
         }
         
@@ -140,13 +170,9 @@ class SiteController extends Controller
                     $validationRule[$inputField] = 'nullable';
                 }
             } 
-            // For page_seo, slug is required, other fields are optional
+            // For page_seo, all fields are optional (no validation)
             elseif ($key == 'page_seo' && $type == 'element') {
-                if ($inputField == 'slug') {
-                    $validationRule[$inputField] = 'required';
-                } else {
-                    $validationRule[$inputField] = 'nullable';
-                }
+                $validationRule[$inputField] = 'nullable';
             }
             // For schema_markup, slug is required, other fields are optional
             elseif ($key == 'schema_markup' && $type == 'element') {
@@ -160,8 +186,16 @@ class SiteController extends Controller
             elseif ($key == 'footer' && $type == 'content' && $inputField == 'footer_text') {
                 $validationRule[$inputField] = 'nullable';
             }
+            // For contact_us section, latitude and longitude are optional
+            elseif ($key == 'contact_us' && $type == 'content' && in_array($inputField, ['latitude', 'longitude'])) {
+                $validationRule[$inputField] = 'nullable';
+            }
             // For success_story, slug and meta fields are optional
             elseif ($key == 'success_story' && $type == 'element' && in_array($inputField, ['slug', 'meta_title', 'meta_description', 'meta_keywords'])) {
+                $validationRule[$inputField] = 'nullable';
+            }
+            // For footer_menu, all fields are optional (no validation)
+            elseif ($key == 'footer_menu' && $type == 'element') {
                 $validationRule[$inputField] = 'nullable';
             }
             else {
@@ -193,6 +227,75 @@ class SiteController extends Controller
             if ($key == 'footer' && $type == 'content' && $keyName == 'footer_text') {
                 // Allow empty string for footer_text
                 $inputContentValue[$keyName] = $input === null ? '' : htmlspecialchars_decode($purifier->purify($input));
+                continue;
+            }
+            
+            // Handle slug generation for dynamic_pages
+            if ($key == 'dynamic_pages' && $type == 'element' && $keyName == 'slug') {
+                if (empty($input) && isset($valInputs['title']) && !empty($valInputs['title'])) {
+                    // Auto-generate slug from title if not provided
+                    $input = slug($valInputs['title']);
+                } elseif (!empty($input)) {
+                    // Clean and format the provided slug
+                    $input = slug($input);
+                }
+                
+                // Ensure slug is unique
+                if (!empty($input)) {
+                    $existingSlug = SiteData::where('data_key', $key . '.element')
+                        ->where('id', '!=', request('id'))
+                        ->whereRaw("JSON_EXTRACT(data_info, '$.slug') = ?", [$input])
+                        ->first();
+                    
+                    if ($existingSlug) {
+                        $counter = 1;
+                        $baseSlug = $input;
+                        do {
+                            $input = $baseSlug . '-' . $counter;
+                            $existingSlug = SiteData::where('data_key', $key . '.element')
+                                ->where('id', '!=', request('id'))
+                                ->whereRaw("JSON_EXTRACT(data_info, '$.slug') = ?", [$input])
+                                ->first();
+                            $counter++;
+                        } while ($existingSlug && $counter < 1000);
+                    }
+                }
+                
+                // Always save slug for dynamic_pages (required field)
+                $inputContentValue[$keyName] = !empty($input) ? $input : '';
+                continue;
+            }
+            
+            // Handle slug for dynamic_pages - ensure it's unique and properly formatted
+            if ($key == 'dynamic_pages' && $type == 'element' && $keyName == 'slug') {
+                if (!empty($input)) {
+                    // Clean and format the provided slug
+                    $input = slug($input);
+                    
+                    // Ensure slug is unique
+                    $existingSlug = SiteData::where('data_key', $key . '.element')
+                        ->where('id', '!=', request('id'))
+                        ->whereRaw("JSON_EXTRACT(data_info, '$.slug') = ?", [$input])
+                        ->first();
+                    
+                    if ($existingSlug) {
+                        $counter = 1;
+                        $baseSlug = $input;
+                        do {
+                            $input = $baseSlug . '-' . $counter;
+                            $existingSlug = SiteData::where('data_key', $key . '.element')
+                                ->where('id', '!=', request('id'))
+                                ->whereRaw("JSON_EXTRACT(data_info, '$.slug') = ?", [$input])
+                                ->first();
+                            $counter++;
+                        } while ($existingSlug && $counter < 1000);
+                    }
+                    
+                    $inputContentValue[$keyName] = $input;
+                } else {
+                    // Slug is required for dynamic_pages, but if empty, set empty string
+                    $inputContentValue[$keyName] = '';
+                }
                 continue;
             }
             
@@ -233,34 +336,19 @@ class SiteController extends Controller
                 continue;
             }
             
-            // Handle slug for page_seo - ensure it's unique and properly formatted
+            // Handle slug for page_seo - preserve forward slashes (e.g., "page/about")
             if ($key == 'page_seo' && $type == 'element' && $keyName == 'slug') {
                 if (!empty($input)) {
-                    // Clean and format the provided slug
-                    $input = slug($input);
+                    // For page_seo, don't use slug() function as it removes forward slashes
+                    // Just trim and clean the input, but preserve forward slashes
+                    $input = trim($input);
+                    // Remove only leading/trailing slashes, but keep internal ones
+                    $input = trim($input, '/');
                     
-                    // Ensure slug is unique
-                    $existingSlug = SiteData::where('data_key', $key . '.element')
-                        ->where('id', '!=', request('id'))
-                        ->whereRaw("JSON_EXTRACT(data_info, '$.slug') = ?", [$input])
-                        ->first();
-                    
-                    if ($existingSlug) {
-                        $counter = 1;
-                        $baseSlug = $input;
-                        do {
-                            $input = $baseSlug . '-' . $counter;
-                            $existingSlug = SiteData::where('data_key', $key . '.element')
-                                ->where('id', '!=', request('id'))
-                                ->whereRaw("JSON_EXTRACT(data_info, '$.slug') = ?", [$input])
-                                ->first();
-                            $counter++;
-                        } while ($existingSlug && $counter < 1000);
-                    }
-                    
+                    // No uniqueness check - allow any value
                     $inputContentValue[$keyName] = $input;
                 } else {
-                    // Slug is required, but if empty, set empty string for page_seo
+                    // Slug is optional for page_seo, set empty string if empty
                     $inputContentValue[$keyName] = '';
                 }
                 continue;
@@ -302,37 +390,11 @@ class SiteController extends Controller
                 continue;
             }
             
-            // Handle slug for footer_menu - ensure it's unique and properly formatted
+            // Handle slug for footer_menu - No validations, save as-is
             if ($key == 'footer_menu' && $type == 'element' && $keyName == 'slug') {
-                // Always process slug field for footer_menu, even if empty
-                if (!empty($input)) {
-                    // Clean and format the provided slug
-                    $input = slug($input);
-                    
-                    // Ensure slug is unique within footer_menu
-                    $existingSlug = SiteData::where('data_key', $key . '.element')
-                        ->where('id', '!=', request('id'))
-                        ->whereRaw("JSON_EXTRACT(data_info, '$.slug') = ?", [$input])
-                        ->first();
-                    
-                    if ($existingSlug) {
-                        $counter = 1;
-                        $baseSlug = $input;
-                        do {
-                            $input = $baseSlug . '-' . $counter;
-                            $existingSlug = SiteData::where('data_key', $key . '.element')
-                                ->where('id', '!=', request('id'))
-                                ->whereRaw("JSON_EXTRACT(data_info, '$.slug') = ?", [$input])
-                                ->first();
-                            $counter++;
-                        } while ($existingSlug && $counter < 1000);
-                    }
-                    
-                    $inputContentValue[$keyName] = $input;
-                } else {
-                    // For footer_menu, if slug is empty, set empty string
-                    $inputContentValue[$keyName] = '';
-                }
+                // Save slug exactly as entered - no validation, no normalization, no uniqueness check
+                // User can enter anything: /path, /path/to/page, full URL, or simple slug
+                $inputContentValue[$keyName] = $input ?? '';
                 continue;
             }
             
@@ -696,8 +758,8 @@ class SiteController extends Controller
         // Merge with existing data to preserve fields not in the form
         $existingData = is_array($content->data_info) ? $content->data_info : [];
         
-        // For page_seo, schema_markup, and footer_menu, replace all data (don't merge, replace completely)
-        if (($key == 'page_seo' || $key == 'schema_markup' || $key == 'footer_menu') && $type == 'element') {
+        // For page_seo, schema_markup, footer_menu, and dynamic_pages, replace all data (don't merge, replace completely)
+        if (($key == 'page_seo' || $key == 'schema_markup' || $key == 'footer_menu' || $key == 'dynamic_pages') && $type == 'element') {
             $content->data_info = $inputContentValue;
         } else {
             $content->data_info = array_merge($existingData, $inputContentValue);

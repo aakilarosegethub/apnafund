@@ -21,7 +21,8 @@ class CategoryController extends Controller
         if (!in_array($sortField, ['id', 'sort_order'])) {
             $sortField = 'sort_order';
         }
-        if (!in_array($sortDir, ['asc', 'desc'])) 
+
+        if (!in_array($sortDir, ['asc', 'desc'])) {
             $sortDir = 'asc';
         }
 

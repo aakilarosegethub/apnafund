@@ -36,8 +36,9 @@ class RegisterController extends Controller
         
         $registerContent = getSiteData('register.content', true);
         $policyPages     = getSiteData('policy_pages.element', false, null, true) ?? [];
+        $setting         = bs();
 
-        return view('user.auth.register-business', compact('pageTitle', 'mobileCode', 'countries', 'registerContent', 'policyPages'));
+        return view($this->activeTheme . 'user.auth.register', compact('pageTitle', 'mobileCode', 'countries', 'registerContent', 'policyPages', 'setting'));
     }
 
     function registerBusinessForm() {
@@ -61,8 +62,9 @@ class RegisterController extends Controller
         
         $registerContent = getSiteData('register.content', true);
         $policyPages     = getSiteData('policy_pages.element', false, null, true) ?? [];
+        $setting         = bs();
         
-        return view('user.auth.register-business', compact('pageTitle', 'mobileCode', 'countries', 'registerContent', 'policyPages'));
+        return view($this->activeTheme . 'user.auth.register', compact('pageTitle', 'mobileCode', 'countries', 'registerContent', 'policyPages', 'setting'));
     }
 
     protected function validator(array $data) {

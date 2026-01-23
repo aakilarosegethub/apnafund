@@ -1,213 +1,110 @@
 @php
+die('OKK');
     $activeTheme = activeTheme();
     $activeThemeTrue = activeTheme();
 @endphp
 @extends($activeTheme . 'layouts.frontend')
 
-@section('style')
+@section('custom-css')
 <style>
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-
-    html {
-        font-size: 62.5%;
-    }
-
-    body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        background: linear-gradient(135deg, #e0f7f4 0%, #b3e5fc 100%);
-        min-height: 100vh;
-        padding: 2rem;
-    }
-
-    .setup-container {
-        background: white;
-        border-radius: 12px;
-        padding: 6rem 5rem;
-        max-width: 700px;
-        width: 70%;
-        margin: 0 auto;
-        box-shadow: 0px 10px 40px rgba(0, 0, 0, 0.08);
-    }
-
-    .setup-title {
-        font-size: 3.2rem;
-        font-weight: 900;
-        color: #1d1d1d;
-        margin-bottom: 1.5rem;
-        line-height: 1.2;
-    }
-
-    .setup-description {
-        font-size: 1.4rem;
-        color: #777;
-        margin-bottom: 3rem;
-        line-height: 1.6;
-    }
-
-    .form-group {
-        margin-bottom: 2rem;
-    }
-
-    .form-label {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: #1d1d1d;
-        margin-bottom: 1rem;
-    }
-
-    .form-label i {
-        font-size: 1.8rem;
-        color: #00c6a7;
-    }
-
-    .form-select {
-        width: 100%;
-        padding: 1.4rem 1.6rem;
-        font-size: 1.5rem;
-        border: 2px solid #00c6a7;
-        border-radius: 8px;
-        background: white;
-        color: #555;
-        font-family: 'Inter', sans-serif;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        appearance: none;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2300c6a7' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 1.5rem center;
-        padding-right: 4rem;
-    }
-
-    .form-select:hover {
-        border-color: #00a887;
-        box-shadow: 0px 4px 12px rgba(0, 198, 167, 0.15);
-    }
-
-    .form-select:focus {
-        outline: none;
-        border-color: #00a887;
-        box-shadow: 0px 4px 16px rgba(0, 198, 167, 0.25);
-    }
-
-    .info {
-        font-size: 1.2rem;
-        color: #666;
-        margin-bottom: 3rem;
-        display: flex;
-        align-items: center;
-        gap: 0.8rem;
-    }
-
-    .info::before {
-        content: "?";
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 2rem;
-        height: 2rem;
-        border-radius: 50%;
-        background-color: #ccc;
-        color: white;
-        text-align: center;
-        font-size: 1.2rem;
-        font-weight: 600;
-    }
-
-    .button-group {
-        display: flex;
-        gap: 1rem;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .continue-btn {
-        background: #00c6a7;
-        color: white;
-        padding: 1.2rem 2.4rem;
-        border: none;
-        border-radius: 6px;
-        font-size: 1.4rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-family: 'Inter', sans-serif;
-        text-decoration: none;
-        display: inline-block;
-    }
-
-    .continue-btn:hover {
-        background: #00a887;
-        transform: translateY(-2px);
-        box-shadow: 0px 6px 16px rgba(0, 198, 167, 0.3);
-    }
-
-    .back-link {
-        display: block;
-        margin-top: 1.5rem;
-        font-size: 1.3rem;
-        color: #333;
-        text-decoration: none;
-        text-align: center;
-    }
-
-    .back-link:hover {
-        text-decoration: underline;
-    }
-
-    /* Responsive Design */
-    @media (max-width: 768px) {
-        .setup-container {
-            padding: 4rem 2.5rem;
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #d4f2f6;
+            margin: 0;
+            padding: 0;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
 
-        .setup-title {
-            font-size: 2.4rem;
+        .container {
+            max-width: 500px;
+            width: 90%;
+               padding: 85px 95px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            background:white;
         }
 
-        .setup-description {
-            font-size: 1.3rem;
+        h1 {
+            font-size: 30px;
+    font-weight: 800;
+            text-align: center;
+            margin-bottom: 10px;
         }
 
-        .form-select {
-            font-size: 1.4rem;
-            padding: 1.2rem 1.4rem;
+        p {
+            font-size: 14px;
+            color: #555;
+            text-align: center;
+            margin-bottom: 30px;
+            line-height: 1.5;
         }
 
-        .button-group {
-            flex-direction: column;
+        select {
+            width: 100%;
+            padding: 12px;
+            font-size: 14px;
+            border: 2px solid #00c6a7;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        .info {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+        }
+
+        .info::before {
+            content: "?";
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: #ccc;
+            color: white;
+            text-align: center;
+            line-height: 16px;
+            font-size: 10px;
+            margin-right: 6px;
         }
 
         .continue-btn {
+            display: block;
             width: 100%;
-        }
-    }
-
-    @media (max-width: 576px) {
-        .setup-container {
-            padding: 3rem 1.5rem;
-        }
-
-        .setup-title {
-            font-size: 2rem;
-        }
-
-        .setup-description {
-            font-size: 1.2rem;
+            padding: 12px;
+            background-color: #333;
+            color: white;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-decoration: none;
         }
 
-        .form-select {
-            font-size: 1.3rem;
-            padding: 1rem 1.2rem;
+        .continue-btn:hover {
+            background-color: #555;
         }
-    }
-</style>
+
+        .back-link {
+            display: block;
+            margin-top: 15px;
+            font-size: 13px;
+            color: #333;
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
 @endsection
 
 @section('frontend')

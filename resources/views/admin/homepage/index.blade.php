@@ -258,5 +258,90 @@
                 </div>
             </div>
         </div>
+
+        <!-- Trending Campaign Section Management -->
+        <div class="col-12">
+            <div class="custom--card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="las la-fire text--primary"></i>
+                        @lang('Trending Campaign Section Management')
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @php
+                        $selectedCampaignId = null;
+                        $showTrending = 0;
+                        if ($trendingCampaignContent && $trendingCampaignContent->data_info) {
+                            $dataInfo = is_array($trendingCampaignContent->data_info) 
+                                ? $trendingCampaignContent->data_info 
+                                : (array)$trendingCampaignContent->data_info;
+                            $selectedCampaignId = $dataInfo['trending_campaign_id'] ?? null;
+                            $showTrending = $dataInfo['show_trending'] ?? 0;
+                        }
+                        $allCampaigns = \App\Models\Campaign::approve()->latest()->get(['id', 'name', 'slug']);
+                    @endphp
+                    <form action="{{ route('admin.homepage.trending-campaign.update') }}" method="POST">
+                        @csrf
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label>@lang('Show Trending Campaign Section')</label>
+                                    <select class="form--control" name="show_trending" id="showTrending">
+                                        <option value="0" {{ $showTrending == 0 ? 'selected' : '' }}>@lang('No')</option>
+                                        <option value="1" {{ $showTrending == 1 ? 'selected' : '' }}>@lang('Yes')</option>
+                                    </select>
+                                    <small class="text--muted">@lang('Enable or disable trending campaign section on home page')</small>
+                                </div>
+                            </div>
+                            <div class="col-12" id="trendingCampaignSelect" style="{{ $showTrending == 0 ? 'display: none;' : '' }}">
+                                <div class="form-group">
+                                    <label>@lang('Select Trending Campaign')</label>
+                                    <select class="form--control select2" name="trending_campaign_id" id="trendingCampaignId" style="width: 100%;">
+                                        <option value="">@lang('-- Select Campaign --')</option>
+                                        @foreach($allCampaigns as $campaign)
+                                            <option value="{{ $campaign->id }}" {{ $selectedCampaignId == $campaign->id ? 'selected' : '' }}>
+                                                {{ $campaign->name }} ({{ $campaign->slug }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <small class="text--muted">@lang('Select a campaign to display as trending on home page')</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn--primary w-100 h-45">@lang('Update Trending Campaign Section')</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 @endsection 
+
+@push('page-script-lib')
+<script src="{{ asset('assets/admin/js/page/select2.js') }}"></script>
+@endpush
+
+@push('page-script')
+<script>
+    $(document).ready(function() {
+        // Initialize Select2
+        if ($('.select2').length) {
+            $('.select2').select2({
+                placeholder: '@lang("-- Select Campaign --")',
+                allowClear: true
+            });
+        }
+
+        // Toggle trending campaign select based on show_trending
+        $('#showTrending').on('change', function() {
+            if ($(this).val() == '1') {
+                $('#trendingCampaignSelect').slideDown();
+            } else {
+                $('#trendingCampaignSelect').slideUp();
+            }
+        });
+    });
+</script>
+@endpush 

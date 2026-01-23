@@ -4,7 +4,7 @@
 @endphp
 @extends($activeTheme . 'layouts.blank')
 
-@section('style')
+@section('custom-css')
 <style>
         * {
             margin: 0;
@@ -20,6 +20,7 @@
             font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, #e0f7f4 0%, #b3e5fc 100%);
             min-height: 100vh;
+            align-items: center;
             justify-content: center;
             padding: 2rem;
         }
@@ -29,8 +30,7 @@
             border-radius: 12px;
             padding: 6rem 5rem;
             max-width: 700px;
-            width: 70%;
-            margin: 0 auto;
+            width: 100%;
             box-shadow: 0px 10px 40px rgba(0, 0, 0, 0.08);
         }
 
@@ -117,12 +117,6 @@
             outline: none;
             border-color: #00a887;
             box-shadow: 0px 4px 16px rgba(0, 198, 167, 0.25);
-        }
-
-        .form-select:disabled {
-            background-color: #f5f5f5;
-            cursor: not-allowed;
-            opacity: 0.7;
         }
 
         .form-select option {

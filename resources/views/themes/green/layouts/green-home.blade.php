@@ -11,6 +11,7 @@ if(isset($_GET['test'])){   die('home');
     $pageSeo = null;
     $currentSection = request()->segment(1);
     $currentSlug = null;
+    $currentPath = trim(request()->path(), '/'); // Get full path without leading/trailing slashes
     
     // Check if this is a /page/{slug} route and fetch SEO from page_seo section
     if ($currentSection == 'page' && request()->segment(2)) {
@@ -21,10 +22,10 @@ if(isset($_GET['test'])){   die('home');
     }
     
     // Check if this is home page
-    $isHomePage = ($currentSection == '' || $currentSection == '/' || request()->path() == '/');
+    $isHomePage = ($currentSection == '' || $currentSection == '/' || request()->path() == '/' || $currentPath == '');
     
     // Fetch SEO data from page_seo section if slug is available
-    if ($currentSlug || $isHomePage) {
+    if ($currentSlug || $isHomePage || $currentPath) {
         $allPageSeo = \App\Models\SiteData::where('data_key', 'page_seo.element')->get();
         
         foreach ($allPageSeo as $seoItem) {
@@ -37,9 +38,17 @@ if(isset($_GET['test'])){   die('home');
                     $pageSeo = (object)$seoInfo;
                     break;
                 }
-            } elseif ($currentSlug && $seoSlug == $currentSlug) {
-                $pageSeo = (object)$seoInfo;
-                break;
+            } else {
+                // Check for exact match with full path (e.g., "user/login")
+                if ($currentPath && $seoSlug == $currentPath) {
+                    $pageSeo = (object)$seoInfo;
+                    break;
+                }
+                // Also check for single segment match (e.g., "about")
+                elseif ($currentSlug && $seoSlug == $currentSlug) {
+                    $pageSeo = (object)$seoInfo;
+                    break;
+                }
             }
         }
     }
@@ -104,12 +113,14 @@ if(isset($_GET['test'])){   die('home');
     $schemaMarkup = null;
     
     // Check if this is home page
-    $isHomePage = ($currentSection == '' || $currentSection == '/' || request()->path() == '/');
+    $isHomePage = ($currentSection == '' || $currentSection == '/' || request()->path() == '/' || $currentPath == '');
     
     // Build full slug path for /page/{slug} routes
     $fullSlug = null;
     if ($currentSection == 'page' && request()->segment(2)) {
         $fullSlug = 'page/' . request()->segment(2);
+    } elseif ($currentPath) {
+        $fullSlug = $currentPath;
     } elseif ($currentSlug) {
         $fullSlug = $currentSlug;
     }
@@ -129,13 +140,20 @@ if(isset($_GET['test'])){   die('home');
             }
         }
         
-        // Match full slug path (e.g., "page/about") or simple slug (e.g., "about")
+        // Match full slug path (e.g., "page/about", "user/login") or simple slug (e.g., "about")
         if ($schemaSlug && !$isHomePage) {
-            // Check if schema slug matches full path or simple slug
-            if ($fullSlug && $schemaSlug == $fullSlug) {
+            // Check if schema slug matches full path (e.g., "user/login")
+            if ($currentPath && $schemaSlug == $currentPath) {
                 $schemaMarkup = $schemaInfo;
                 break;
-            } elseif ($currentSlug && $schemaSlug == $currentSlug) {
+            }
+            // Check if schema slug matches full slug path (e.g., "page/about")
+            elseif ($fullSlug && $schemaSlug == $fullSlug) {
+                $schemaMarkup = $schemaInfo;
+                break;
+            }
+            // Check if schema slug matches simple slug (e.g., "about")
+            elseif ($currentSlug && $schemaSlug == $currentSlug) {
                 $schemaMarkup = $schemaInfo;
                 break;
             }
@@ -440,6 +458,12 @@ span{
 }
 
 </style>
+@yield('custom-css')
+
+{{-- Custom Header Code from Admin Panel --}}
+@if(getCustomCode('header'))
+{!! getCustomCode('header') !!}
+@endif
 </head>
 <body>
 
@@ -457,5 +481,10 @@ span{
 
 @stack('scripts')
 @stack('page-script')
+
+{{-- Custom Footer Code from Admin Panel --}}
+@if(getCustomCode('footer'))
+{!! getCustomCode('footer') !!}
+@endif
 </body>
 </html>

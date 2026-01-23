@@ -24,7 +24,14 @@
                                         <div class="card-body">
                                             <div class="form-group">
                                                 <label>@lang('Custom Code for Header')</label>
-                                                <textarea name="header_code" class="form-control" rows="8" placeholder="Enter your custom HTML, CSS, or JavaScript code for header...">{{ @$headerCode->data_info->code ?? '' }}</textarea>
+                                                @php
+                                                    $headerCodeValue = '';
+                                                    if ($headerCode && $headerCode->data_info) {
+                                                        $headerData = is_array($headerCode->data_info) ? $headerCode->data_info : (array)$headerCode->data_info;
+                                                        $headerCodeValue = $headerData['code'] ?? '';
+                                                    }
+                                                @endphp
+                                                <textarea name="header_code" class="form-control" rows="8" placeholder="Enter your custom HTML, CSS, or JavaScript code for header...">{{ $headerCodeValue }}</textarea>
                                                 <small class="text-muted">@lang('This code will be added in the &lt;head&gt; section of your website.')</small>
                                             </div>
                                         </div>
@@ -41,7 +48,14 @@
                                         <div class="card-body">
                                             <div class="form-group">
                                                 <label>@lang('Custom Code for Footer')</label>
-                                                <textarea name="footer_code" class="form-control" rows="8" placeholder="Enter your custom HTML, CSS, or JavaScript code for footer...">{{ @$footerCode->data_info->code ?? '' }}</textarea>
+                                                @php
+                                                    $footerCodeValue = '';
+                                                    if ($footerCode && $footerCode->data_info) {
+                                                        $footerData = is_array($footerCode->data_info) ? $footerCode->data_info : (array)$footerCode->data_info;
+                                                        $footerCodeValue = $footerData['code'] ?? '';
+                                                    }
+                                                @endphp
+                                                <textarea name="footer_code" class="form-control" rows="8" placeholder="Enter your custom HTML, CSS, or JavaScript code for footer...">{{ $footerCodeValue }}</textarea>
                                                 <small class="text-muted">@lang('This code will be added before the closing &lt;/body&gt; tag of your website.')</small>
                                             </div>
                                         </div>

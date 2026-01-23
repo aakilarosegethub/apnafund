@@ -477,7 +477,7 @@ class CampaignController extends Controller
                 $faqs = CampaignFaq::where('campaign_id', $campaign->id)->orderBy('order')->orderBy('id')->get();
             }
 
-            return view('themes.apnafund.user.campaign.edit', compact('pageTitle', 'categories', 'campaign', 'section', 'rewards', 'faqs'));
+            return view($this->activeTheme . 'user.campaign.edit', compact('pageTitle', 'categories', 'campaign', 'section', 'rewards', 'faqs'));
         } catch (\Exception $e) {
             $toast[] = ['error', 'Error loading campaign: ' . $e->getMessage()];
             return back()->withToasts($toast);

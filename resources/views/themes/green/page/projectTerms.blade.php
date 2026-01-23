@@ -4,7 +4,7 @@
 @endphp
 @extends($activeTheme . 'layouts.blank')
 
-@section('style')
+@section('custom-css')
 <style>
     body {
         font-family: Arial, sans-serif;
@@ -16,19 +16,17 @@
 
     /* ------------ CENTER BOX WRAPPER ------------ */
     .centerWrapper {
-        min-height: calc(100vh - 100px);
+        height: 100vh;
         display: flex;
         justify-content: center;
         align-items: center;
         transition: opacity 0.5s ease, visibility 0.5s ease;
-        padding-top: 100px;
     }
 
     .centerWrapper.hidden {
         opacity: 0;
         visibility: hidden;
         height: 0;
-        padding-top: 0;
     }
 
     /* ------------ RULE BOX ------------ */
@@ -72,11 +70,6 @@
         color: #c6c6c6;
     }
 
-    .lineText {
-        font-size: 15px;
-        color: #333;
-    }
-
     .lineText a {
         color: #0b6f3c;
         text-decoration: none;
@@ -90,11 +83,8 @@
         margin-top: 10px;
     }
 
-    .actionBtn {
-        margin-top: 30px;
-    }
-
     .actionBtn button {
+        margin-top: 30px;
         padding: 12px 35px;
         font-size: 16px;
         border: none;
@@ -102,20 +92,6 @@
         color: #fff;
         border-radius: 3px;
         cursor: pointer;
-        transition: background-color 0.3s ease;
-    }
-
-    .actionBtn button:hover {
-        background-color: #156f3d;
-    }
-
-    .actionBtn button:disabled {
-        background-color: #c6c6c6;
-        cursor: not-allowed;
-    }
-
-    .footerText {
-        margin-top: 20px;
     }
 
     .footerText a {
@@ -123,24 +99,19 @@
         text-decoration: none;
     }
 
-    .footerText a:hover {
-        text-decoration: underline;
-    }
-
     /* ------------ BELOW PROJECT CONTENT ------------ */
-    .container {
+
+    #projectBox.container {
         width: 70%;
         margin: auto;
         padding: 30px 0;
         opacity: 0;
         transition: opacity 0.6s ease;
-        padding-top: 120px;
     }
 
-    .container.visible {
+    #projectBox.container.visible {
         opacity: 1;
-        margin-top: -500px;
-        padding-top: 40px;
+        margin-top: 40px;
     }
 
     .project-title {
@@ -203,106 +174,6 @@
         margin: 5px 0 0;
         color: #666;
         font-size: 14px;
-    }
-
-    /* Checkbox styling */
-    .checkbox-wrapper {
-        margin-top: 30px;
-        text-align: left;
-        padding: 20px;
-        background: #f8f9fa;
-        border-radius: 5px;
-    }
-
-    .checkbox-wrapper input[type="checkbox"] {
-        width: 18px;
-        height: 18px;
-        margin-right: 10px;
-        cursor: pointer;
-    }
-
-    .checkbox-wrapper label {
-        font-size: 14px;
-        color: #333;
-        cursor: pointer;
-    }
-
-    .confirm-section {
-        margin-top: 30px;
-        text-align: center;
-    }
-
-    .confirm-btn {
-        padding: 12px 35px;
-        font-size: 16px;
-        border: none;
-        background-color: #c6c6c6;
-        color: #fff;
-        border-radius: 3px;
-        cursor: not-allowed;
-        transition: background-color 0.3s ease;
-    }
-
-    .confirm-btn:enabled {
-        background-color: #1c8e50;
-        cursor: pointer;
-    }
-
-    .confirm-btn:enabled:hover {
-        background-color: #156f3d;
-    }
-
-    .back-link {
-        display: block;
-        margin-top: 20px;
-        font-size: 14px;
-        color: #0b6f3c;
-        text-decoration: none;
-        text-align: center;
-    }
-
-    .back-link:hover {
-        text-decoration: underline;
-    }
-
-    /* Responsive Design */
-    @media (max-width: 768px) {
-        .rulesBox {
-            width: 90%;
-            padding: 30px;
-        }
-
-        .container {
-            width: 90%;
-        }
-
-        .mainHeading {
-            font-size: 22px;
-        }
-
-        .project-title {
-            font-size: 28px;
-        }
-    }
-
-    @media (max-width: 576px) {
-        .rulesBox {
-            width: 95%;
-            padding: 20px;
-        }
-
-        .mainHeading {
-            font-size: 20px;
-        }
-
-        .lineNumber {
-            font-size: 24px;
-            width: 40px;
-        }
-
-        .lineText {
-            font-size: 14px;
-        }
     }
 </style>
 @endsection

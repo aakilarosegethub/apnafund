@@ -143,6 +143,52 @@ class WebsiteController extends Controller
         return view($this->activeTheme . 'page.campaign', compact('pageTitle', 'categories', 'campaigns'));
     }
 
+    /**
+     * Pretty URL for campaigns by category, e.g. /campaigns/category/health
+     *
+     * Same listing page as /campaigns, but pre-filtered by category slug.
+     * No redirect – URL stays /campaigns/category/{slug}.
+     */
+    function campaignCategory($slug) {
+        // Try to resolve category; if not found, behave like all campaigns (no 404)
+        $category = Category::where('slug', $slug)->active()->first();
+
+        $pageTitle  = $category
+            ? 'Campaigns in ' . $category->name
+            : 'Campaigns';
+
+        // Categories list with counts (same as campaigns())
+        $categories = Category::active()
+            ->select('name', 'slug')
+            ->withCount(['campaigns' => function($query) {
+                $query->commonQuery()->approve();
+            }])
+            ->get();
+
+        // Base query
+        $campaigns = Campaign::when($category, function ($query) use ($category) {
+                                $query->where('category_id', $category->id);
+                            })->when(request()->filled('name'), function ($query) {
+                                $query->where('name', 'like', '%' . request('name') . '%');
+                            })->when(request()->filled('date_range'), function ($query) {
+                                $dateArray = explode(' - ', request('date_range'));
+                                $startDate = Carbon::parse($dateArray[0])->format('Y-m-d');
+                                $endDate   = Carbon::parse($dateArray[1])->format('Y-m-d');
+
+                                $query->where('start_date', '>=', $startDate)->where('end_date', '<=', $endDate);
+                            })->commonQuery()
+                            ->approve()
+                            ->latest()
+                            ->paginate(getPaginate(10));
+
+        // For the filter dropdown to show the selected category
+        if ($category) {
+            request()->merge(['category' => $category->slug]);
+        }
+
+        return view($this->activeTheme . 'page.campaign', compact('pageTitle', 'categories', 'campaigns', 'category'));
+    }
+
     function campaignShow($slug) {
 
         $pageTitle        = 'Campaign Details';
@@ -693,8 +739,77 @@ class WebsiteController extends Controller
             return redirect()->route('start.project')->with('error', 'Please select category and subcategory first.');
         }
 
+        // Get allowed countries from admin settings
+        $allowedCountries = $this->getAllowedCountries();
+        
         // Force green theme for this page
-        return view('themes.green.page.projectLocation', compact('pageTitle'));
+        return view('themes.green.page.projectLocation', compact('pageTitle', 'allowedCountries'));
+    }
+
+    private function getAllowedCountries() {
+        // Get countries list from admin settings
+        $siteData = \App\Models\SiteData::where('data_key', 'general.allowed_countries')->first();
+        
+        if ($siteData && $siteData->data_info) {
+            // SiteData model casts data_info as array, so it should already be an array
+            $dataInfo = $siteData->data_info;
+            
+            // Ensure it's an array
+            if (!is_array($dataInfo)) {
+                $dataInfo = is_object($dataInfo) ? (array)$dataInfo : json_decode($dataInfo, true);
+            }
+            
+            $selectedCountries = $dataInfo['selected_countries'] ?? [];
+            
+            // Handle boolean conversion - check for true, '1', 1, etc.
+            $useSelectedOnly = false;
+            if (isset($dataInfo['use_selected_only'])) {
+                $value = $dataInfo['use_selected_only'];
+                $useSelectedOnly = ($value === true || $value === '1' || $value === 1 || $value === 'true');
+            }
+            
+            // If use_selected_only is true, return only selected countries
+            if ($useSelectedOnly) {
+                if (!empty($selectedCountries) && is_array($selectedCountries)) {
+                    // Filter out empty values and sort alphabetically
+                    $selectedCountries = array_filter($selectedCountries);
+                    if (!empty($selectedCountries)) {
+                        sort($selectedCountries);
+                        return array_values($selectedCountries);
+                    }
+                }
+                // If use_selected_only is true but no countries selected, return empty array
+                return [];
+            }
+        }
+        
+        // Return all countries if use_selected_only is false or not set
+        return $this->getAllCountriesList();
+    }
+
+    private function getAllCountriesList() {
+        return [
+            'Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Antigua and Barbuda', 'Argentina', 'Armenia', 'Australia', 'Austria',
+            'Azerbaijan', 'Bahamas', 'Bahrain', 'Bangladesh', 'Barbados', 'Belarus', 'Belgium', 'Belize', 'Benin', 'Bhutan',
+            'Bolivia', 'Bosnia and Herzegovina', 'Botswana', 'Brazil', 'Brunei', 'Bulgaria', 'Burkina Faso', 'Burundi', 'Cambodia', 'Cameroon',
+            'Canada', 'Cape Verde', 'Central African Republic', 'Chad', 'Chile', 'China', 'Colombia', 'Comoros', 'Congo', 'Costa Rica',
+            'Croatia', 'Cuba', 'Cyprus', 'Czech Republic', 'Denmark', 'Djibouti', 'Dominica', 'Dominican Republic', 'Ecuador', 'Egypt',
+            'El Salvador', 'Equatorial Guinea', 'Eritrea', 'Estonia', 'Eswatini', 'Ethiopia', 'Fiji', 'Finland', 'France', 'Gabon',
+            'Gambia', 'Georgia', 'Germany', 'Ghana', 'Greece', 'Grenada', 'Guatemala', 'Guinea', 'Guinea-Bissau', 'Guyana',
+            'Haiti', 'Honduras', 'Hungary', 'Iceland', 'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland', 'Israel',
+            'Italy', 'Jamaica', 'Japan', 'Jordan', 'Kazakhstan', 'Kenya', 'Kiribati', 'Kosovo', 'Kuwait', 'Kyrgyzstan',
+            'Laos', 'Latvia', 'Lebanon', 'Lesotho', 'Liberia', 'Libya', 'Liechtenstein', 'Lithuania', 'Luxembourg', 'Madagascar',
+            'Malawi', 'Malaysia', 'Maldives', 'Mali', 'Malta', 'Marshall Islands', 'Mauritania', 'Mauritius', 'Mexico', 'Micronesia',
+            'Moldova', 'Monaco', 'Mongolia', 'Montenegro', 'Morocco', 'Mozambique', 'Myanmar', 'Namibia', 'Nauru', 'Nepal',
+            'Netherlands', 'New Zealand', 'Nicaragua', 'Niger', 'Nigeria', 'North Korea', 'North Macedonia', 'Norway', 'Oman', 'Pakistan',
+            'Palau', 'Palestine', 'Panama', 'Papua New Guinea', 'Paraguay', 'Peru', 'Philippines', 'Poland', 'Portugal', 'Qatar',
+            'Romania', 'Russia', 'Rwanda', 'Saint Kitts and Nevis', 'Saint Lucia', 'Saint Vincent and the Grenadines', 'Samoa', 'San Marino', 'Sao Tome and Principe', 'Saudi Arabia',
+            'Senegal', 'Serbia', 'Seychelles', 'Sierra Leone', 'Singapore', 'Slovakia', 'Slovenia', 'Solomon Islands', 'Somalia', 'South Africa',
+            'South Korea', 'South Sudan', 'Spain', 'Sri Lanka', 'Sudan', 'Suriname', 'Sweden', 'Switzerland', 'Syria', 'Taiwan',
+            'Tajikistan', 'Tanzania', 'Thailand', 'Timor-Leste', 'Togo', 'Tonga', 'Trinidad and Tobago', 'Tunisia', 'Turkey', 'Turkmenistan',
+            'Tuvalu', 'Uganda', 'Ukraine', 'United Arab Emirates', 'United Kingdom', 'United States', 'Uruguay', 'Uzbekistan', 'Vanuatu', 'Vatican City',
+            'Venezuela', 'Vietnam', 'Yemen', 'Zambia', 'Zimbabwe'
+        ];
     }
 
     function saveProjectLocation(\Illuminate\Http\Request $request) {

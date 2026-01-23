@@ -24,7 +24,8 @@ class ActivityController extends BaseApiController
                 "ResponseMsg" => "Unauthorized! Please login first."
             ], 401);
         }
-        $getfundlist = $this->h->queryfire("select group_concat(`id`) as fundlist from tbl_fund where uid=" . $uid . "")->fetch_assoc();
+        // Use campaigns table instead of tbl_fund
+        $getfundlist = $this->h->queryfire("select group_concat(`id`) as fundlist from campaigns where user_id=" . $uid . "")->fetch_assoc();
         $fund_id = $getfundlist['fundlist'];
 
         if (empty($fund_id)) {
@@ -35,18 +36,21 @@ class ActivityController extends BaseApiController
                 "activitylist" => []
             ], 401);
         } else {
-            $actionlist = $this->h->queryfire("SELECT * FROM `tbl_deposit` where fund_id IN(" . $fund_id . ") order by deposite_date desc");
+            // Use deposits table with campaign_id (not fund_id)
+            $actionlist = $this->h->queryfire("SELECT * FROM `deposits` where campaign_id IN(" . $fund_id . ") order by created_at desc");
             $zol = array();
             while ($row = $actionlist->fetch_assoc()) {
-                $fundlist = $this->h->queryfire("select * from tbl_fund where id=" . $row['fund_id'] . "")->fetch_assoc();
-                $udata = $this->h->queryfire("select * from tbl_user where id=" . $row["uid"] . "")->fetch_assoc();
+                // Use campaigns table instead of tbl_fund
+                $fundlist = $this->h->queryfire("select * from campaigns where id=" . $row['campaign_id'] . "")->fetch_assoc();
+                // Use users table instead of tbl_user
+                $udata = $this->h->queryfire("select * from users where id=" . $row["user_id"] . "")->fetch_assoc();
 
                 $pol = [
                     'donator_id' => $udata['id'],
-                    'fund_title' => $fundlist['title'],
-                    'profile_pic' => $udata['profile_pic'] ?? 'images/default.png',
-                    'name' => ($row['is_anonymous'] == 1) ? 'Anonymous' : $udata['name'],
-                    'donation_amt' => $row['amt']
+                    'fund_title' => $fundlist['name'] ?? '', // campaigns table uses 'name' not 'title'
+                    'profile_pic' => $udata['image'] ?? 'images/default.png', // users table uses 'image' not 'profile_pic'
+                    'name' => ($row['is_anonymous'] == 1) ? 'Anonymous' : ($udata['name'] ?? ($udata['firstname'] ?? '' . ' ' . $udata['lastname'] ?? '')),
+                    'donation_amt' => $row['amount'] ?? 0 // deposits table uses 'amount' not 'amt'
                 ];
                 $zol[] = $pol;
             }

@@ -14,6 +14,24 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\DonateController;
 use App\Http\Controllers\Api\WithdrawController;
 use App\Http\Controllers\Api\WalletController;
+use Illuminate\Support\Facades\Cookie;
+
+// Beta landing page logic
+Route::get('/beta', function (\Illuminate\Http\Request $request) {
+    // If cookie already exists, go to normal home
+    if (Cookie::get('apnafund_beta_seen')) {
+        return redirect()->route('home');
+    }
+
+    return view('themes.green.page.beta');
+})->name('beta.page');
+
+Route::post('/beta/start', function (\Illuminate\Http\Request $request) {
+    // Set cookie for 1 day (60 minutes * 24 hours)
+    $cookie = Cookie::make('apnafund_beta_seen', true, 60 * 24);
+
+    return redirect()->route('home')->withCookie($cookie);
+})->name('beta.accept');
 
 // CSRF Token refresh route
 Route::get('/csrf-token', function () {
@@ -33,6 +51,8 @@ Route::get('/change.htm', function () {
     return response()->file(public_path('change.htm'));
 })->name('password.reset.page');
 
+// All public website routes that should respect the beta page
+Route::middleware(\App\Http\Middleware\BetaGate::class)->group(function () {
 Route::controller('WebsiteController')->group(function () {
     Route::get('/', 'home')->name('home');
     Route::get('home-new', 'homeNew')->name('home.new');
@@ -43,6 +63,7 @@ Route::controller('WebsiteController')->group(function () {
     Route::get('faq', 'faq')->name('faq');
     Route::get('creators', 'creators')->name('creators');
     Route::get('campaigns', 'campaigns')->name('campaign');
+        Route::get('campaigns/category/{slug}', 'campaignCategory')->name('campaign.category');
 
     // Campaign 
     Route::prefix('campaign/{slug}')->name('campaign.')->group(function () {
@@ -65,6 +86,10 @@ Route::controller('WebsiteController')->group(function () {
     // Business Resources / Creator Hub
     Route::get('creator-hub', 'businessResources')->name('creator.hub');
     Route::get('business-resources', 'businessResources')->name('business.resources');
+    // Redirect creator-guide to business-resources
+    Route::get('creator-guide', function () {
+        return redirect('/business-resources', 301);
+    })->name('creator.guide.redirect');
 
     // Start Project
     Route::get('start-project', 'startProject')->name('start.project');
@@ -78,8 +103,9 @@ Route::controller('WebsiteController')->group(function () {
     Route::post('subscriber/store', 'subscriberStore')->name('subscriber.store');;
 
     // Contact
-    Route::get('contact', 'contact')->name('contact');
-    Route::post('contact', 'contactStore');
+        // New pretty slug: /contact-us
+        Route::get('contact-us', 'contact')->name('contact');
+        Route::post('contact-us', 'contactStore');
 
     // Cookie
     Route::get('cookie/accept', 'cookieAccept')->name('cookie.accept');
@@ -125,9 +151,9 @@ Route::get('page/press', function () {
     return redirect('/press');
 })->name('page.press.redirect');
 
-// Redirect /page/rules to /rules
+    // Redirect /page/rules to /apnacrowdfunding-rules
 Route::get('page/rules', function () {
-    return redirect('/rules');
+        return redirect('/apnacrowdfunding-rules');
 })->name('page.rules.redirect');
 
 // Redirect /page/charter to /our-mission
@@ -139,10 +165,17 @@ Route::get('page/charter', function () {
 Route::get('page/{slug}', [\App\Http\Controllers\WebsiteController::class, 'pageBySlug'])->name('page.show');
 
 // Specific routes for pages with view files (before catch-all dynamic route)
-Route::get('rules', function(\Illuminate\Http\Request $request) {
+    // New pretty URL for rules page
+Route::get('our-rules', function(\Illuminate\Http\Request $request) {
     $controller = app(\App\Http\Controllers\WebsiteController::class);
-    return $controller->pageBySlug('rules');
+        // Still load the same page record by its internal slug
+    return $controller->pageBySlug('apnacrowdfunding-rules');
 })->name('rules');
+
+    // Backward compatible redirect from old URL
+Route::get('apnacrowdfunding-rules', function () {
+    return redirect('/our-rules');
+    })->name('apnacrowdfunding-rules.redirect');
 Route::get('forwardfunds', function(\Illuminate\Http\Request $request) {
     $controller = app(\App\Http\Controllers\WebsiteController::class);
     return $controller->pageBySlug('forwardfunds');
@@ -163,6 +196,12 @@ Route::get('charter', function () {
 Route::get('{slug}', [App\Http\Controllers\WebsiteController::class, 'dynamicPages'])
     ->name('dynamic.pages')
     ->where('slug', '[a-z0-9-]+');
+});
+
+// Backward compatible redirect from old /contact to /contact-us
+Route::get('contact', function () {
+    return redirect('/contact-us');
+})->name('contact.redirect');
 
 // Test route for IP detection
 Route::get('/test-ip-detection', function() {
@@ -520,7 +559,7 @@ Route::prefix('api')->group(function () {
                 ->where('status', 'active')
                 ->orderBy('sort_order')
                 ->orderBy('name')
-                ->get(['id', 'name', 'slFg', 'category_id']);
+                ->get(['id', 'name', 'slug', 'category_id']);
             
             return response()->json([
                 'success' => true,

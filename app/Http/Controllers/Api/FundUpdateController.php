@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 
 class FundUpdateController extends BaseApiController
 {
@@ -88,15 +89,28 @@ class FundUpdateController extends BaseApiController
         
         $reject_comment = $data['reject_comment'] ?? '';
 
-        $table = "tbl_fund";
-        $field = [
-            "fund_status" => 'Cancelled',
-            "reject_comment" => $reject_comment
-        ];
+        // Use campaigns table instead of tbl_fund
+        // campaigns: status 0 = rejected/cancelled
+        // Check if campaign belongs to user
+        $campaign = DB::table('campaigns')->where('id', $fund_id)->where('user_id', $uid)->first();
+        
+        if (!$campaign) {
+            return response()->json([
+                "ResponseCode" => "401",
+                "Result" => "false",
+                "ResponseMsg" => "Campaign not found or unauthorized!"
+            ], 401);
+        }
 
-        $where = "where id=" . $fund_id . " and uid=" . $uid . "";
-
-        $check = $this->h->updateData_Api($field, $table, $where);
+        // Update campaign status to rejected (0 = cancelled/rejected)
+        DB::table('campaigns')
+            ->where('id', $fund_id)
+            ->where('user_id', $uid)
+            ->update([
+                'status' => 0, // CAMPAIGN_REJECTED = 0 (cancelled)
+                'reject_reason' => $reject_comment, // Store reject comment if column exists
+                'updated_at' => date('Y-m-d H:i:s')
+            ]);
 
         return response()->json([
             "ResponseCode" => "200",
@@ -133,14 +147,28 @@ class FundUpdateController extends BaseApiController
             ], 401);
         }
 
-        $table = "tbl_fund";
-        $field = [
-            "fund_status" => 'Completed'
-        ];
+        // Use campaigns table instead of tbl_fund
+        // Check if campaign belongs to user
+        $campaign = DB::table('campaigns')->where('id', $fund_id)->where('user_id', $uid)->first();
+        
+        if (!$campaign) {
+            return response()->json([
+                "ResponseCode" => "401",
+                "Result" => "false",
+                "ResponseMsg" => "Campaign not found or unauthorized!"
+            ], 401);
+        }
 
-        $where = "where id=" . $fund_id . " and uid=" . $uid . "";
-
-        $check = $this->h->updateData_Api($field, $table, $where);
+        // For campaigns table, "Completed" is not a status - it's calculated based on end_date
+        // But we can mark as expired by updating end_date to past or mark as approved (1)
+        // Since campaign is already running (status=1), we just update end_date to mark it complete
+        DB::table('campaigns')
+            ->where('id', $fund_id)
+            ->where('user_id', $uid)
+            ->update([
+                'end_date' => date('Y-m-d'), // Set end date to today to mark as complete
+                'updated_at' => date('Y-m-d H:i:s')
+            ]);
 
         return response()->json([
             "ResponseCode" => "200",
@@ -238,51 +266,77 @@ class FundUpdateController extends BaseApiController
             $imageListss = $imlistss . '$;' . $multifiless;
         }
 
-        $table = "tbl_fund";
-        if (empty($exp_date)) {
-            $field = [
-                "cat_id" => $cat_id,
-                "title" => $title,
-                "fund_for" => $fund_for,
-                "fund_amt" => $fund_amt,
-                "full_address" => $full_address,
-                "lats" => $lats,
-                "longs" => $longs,
-                "fund_story" => $fund_story,
-                "patient_title" => $patient_title,
-                "patient_diagnosis" => $patient_diagnosis,
-                "fund_plan" => $fund_plan,
-                "status" => $status,
-                "fund_photos" => $imageList,
-                "patient_photo" => $imageLists,
-                "medical_certificate" => $imageListss,
-                'is_approve' => 0
-            ];
-        } else {
-            $field = [
-                "cat_id" => $cat_id,
-                "title" => $title,
-                "fund_for" => $fund_for,
-                "fund_amt" => $fund_amt,
-                "full_address" => $full_address,
-                "lats" => $lats,
-                "longs" => $longs,
-                "fund_story" => $fund_story,
-                "exp_date" => $exp_date,
-                "patient_title" => $patient_title,
-                "patient_diagnosis" => $patient_diagnosis,
-                "fund_plan" => $fund_plan,
-                "status" => $status,
-                "fund_photos" => $imageList,
-                "patient_photo" => $imageLists,
-                "medical_certificate" => $imageListss,
-                'is_approve' => 0
-            ];
+        // Use campaigns table instead of tbl_fund
+        // Check if campaign belongs to user
+        $campaign = DB::table('campaigns')->where('id', $record_id)->where('user_id', $uid)->first();
+        
+        if (!$campaign) {
+            return response()->json([
+                "ResponseCode" => "401",
+                "Result" => "false",
+                "ResponseMsg" => "Campaign not found or unauthorized!"
+            ], 401);
         }
 
-        $where = "where uid=" . $uid . " and id=" . $record_id . "";
+        // Build gallery from all image types
+        $gallery = [];
+        if (!empty($imageList) && $imageList != "0") {
+            $fundPhotos = explode('$;', $imageList);
+            $gallery = array_merge($gallery, $fundPhotos);
+        }
+        if (!empty($imageLists) && $imageLists != "0") {
+            $patientPhotos = explode('$;', $imageLists);
+            $gallery = array_merge($gallery, $patientPhotos);
+        }
+        if (!empty($imageListss) && $imageListss != "0") {
+            $certPhotos = explode('$;', $imageListss);
+            $gallery = array_merge($gallery, $certPhotos);
+        }
+        
+        // First photo is main image
+        $mainImage = !empty($gallery) ? $gallery[0] : $campaign->image;
+        
+        // Map status: 'Pending' -> 2, 'Approved' -> 1, 'Cancelled' -> 0
+        $campaignStatus = 2; // default to pending
+        if ($status == 'Approved') {
+            $campaignStatus = 1;
+        } elseif ($status == 'Cancelled' || $status == 'Rejected') {
+            $campaignStatus = 0;
+        }
+        
+        // Generate new slug if title changed
+        $slug = $campaign->slug;
+        if ($title != $campaign->name) {
+            $newSlug = \Illuminate\Support\Str::slug($title);
+            // Check if slug already exists (excluding current campaign)
+            $slugExists = DB::table('campaigns')->where('slug', $newSlug)->where('id', '!=', $record_id)->exists();
+            $slug = $slugExists ? $newSlug . '-' . $record_id : $newSlug;
+        }
 
-        $check = $this->h->updateData_Api($field, $table, $where);
+        // Prepare update data for campaigns table
+        $updateData = [
+            'category_id' => $cat_id,
+            'name' => $title,
+            'slug' => $slug,
+            'description' => $fund_story,
+            'image' => $mainImage,
+            'gallery' => !empty($gallery) ? json_encode($gallery) : null,
+            'goal_amount' => $fund_amt,
+            'location' => $full_address,
+            'status' => $campaignStatus,
+            'updated_at' => date('Y-m-d H:i:s')
+        ];
+        
+        // Add end_date if provided
+        if (!empty($exp_date)) {
+            $updateData['end_date'] = $exp_date;
+        }
+
+        // Update campaign
+        DB::table('campaigns')
+            ->where('id', $record_id)
+            ->where('user_id', $uid)
+            ->update($updateData);
 
         return response()->json([
             "ResponseCode" => "200",

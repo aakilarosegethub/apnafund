@@ -175,18 +175,41 @@
                                                     <div class="col-lg-3">
                                                         @php
                                                             // Make title and slug required for dynamic_pages
-                                                            // Make slug required for page_seo and schema_markup
+                                                            // Make slug required for schema_markup only
                                                             $isRequired = false;
                                                             if ($key == 'dynamic_pages' && ($k == 'title' || $k == 'slug')) {
                                                                 $isRequired = true;
-                                                            } elseif (($key == 'page_seo' || $key == 'schema_markup') && $k == 'slug') {
+                                                            } elseif ($key == 'schema_markup' && $k == 'slug') {
                                                                 $isRequired = true;
                                                             }
+                                                            // footer_menu and page_seo slug are never required - no validations
+                                                            if (($key == 'footer_menu' || $key == 'page_seo') && $k == 'slug') {
+                                                                $isRequired = false;
+                                                            }
+
+                                                            // Special label for footer_menu slug: can be slug OR full URL
+                                                            $labelText = ($key == 'footer_menu' && $k == 'slug')
+                                                                ? 'Slug / URL'
+                                                                : keyToTitle($k);
                                                         @endphp
-                                                        <label class="form--label {{ $isRequired ? 'required' : '' }}">{{ __(keyToTitle($k)) }}</label>
+                                                        <label class="form--label {{ $isRequired ? 'required' : '' }}">{{ __($labelText) }}</label>
                                                     </div>
                                                     <div class="col-lg-9">
-                                                        <input type="text" class="form--control" name="{{ $k }}" value="{{ @$data->data_info[$k] ?? '' }}" {{ $isRequired ? 'required' : '' }}>
+                                                        <input
+                                                            type="text"
+                                                            class="form--control"
+                                                            name="{{ $k }}"
+                                                            value="{{ @$data->data_info[$k] ?? '' }}"
+                                                            {{ $isRequired ? 'required' : '' }}
+                                                            @if($key == 'footer_menu' && $k == 'slug')
+                                                                placeholder="@lang('Example: /our-rules, /path/to/page, or https://apnacrowdfunding.com/our-rules')"
+                                                            @endif
+                                                        >
+                                                        @if($key == 'footer_menu' && $k == 'slug')
+                                                            <small class="text--muted d-block mt-1">
+                                                                @lang('You can enter any value: /path, /path/to/page, full URL, or simple slug. No validations applied.')
+                                                            </small>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             </div>

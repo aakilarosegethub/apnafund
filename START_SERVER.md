@@ -1,35 +1,85 @@
-# Server Start Karne Ke Liye
+# Server Start Guide
 
-## Quick Start Command:
+## Issue: Connection Refused Error
 
-```bash
-cd /Applications/XAMPP/xamppfiles/htdocs/apnacrowdfunding
-/Applications/XAMPP/xamppfiles/bin/php artisan serve --host=0.0.0.0 --port=8000
-```
+Agar aapko `ERR_CONNECTION_REFUSED` error aa raha hai, to yeh steps follow karein:
 
-## Ya Phir Script Use Karo:
+### Step 1: XAMPP Start Karein
 
-```bash
-cd /Applications/XAMPP/xamppfiles/htdocs/apnacrowdfunding
-chmod +x serve.sh
-./serve.sh
-```
+1. **XAMPP Control Panel** kholen
+2. **MySQL** ko **Start** karein
+3. **Apache** (agar needed ho) ko **Start** karein
 
-## Server URLs:
-- http://localhost:8000
-- http://0.0.0.0:8000
-- http://127.0.0.1:8000
-
-## Background Mein Run Karne Ke Liye:
+Ya terminal se:
 
 ```bash
-cd /Applications/XAMPP/xamppfiles/htdocs/apnacrowdfunding
-nohup /Applications/XAMPP/xamppfiles/bin/php artisan serve --host=0.0.0.0 --port=8000 > server.log 2>&1 &
+# XAMPP directory mein jao
+cd /Applications/XAMPP/xamppfiles
+
+# MySQL start karein
+./xampp startmysql
+
+# Apache start karein (agar needed)
+./xampp startapache
 ```
 
-## Server Stop Karne Ke Liye:
+### Step 2: Laravel Server Start Karein
 
 ```bash
-pkill -f "artisan serve"
+cd /Applications/XAMPP/xamppfiles/htdocs/apnafund
+
+# Server start karein
+php artisan serve --host=192.168.1.34 --port=8000
 ```
 
+Ya existing script use karein:
+
+```bash
+./run_server
+```
+
+### Step 3: Database Connection Check Karein
+
+`.env` file mein database settings check karein:
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=your_database_name
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+### Quick Fix Commands:
+
+```bash
+# MySQL status check
+/Applications/XAMPP/xamppfiles/bin/mysql.server status
+
+# MySQL start (agar permission issue ho to sudo use karein)
+sudo /Applications/XAMPP/xamppfiles/bin/mysql.server start
+
+# Laravel server start
+cd /Applications/XAMPP/xamppfiles/htdocs/apnafund
+php artisan serve --host=192.168.1.34 --port=8000
+```
+
+### Common Issues:
+
+1. **MySQL PID file exists but server not running:**
+   ```bash
+   rm -f /Applications/XAMPP/xamppfiles/var/mysql/*.pid
+   /Applications/XAMPP/xamppfiles/xampp startmysql
+   ```
+
+2. **Port 8000 already in use:**
+   ```bash
+   lsof -i :8000
+   # Process kill karein agar needed
+   kill -9 <PID>
+   ```
+
+3. **Database connection refused:**
+   - XAMPP Control Panel se MySQL start karein
+   - `.env` file mein database credentials check karein

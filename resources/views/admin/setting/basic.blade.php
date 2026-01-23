@@ -63,6 +63,37 @@
                             <input type="text" class="form--control" name="second_color" value="#{{ $setting->second_color }}" placeholder="@lang('Hex Code e.g. #ffff00')" required>
                         </div>
                     </div>
+                    
+                    <!-- Allowed Countries Section -->
+                    <div class="col-12 mt-4">
+                        <div class="card border">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">@lang('Allowed Countries for Project Location')</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" name="use_selected_countries" id="useSelectedCountries" value="1" {{ $useSelectedOnly ?? false ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="useSelectedCountries">
+                                        @lang('Use Only Selected Countries')
+                                    </label>
+                                    <small class="form-text text-muted d-block">@lang('If unchecked, all countries will be available. If checked, only selected countries will be shown.')</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form--label">@lang('Select Countries')</label>
+                                    <select class="form--control form-select select-2" name="selected_countries[]" id="selectedCountries" multiple style="height: 200px;">
+                                        @foreach($allCountries ?? [] as $country)
+                                            <option value="{{ $country }}" {{ in_array($country, $selectedCountries ?? []) ? 'selected' : '' }}>
+                                                {{ $country }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <small class="form-text text-muted">@lang('Hold Ctrl/Cmd to select multiple countries')</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="col-12">
                         <div class="d-flex justify-content-center">
                             <button type="submit" class="btn btn--base px-4">@lang('Submit')</button>

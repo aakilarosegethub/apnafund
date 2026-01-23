@@ -26,19 +26,36 @@ class CustomCodeController extends Controller
             'footer_code' => 'nullable|string',
         ]);
 
-        // Update header code
-        SiteData::updateOrCreate(
-            ['data_key' => 'custom_code.header'],
-            ['data_info' => ['code' => $request->header_code ?? '']]
-        );
+        try {
+            // Get header code value (handle null and empty strings)
+            $headerCodeValue = $request->input('header_code', '');
+            $headerCodeValue = $headerCodeValue !== null ? $headerCodeValue : '';
 
-        // Update footer code
-        SiteData::updateOrCreate(
-            ['data_key' => 'custom_code.footer'],
-            ['data_info' => ['code' => $request->footer_code ?? '']]
-        );
+            // Update header code
+            SiteData::updateOrCreate(
+                ['data_key' => 'custom_code.header'],
+                ['data_info' => ['code' => $headerCodeValue]]
+            );
 
-        $toast[] = ['success', 'Custom code updated successfully'];
-        return back()->withToasts($toast);
+            // Get footer code value (handle null and empty strings)
+            $footerCodeValue = $request->input('footer_code', '');
+            $footerCodeValue = $footerCodeValue !== null ? $footerCodeValue : '';
+
+            // Update footer code
+            SiteData::updateOrCreate(
+                ['data_key' => 'custom_code.footer'],
+                ['data_info' => ['code' => $footerCodeValue]]
+            );
+
+            $toast[] = ['success', 'Custom code updated successfully'];
+            return back()->withToasts($toast);
+        } catch (\Exception $e) {
+            \Log::error('Custom code update failed: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            $toast[] = ['error', 'Failed to update custom code. Please try again.'];
+            return back()->withToasts($toast);
+        }
     }
 } 

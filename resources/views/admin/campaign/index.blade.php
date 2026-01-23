@@ -68,6 +68,10 @@
                                 <a href="{{ route('admin.campaigns.details', $campaign->id) }}" class="btn btn--sm btn-outline--base">
                                     <i class="ti ti-info-square-rounded"></i> @lang('Details')
                                 </a>
+                                
+                                <a href="{{ route('admin.campaigns.edit', $campaign->id) }}" class="btn btn--sm btn-outline--primary">
+                                    <i class="ti ti-edit"></i> @lang('Edit')
+                                </a>
 
                                 @if($campaign->status != ManageStatus::CAMPAIGN_REJECTED && !$campaign->isExpired())
                                     <div class="custom--dropdown">

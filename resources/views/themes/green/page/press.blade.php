@@ -29,6 +29,9 @@
     text-align:center;
     margin-bottom:80px;
 }
+.stats-box ul li{
+    list-style:none;
+}
 .stats-box h2{
     font-size:28px;
     font-weight:700;
@@ -117,128 +120,100 @@
 
 <div class="container">
 
-    <!-- HERO -->
-    <div class="press-hero">
+    <!-- HERO / PRESSROOM -->
+    <div class="press-hero mb-5">
         <h1>Pressroom</h1>
         <p>
-            ApnaCrowdfunding is a people-powered crowdfunding platform built to help dreamers, doers and changemakers across the world and beyond turn ideas into reality. From personal causes and social impact initiatives to startups, creative projects, and community needs we help stories find support and ideas find life.
+            ApnaCrowdfunding is a crowdfunding platform that helps people around the world turn their ideas into reality. It can be a personal project, a social project, a start-up, or anything else. We will make it come true. Working on an ApnaCrowdfunding story? You can belong from any profession and upload your story on ApnaCrowdfunding.
         </p>
     </div>
 
+    <!-- MEDIA INQUIRIES -->
+    <div class="media-inquiries mb-5">
+        <h4 class="fw-bold">Media Inquiries</h4>
+        <p>Email: <a href="mailto:press@apnacrowdfunding.com">press@apnacrowdfunding.com</a></p>
+        <p>You can take help from our support centre and chat with our team.</p>
+    </div>
+
     <!-- STATS -->
-    <div class="stats-box">
-        <h2>Our mission is to make fundraising accessible, transparent, and human.
-</h2>
-       
-        <a href="#" class="btn mt-3">View company stats</a>
+    <div class="stats-box mb-5">
+        <h4 class="fw-bold">ApnaCrowdfunding at a glance</h4>
+        <ul>
+            <li>Since our launch, ApnaCrowdfunding has helped thousands of individuals, families, creators, and entrepreneurs raise funds for causes that truly matter.</li>
+            <li>Thousands of campaigns launched</li>
+            <li>Millions raised for social and creative causes</li>
+            <li>Transparent fundraising</li>
+        </ul>
     </div>
 
-    <!-- FAQ -->
-<div class="mb-5">
-    <h4 class="fw-bold mb-4">The basics</h4>
 
-    <div class="faq-item">
-        <div class="faq-question">
-            <span>What is ApnaCrowdfunding?</span>
-            <span class="faq-icon">+</span>
-        </div>
-        <div class="faq-answer">
-            ApnaCrowdfunding is a platform that helps creators bring ideas to life
-            with the support of a community that believes in them.
-        </div>
+    <!-- OUR STORY -->
+    <div class="our-story mb-5">
+        <h4 class="fw-bold">Our Story</h4>
+        <p>
+            ApnaCrowdfunding has a simple realization: People want to help but they need the right platform to do so. Countless families, creators, and innovators struggle to access timely financial support.
+        </p>
     </div>
 
-    <div class="faq-item">
-        <div class="faq-question">
-            <span>How does funding work?</span>
-            <span class="faq-icon">+</span>
-        </div>
-        <div class="faq-answer">
-            Creators set a goal and timeline. Supporters pledge money to help
-            reach that goal. If the goal is met, the project moves forward.
-        </div>
+    <!-- LEADERSHIP & TEAM -->
+    <div class="leadership-box mb-5">
+        <h4 class="fw-bold">Leadership & Team</h4>
+        <p>ApnaCrowdfunding is a team of people who believe that crowdfunding can change lives. “Crowdfunding is about compassion and hope.”</p>
     </div>
 
-    <div class="faq-item">
-        <div class="faq-question">
-            <span>Who can launch a project?</span>
-            <span class="faq-icon">+</span>
-        </div>
-        <div class="faq-answer">
-            Anyone with a creative or meaningful idea can launch a project,
-            as long as it follows our platform guidelines.
-        </div>
-    </div>
+    <!-- EXISTING FAQ (unchanged) -->
+    <div class="mb-5">
+        <h4 class="fw-bold mb-4">The basics</h4>
 
-    <div class="faq-item">
-        <div class="faq-question">
-            <span>Where is ApnaCrowdfunding available?</span>
-            <span class="faq-icon">+</span>
-        </div>
-        <div class="faq-answer">
-            ApnaCrowdfunding is accessible online and supports creators
-            and backers from multiple regions.
-        </div>
-    </div>
-</div>
+        <div class="faq-item">
+            <div class="faq-question">
+                <span>How does ApnaCrowdfunding work?</span>
+                <span class="faq-icon">+</span>
+            </div>
+            <div class="faq-answer">
+             Create a campaign, share your story and invite people to show their support. Funds go directly to the beneficiary with complete transparency.
 
-</div>
-
-<!-- QUOTE -->
-<div class="quote-box">
-    <p>
-        “Kickstarter gives creative people the freedom to build ambitious ideas
-        with the support of a passionate global community.”
-    </p>
-</div>
-
-<div class="container">
-
-    <!-- PROFILE 1 -->
-    <div class="row profile-section align-items-center">
-        <div class="col-md-5">
-            <img src="https://images.unsplash.com/photo-1527980965255-d3b416303d12" class="profile-img" alt="">
+            </div>
         </div>
-        <div class="col-md-7">
-            <h5 class="fw-bold">Creator Story</h5>
-            <p>
-                A musician shares how Kickstarter helped turn an independent album into a global success.
-            </p>
-        </div>
-    </div>
 
-    <!-- TEAM -->
-    <div class="row profile-section">
-        <div class="col-md-4">
-            <img src="https://images.unsplash.com/photo-1522075469751-3a6694fb2f61" class="profile-img" alt="">
+        <div class="faq-item">
+            <div class="faq-question">
+                <span>Why do people raise funds?
+</span>
+                <span class="faq-icon">+</span>
+            </div>
+            <div class="faq-answer">
+                Our campaigns are a representation of true human stories. A hope, urgency, creativity or change.
+
+            </div>
         </div>
-        <div class="col-md-4">
-            <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e" class="profile-img" alt="">
+
+        <div class="faq-item">
+            <div class="faq-question">
+                <span>What kind of causes are allowed?</span>
+                <span class="faq-icon">+</span>
+            </div>
+            <div class="faq-answer">
+                Medical emergencies, education, startups, creative projects, NGOs, social causes, community needs and more.
+
+            </div>
         </div>
-        <div class="col-md-4">
-            <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2" class="profile-img" alt="">
+
+        <div class="faq-item">
+            <div class="faq-question">
+                <span>How does ApnaCrowdfunding sustain itself?
+</span>
+                <span class="faq-icon">+</span>
+            </div>
+            <div class="faq-answer">
+               We will take a small amount of fee to give security to our creators.
+
+            </div>
         </div>
     </div>
 
 </div>
 
-<!-- HIGHLIGHT -->
-<div class="highlight-box">
-    <p>
-        “Kickstarter is the world’s largest platform for funding creative work,
-        helping artists, designers, and innovators bring their ideas to life.”
-    </p>
-</div>
-
-<div class="container mb-5">
-
-    <h4 class="fw-bold mb-3">Highlights</h4>
-    <p>
-        Kickstarter continues to support creative independence by enabling
-        artists and innovators to work directly with their audiences.
-    </p>
-
-</div>
 <script>
 document.querySelectorAll('.faq-question').forEach(item=>{
     item.addEventListener('click',()=>{
@@ -247,6 +222,8 @@ document.querySelectorAll('.faq-question').forEach(item=>{
     });
 });
 </script>
+
+
 
 
 @endsection

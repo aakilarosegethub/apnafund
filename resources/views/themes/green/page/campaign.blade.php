@@ -361,16 +361,25 @@
     <script>
         // Function to build URL and navigate
         function applyFilters() {
-            const category = $('#filter-category').val() || '';
-            const name = $('#campaign-name').val() || '';
-            const sort = $('#sort-campaigns').val() || '';
+            const category  = $('#filter-category').val() || '';
+            const name      = $('#campaign-name').val() || '';
+            const sort      = $('#sort-campaigns').val() || '';
             const dateRange = $('#date-range').val() || '';
             
-            // Build URL with parameters
-            const baseUrl = '{{ route("campaign") }}';
+            // Base URLs
+            const baseCampaignUrl   = '{{ route("campaign") }}'; // /campaigns
+            const categoryBaseUrl   = '{{ url("campaigns/category") }}'; // /campaigns/category
+
+            // Decide base URL: pretty category URL when category is selected
+            let baseUrl;
+            if (category) {
+                baseUrl = categoryBaseUrl + '/' + encodeURIComponent(category);
+            } else {
+                baseUrl = baseCampaignUrl;
+            }
+
+            // Build query parameters (exclude category, already in path)
             const params = new URLSearchParams();
-            
-            if (category) params.append('category', category);
             if (name) params.append('name', name);
             if (sort) params.append('sort', sort);
             if (dateRange) params.append('date_range', dateRange);

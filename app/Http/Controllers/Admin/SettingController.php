@@ -17,8 +17,47 @@ class SettingController extends Controller
     function basic() {
         $pageTitle   = 'Basic Setting';
         $timeRegions = json_decode(file_get_contents(resource_path('views/admin/partials/timeRegion.json')));
+        
+        // Get allowed countries settings
+        $allowedCountriesData = SiteData::where('data_key', 'general.allowed_countries')->first();
+        $selectedCountries = [];
+        $useSelectedOnly = false;
+        
+        if ($allowedCountriesData && $allowedCountriesData->data_info) {
+            $dataInfo = is_array($allowedCountriesData->data_info) ? $allowedCountriesData->data_info : (array)$allowedCountriesData->data_info;
+            $selectedCountries = $dataInfo['selected_countries'] ?? [];
+            $useSelectedOnly = $dataInfo['use_selected_only'] ?? false;
+        }
+        
+        // Get all countries list
+        $allCountries = $this->getAllCountriesList();
 
-        return view('admin.setting.basic', compact('pageTitle', 'timeRegions'));
+        return view('admin.setting.basic', compact('pageTitle', 'timeRegions', 'selectedCountries', 'useSelectedOnly', 'allCountries'));
+    }
+    
+    private function getAllCountriesList() {
+        return [
+            'Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Antigua and Barbuda', 'Argentina', 'Armenia', 'Australia', 'Austria',
+            'Azerbaijan', 'Bahamas', 'Bahrain', 'Bangladesh', 'Barbados', 'Belarus', 'Belgium', 'Belize', 'Benin', 'Bhutan',
+            'Bolivia', 'Bosnia and Herzegovina', 'Botswana', 'Brazil', 'Brunei', 'Bulgaria', 'Burkina Faso', 'Burundi', 'Cambodia', 'Cameroon',
+            'Canada', 'Cape Verde', 'Central African Republic', 'Chad', 'Chile', 'China', 'Colombia', 'Comoros', 'Congo', 'Costa Rica',
+            'Croatia', 'Cuba', 'Cyprus', 'Czech Republic', 'Denmark', 'Djibouti', 'Dominica', 'Dominican Republic', 'Ecuador', 'Egypt',
+            'El Salvador', 'Equatorial Guinea', 'Eritrea', 'Estonia', 'Eswatini', 'Ethiopia', 'Fiji', 'Finland', 'France', 'Gabon',
+            'Gambia', 'Georgia', 'Germany', 'Ghana', 'Greece', 'Grenada', 'Guatemala', 'Guinea', 'Guinea-Bissau', 'Guyana',
+            'Haiti', 'Honduras', 'Hungary', 'Iceland', 'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland', 'Israel',
+            'Italy', 'Jamaica', 'Japan', 'Jordan', 'Kazakhstan', 'Kenya', 'Kiribati', 'Kosovo', 'Kuwait', 'Kyrgyzstan',
+            'Laos', 'Latvia', 'Lebanon', 'Lesotho', 'Liberia', 'Libya', 'Liechtenstein', 'Lithuania', 'Luxembourg', 'Madagascar',
+            'Malawi', 'Malaysia', 'Maldives', 'Mali', 'Malta', 'Marshall Islands', 'Mauritania', 'Mauritius', 'Mexico', 'Micronesia',
+            'Moldova', 'Monaco', 'Mongolia', 'Montenegro', 'Morocco', 'Mozambique', 'Myanmar', 'Namibia', 'Nauru', 'Nepal',
+            'Netherlands', 'New Zealand', 'Nicaragua', 'Niger', 'Nigeria', 'North Korea', 'North Macedonia', 'Norway', 'Oman', 'Pakistan',
+            'Palau', 'Palestine', 'Panama', 'Papua New Guinea', 'Paraguay', 'Peru', 'Philippines', 'Poland', 'Portugal', 'Qatar',
+            'Romania', 'Russia', 'Rwanda', 'Saint Kitts and Nevis', 'Saint Lucia', 'Saint Vincent and the Grenadines', 'Samoa', 'San Marino', 'Sao Tome and Principe', 'Saudi Arabia',
+            'Senegal', 'Serbia', 'Seychelles', 'Sierra Leone', 'Singapore', 'Slovakia', 'Slovenia', 'Solomon Islands', 'Somalia', 'South Africa',
+            'South Korea', 'South Sudan', 'Spain', 'Sri Lanka', 'Sudan', 'Suriname', 'Sweden', 'Switzerland', 'Syria', 'Taiwan',
+            'Tajikistan', 'Tanzania', 'Thailand', 'Timor-Leste', 'Togo', 'Tonga', 'Trinidad and Tobago', 'Tunisia', 'Turkey', 'Turkmenistan',
+            'Tuvalu', 'Uganda', 'Ukraine', 'United Arab Emirates', 'United Kingdom', 'United States', 'Uruguay', 'Uzbekistan', 'Vanuatu', 'Vatican City',
+            'Venezuela', 'Vietnam', 'Yemen', 'Zambia', 'Zimbabwe'
+        ];
     }
 
     function basicUpdate() {
@@ -49,6 +88,23 @@ class SettingController extends Controller
         $timeRegionFile = config_path('timeRegion.php');
         $setTimeRegion  = '<?php $timeRegion = '.request('time_region').' ?>';
         file_put_contents($timeRegionFile, $setTimeRegion);
+
+        // Save allowed countries settings
+        $allowedCountriesData = SiteData::where('data_key', 'general.allowed_countries')->first();
+        if (!$allowedCountriesData) {
+            $allowedCountriesData = new SiteData();
+            $allowedCountriesData->data_key = 'general.allowed_countries';
+        }
+        
+        // Get checkbox value (will be '1' if checked, null if unchecked)
+        $useSelectedOnly = request()->has('use_selected_countries') && request('use_selected_countries') == '1';
+        $selectedCountries = request('selected_countries') ? (array)request('selected_countries') : [];
+        
+        $allowedCountriesData->data_info = [
+            'use_selected_only' => $useSelectedOnly,
+            'selected_countries' => $selectedCountries
+        ];
+        $allowedCountriesData->save();
 
         $toast[] = ['success', 'Basic setting update success'];
         return back()->withToasts($toast);

@@ -82,6 +82,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'maintenance'      => \App\Http\Middleware\MaintenanceMode::class,
             'register.status'  => \App\Http\Middleware\AllowRegistration::class,
             'authorize.status' => \App\Http\Middleware\AuthorizationStatus::class,
+            'beta.gate'        => \App\Http\Middleware\BetaGate::class,
         ]);
 
         $middleware->validateCsrfTokens(

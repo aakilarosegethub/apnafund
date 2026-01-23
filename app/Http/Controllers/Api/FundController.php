@@ -273,22 +273,103 @@ class FundController extends BaseApiController
             $multifiless = implode('$;', $uploadedFilesss);
         }
 
-        $table = "tbl_fund";
-        if (empty($exp_date)) {
-            $field_values = ["cat_id", "title", "fund_for", "fund_amt", "fund_story", "fund_photos", "fund_date", "patient_photo", "patient_title", "patient_diagnosis", "fund_plan", "medical_certificate", "uid", "status", "charity_id", "longs", "lats", "full_address"];
-            $data_values = [$cat_id, $title, $fund_for, $fund_amt, $fund_story, $multifile, $fund_date, $multifiles, $patient_title, $patient_diagnosis, $fund_plan, $multifiless, $uid, $status, $charity_id, $longs, $lats, $full_address];
-        } else {
-            $field_values = ["cat_id", "title", "fund_for", "fund_amt", "fund_story", "fund_photos", "exp_date", "fund_date", "patient_photo", "patient_title", "patient_diagnosis", "fund_plan", "medical_certificate", "uid", "status", "charity_id", "longs", "lats", "full_address"];
-            $data_values = [$cat_id, $title, $fund_for, $fund_amt, $fund_story, $multifile, $exp_date, $fund_date, $multifiles, $patient_title, $patient_diagnosis, $fund_plan, $multifiless, $uid, $status, $charity_id, $longs, $lats, $full_address];
+        // Use campaigns table instead of tbl_fund
+        // Map fields from old tbl_fund to campaigns table
+        // campaigns table structure:
+        // - category_id (from cat_id)
+        // - name (from title)
+        // - description (from fund_story)
+        // - image (first photo from fund_photos)
+        // - gallery (JSON array of all photos)
+        // - goal_amount (from fund_amt)
+        // - start_date (from fund_date)
+        // - end_date (from exp_date or null)
+        // - user_id (from uid)
+        // - status: 2=pending, 1=approved, 0=rejected
+        // - location (from full_address)
+        // - slug (generated from name)
+
+        // Build gallery array from all uploaded photos
+        $gallery = [];
+        if (!empty($multifile)) {
+            $fundPhotos = explode('$;', $multifile);
+            $gallery = array_merge($gallery, $fundPhotos);
+        }
+        if (!empty($multifiles)) {
+            $patientPhotos = explode('$;', $multifiles);
+            $gallery = array_merge($gallery, $patientPhotos);
+        }
+        if (!empty($multifiless)) {
+            $certPhotos = explode('$;', $multifiless);
+            $gallery = array_merge($gallery, $certPhotos);
+        }
+        
+        // First photo is the main image
+        $mainImage = !empty($gallery) ? $gallery[0] : null;
+        
+        // Map status: 'Pending' -> 2, 'Approved' -> 1, 'Cancelled' -> 0
+        $campaignStatus = 2; // default to pending
+        if ($status == 'Approved') {
+            $campaignStatus = 1;
+        } elseif ($status == 'Cancelled' || $status == 'Rejected') {
+            $campaignStatus = 0;
         }
 
-        $check = $this->h->insertData_Api($field_values, $data_values, $table);
+        // Generate slug from title
+        $slug = \Illuminate\Support\Str::slug($title);
+        // Ensure slug is unique
+        $originalSlug = $slug;
+        $counter = 1;
+        while (\DB::table('campaigns')->where('slug', $slug)->exists()) {
+            $slug = $originalSlug . '-' . $counter;
+            $counter++;
+        }
 
-        return response()->json([
-            "ResponseCode" => "200",
-            "Result" => "true",
-            "ResponseMsg" => "Fund Raise Submited Wait For Approval!!"
-        ]);
+        // Prepare data for campaigns table
+        $campaignData = [
+            'user_id' => $uid,
+            'category_id' => $cat_id,
+            'name' => $title,
+            'slug' => $slug,
+            'description' => $fund_story,
+            'image' => $mainImage,
+            'gallery' => !empty($gallery) ? json_encode($gallery) : null,
+            'goal_amount' => $fund_amt,
+            'target_amount' => $fund_amt, // Some migrations use target_amount
+            'start_date' => $fund_date,
+            'end_date' => !empty($exp_date) ? $exp_date : null,
+            'status' => $campaignStatus,
+            'location' => $full_address,
+            'raised_amount' => 0,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s')
+        ];
+
+        try {
+            // Use Laravel DB facade directly to get better error handling
+            $check = \DB::table('campaigns')->insertGetId($campaignData);
+
+            if ($check) {
+                return response()->json([
+                    "ResponseCode" => "200",
+                    "Result" => "true",
+                    "ResponseMsg" => "Fund Raise Submited Wait For Approval!!",
+                    "fund_id" => $check
+                ]);
+            }
+
+            return response()->json([
+                "ResponseCode" => "401",
+                "Result" => "false",
+                "ResponseMsg" => "Fund creation failed! Please try again."
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                "ResponseCode" => "401",
+                "Result" => "false",
+                "ResponseMsg" => "Fund creation failed! Error: " . $e->getMessage()
+            ]);
+        }
     }
 
     /**

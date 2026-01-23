@@ -143,9 +143,15 @@
               @php
                 $itemData = is_array($item->data_info) ? $item->data_info : (array) $item->data_info;
                 $menuLabel = $itemData['menu_label'] ?? '';
-                $slug = $itemData['slug'] ?? '#';
-                // If slug starts with http, use as is, otherwise make it a URL
-                $url = (strpos($slug, 'http') === 0) ? $slug : url($slug);
+                $slug = trim($itemData['slug'] ?? '#');
+
+                // If slug is a full URL (http/https/www) OR already an absolute path (/xyz), use as is.
+                if (preg_match('/^https?:\/\//i', $slug) || preg_match('/^www\./i', $slug) || str_starts_with($slug, '/')) {
+                    $url = $slug;
+                } else {
+                    // Treat everything else as relative path under current domain
+                    $url = url($slug);
+                }
               @endphp
               <li><a href="{{ $url }}">{{ __($menuLabel) }}</a></li>
             @endforeach
@@ -162,9 +168,13 @@
               @php
                 $itemData = is_array($item->data_info) ? $item->data_info : (array) $item->data_info;
                 $menuLabel = $itemData['menu_label'] ?? '';
-                $slug = $itemData['slug'] ?? '#';
-                // If slug starts with http, use as is, otherwise make it a URL
-                $url = (strpos($slug, 'http') === 0) ? $slug : url($slug);
+                $slug = trim($itemData['slug'] ?? '#');
+
+                if (preg_match('/^https?:\/\//i', $slug) || preg_match('/^www\./i', $slug) || str_starts_with($slug, '/')) {
+                    $url = $slug;
+                } else {
+                    $url = url($slug);
+                }
               @endphp
               <li><a href="{{ $url }}">{{ __($menuLabel) }}</a></li>
             @endforeach
@@ -181,9 +191,13 @@
               @php
                 $itemData = is_array($item->data_info) ? $item->data_info : (array) $item->data_info;
                 $menuLabel = $itemData['menu_label'] ?? '';
-                $slug = $itemData['slug'] ?? '#';
-                // If slug starts with http, use as is, otherwise make it a URL
-                $url = (strpos($slug, 'http') === 0) ? $slug : url($slug);
+                $slug = trim($itemData['slug'] ?? '#');
+
+                if (preg_match('/^https?:\/\//i', $slug) || preg_match('/^www\./i', $slug) || str_starts_with($slug, '/')) {
+                    $url = $slug;
+                } else {
+                    $url = url($slug);
+                }
               @endphp
               <li><a href="{{ $url }}">{{ __($menuLabel) }}</a></li>
             @endforeach
@@ -232,9 +246,13 @@
                 @php
                   $itemData = is_array($item->data_info) ? $item->data_info : (array) $item->data_info;
                   $menuLabel = $itemData['menu_label'] ?? '';
-                  $slug = $itemData['slug'] ?? '#';
-                  // If slug starts with http, use as is, otherwise make it a URL
-                  $url = (strpos($slug, 'http') === 0) ? $slug : url($slug);
+                  $slug = trim($itemData['slug'] ?? '#');
+
+                  if (preg_match('/^https?:\/\//i', $slug) || preg_match('/^www\./i', $slug) || str_starts_with($slug, '/')) {
+                      $url = $slug;
+                  } else {
+                      $url = url($slug);
+                  }
                 @endphp
                 <a href="{{ $url }}" class="footer-down-link">{{ __($menuLabel) }}</a>
               @endforeach

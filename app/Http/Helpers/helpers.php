@@ -380,10 +380,28 @@ function activeTheme($asset = false): string {
 
 function getPageSections($arr = false) {
     $jsonUrl  = resource_path('views/') . str_replace('.', '/', activeTheme()) . 'site.json';
-    $sections = json_decode(file_get_contents($jsonUrl));
+    
+    // Check if file exists
+    if (!file_exists($jsonUrl)) {
+        \Log::error('site.json not found', ['path' => $jsonUrl, 'active_theme' => bs('active_theme')]);
+        return $arr ? [] : (object)[];
+    }
+    
+    $jsonContent = file_get_contents($jsonUrl);
+    $sections = json_decode($jsonContent);
+
+    // Check for JSON errors
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        \Log::error('JSON decode error in site.json', [
+            'error' => json_last_error_msg(),
+            'path' => $jsonUrl,
+            'active_theme' => bs('active_theme')
+        ]);
+        return $arr ? [] : (object)[];
+    }
 
     if ($arr) {
-        $sections = json_decode(file_get_contents($jsonUrl), true);
+        $sections = json_decode($jsonContent, true);
         ksort($sections);
     }
 
@@ -660,8 +678,11 @@ function getDefaultUserAvatar(): string {
 
 function getCustomCode($type) {
     $codeData = SiteData::where('data_key', 'custom_code.' . $type)->first();
-    if ($codeData && $codeData->data_info && isset($codeData->data_info->code)) {
-        return $codeData->data_info->code;
+    if ($codeData && $codeData->data_info) {
+        $dataInfo = is_array($codeData->data_info) ? $codeData->data_info : (array)$codeData->data_info;
+        if (isset($dataInfo['code']) && !empty($dataInfo['code'])) {
+            return $dataInfo['code'];
+        }
     }
     return '';
 }

@@ -9,9 +9,10 @@
     
     // Set default section if not provided
     $section = $section ?? 'basics';
+    $currentSection = $section;
 @endphp
-@extends($activeTheme . 'layouts.frontend')
-@section('style')
+@extends($activeTheme . 'layouts.blank')
+@section('custom-css')
 <style>
     .input-group{
         overflow :unset !important;
@@ -410,6 +411,13 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="{{ asset($activeThemeTrue . 'css/dropzone.min.css') }}">
+    @if($currentSection == 'story')
+    <!-- include libraries(jQuery, bootstrap) -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" rel="stylesheet">
+    <!-- include summernote css/js -->
+    <link href="https://cdn.jsdelivr.net/npm/summernote@0.9.0/dist/summernote.min.css" rel="stylesheet">
+    @endif
 @endsection
 @section('frontend')
 
@@ -1492,17 +1500,7 @@
 
 @endsection
 
-@push('page-style-lib')
-    <link rel="stylesheet" href="{{ asset($activeThemeTrue . 'css/dropzone.min.css') }}">
-    @if($currentSection == 'story')
-    <!-- include libraries(jQuery, bootstrap) -->
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" rel="stylesheet">
-    <!-- include summernote css/js -->
-    <link href="https://cdn.jsdelivr.net/npm/summernote@0.9.0/dist/summernote.min.css" rel="stylesheet">
-    @endif
-@endpush
-
-@push('page-script-lib')
+@section('script')
     <script src="{{ asset($activeThemeTrue . 'js/dropzone.min.js') }}"></script>
     @if($currentSection == 'story')
     <!-- include libraries(jQuery, bootstrap) -->
@@ -1511,9 +1509,8 @@
     <!-- include summernote css/js -->
     <script src="https://cdn.jsdelivr.net/npm/summernote@0.9.0/dist/summernote.min.js"></script>
     @endif
-@endpush
-
-@include($activeTheme . 'user.campaign.commonStyleScript')
+    @include($activeTheme . 'user.campaign.commonStyleScript')
+@endsection
 
 
 

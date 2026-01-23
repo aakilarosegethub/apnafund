@@ -1,320 +1,322 @@
-@php
-    $activeTheme = activeTheme();
-@endphp
+@extends($activeTheme . 'layouts.green-home')
 
-@extends($activeTheme . 'layouts.frontend')
-
-@section('content')
-
+@section('custom-css')
 <style>
-:root{
-    --primary:#05ce78;
-    --primary-dark:#04995a;
-    --deep:#064e3b;
-    --border:#e6e9ee;
-    --text:#1f2937;
-    --muted:#6b7280;
-}
+    body {
+        background: #f7f7f7;
+    }
 
-/* ================= BODY ================= */
-body{
-    margin:0;
-    min-height:100vh;
-    font-family:'Inter',sans-serif;
-    background:linear-gradient(135deg,#f4fff9 0%,#dff8ec 100%);
-}
+    .ks-login-wrapper {
+        min-height: calc(100vh - 180px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 16px;
+        margin-top: 80px;
+    }
 
-/* ================= LAYOUT ================= */
-.login-page-container{
-    min-height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:24px;
-}
+    .ks-login-card {
+        width: 100%;
+        max-width: 420px;
+        background: #ffffff;
+        padding: 32px 28px;
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
 
-/* ================= LEFT ================= */
-.login-illustration{
-    flex:1;
-    max-width:620px;
-    padding:30px;
-}
+    .ks-logo {
+        text-align: center;
+        margin-bottom: 20px;
+    }
 
-.illustration-container{
-    height:520px;
-    background: radial-gradient(circle at top, rgba(255, 255, 255, .15), transparent 60%), linear-gradient(160deg, #ffffff 0%, #6adaba 40%, #05ce78 100%);
-    border-radius:28px;
-    box-shadow:0 40px 90px rgba(0,0,0,.35);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    position:relative;
-    overflow:hidden;
-}
+    .ks-logo h1 {
+        font-size: 28px;
+        font-weight: 800;
+        color: #05ce78;
+        margin: 0;
+        letter-spacing: -1px;
+    }
 
-/* subtle dark overlay */
-.illustration-container::after{
-    content:'';
-    position:absolute;
-    inset:0;
-    background:rgba(0,0,0,.12);
-}
+    .ks-title {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 24px;
+        color: #222;
+    }
 
-/* ================= CONTENT ================= */
-.illustration-content{
-    text-align:center;
-    color:#fff;
-    position:relative;
-    z-index:2;
-}
+    .ks-form-group {
+        margin-bottom: 18px;
+    }
 
-/* 🔥 LOGO CLEAR & STRONG */
-.illustration-content img{
-    max-width:260px;
-    margin-bottom:30px;
-    filter:
-        drop-shadow(0 10px 30px rgba(0,0,0,.6))
-        drop-shadow(0 0 20px rgba(5,206,120,.5));
-}
+    .ks-form-group input {
+        width: 100%;
+        padding: 12px 14px;
+        font-size: 15px;
+        border: 1px solid #dcdcdc;
+        border-radius: 4px;
+        background: #eef4ff;
+    }
 
-.illustration-title{
-    font-size:2.6rem;
-    font-weight:800;
-    margin-bottom:10px;
-    letter-spacing:.5px;
-}
+    .ks-form-group input:focus {
+        outline: none;
+        border-color: #05ce78;
+        background: #ffffff;
+    }
 
-.illustration-subtitle{
-    font-size:1.15rem;
-    opacity:.95;
-}
+    .ks-forgot {
+        display: inline-block;
+        font-size: 14px;
+        color: #2752ff;
+        margin: 6px 0 16px;
+        text-decoration: none;
+    }
 
-/* ================= LOGIN CARD ================= */
-.login-form-section{
-    flex:1;
-    max-width:460px;
-    background:#fff;
-    border-radius:26px;
-    box-shadow:0 35px 80px rgba(0,0,0,.15);
-    padding:48px;
-}
+    .ks-forgot:hover {
+        text-decoration: underline;
+    }
 
-/* ================= HEADER ================= */
-.login-header{
-    text-align:center;
-    margin-bottom:34px;
-}
-.login-title{
-    font-size:1.9rem;
-    font-weight:700;
-    color:var(--text);
-}
-.login-subtitle{
-    color:var(--muted);
-    font-size:.95rem;
-}
+    .ks-login-btn {
+        width: 100%;
+        padding: 12px;
+        background: #05ce78;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        position: relative;
+        transition: background 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
 
-/* ================= FORM ================= */
-.form-group{margin-bottom:18px;}
-.form-label{
-    font-size:.9rem;
-    font-weight:600;
-    margin-bottom:6px;
-    display:block;
-}
+    .ks-login-btn:hover:not(:disabled) {
+        background: #04b56a;
+    }
 
-.form-control{
-    width:100%;
-    padding:15px 18px;
-    border-radius:14px;
-    border:1.6px solid var(--border);
-    font-size:1rem;
-}
+    .ks-login-btn:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+    }
 
-.form-control:focus{
-    outline:none;
-    border-color:var(--primary);
-    box-shadow:0 0 0 5px rgba(5,206,120,.15);
-}
+    .btn-loader {
+        display: none;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #ffffff;
+        border-top: 2px solid transparent;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
 
-/* ================= PASSWORD ================= */
-.input-group{position:relative;}
-.input-group-text{
-    position:absolute;
-    right:16px;
-    top:50%;
-    transform:translateY(-50%);
-    border:none;
-    background:none;
-    cursor:pointer;
-    color:#6b7280;
-}
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
 
-/* ================= CHECK ================= */
-.form-check{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin:18px 0;
-}
+    .btn-loading .btn-loader {
+        display: inline-block;
+    }
 
-/* ================= BUTTON ================= */
-.btn-theme{
-    width:100%;
-    height:54px;
-    border-radius:16px;
-    border:none;
-    background:linear-gradient(135deg,var(--primary),var(--primary-dark));
-    color:#fff;
-    font-weight:600;
-    font-size:16px;
-    cursor:pointer;
-    box-shadow:0 18px 40px rgba(5,206,120,.45);
-    transition:.25s;
-}
-.btn-theme:hover{transform:translateY(-2px);}
+    .btn-loading .btn-text {
+        opacity: 0.7;
+    }
 
-/* ================= SOCIAL ================= */
-.divider{
-    text-align:center;
-    margin:30px 0;
-    position:relative;
-}
-.divider::before{
-    content:'';
-    height:1px;
-    background:var(--border);
-    position:absolute;
-    top:50%;
-    left:0;
-    right:0;
-}
-.divider span{
-    background:#fff;
-    padding:0 14px;
-    color:var(--muted);
-    font-size:14px;
-    position:relative;
-}
+    .ks-remember {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 14px 0;
+        font-size: 14px;
+    }
 
-.social-login-buttons{
-    display:flex;
-    gap:14px;
-    justify-content:center;
-}
+    .ks-divider {
+        text-align: center;
+        margin: 22px 0;
+        position: relative;
+    }
 
-.social-btn{
-    padding:11px 20px;
-    border-radius:30px;
-    border:1px solid var(--border);
-    text-decoration:none;
-    font-weight:500;
-    color:#111;
-    display:flex;
-    align-items:center;
-    gap:8px;
-    transition:.25s;
-}
-.facebook-btn:hover{background:#1877f2;color:#fff;}
-.google-btn:hover{background:#db4437;color:#fff;}
+    .ks-divider::before {
+        content: "";
+        height: 1px;
+        background: #e5e5e5;
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 50%;
+    }
 
-/* ================= FOOTER ================= */
-.login-footer{
-    text-align:center;
-    margin-top:26px;
-    font-size:.9rem;
-}
+    .ks-divider span {
+        background: #fff;
+        padding: 0 10px;
+        font-size: 14px;
+        color: #666;
+        position: relative;
+    }
 
-/* ================= MOBILE ================= */
-@media(max-width:768px){
-    .login-illustration{display:none;}
-    .login-form-section{padding:36px;}
+    .ks-social-btn {
+        width: 100%;
+        padding: 12px;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .ks-apple {
+        background: #000;
+        color: #fff;
+    }
+
+    .ks-facebook {
+        background: #3b5998;
+        color: #fff;
+    }
+
+    .ks-google {
+        background: #db4437;
+        color: #fff;
+    }
+
+    .ks-social-info {
+        font-size: 13px;
+        color: #666;
+        margin-top: 12px;
+        line-height: 1.5;
+    }
+
+    .ks-footer {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 14px;
+    }
+
+    .ks-footer a {
+        color: #2752ff;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .ks-footer a:hover {
+        text-decoration: underline;
+    }
+
+    .alert-danger {
+        background: #fde8e8;
+        border: 1px solid #f5b5b5;
+        padding: 10px 12px;
+        font-size: 14px;
+        color: #9b1c1c;
+        margin-bottom: 16px;
+        border-radius: 4px;
     }
 </style>
+@endsection
 
-<div class="login-page-container">
+@section('content')
+<div class="ks-login-wrapper">
+    <div class="ks-login-card">
 
-    {{-- LEFT --}}
-    <div class="login-illustration">
-        <div class="illustration-container">
-            <div class="illustration-content">
-                <a href="{{ url('/') }}">
-                    <img src="{{ getImage(getFilePath('logoFavicon').'/logo_light.png',getFileSize('logoFavicon')) }}">
-                </a>
-              
-                <p class="illustration-subtitle">Secure & Easy Fundraising Platform</p>
-            </div>
+        <div class="ks-logo">
+            <h1>{{ bs('site_name') ?? 'ApnaFund' }}</h1>
         </div>
-    </div>
 
-    {{-- RIGHT --}}
-    <div class="login-form-section">
-
-        <div class="login-header">
-            <h2 class="login-title">Welcome Back 👋</h2>
-            <p class="login-subtitle">Login to continue</p>
-        </div>
+        <h2 class="ks-title">Log in</h2>
 
         @if($errors->any())
-            <div class="alert alert-danger">
+            <div class="alert-danger">
                 @foreach($errors->all() as $error)
                     <div>{{ $error }}</div>
-                    @endforeach
+                @endforeach
             </div>
         @endif
 
-        <form action="{{ route('user.login') }}" method="POST">
+        <form method="POST" action="{{ route('user.login') }}">
             @csrf
 
-            <div class="form-group">
-                <label class="form-label">Username or Email</label>
-                <input class="form-control" name="username" value="{{ old('username') }}" required>
+            <div class="ks-form-group">
+                <input type="text" name="username" placeholder="Email address or username"
+                       value="{{ old('username') }}" required>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">Password</label>
-                <div class="input-group">
-                    <input type="password" class="form-control" name="password" id="password" required>
-                    <button type="button" class="input-group-text" id="togglePassword">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                </div>
+            <div class="ks-form-group">
+                <input type="password" name="password" placeholder="Password" required>
             </div>
 
-            <div class="form-check">
-                <label><input type="checkbox" name="remember"> Remember me</label>
-                <a href="{{ route('user.password.request.form') }}">Forgot?</a>
+            <a href="{{ route('user.password.request.form') }}" class="ks-forgot">
+                Forgot your password?
+            </a>
+
+            <button type="submit" class="ks-login-btn" id="loginBtn">
+                <span class="btn-loader"></span>
+                <span class="btn-text">Log in</span>
+            </button>
+
+            <div class="ks-remember">
+                <input type="checkbox" name="remember" id="remember" checked>
+                <label for="remember">Remember me</label>
             </div>
-
-            <x-captcha />
-
-            <button class="btn-theme">Log In</button>
         </form>
 
-        <div class="divider"><span>Or</span></div>
-            
-            <div class="social-login-buttons">
-                <a href="{{ route('user.social.facebook') }}" class="social-btn facebook-btn">
-                <i class="fab fa-facebook-f"></i> Facebook
-                </a>
-                <a href="{{ route('user.social.google') }}" class="social-btn google-btn">
-                <i class="fab fa-google"></i> Google
-                </a>
-        </div>
+        @php
+            $facebookEnabled = !empty(config('services.facebook.client_id')) && 
+                               !empty(config('services.facebook.client_secret')) && 
+                               config('services.facebook.client_id') !== 'disabled';
+            $googleEnabled = !empty(config('services.google.client_id')) && 
+                             !empty(config('services.google.client_secret')) && 
+                             config('services.google.client_id') !== 'disabled';
+        @endphp
 
-        <div class="login-footer">
-            Don’t have an account?
-            <a href="{{ route('user.register') }}">Create Account</a>
+        @if($facebookEnabled || $googleEnabled)
+            <div class="ks-divider">
+                <span>or</span>
+            </div>
+
+            <div style="display: flex; gap: 10px; flex-direction: column;">
+                @if($facebookEnabled)
+                    <a href="{{ route('user.social.facebook') }}" class="ks-social-btn ks-facebook">
+                        <i class="fab fa-facebook-f"></i> Continue with Facebook
+                    </a>
+                @endif
+
+                @if($googleEnabled)
+                    <a href="{{ route('user.social.google') }}" class="ks-social-btn ks-google">
+                        <i class="fab fa-google"></i> Continue with Google
+                    </a>
+                @endif
+            </div>
+        @endif
+
+        <div class="ks-footer">
+            New to {{ bs('site_name') ?? 'ApnaFund' }}?
+            <a href="{{ route('user.register') }}">Sign up</a>
         </div>
 
     </div>
 </div>
-
-<script>
-document.getElementById('togglePassword').onclick=function(){
-    const p=document.getElementById('password');
-    p.type=p.type==='password'?'text':'password';
-}
-</script>
-
 @endsection
+
+@push('page-script')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const loginForm = document.querySelector('form[action="{{ route("user.login") }}"]');
+    const loginBtn = document.getElementById('loginBtn');
+
+    if (loginForm && loginBtn) {
+        loginForm.addEventListener('submit', function(e) {
+            // Show loader
+            loginBtn.classList.add('btn-loading');
+            loginBtn.disabled = true;
+        });
+    }
+});
+</script>
+@endpush

@@ -18,8 +18,9 @@ class HomePageController extends Controller
         $heroContent = SiteData::where('data_key', 'home.hero')->first();
         $infoBannerContent = SiteData::where('data_key', 'home.info_banner')->first();
         $featuredProjectsContent = SiteData::where('data_key', 'home.featured_projects')->first();
+        $trendingCampaignContent = SiteData::where('data_key', 'home.trending_campaign')->first();
         
-        return view('admin.homepage.index', compact('pageTitle', 'heroContent', 'infoBannerContent', 'featuredProjectsContent'));
+        return view('admin.homepage.index', compact('pageTitle', 'heroContent', 'infoBannerContent', 'featuredProjectsContent', 'trendingCampaignContent'));
     }
 
     public function updateHero(Request $request)
@@ -217,6 +218,32 @@ class HomePageController extends Controller
         $featuredProjectsContent->save();
 
         $toast[] = ['success', 'Featured projects section updated successfully'];
+        return back()->withToasts($toast);
+    }
+
+    public function updateTrendingCampaign(Request $request)
+    {
+        $request->validate([
+            'show_trending' => 'required|in:0,1',
+            'trending_campaign_id' => 'nullable|exists:campaigns,id',
+        ]);
+
+        $trendingCampaignContent = SiteData::where('data_key', 'home.trending_campaign')->first();
+        
+        if (!$trendingCampaignContent) {
+            $trendingCampaignContent = new SiteData();
+            $trendingCampaignContent->data_key = 'home.trending_campaign';
+        }
+
+        $data = [
+            'show_trending' => (int)$request->show_trending,
+            'trending_campaign_id' => $request->trending_campaign_id ? (int)$request->trending_campaign_id : null,
+        ];
+
+        $trendingCampaignContent->data_info = $data;
+        $trendingCampaignContent->save();
+
+        $toast[] = ['success', 'Trending campaign section updated successfully'];
         return back()->withToasts($toast);
     }
 } 

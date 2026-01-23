@@ -13,6 +13,7 @@ use App\Lib\GoogleAuthenticator;
 use App\Http\Controllers\Controller;
 use App\Models\Withdrawal;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rules\File;
 use Illuminate\Validation\Rules\Password;
 
@@ -315,18 +316,21 @@ class UserController extends Controller
         $pageTitle = 'Rewards Tracking';
         $filter = request('filter', 'received'); // received or paid
         
+        // Check if reward_id column exists in transactions table
+        $hasRewardIdColumn = Schema::hasColumn('transactions', 'reward_id');
+        
         if ($filter == 'received') {
             // Rewards received by creator (donation_received transactions)
+            $query = Transaction::where('user_id', auth()->id())
+                ->where('remark', 'donation_received');
+            
+            // Only filter by reward_id if the column exists
+            if ($hasRewardIdColumn) {
+                $query->whereNotNull('reward_id');
+            }
+            
             // Get unique transaction IDs first to avoid duplicates
-            $transactionIds = Transaction::where('user_id', auth()->id())
-                ->where('remark', 'donation_received')
-                ->where(function($query) {
-                    $query->whereNotNull('reward_id')
-                          ->orWhereHas('deposit', function($q) {
-                              $q->whereNotNull('reward_id');
-                          });
-                })
-                ->pluck('id')
+            $transactionIds = $query->pluck('id')
                 ->unique()
                 ->toArray();
             
@@ -340,25 +344,18 @@ class UserController extends Controller
                     ->paginate(getPaginate());
             }
             
-            // Update reward_id from deposit if not set
-            foreach ($transactions as $transaction) {
-                if (!$transaction->reward_id && $transaction->deposit && $transaction->deposit->reward_id) {
-                    $transaction->reward_id = $transaction->deposit->reward_id;
-                    $transaction->save();
-                }
-            }
         } else {
             // Rewards paid by contributor (donation_given transactions)
+            $query = Transaction::where('user_id', auth()->id())
+                ->where('remark', 'donation_given');
+            
+            // Only filter by reward_id if the column exists
+            if ($hasRewardIdColumn) {
+                $query->whereNotNull('reward_id');
+            }
+            
             // Get unique transaction IDs first to avoid duplicates
-            $transactionIds = Transaction::where('user_id', auth()->id())
-                ->where('remark', 'donation_given')
-                ->where(function($query) {
-                    $query->whereNotNull('reward_id')
-                          ->orWhereHas('deposit', function($q) {
-                              $q->whereNotNull('reward_id');
-                          });
-                })
-                ->pluck('id')
+            $transactionIds = $query->pluck('id')
                 ->unique()
                 ->toArray();
             
@@ -372,13 +369,6 @@ class UserController extends Controller
                     ->paginate(getPaginate());
             }
             
-            // Update reward_id from deposit if not set
-            foreach ($transactions as $transaction) {
-                if (!$transaction->reward_id && $transaction->deposit && $transaction->deposit->reward_id) {
-                    $transaction->reward_id = $transaction->deposit->reward_id;
-                    $transaction->save();
-                }
-            }
         }
 
         $emptyMessage = 'No rewards found';
@@ -396,8 +386,15 @@ class UserController extends Controller
         $transaction = Transaction::where('trx', $trx)
             ->where('remark', 'donation_received')
             ->where('user_id', auth()->id())
-            ->whereNotNull('reward_id')
-            ->where('reward_fulfilled', false)
+            ->whereHas('deposit', function($q) {
+                $q->whereNotNull('reward_id');
+            })
+            ->where(function($query) {
+                // Check if reward_fulfilled column exists, if not skip that condition
+                if (Schema::hasColumn('transactions', 'reward_fulfilled')) {
+                    $query->where('reward_fulfilled', false);
+                }
+            })
             ->first();
 
         if (!$transaction) {
@@ -407,9 +404,16 @@ class UserController extends Controller
             ], 404);
         }
 
-        $transaction->reward_fulfilled = true;
-        $transaction->reward_fulfilled_at = now();
-        $transaction->reward_fulfillment_note = request('note');
+        // Update reward fulfillment fields if columns exist
+        if (Schema::hasColumn('transactions', 'reward_fulfilled')) {
+            $transaction->reward_fulfilled = true;
+        }
+        if (Schema::hasColumn('transactions', 'reward_fulfilled_at')) {
+            $transaction->reward_fulfilled_at = now();
+        }
+        if (Schema::hasColumn('transactions', 'reward_fulfillment_note')) {
+            $transaction->reward_fulfillment_note = request('note');
+        }
         $transaction->save();
 
         return response()->json([

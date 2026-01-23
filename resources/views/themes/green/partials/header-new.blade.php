@@ -89,6 +89,16 @@
         font-size: 16px;
         padding: 12px 45px 12px 16px;
     }
+    
+    /* Mobile login/signup links styling */
+    .navbar-collapse .nav-link {
+        padding: 8px 0;
+        display: inline-block;
+    }
+    
+    .navbar-collapse .btn {
+        margin-top: 8px;
+    }
 }
 
 @media (max-width: 576px) {
@@ -135,15 +145,18 @@
           </div>
         </div>
 
-        <!-- Right Button -->
-        <div class="ms-lg-3 text-lg-end">
+        <!-- Right Buttons -->
+        <div class="ms-lg-3 d-flex align-items-center gap-2 flex-wrap justify-content-end">
           @auth
-            <a class="btn btn-success rounded-pill px-4 w-100 w-lg-auto" href="{{ route('start.project') }}">
+            <a class="btn btn-success rounded-pill px-4" href="{{ route('start.project') }}">
               Start a Campaign
             </a>
           @else
-            <a class="btn btn-success rounded-pill px-4 w-100 w-lg-auto" href="{{ route('user.login') }}">
-              Start a Campaign
+            <a class="nav-link text-dark fw-medium" href="{{ route('user.login') }}" style="text-decoration: none; color: #374151 !important; font-size: 14px;">
+              Log in
+            </a>
+            <a class="btn btn-success rounded-pill px-4" href="{{ route('user.register') }}" style="background: #16a34a; border-color: #16a34a;">
+              Sign up
             </a>
           @endauth
         </div>
@@ -161,7 +174,9 @@
       @endphp
       
       @forelse($headerCategories as $headerCategory)
-        <a href="{{ route('home') }}?category={{ $headerCategory->slug }}">{{ __($headerCategory->label) }}</a>
+      
+
+        <a href="{{ url('/') }}/campaigns/category/{{ $headerCategory->slug }}">{{ __($headerCategory->label) }}</a>
       @empty
         {{-- Fallback to default categories if no header categories exist --}}
         <a href="#">Art/Crafts</a>
