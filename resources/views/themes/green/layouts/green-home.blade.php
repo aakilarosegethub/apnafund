@@ -6,10 +6,248 @@ if(isset($_GET['test'])){   die('home');
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>{{ $setting->siteName(__($pageTitle)) }}</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+@php
+    // Get page-specific SEO data if available
+    $pageSeo = null;
+    $currentSection = request()->segment(1);
+    $currentSlug = null;
+    $currentPath = trim(request()->path(), '/'); // Get full path without leading/trailing slashes
+    
+    // Check if this is a /page/{slug} route and fetch SEO from page_seo section
+    if ($currentSection == 'page' && request()->segment(2)) {
+        $currentSlug = request()->segment(2);
+    } else {
+        // For direct routes like /about, /faq, etc., use the first segment as slug
+        $currentSlug = $currentSection;
+    }
+    
+    // Check if this is home page
+    $isHomePage = ($currentSection == '' || $currentSection == '/' || request()->path() == '/' || $currentPath == '');
+    
+    // Fetch SEO data from page_seo section if slug is available
+    if ($currentSlug || $isHomePage || $currentPath) {
+        $allPageSeo = \App\Models\SiteData::where('data_key', 'page_seo.element')->get();
+        
+        foreach ($allPageSeo as $seoItem) {
+            $seoInfo = is_array($seoItem->data_info) ? $seoItem->data_info : (array)$seoItem->data_info;
+            $seoSlug = isset($seoInfo['slug']) ? trim($seoInfo['slug'], '/') : '';
+            
+            // Normalize paths for comparison (remove leading/trailing slashes, lowercase)
+            $normalizedCurrentPath = strtolower(trim($currentPath, '/'));
+            $normalizedSeoSlug = strtolower(trim($seoSlug, '/'));
+            $normalizedCurrentSlug = strtolower(trim($currentSlug, '/'));
+            
+            // Special handling for home page - check for "justv/" or empty slug
+            if ($isHomePage) {
+                if ($normalizedSeoSlug == 'justv' || $normalizedSeoSlug == '' || $normalizedSeoSlug == '/') {
+                    $pageSeo = (object)$seoInfo;
+                    break;
+                }
+            } else {
+                // Check for exact match with full path (e.g., "user/login")
+                if ($normalizedCurrentPath && $normalizedSeoSlug == $normalizedCurrentPath) {
+                    $pageSeo = (object)$seoInfo;
+                    break;
+                }
+                // Also check for single segment match (e.g., "about")
+                elseif ($normalizedCurrentSlug && $normalizedSeoSlug == $normalizedCurrentSlug) {
+                    $pageSeo = (object)$seoInfo;
+                    break;
+                }
+                // Check for "page/{slug}" format match (e.g., "page/about" matches "about")
+                elseif ($currentSection == 'page' && $currentSlug && $normalizedSeoSlug == $normalizedCurrentSlug) {
+                    $pageSeo = (object)$seoInfo;
+                    break;
+                }
+                // Check if SEO slug is "page/{slug}" format and matches current path
+                elseif (strpos($normalizedSeoSlug, 'page/') === 0) {
+                    $seoSlugWithoutPage = substr($normalizedSeoSlug, 5); // Remove "page/" prefix
+                    if ($seoSlugWithoutPage == $normalizedCurrentSlug || $seoSlugWithoutPage == $normalizedCurrentPath) {
+                        $pageSeo = (object)$seoInfo;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    
+    // If no page_seo data found, check for $pageSEO variable passed from controller (e.g., for category pages)
+    if (!$pageSeo && isset($pageSEO) && is_array($pageSEO) && !empty($pageSEO)) {
+        $pageSeo = (object)$pageSEO;
+    }
+    
+    // If still no page_seo data found, try to get from section-specific SEO
+    if (!$pageSeo && $currentSection) {
+        $pageSeoData = \App\Models\SiteData::where('data_key', $currentSection . '.seo')->first();
+        $pageSeo = $pageSeoData ? (is_array($pageSeoData->data_info) ? (object)$pageSeoData->data_info : $pageSeoData->data_info) : null;
+    }
+    
+    // Get global SEO data
+    $seo = \App\Models\SiteData::where('data_key', 'seo.data')->first();
+    $seoData = $seo ? (is_array($seo->data_info) ? (object)$seo->data_info : $seo->data_info) : null;
+    
+    // Set charset and viewport from SEO data or use defaults
+    // Priority: pageSeo > seoData > defaults
+    $metaCharset = ($pageSeo->meta_charset ?? $seoData->meta_charset ?? 'UTF-8');
+    $metaViewport = ($pageSeo->meta_viewport ?? $seoData->meta_viewport ?? 'width=device-width, initial-scale=1');
+    
+    // Get meta title with fallback priority
+    $metaTitle = $pageSeo->meta_title ?? $seoData->meta_title ?? bs('site_name') ?? 'ApnaCrowdfunding';
+    
+    // Get meta description with fallback priority
+    $metaDescription = $pageSeo->meta_description ?? $seoData->meta_description ?? $seoData->description ?? '';
+    
+    // Get meta keywords with fallback priority
+    $metaKeywords = '';
+    if ($pageSeo && isset($pageSeo->meta_keywords) && $pageSeo->meta_keywords) {
+        $metaKeywords = $pageSeo->meta_keywords;
+    } elseif ($seoData && isset($seoData->meta_keywords) && $seoData->meta_keywords) {
+        $metaKeywords = $seoData->meta_keywords;
+    } elseif ($seoData && isset($seoData->keywords) && is_array($seoData->keywords)) {
+        $metaKeywords = implode(',', $seoData->keywords);
+    }
+    
+    // Get meta author
+    $metaAuthor = $pageSeo->meta_author ?? $seoData->meta_author ?? null;
+    
+    // Get meta robots
+    $metaRobots = $pageSeo->meta_robots ?? $seoData->meta_robots ?? 'index, follow';
+    
+    // Get canonical URL
+    $canonicalUrl = $pageSeo->canonical_url ?? $seoData->canonical_url ?? url()->current();
+    
+    // Get OG and Twitter images from page_seo if available
+    $ogImage = null;
+    $twitterImage = null;
+    if ($pageSeo) {
+        if (isset($pageSeo->og_image_url) && $pageSeo->og_image_url) {
+            $ogImage = filter_var($pageSeo->og_image_url, FILTER_VALIDATE_URL) 
+                ? $pageSeo->og_image_url 
+                : url($pageSeo->og_image_url);
+        }
+        if (isset($pageSeo->twitter_image_url) && $pageSeo->twitter_image_url) {
+            $twitterImage = filter_var($pageSeo->twitter_image_url, FILTER_VALIDATE_URL) 
+                ? $pageSeo->twitter_image_url 
+                : url($pageSeo->twitter_image_url);
+        }
+    }
+    
+    // Get Schema Markup for current page
+    $schemaMarkup = null;
+    
+    // Check if this is home page
+    $isHomePage = ($currentSection == '' || $currentSection == '/' || request()->path() == '/' || $currentPath == '');
+    
+    // Build full slug path for /page/{slug} routes
+    $fullSlug = null;
+    if ($currentSection == 'page' && request()->segment(2)) {
+        $fullSlug = 'page/' . request()->segment(2);
+    } elseif ($currentPath) {
+        $fullSlug = $currentPath;
+    } elseif ($currentSlug) {
+        $fullSlug = $currentSlug;
+    }
+    
+    // Get all schema markup entries
+    $allSchemaMarkup = \App\Models\SiteData::where('data_key', 'schema_markup.element')->get();
+    
+    foreach ($allSchemaMarkup as $schemaItem) {
+        $schemaInfo = is_array($schemaItem->data_info) ? $schemaItem->data_info : (array)$schemaItem->data_info;
+        $schemaSlug = isset($schemaInfo['slug']) ? trim($schemaInfo['slug']) : '';
+        
+        // Special handling for home page - check for "justv/" or empty slug
+        if ($isHomePage) {
+            if ($schemaSlug == 'justv/' || $schemaSlug == 'justv' || $schemaSlug == '' || $schemaSlug == '/') {
+                $schemaMarkup = $schemaInfo;
+                break;
+            }
+        }
+        
+        // Match full slug path (e.g., "page/about", "user/login") or simple slug (e.g., "about")
+        if ($schemaSlug && !$isHomePage) {
+            // Check if schema slug matches full path (e.g., "user/login")
+            if ($currentPath && $schemaSlug == $currentPath) {
+                $schemaMarkup = $schemaInfo;
+                break;
+            }
+            // Check if schema slug matches full slug path (e.g., "page/about")
+            elseif ($fullSlug && $schemaSlug == $fullSlug) {
+                $schemaMarkup = $schemaInfo;
+                break;
+            }
+            // Check if schema slug matches simple slug (e.g., "about")
+            elseif ($currentSlug && $schemaSlug == $currentSlug) {
+                $schemaMarkup = $schemaInfo;
+                break;
+            }
+        }
+    }
+@endphp
+<meta charset="{{ $metaCharset }}">
+<title>@yield('title', $metaTitle)</title>
+<meta name="viewport" content="{{ $metaViewport }}">
 <meta name="csrf-token" content="{{ csrf_token() }}">
+
+@if($seoData || $pageSeo)
+    <!-- SEO Meta Tags -->
+    @if($metaDescription)
+        <meta name="description" content="{{ $metaDescription }}">
+    @endif
+    
+    @if($metaKeywords)
+        <meta name="keywords" content="{{ $metaKeywords }}">
+    @endif
+    
+    @if($metaAuthor)
+        <meta name="author" content="{{ $metaAuthor }}">
+    @endif
+    
+    <meta name="robots" content="{{ $metaRobots }}">
+    <link rel="canonical" href="{{ $canonicalUrl }}">
+    
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="{{ getSiteFavicon() }}" type="image/png">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{{ $pageSeo->og_title ?? $pageSeo->meta_title ?? $seoData->meta_title ?? $seoData->social_title ?? bs('site_name') ?? 'ApnaCrowdfunding' }}">
+    <meta property="og:description" content="{{ $pageSeo->og_description ?? $pageSeo->meta_description ?? $seoData->social_description ?? $seoData->meta_description ?? $seoData->description ?? '' }}">
+    @if($ogImage)
+        <meta property="og:image" content="{{ $ogImage }}">
+    @elseif(isset($seoData->image) && $seoData->image)
+        @php
+            $seoImage = filter_var($seoData->image, FILTER_VALIDATE_URL) 
+                ? $seoData->image 
+                : getImage(getFilePath('seo') . '/' . $seoData->image, getFileSize('seo'));
+        @endphp
+        <meta property="og:image" content="{{ $seoImage }}">
+    @endif
+    <meta property="og:url" content="{{ $canonicalUrl }}">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $pageSeo->twitter_title ?? $pageSeo->meta_title ?? $seoData->meta_title ?? $seoData->social_title ?? bs('site_name') ?? 'ApnaCrowdfunding' }}">
+    <meta name="twitter:description" content="{{ $pageSeo->twitter_description ?? $pageSeo->meta_description ?? $seoData->social_description ?? $seoData->meta_description ?? $seoData->description ?? '' }}">
+    @if($twitterImage)
+        <meta name="twitter:image" content="{{ $twitterImage }}">
+    @elseif(isset($seoData->image) && $seoData->image)
+        <meta name="twitter:image" content="{{ $seoImage ?? '' }}">
+    @endif
+@else
+    <!-- Default Meta Tags -->
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="{{ url()->current() }}">
+    
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="{{ getSiteFavicon() }}" type="image/png">
+@endif
+
+@if($schemaMarkup && isset($schemaMarkup['schema_json']) && !empty($schemaMarkup['schema_json']))
+    <!-- Schema Markup (JSON-LD) -->
+    <script type="application/ld+json">
+    {!! $schemaMarkup['schema_json'] !!}
+    </script>
+@endif
 
 <!-- Bootstrap -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -169,6 +407,9 @@ body{
     padding:10px 0;
   }
 }
+span{
+	color: #05ce78;
+}
 /* ===== SMALL MOBILE ===== */
 @media(max-width:480px){
   .campaign-img{
@@ -238,12 +479,14 @@ body{
 .hero .btn{
   font-weight: 600;
 }
-.project-image {
-    height: 290px !important;
-    background-size: contain !important;
-}
 
 </style>
+@yield('custom-css')
+
+{{-- Custom Header Code from Admin Panel --}}
+@if(getCustomCode('header'))
+{!! getCustomCode('header') !!}
+@endif
 </head>
 <body>
 
@@ -256,9 +499,15 @@ body{
 <!-- FOOTER -->
 @include(activeTheme() . 'partials.footer-new')
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 @stack('scripts')
+@stack('page-script')
+
+{{-- Custom Footer Code from Admin Panel --}}
+@if(getCustomCode('footer'))
+{!! getCustomCode('footer') !!}
+@endif
 </body>
 </html>
