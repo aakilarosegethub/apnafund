@@ -74,6 +74,10 @@ Route::controller('WebsiteController')->group(function () {
         Route::get('fetch-comment', 'fetchCampaignComment')->name('comment.fetch');
         Route::get('donations', 'campaignDonations')->name('donations');
         Route::get('donations/top', 'campaignTopDonations')->name('donations.top');
+        // Campaign Updates
+        Route::get('updates', 'campaignUpdates')->name('updates');
+        Route::get('updates/{updateSlug}', 'campaignUpdateShow')->name('update.show');
+        Route::post('updates/{updateSlug}/comment', 'storeUpdateComment')->name('update.comment');
     });
 
     Route::get('upcoming-campaigns', 'upcomingCampaigns')->name('upcoming');
@@ -161,6 +165,12 @@ Route::get('page/charter', function () {
     return redirect('/our-mission');
 })->name('page.charter.redirect');
 
+// Redirect /page/story to /our-story for clarity
+Route::get('our-story', function(\Illuminate\Http\Request $request) {
+    $controller = app(\App\Http\Controllers\WebsiteController::class);
+    return $controller->pageBySlug('story');
+})->name('our.story');
+
 // Dynamic Page by Slug (outside controller group to avoid binding issues)
 Route::get('page/{slug}', [\App\Http\Controllers\WebsiteController::class, 'pageBySlug'])->name('page.show');
 
@@ -176,6 +186,13 @@ Route::get('our-rules', function(\Illuminate\Http\Request $request) {
 Route::get('apnacrowdfunding-rules', function () {
     return redirect('/our-rules');
     })->name('apnacrowdfunding-rules.redirect');
+
+// Careers page route
+Route::get('apnacrowdfunding-careers', function(\Illuminate\Http\Request $request) {
+    $controller = app(\App\Http\Controllers\WebsiteController::class);
+    return $controller->pageBySlug('apnacrowdfunding-careers');
+})->name('careers');
+
 Route::get('forwardfunds', function(\Illuminate\Http\Request $request) {
     $controller = app(\App\Http\Controllers\WebsiteController::class);
     return $controller->pageBySlug('forwardfunds');

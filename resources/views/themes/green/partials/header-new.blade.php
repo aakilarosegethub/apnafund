@@ -108,6 +108,96 @@
     }
 }
 
+/* User Avatar & Dropdown */
+.user-wrapper {
+    position: relative;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    overflow: hidden;
+    border: 2px solid #e9ecef;
+}
+
+.user-avatar:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+}
+
+.user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.user-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    min-width: 180px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    z-index: 1001;
+    padding: 8px 0;
+}
+
+.user-dropdown.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.user-dropdown a {
+    display: block;
+    padding: 12px 20px;
+    color: #333;
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.user-dropdown a:last-child {
+    border-bottom: none;
+}
+
+.user-dropdown a:hover {
+    background: #f8f9fa;
+    color: #16a34a;
+    padding-left: 25px;
+}
+
+/* Responsive for user avatar */
+@media (max-width: 768px) {
+    .user-avatar {
+        width: 35px;
+        height: 35px;
+        font-size: 12px;
+    }
+    
+    .user-dropdown {
+        min-width: 160px;
+        right: -10px;
+    }
+}
+
 </style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
@@ -148,9 +238,45 @@
         <!-- Right Buttons -->
         <div class="ms-lg-3 d-flex align-items-center gap-2 flex-wrap justify-content-end">
           @auth
+            @php
+                $user = auth()->user();
+                $userName = $user ? ($user->fullname ?? $user->name ?? null) : null;
+                $initials = 'U';
+
+                if ($userName) {
+                    $parts = explode(' ', $userName);
+                    $initials = '';
+                    foreach ($parts as $part) {
+                        if (! empty($part)) {
+                            $initials .= mb_substr($part, 0, 1);
+                        }
+                    }
+                    $initials = strtoupper($initials);
+                }
+            @endphp
+
             <a class="btn btn-success rounded-pill px-4" href="{{ route('start.project') }}">
               Start a Campaign
             </a>
+
+            <div class="user-wrapper">
+              <div class="user-avatar" id="userAvatar">
+                @if(!empty($user->image))
+                  <img
+                    src="{{ getImage(getFilePath('userProfile') . '/' . $user->image, getFileSize('userProfile')) }}"
+                    alt="{{ $userName }}"
+                  >
+                @else
+                  {{ $initials }}
+                @endif
+              </div>
+
+              <div class="user-dropdown" id="userDropdown">
+                <a href="{{ route('user.dashboard') }}">Dashboard</a>
+                <a href="{{ route('user.profile') }}">Profile</a>
+                <a href="{{ route('user.logout') }}">Logout</a>
+              </div>
+            </div>
           @else
             <a class="nav-link text-dark fw-medium" href="{{ route('user.login') }}" style="text-decoration: none; color: #374151 !important; font-size: 14px;">
               Log in
@@ -211,6 +337,21 @@
         });
       }
     });
+
+    // Handle user avatar dropdown
+    var avatar = document.getElementById('userAvatar');
+    var dropdown = document.getElementById('userDropdown');
+
+    if (avatar && dropdown) {
+      avatar.addEventListener('click', function (e) {
+        e.stopPropagation();
+        dropdown.classList.toggle('show');
+      });
+
+      document.addEventListener('click', function () {
+        dropdown.classList.remove('show');
+      });
+    }
   });
 </script>
 @endpush

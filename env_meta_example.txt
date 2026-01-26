@@ -1,0 +1,14 @@
+############################################
+# META (FACEBOOK) MARKETING API
+# Add these lines to your .env file
+############################################
+
+# Meta Access Token - Get from: https://developers.facebook.com/tools/explorer/
+META_ACCESS_TOKEN=your_meta_access_token_here
+
+# Meta Ad Account ID - Find in Facebook Ads Manager → Settings
+# Use numbers only (without "act_" prefix)
+META_AD_ACCOUNT_ID=123456789012345
+
+# Meta Page ID - Find in Facebook Page → Settings → About
+META_PAGE_ID=987654321012345

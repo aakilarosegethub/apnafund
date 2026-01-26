@@ -270,7 +270,7 @@
                 </div>
                 <div class="col-md-6 text-end">
                     <div class="footer-info">
-                        <p class="copyright">© {{ date('Y') }} Apna Crowdfunding. All rights reserved.</p>
+                        <p class="copyright">© {{ date('Y') }} {!! apnaCrowdfundingLink() !!}. All rights reserved.</p>
                         <p class="email">contact@apnacrowdfunding.com</p>
                     </div>
                 </div>

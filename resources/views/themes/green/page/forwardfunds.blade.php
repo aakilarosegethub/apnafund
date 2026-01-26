@@ -76,7 +76,7 @@
     <div class="row mb-5">
         <div class="col-lg-8">
             <p>
-                At ApnaCrowdfunding, we believe that powerful ideas deserve powerful backing.
+                At {!! apnaCrowdfundingLink() !!}, we believe that powerful ideas deserve powerful backing.
 Forward Funders are foundations, nonprofits, brands, and mission-driven organizations that actively support crowdfunding campaigns aligned with their vision for a more creative, inclusive, and equitable world.
 These funders don’t just donate, they stand behind ideas, publicly commit to causes they believe in, and back projects through direct pledges that help turn dreams into reality.
 
@@ -109,7 +109,7 @@ Funds projects just like any supporter  through transparent, single pledges.
             <p>
                 Your Vision, Backed by Purpose
                 <br>
-                Every project launched on ApnaCrowdfunding that follows our platform guidelines is eligible for Forward Funding.
+                Every project launched on {!! apnaCrowdfundingLink() !!} that follows our platform guidelines is eligible for Forward Funding.
 
             </p>
             <br></br>
@@ -130,7 +130,7 @@ Funds projects just like any supporter  through transparent, single pledges.
         <div class="col-md-6 mb-4 new_1">
             <h5 class="fw-bold">For Organizations</h5>
             <p>Turn Your Mission Into Measurable Impact
-Forward Funders at ApnaCrowdfunding are united by a shared belief:
+Forward Funders at {!! apnaCrowdfundingLink() !!} are united by a shared belief:
  Creative ideas drive social change.
 
             </p>

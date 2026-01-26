@@ -425,9 +425,17 @@
             <a href="{{ route('user.campaign.edit.boost', $campaign->slug) }}" class="{{ ($section ?? 'basics') == 'boost' ? 'active' : '' }}">Boost</a>
             <a href="{{ route('user.campaign.edit.faq', $campaign->slug) }}" class="{{ ($section ?? 'basics') == 'faq' ? 'active' : '' }}">FAQ</a>
         </div>
-        <div id="topActionButtons" style="display: none; gap: 10px; align-items: center;">
-            <button type="button" id="topExitBtn" class="next-btn" style="margin: 0; padding: 8px 20px; font-size: 14px; background: #666;">Exit</button>
-            <button type="button" id="topSaveBtn" class="next-btn active" style="margin: 0; padding: 8px 20px; font-size: 14px;">Save</button>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <!-- Preview Button -->
+            <a href="{{ route('user.campaign.show', $campaign->slug) }}" target="_blank" class="btn" style="padding: 8px 20px; font-size: 14px; background: #fff; border: 1px solid #ddd; color: #333; text-decoration: none; border-radius: 5px; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;">
+                <i class="fas fa-eye"></i> Preview
+            </a>
+            
+            <!-- Action Buttons (Save/Exit - shown when editing) -->
+            <div id="topActionButtons" style="display: none; gap: 10px; align-items: center;">
+                <button type="button" id="topExitBtn" class="next-btn" style="margin: 0; padding: 8px 20px; font-size: 14px; background: #666;">Exit</button>
+                <button type="button" id="topSaveBtn" class="next-btn active" style="margin: 0; padding: 8px 20px; font-size: 14px;">Save</button>
+            </div>
         </div>
         <button type="button" id="topEditBtn" class="d-none next-btn active" style="margin: 0; padding: 8px 20px; font-size: 14px;">Edit</button>
     </div>

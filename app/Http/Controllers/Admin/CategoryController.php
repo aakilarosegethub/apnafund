@@ -38,8 +38,11 @@ class CategoryController extends Controller
 
     function store(Request $request, $id = 0) {
         $this->validate($request, [
-            'name'       => 'required|string|max:40|unique:categories,name,' . $id,
-            'sort_order' => 'nullable|integer|min:0',
+            'name'            => 'required|string|max:40|unique:categories,name,' . $id,
+            'sort_order'     => 'nullable|integer|min:0',
+            'meta_title'     => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string|max:500',
+            'meta_keywords'  => 'nullable|string|max:500',
         ]);
 
         if ($id) {
@@ -50,9 +53,12 @@ class CategoryController extends Controller
             $message  = 'Category successfully added';
         }
 
-        $category->name       = $request->input('name');
-        $category->slug       = slug($request->input('name'));
-        $category->sort_order = $request->input('sort_order', 0);
+        $category->name            = $request->input('name');
+        $category->slug            = slug($request->input('name'));
+        $category->sort_order      = $request->input('sort_order', 0);
+        $category->meta_title      = $request->input('meta_title');
+        $category->meta_description = $request->input('meta_description');
+        $category->meta_keywords    = $request->input('meta_keywords');
         $category->save();
 
         $toast[] = ['success', $message];

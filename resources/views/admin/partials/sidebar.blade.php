@@ -36,6 +36,12 @@
             </a>
         </li>
         <li class="sidebar-item">
+            <a href="{{ route('admin.payout-banks.index') }}" class="sidebar-link {{ navigationActive('admin.payout-banks*', 2) }}">
+                <span class="nav-icon"><i class="ti ti-building-bank"></i></span>
+                <span class="sidebar-txt">@lang('Payout Banks')</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
             <a role="button" class="sidebar-link has-sub {{ navigationActive('admin.campaigns*', 2) }}">
                 <span class="nav-icon">
                     <i class="ti ti-speakerphone"></i>

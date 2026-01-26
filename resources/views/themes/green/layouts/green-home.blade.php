@@ -30,30 +30,53 @@ if(isset($_GET['test'])){   die('home');
         
         foreach ($allPageSeo as $seoItem) {
             $seoInfo = is_array($seoItem->data_info) ? $seoItem->data_info : (array)$seoItem->data_info;
-            $seoSlug = isset($seoInfo['slug']) ? trim($seoInfo['slug']) : '';
+            $seoSlug = isset($seoInfo['slug']) ? trim($seoInfo['slug'], '/') : '';
+            
+            // Normalize paths for comparison (remove leading/trailing slashes, lowercase)
+            $normalizedCurrentPath = strtolower(trim($currentPath, '/'));
+            $normalizedSeoSlug = strtolower(trim($seoSlug, '/'));
+            $normalizedCurrentSlug = strtolower(trim($currentSlug, '/'));
             
             // Special handling for home page - check for "justv/" or empty slug
             if ($isHomePage) {
-                if ($seoSlug == 'justv/' || $seoSlug == 'justv' || $seoSlug == '' || $seoSlug == '/') {
+                if ($normalizedSeoSlug == 'justv' || $normalizedSeoSlug == '' || $normalizedSeoSlug == '/') {
                     $pageSeo = (object)$seoInfo;
                     break;
                 }
             } else {
                 // Check for exact match with full path (e.g., "user/login")
-                if ($currentPath && $seoSlug == $currentPath) {
+                if ($normalizedCurrentPath && $normalizedSeoSlug == $normalizedCurrentPath) {
                     $pageSeo = (object)$seoInfo;
                     break;
                 }
                 // Also check for single segment match (e.g., "about")
-                elseif ($currentSlug && $seoSlug == $currentSlug) {
+                elseif ($normalizedCurrentSlug && $normalizedSeoSlug == $normalizedCurrentSlug) {
                     $pageSeo = (object)$seoInfo;
                     break;
+                }
+                // Check for "page/{slug}" format match (e.g., "page/about" matches "about")
+                elseif ($currentSection == 'page' && $currentSlug && $normalizedSeoSlug == $normalizedCurrentSlug) {
+                    $pageSeo = (object)$seoInfo;
+                    break;
+                }
+                // Check if SEO slug is "page/{slug}" format and matches current path
+                elseif (strpos($normalizedSeoSlug, 'page/') === 0) {
+                    $seoSlugWithoutPage = substr($normalizedSeoSlug, 5); // Remove "page/" prefix
+                    if ($seoSlugWithoutPage == $normalizedCurrentSlug || $seoSlugWithoutPage == $normalizedCurrentPath) {
+                        $pageSeo = (object)$seoInfo;
+                        break;
+                    }
                 }
             }
         }
     }
     
-    // If no page_seo data found, try to get from section-specific SEO
+    // If no page_seo data found, check for $pageSEO variable passed from controller (e.g., for category pages)
+    if (!$pageSeo && isset($pageSEO) && is_array($pageSEO) && !empty($pageSEO)) {
+        $pageSeo = (object)$pageSEO;
+    }
+    
+    // If still no page_seo data found, try to get from section-specific SEO
     if (!$pageSeo && $currentSection) {
         $pageSeoData = \App\Models\SiteData::where('data_key', $currentSection . '.seo')->first();
         $pageSeo = $pageSeoData ? (is_array($pageSeoData->data_info) ? (object)$pageSeoData->data_info : $pageSeoData->data_info) : null;

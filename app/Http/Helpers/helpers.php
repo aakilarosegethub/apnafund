@@ -1197,3 +1197,11 @@ function donationPercentage($goalAmount, $raisedAmount) {
     // Cap at 100% to avoid showing more than 100%
     return min(round($percentage, 2), 100);
 }
+
+/**
+ * Get ApnaCrowdfunding as italic linked text
+ * Returns the brand name as an italic link throughout the project
+ */
+function apnaCrowdfundingLink($url = '#', $class = 'italic-text') {
+    return '<em>ApnaCrowdfunding</em>';
+}

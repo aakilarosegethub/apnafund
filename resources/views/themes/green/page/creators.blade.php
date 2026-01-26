@@ -543,7 +543,7 @@
                             For Your Projects
                         </h1>
                         <p class="main-subtitle">
-                          Whatever spark your business dream holds, ApnaCrowdfunding is here to fuel it with the support and funding it deserves. We help bring your vision to life-giving birth to the projects you imagine. Join a community that turns ideas into reality.
+                          Whatever spark your business dream holds, {!! apnaCrowdfundingLink() !!} is here to fuel it with the support and funding it deserves. We help bring your vision to life-giving birth to the projects you imagine. Join a community that turns ideas into reality.
                         </p>
                         <a href="{{ url('business-resources') }}" class="get-started-btn">Get started</a>
                     </div>
@@ -574,7 +574,7 @@
     <div class="col-custom mb-4">
         <div class="conf-box box1">
             <i class="fas fa-users"></i>
-            <h3>Join a community of millions backers on ApnaCrowdfunding</h3>
+            <h3>Join a community of millions backers on {!! apnaCrowdfundingLink() !!}</h3>
             <p> 
 Connect with passionate backers who share your values, believe in your ideas and are excited to help you build what matters. Your community is here — people who get your vision and stand behind it.
 </p>
@@ -585,7 +585,7 @@ Connect with passionate backers who share your values, believe in your ideas and
         <div class="conf-box box2">
             <i class="fas fa-shield-alt"></i>
             <h3>Creative Freedom, Always</h3>
-            <p> On ApnaCrowdfunding, you maintain full creative control and complete ownership of every project you launch. Build without limits — and turn your passion into reality on your terms.</p>
+            <p> On {!! apnaCrowdfundingLink() !!}, you maintain full creative control and complete ownership of every project you launch. Build without limits — and turn your passion into reality on your terms.</p>
         </div>
     </div>
 

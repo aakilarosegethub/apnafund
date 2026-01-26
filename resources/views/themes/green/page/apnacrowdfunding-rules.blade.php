@@ -36,7 +36,7 @@ body{background:#ffffff;}
 <section class="kc-rules-hero">
     <div class="kc-hero-center">
         <h1>Our Rules – Fair, Transparent & Community-Driven Crowdfunding</h1>
-        <p>Clear guidelines for creators and backers on ApnaCrowdfunding</p>
+        <p>Clear guidelines for creators and backers on {!! apnaCrowdfundingLink() !!}</p>
     </div>
 </section>
 
@@ -48,7 +48,7 @@ body{background:#ffffff;}
 <div class="kc-intro">
     <h2>Community-Driven Reward-Based Crowdfunding</h2>
     <p>
-        ApnaCrowdfunding is a <strong>reward-based crowdfunding platform</strong> built to empower people to bring ideas,
+        {!! apnaCrowdfundingLink() !!} is a <strong>reward-based crowdfunding platform</strong> built to empower people to bring ideas,
         causes and goals to life ethically. These rules ensure transparency, trust and fairness for everyone using our platform.
     </p>
     <p>
@@ -64,7 +64,7 @@ body{background:#ffffff;}
 <!-- RULES -->
 
 <div class="kc-rule">
-    <h2><span class="kc-check">✔</span>Who Can Use ApnaCrowdfunding</h2>
+    <h2><span class="kc-check">✔</span>Who Can Use {!! apnaCrowdfundingLink() !!}</h2>
     <p>
         You must be legally eligible to enter into agreements in your country and comply with local laws.
         Users under 18 may only participate with guardian consent.
@@ -122,7 +122,7 @@ body{background:#ffffff;}
 <div class="kc-rule">
     <h2><span class="kc-check">✔</span>Platform Fees & Sustainability</h2>
     <p>
-        ApnaCrowdfunding charges a small fee on successful campaigns to maintain security, technology and user support.
+        {!! apnaCrowdfundingLink() !!} charges a small fee on successful campaigns to maintain security, technology and user support.
         View full details on our <a href="{{ url('/fees') }}">platform fees page</a>.
     </p>
 </div>
@@ -154,12 +154,12 @@ body{background:#ffffff;}
 <div class="kc-rule">
     <h2>Our Promise to Creators & Backers</h2>
     <p>
-        ApnaCrowdfunding exists to support real people with real stories.
+        {!! apnaCrowdfundingLink() !!} exists to support real people with real stories.
         We are committed to ethical, transparent and community-driven crowdfunding.
     </p>
     <p>
         Explore active campaigns on
-        <a href="{{ url('/explore') }}">ApnaCrowdfunding</a>.
+        <a href="{{ url('/explore') }}">{!! apnaCrowdfundingLink() !!}</a>.
     </p>
 </div>
 

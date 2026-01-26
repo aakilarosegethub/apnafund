@@ -711,6 +711,7 @@
         @include('partials.toasts')
 
         @stack('page-script-lib')
+        @stack('page-script')
         @yield('page-script')
         @yield('script')
         

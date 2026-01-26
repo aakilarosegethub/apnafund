@@ -1,0 +1,305 @@
+═══════════════════════════════════════════════════════════════════════════
+                    CAMPAIGN PROMOTION ARCHITECTURE
+═══════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                            FRONTEND LAYER                               │
+└─────────────────────────────────────────────────────────────────────────┘
+
+    Campaign Edit Page (Boost Tab)
+    /user/campaign/edit/{slug}?section=boost
+            │
+            ├─ Daily Budget Input ($1-$10,000)
+            ├─ Target Countries Multi-Select
+            ├─ Promote Button
+            ├─ Pause Button
+            ├─ Status Display
+            ├─ Loading Spinner
+            └─ Alert Messages
+            │
+            ▼
+    ┌───────────────────────────┐
+    │   JavaScript (AJAX)       │
+    │   - Fetch API             │
+    │   - Event Handlers        │
+    │   - Status Polling        │
+    └───────────────────────────┘
+            │
+            │ AJAX Request
+            ▼
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                            ROUTING LAYER                                │
+└─────────────────────────────────────────────────────────────────────────┘
+
+    routes/user.php
+            │
+            ├─ POST /user/campaign/promotion/{id}/promote
+            ├─ POST /user/campaign/promotion/{id}/pause
+            └─ GET  /user/campaign/promotion/{id}/status
+            │
+            ▼
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                          CONTROLLER LAYER                               │
+└─────────────────────────────────────────────────────────────────────────┘
+
+    CampaignPromotionController
+            │
+            ├─ promoteCampaign($request, $campaignId)
+            │   • Validate request
+            │   • Check permissions
+            │   • Check campaign approval
+            │   • Call Meta API Helper
+            │   • Save to database
+            │   • Return JSON response
+            │
+            ├─ pausePromotion($campaignId)
+            │   • Find active promotion
+            │   • Call Meta API to pause
+            │   • Update database
+            │   • Return JSON response
+            │
+            └─ getPromotionStatus($campaignId)
+                • Query database
+                • Return current status
+            │
+            ▼
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                          HELPER LAYER                                   │
+└─────────────────────────────────────────────────────────────────────────┘
+
+    MetaApiHelper (cURL Functions)
+            │
+            ├─ makeRequest($endpoint, $params, $method)
+            │   • Generic cURL wrapper
+            │   • Add access token
+            │   • Handle errors
+            │   • Return JSON
+            │
+            ├─ createCampaign($name, $objective, $status)
+            │   • POST to /act_{id}/campaigns
+            │   • Return campaign_id
+            │
+            ├─ createAdSet($campaignId, $name, $budget, ...)
+            │   • POST to /act_{id}/adsets
+            │   • Set targeting, budget, page_id
+            │   • Return adset_id
+            │
+            ├─ createAdCreative($name, $message, $link, ...)
+            │   • POST to /act_{id}/adcreatives
+            │   • Build object_story_spec
+            │   • Return creative_id
+            │
+            ├─ createAd($name, $adsetId, $creativeId, $status)
+            │   • POST to /act_{id}/ads
+            │   • Link creative to adset
+            │   • Return ad_id
+            │
+            └─ updateStatus($objectId, $status)
+                • POST to /{objectId}
+                • Update status (ACTIVE/PAUSED)
+            │
+            ▼
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                          META API LAYER                                 │
+└─────────────────────────────────────────────────────────────────────────┘
+
+    Meta Graph API v19.0
+    https://graph.facebook.com/v19.0
+            │
+            ├─ /act_{id}/campaigns
+            │   • Create campaign
+            │   • Objective: OUTCOME_TRAFFIC
+            │
+            ├─ /act_{id}/adsets
+            │   • Create ad set
+            │   • Daily budget
+            │   • Targeting
+            │   • Promoted object (page_id)
+            │
+            ├─ /act_{id}/adcreatives
+            │   • Create ad creative
+            │   • Link URL
+            │   • Message
+            │   • CTA: LEARN_MORE
+            │
+            ├─ /act_{id}/ads
+            │   • Create ad
+            │   • Link adset + creative
+            │   • Status: ACTIVE
+            │
+            └─ /{object_id}
+                • Update status
+            │
+            ▼
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                          DATABASE LAYER                                 │
+└─────────────────────────────────────────────────────────────────────────┘
+
+    campaign_promotions Table
+            │
+            ├─ id (PK)
+            ├─ campaign_id (FK → campaigns)
+            ├─ meta_campaign_id
+            ├─ meta_adset_id
+            ├─ meta_ad_id
+            ├─ meta_creative_id
+            ├─ status (pending|active|paused|error)
+            ├─ daily_budget
+            ├─ error_message
+            ├─ promoted_at
+            └─ timestamps
+
+═══════════════════════════════════════════════════════════════════════════
+                            DATA FLOW DIAGRAM
+═══════════════════════════════════════════════════════════════════════════
+
+User Action                  Backend Process              Meta API Result
+───────────                  ───────────────              ───────────────
+
+[Click Promote] ──────────> Validate Request
+                                   │
+                                   ├─> Check Owner/Collaborator
+                                   ├─> Check Campaign Approved
+                                   └─> Get Budget & Countries
+                                          │
+                                          ▼
+                             [Step 1] Create Campaign ───> campaign_id
+                                          │
+                                          ▼
+                             [Step 2] Create Ad Set ─────> adset_id
+                                          │
+                                          ▼
+                             [Step 3] Create Creative ───> creative_id
+                                          │
+                                          ▼
+                             [Step 4] Create Ad ─────────> ad_id (ACTIVE)
+                                          │
+                                          ▼
+                             Save to Database
+                                          │
+                                          ▼
+[Show Success] <───────── Return JSON Response
+
+
+═══════════════════════════════════════════════════════════════════════════
+                            FILE STRUCTURE
+═══════════════════════════════════════════════════════════════════════════
+
+apnafund/
+│
+├── app/
+│   ├── Helpers/
+│   │   └── MetaApiHelper.php ················ cURL helper functions
+│   │
+│   ├── Http/Controllers/User/
+│   │   └── CampaignPromotionController.php ·· Main controller
+│   │
+│   └── Models/
+│       └── CampaignPromotion.php ············ Eloquent model
+│
+├── database/migrations/
+│   └── 2026_01_24_000001_create_campaign_promotions_table.php
+│
+├── resources/views/themes/green/user/campaign/
+│   └── edit.blade.php ······················· Frontend UI + AJAX
+│
+├── routes/
+│   └── user.php ····························· API routes
+│
+├── create_campaign_promotions_table.sql ······ Plain SQL migration
+│
+└── Documentation/
+    ├── META_API_SETUP.md
+    ├── META_PROMOTION_GUIDE.md
+    ├── CAMPAIGN_PROMOTION_README.md
+    ├── QUICK_REFERENCE.md
+    ├── IMPLEMENTATION_SUMMARY.txt
+    └── env_meta_example.txt
+
+
+═══════════════════════════════════════════════════════════════════════════
+                            SECURITY FLOW
+═══════════════════════════════════════════════════════════════════════════
+
+Request ────> CSRF Validation
+                    │
+                    ▼
+              Auth Middleware (must be logged in)
+                    │
+                    ▼
+              Permission Check
+                    ├─> Is campaign owner?
+                    └─> Is collaborator?
+                    │
+                    ▼
+              Campaign Approval Check
+                    │
+                    ▼
+              Input Validation
+                    ├─> Budget: $1-$10,000
+                    └─> Countries: Valid ISO codes
+                    │
+                    ▼
+              Database Transaction BEGIN
+                    │
+                    ├─> Meta API Calls
+                    ├─> Save IDs to DB
+                    │
+                    ├─> [Success] COMMIT
+                    └─> [Error] ROLLBACK
+                    │
+                    ▼
+              Log Activity (for audit)
+                    │
+                    ▼
+              Return Response
+
+
+═══════════════════════════════════════════════════════════════════════════
+                         META CAMPAIGN HIERARCHY
+═══════════════════════════════════════════════════════════════════════════
+
+                        ┌───────────────────┐
+                        │  Meta Campaign    │
+                        │  (OUTCOME_TRAFFIC)│
+                        └─────────┬─────────┘
+                                  │
+                        ┌─────────▼─────────┐
+                        │    Ad Set         │
+                        │  • Budget: $10/day│
+                        │  • Target: US     │
+                        │  • Age: 18-65     │
+                        │  • page_id        │
+                        └─────────┬─────────┘
+                                  │
+                        ┌─────────▼─────────┐
+                        │   Ad Creative     │
+                        │  • Link URL       │
+                        │  • Message        │
+                        │  • CTA: Learn More│
+                        └─────────┬─────────┘
+                                  │
+                        ┌─────────▼─────────┐
+                        │       Ad          │
+                        │   Status: ACTIVE  │
+                        └───────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════
+                           VERSION INFO
+═══════════════════════════════════════════════════════════════════════════
+
+Implementation Date:  January 24, 2026
+Version:             1.0.0
+API Version:         Meta Graph API v19.0
+PHP Version:         7.4+
+Laravel Version:     8+
+Database:            MySQL/MariaDB
+Status:              Production Ready ✅
+
+═══════════════════════════════════════════════════════════════════════════

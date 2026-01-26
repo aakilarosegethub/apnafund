@@ -176,7 +176,7 @@
                             <div class="col-lg-6">
                                 <div class="slide-content">
                                     <h3 class="slide-title">John Doe - Senior Developer</h3>
-                                    <p class="slide-description">"Apna Crowdfunding helped us raise $2.5M for our tech startup.
+                                    <p class="slide-description">"{!! apnaCrowdfundingLink() !!} helped us raise $2.5M for our tech startup.
                                         The platform's ease of use and supportive community made all the difference in
                                         our journey from idea to successful launch."</p>
                                     <button class="case-study-btn">See case study</button>
@@ -207,7 +207,7 @@
                                 <div class="slide-content">
                                     <h3 class="slide-title">Sarah Miller - Creative Director</h3>
                                     <p class="slide-description">"Our creative project found its perfect audience
-                                        through Apna Crowdfunding. We exceeded our funding goal by 300% and built a community of
+                                        through {!! apnaCrowdfundingLink() !!}. We exceeded our funding goal by 300% and built a community of
                                         passionate supporters who believe in our vision."</p>
                                     <button class="case-study-btn">See case study</button>
                                 </div>
@@ -236,7 +236,7 @@
                             <div class="col-lg-6">
                                 <div class="slide-content">
                                     <h3 class="slide-title">Rajesh Kumar - Startup Founder</h3>
-                                    <p class="slide-description">"Apna Crowdfunding's platform transformed our startup journey.
+                                    <p class="slide-description">"{!! apnaCrowdfundingLink() !!}'s platform transformed our startup journey.
                                         We raised $1.8M and connected with investors who shared our vision for
                                         sustainable technology solutions."</p>
                                     <button class="case-study-btn">See case study</button>
@@ -271,13 +271,13 @@
                         <h2 class="accordion-header" id="faq1">
                             <button class="accordion-button" type="button" data-bs-toggle="collapse"
                                 data-bs-target="#collapse1" aria-expanded="true" aria-controls="collapse1">
-                                What can I use Apna Crowdfunding to finance?
+                                What can I use {!! apnaCrowdfundingLink() !!} to finance?
                             </button>
                         </h2>
                         <div id="collapse1" class="accordion-collapse collapse show" aria-labelledby="faq1"
                             data-bs-parent="#faqAccordion">
                             <div class="accordion-body">
-                                Apna Crowdfunding supports a wide range of creative and innovative projects including technology
+                                {!! apnaCrowdfundingLink() !!} supports a wide range of creative and innovative projects including technology
                                 startups, creative arts, social causes, business ventures, and community initiatives.
                                 Whether you're launching a new product, creating art, or starting a business, our
                                 platform provides the tools and community to bring your vision to life.
@@ -403,7 +403,7 @@
                 </div>
                 <div class="col-md-6 text-end">
                     <div class="footer-info">
-                        <p class="copyright">© 2024 Apna Crowdfunding. All rights reserved.</p>
+                        <p class="copyright">© 2024 {!! apnaCrowdfundingLink() !!}. All rights reserved.</p>
                         <p class="email">contact@apnacrowdfunding.com</p>
                     </div>
                 </div>

@@ -91,6 +91,25 @@
                                 <label class="form--label">@lang('Sort Order')</label>
                                 <input type="number" class="form--control" name="sort_order" min="0" placeholder="@lang('e.g. 1, 2, 3')">
                             </div>
+                            <div class="col-12">
+                                <hr class="my-3">
+                                <h6 class="mb-3">@lang('SEO Information')</h6>
+                            </div>
+                            <div class="col-12">
+                                <label class="form--label">@lang('Meta Title')</label>
+                                <input type="text" class="form--control" name="meta_title" maxlength="255" placeholder="@lang('SEO title for search engines')">
+                                <small class="text-muted">@lang('Recommended: 50-60 characters')</small>
+                            </div>
+                            <div class="col-12">
+                                <label class="form--label">@lang('Meta Description')</label>
+                                <textarea class="form--control" name="meta_description" rows="3" maxlength="500" placeholder="@lang('Brief description for search engines')"></textarea>
+                                <small class="text-muted">@lang('Recommended: 150-160 characters')</small>
+                            </div>
+                            <div class="col-12">
+                                <label class="form--label">@lang('Meta Keywords')</label>
+                                <input type="text" class="form--control" name="meta_keywords" maxlength="500" placeholder="@lang('Comma-separated keywords, e.g. keyword1, keyword2, keyword3')">
+                                <small class="text-muted">@lang('Separate keywords with commas')</small>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer gap-2">
@@ -123,6 +142,25 @@
                             <div class="col-12">
                                 <label class="form--label">@lang('Sort Order')</label>
                                 <input type="number" class="form--control" name="sort_order" id="editSortOrder" min="0" placeholder="@lang('e.g. 1, 2, 3')">
+                            </div>
+                            <div class="col-12">
+                                <hr class="my-3">
+                                <h6 class="mb-3">@lang('SEO Information')</h6>
+                            </div>
+                            <div class="col-12">
+                                <label class="form--label">@lang('Meta Title')</label>
+                                <input type="text" class="form--control" name="meta_title" id="editMetaTitle" maxlength="255" placeholder="@lang('SEO title for search engines')">
+                                <small class="text-muted">@lang('Recommended: 50-60 characters')</small>
+                            </div>
+                            <div class="col-12">
+                                <label class="form--label">@lang('Meta Description')</label>
+                                <textarea class="form--control" name="meta_description" id="editMetaDescription" rows="3" maxlength="500" placeholder="@lang('Brief description for search engines')"></textarea>
+                                <small class="text-muted">@lang('Recommended: 150-160 characters')</small>
+                            </div>
+                            <div class="col-12">
+                                <label class="form--label">@lang('Meta Keywords')</label>
+                                <input type="text" class="form--control" name="meta_keywords" id="editMetaKeywords" maxlength="500" placeholder="@lang('Comma-separated keywords, e.g. keyword1, keyword2, keyword3')">
+                                <small class="text-muted">@lang('Separate keywords with commas')</small>
                             </div>
                         </div>
                     </div>
@@ -178,6 +216,9 @@
 
                 editModal.find('#editName').val(resource.name)
                 editModal.find('#editSortOrder').val(resource.sort_order ?? 0)
+                editModal.find('#editMetaTitle').val(resource.meta_title ?? '')
+                editModal.find('#editMetaDescription').val(resource.meta_description ?? '')
+                editModal.find('#editMetaKeywords').val(resource.meta_keywords ?? '')
                 editModal.find('form').attr('action', formAction)
                 editModal.modal('show')
             })

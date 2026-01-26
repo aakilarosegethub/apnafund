@@ -202,6 +202,43 @@
                 </table>
             </div>
         </div>
+        
+        @if($campaign->payout_bank_id || $campaign->bank_account_number)
+        <div class="custom--card h-auto mb-4">
+            <div class="card-header">
+                <h3 class="title">@lang('Payout Bank Details')</h3>
+            </div>
+            <div class="card-body">
+                <table class="table table-flush">
+                    <tbody>
+                        @if($campaign->payoutBank)
+                        <tr>
+                            <td class="fw-semibold">@lang('Bank Name'):</td>
+                            <td>{{ __($campaign->payoutBank->name) }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">@lang('Bank Code'):</td>
+                            <td>{{ $campaign->payoutBank->code }}</td>
+                        </tr>
+                        @endif
+                        @if($campaign->bank_account_number)
+                        <tr>
+                            <td class="fw-semibold">@lang('Account Number/Email'):</td>
+                            <td>
+                                <span class="text--base">{{ $campaign->bank_account_number }}</span>
+                            </td>
+                        </tr>
+                        @endif
+                        @if(!$campaign->payout_bank_id && !$campaign->bank_account_number)
+                        <tr>
+                            <td colspan="2" class="text-center text-muted">@lang('No payout bank details provided')</td>
+                        </tr>
+                        @endif
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        @endif
         <div class="custom--card h-auto mb-4">
             <div class="card-header">
                 <h3 class="title">@lang('Relevant Images')</h3>

@@ -11,6 +11,9 @@ use App\Models\Gallery;
 use App\Models\Campaign;
 use App\Models\Category;
 use App\Models\CampaignFaq;
+use App\Models\CampaignUpdate;
+use App\Models\CampaignCollaborator;
+use App\Models\User;
 use App\Models\AdminNotification;
 use App\Http\Controllers\Controller;
 use App\Services\YouTubeUploadService;
@@ -55,8 +58,15 @@ class CampaignController extends Controller
             $campaigns = Campaign::query();
         }
 
+        // Get campaigns where user is owner or collaborator
+        $userId = auth()->id();
+        $collaboratorCampaignIds = CampaignCollaborator::where('user_id', $userId)->pluck('campaign_id')->toArray();
+
         return $campaigns->with('category')
-            ->where('user_id', auth()->id())
+            ->where(function($query) use ($userId, $collaboratorCampaignIds) {
+                $query->where('user_id', $userId)
+                      ->orWhereIn('id', $collaboratorCampaignIds);
+            })
             ->searchable(['name', 'category:name'])
             ->latest()
             ->paginate(getPaginate());
@@ -432,11 +442,16 @@ class CampaignController extends Controller
                                     $query->where('slug', $slug)
                                           ->orWhere('id', $slug);
                                 })
-                                ->where('user_id', auth()->id())
-                                // ->approve()
                                 ->first();
+            
             if (!$campaign) {
                 $toast[] = ['error', 'Campaign not found - Line 376'];
+                return back()->withToasts($toast);
+            }
+
+            // Check if user is owner or collaborator
+            if (!$campaign->canBeEditedBy(auth()->id())) {
+                $toast[] = ['error', 'You do not have permission to edit this campaign'];
                 return back()->withToasts($toast);
             }
 
@@ -461,6 +476,8 @@ class CampaignController extends Controller
                 $section = 'boost';
             } elseif (strpos($routeName, 'faq') !== false) {
                 $section = 'faq';
+            } elseif (strpos($routeName, 'updates') !== false) {
+                $section = 'updates';
             } else {
                 $section = 'basics';
             }
@@ -477,7 +494,28 @@ class CampaignController extends Controller
                 $faqs = CampaignFaq::where('campaign_id', $campaign->id)->orderBy('order')->orderBy('id')->get();
             }
 
-            return view($this->activeTheme . 'user.campaign.edit', compact('pageTitle', 'categories', 'campaign', 'section', 'rewards', 'faqs'));
+            // Load updates if updates section
+            $updates = null;
+            if ($section == 'updates') {
+                $updates = $campaign->allUpdates()->get();
+            }
+
+            // Load payout banks if payment section
+            $payoutBanks = null;
+            if ($section == 'payment') {
+                $payoutBanks = \App\Models\PayoutBank::where('status', true)
+                    ->orderBy('sort_order')
+                    ->orderBy('name')
+                    ->get();
+            }
+
+            // Load collaborators if people section
+            $collaborators = null;
+            if ($section == 'people') {
+                $collaborators = $campaign->collaborators()->with('user')->get();
+            }
+
+            return view($this->activeTheme . 'user.campaign.edit', compact('pageTitle', 'categories', 'campaign', 'section', 'rewards', 'faqs', 'updates', 'payoutBanks', 'collaborators'));
         } catch (\Exception $e) {
             $toast[] = ['error', 'Error loading campaign: ' . $e->getMessage()];
             return back()->withToasts($toast);
@@ -488,13 +526,21 @@ class CampaignController extends Controller
      * Remove image while editing a campaign
      */
     function removeImage($id) {
-        $campaign = Campaign::where('id', $id)->where('user_id', auth()->id())->first();
+        $campaign = Campaign::where('id', $id)->first();
 
         if (!$campaign) {
             return response()->json([
                 'status'  => 'error',
                 'message' => 'Campaign not found - Line 396',
             ]);
+        }
+
+        // Check if user is owner or collaborator
+        if (!$campaign->canBeEditedBy(auth()->id())) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'You do not have permission to edit this campaign',
+            ], 403);
         }
 
         if ($campaign->isExpired()) {
@@ -573,7 +619,7 @@ class CampaignController extends Controller
                     'description'         => 'required|min:30',
                     'goal_amount'         => 'required|numeric|gt:0',
                     'start_date'          => 'required|date_format:Y-m-d',
-                    'end_date'            => 'required|date_format:Y-m-d|after:start_date',
+                    'end_date'            => 'required|date_format:Y-m-d|after:start_date|before_or_equal:' . Carbon::parse(request('start_date'))->addDays(30)->format('Y-m-d'),
                     'document'            => ['nullable', File::types('pdf')],
                 ], [
                     'category_id.required' => 'The category field is required.',
@@ -582,6 +628,7 @@ class CampaignController extends Controller
                     'goal_amount.required' => 'The goal amount field is required.',
                     'start_date.required' => 'The start date field is required.',
                     'end_date.required' => 'The end date field is required.',
+                    'end_date.before_or_equal' => 'The campaign can last maximum 30 days from start date.',
                     'video.max'           => 'Video file size must be less than 500MB.',
                     'youtube_url.url'     => 'YouTube URL must be a valid URL.',
                     'youtube_url.regex'   => 'Please enter a valid YouTube URL.',
@@ -603,15 +650,27 @@ class CampaignController extends Controller
                 }
             }
 
-            $campaign = Campaign::where('id', $id)->where('user_id', auth()->id())->first();
+            $campaign = Campaign::where('id', $id)->first();
 
-            if ($campaign->id != $id) {
+            if (!$campaign) {
                 $toast[] = ['error', 'Campaign not found - Line 495'];
                 if (request()->ajax()) {
                     return response()->json([
                         'success' => false,
                         'message' => 'Campaign not found - Line 495'
                     ], 404);
+                }
+                return back()->withToasts($toast);
+            }
+
+            // Check if user is owner or collaborator
+            if (!$campaign->canBeEditedBy(auth()->id())) {
+                $toast[] = ['error', 'You do not have permission to edit this campaign'];
+                if (request()->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'You do not have permission to edit this campaign'
+                    ], 403);
                 }
                 return back()->withToasts($toast);
             }
@@ -798,8 +857,13 @@ class CampaignController extends Controller
 
             $campaign->save();
             
-            // Redirect based on section
-            if ($section == 'story') {
+            // Redirect based on section and next_tab parameter
+            $nextTab = request('next_tab');
+            
+            if ($nextTab && in_array($nextTab, ['basics', 'story', 'reward', 'people', 'payment', 'boost', 'faq', 'updates'])) {
+                // Redirect to next tab if specified
+                $redirectRoute = 'user.campaign.edit.' . $nextTab;
+            } elseif ($section == 'story') {
                 $redirectRoute = 'user.campaign.edit.story';
             } else {
                 $redirectRoute = 'user.campaign.edit.basics';
@@ -810,6 +874,7 @@ class CampaignController extends Controller
                 'campaign_id' => $campaign->id,
                 'user_id' => $campaign->user_id,
                 'section' => $section,
+                'next_tab' => $nextTab,
                 'name' => $campaign->name,
                 'goal_amount' => $campaign->goal_amount
             ]);
@@ -903,6 +968,12 @@ class CampaignController extends Controller
 
         if (!$campaign) {
             $toast[] = ['error', 'Campaign not found - Line 677'];
+            return back()->withToasts($toast);
+        }
+
+        // Only campaign owner can delete
+        if ($campaign->user_id != auth()->id()) {
+            $toast[] = ['error', 'Only the campaign owner can delete this campaign'];
             return back()->withToasts($toast);
         }
 
@@ -1116,9 +1187,18 @@ class CampaignController extends Controller
      * Store FAQ for campaign
      */
     function storeFaq($slug) {
-        $campaign = Campaign::where('slug', $slug)
-            ->where('user_id', auth()->id())
-            ->firstOrFail();
+        $campaign = Campaign::where('slug', $slug)->firstOrFail();
+        
+        // Check if user is owner or collaborator
+        if (!$campaign->canBeEditedBy(auth()->id())) {
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to edit this campaign'
+                ], 403);
+            }
+            abort(403, 'You do not have permission to edit this campaign');
+        }
 
         request()->validate([
             'question' => 'required|string|max:500',
@@ -1149,9 +1229,18 @@ class CampaignController extends Controller
      * Update FAQ
      */
     function updateFaq($slug, $faqId) {
-        $campaign = Campaign::where('slug', $slug)
-            ->where('user_id', auth()->id())
-            ->firstOrFail();
+        $campaign = Campaign::where('slug', $slug)->firstOrFail();
+        
+        // Check if user is owner or collaborator
+        if (!$campaign->canBeEditedBy(auth()->id())) {
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to edit this campaign'
+                ], 403);
+            }
+            abort(403, 'You do not have permission to edit this campaign');
+        }
 
         $faq = CampaignFaq::where('id', $faqId)
             ->where('campaign_id', $campaign->id)
@@ -1184,9 +1273,18 @@ class CampaignController extends Controller
      * Delete FAQ
      */
     function deleteFaq($slug, $faqId) {
-        $campaign = Campaign::where('slug', $slug)
-            ->where('user_id', auth()->id())
-            ->firstOrFail();
+        $campaign = Campaign::where('slug', $slug)->firstOrFail();
+        
+        // Check if user is owner or collaborator
+        if (!$campaign->canBeEditedBy(auth()->id())) {
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to edit this campaign'
+                ], 403);
+            }
+            abort(403, 'You do not have permission to edit this campaign');
+        }
 
         $faq = CampaignFaq::where('id', $faqId)
             ->where('campaign_id', $campaign->id)
@@ -1209,9 +1307,15 @@ class CampaignController extends Controller
      * Get FAQ for editing (AJAX)
      */
     function getFaq($slug, $faqId) {
-        $campaign = Campaign::where('slug', $slug)
-            ->where('user_id', auth()->id())
-            ->firstOrFail();
+        $campaign = Campaign::where('slug', $slug)->firstOrFail();
+        
+        // Check if user is owner or collaborator
+        if (!$campaign->canBeEditedBy(auth()->id())) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not have permission to edit this campaign'
+            ], 403);
+        }
 
         $faq = CampaignFaq::where('id', $faqId)
             ->where('campaign_id', $campaign->id)
@@ -1221,5 +1325,427 @@ class CampaignController extends Controller
             'success' => true,
             'faq' => $faq
         ]);
+    }
+
+    /**
+     * Store Update for campaign
+     */
+    function storeUpdate($slug) {
+        $campaign = Campaign::where('slug', $slug)->firstOrFail();
+        
+        // Check if user is owner or collaborator
+        if (!$campaign->canBeEditedBy(auth()->id())) {
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to edit this campaign'
+                ], 403);
+            }
+            abort(403, 'You do not have permission to edit this campaign');
+        }
+
+        request()->validate([
+            'title' => 'required|string|max:500',
+            'content' => 'required|string|min:30',
+            'image' => ['nullable', File::types(['png', 'jpg', 'jpeg'])],
+            'is_published' => 'nullable|boolean'
+        ]);
+
+        $update = new CampaignUpdate();
+        $update->campaign_id = $campaign->id;
+        $update->user_id = auth()->id();
+        $update->title = request('title');
+        $update->content = request('content');
+        $update->slug = slug(request('title')) . '-' . time();
+        $update->is_published = request('is_published', true);
+
+        // Upload image if provided
+        if (request()->hasFile('image')) {
+            try {
+                $update->image = fileUploader(request('image'), getFilePath('campaign'), getFileSize('campaign'));
+            } catch (Exception $e) {
+                if (request()->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Image upload failed: ' . $e->getMessage()
+                    ], 400);
+                }
+                $toast[] = ['error', 'Image uploading process has failed'];
+                return back()->withToasts($toast);
+            }
+        }
+
+        $update->save();
+
+        if (request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Update added successfully',
+                'update' => $update
+            ]);
+        }
+
+        $toast[] = ['success', 'Update added successfully'];
+        return back()->withToasts($toast);
+    }
+
+    /**
+     * Update Update
+     */
+    function updateUpdate($slug, $updateId) {
+        $campaign = Campaign::where('slug', $slug)->firstOrFail();
+        
+        // Check if user is owner or collaborator
+        if (!$campaign->canBeEditedBy(auth()->id())) {
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to edit this campaign'
+                ], 403);
+            }
+            abort(403, 'You do not have permission to edit this campaign');
+        }
+
+        $update = CampaignUpdate::where('id', $updateId)
+            ->where('campaign_id', $campaign->id)
+            ->firstOrFail();
+
+        request()->validate([
+            'title' => 'required|string|max:500',
+            'content' => 'required|string|min:30',
+            'image' => ['nullable', File::types(['png', 'jpg', 'jpeg'])],
+            'is_published' => 'nullable|boolean'
+        ]);
+
+        $update->title = request('title');
+        $update->content = request('content');
+        $update->is_published = request('is_published', $update->is_published);
+
+        // Update slug if title changed
+        if ($update->title != request('title')) {
+            $update->slug = slug(request('title')) . '-' . time();
+        }
+
+        // Upload new image if provided
+        if (request()->hasFile('image')) {
+            try {
+                $update->image = fileUploader(request('image'), getFilePath('campaign'), getFileSize('campaign'), $update->image);
+            } catch (Exception $e) {
+                if (request()->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Image upload failed: ' . $e->getMessage()
+                    ], 400);
+                }
+                $toast[] = ['error', 'Image uploading process has failed'];
+                return back()->withToasts($toast);
+            }
+        }
+
+        $update->save();
+
+        if (request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Update updated successfully',
+                'update' => $update
+            ]);
+        }
+
+        $toast[] = ['success', 'Update updated successfully'];
+        return back()->withToasts($toast);
+    }
+
+    /**
+     * Delete Update
+     */
+    function deleteUpdate($slug, $updateId) {
+        $campaign = Campaign::where('slug', $slug)->firstOrFail();
+        
+        // Check if user is owner or collaborator
+        if (!$campaign->canBeEditedBy(auth()->id())) {
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to edit this campaign'
+                ], 403);
+            }
+            abort(403, 'You do not have permission to edit this campaign');
+        }
+
+        $update = CampaignUpdate::where('id', $updateId)
+            ->where('campaign_id', $campaign->id)
+            ->firstOrFail();
+
+        // Delete image if exists
+        if ($update->image) {
+            fileManager()->removeFile(getFilePath('campaign') . '/' . $update->image);
+        }
+
+        $update->delete();
+
+        if (request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Update deleted successfully'
+            ]);
+        }
+
+        $toast[] = ['success', 'Update deleted successfully'];
+        return back()->withToasts($toast);
+    }
+
+    /**
+     * Get Update for editing (AJAX)
+     */
+    function getUpdate($slug, $updateId) {
+        $campaign = Campaign::where('slug', $slug)->firstOrFail();
+        
+        // Check if user is owner or collaborator
+        if (!$campaign->canBeEditedBy(auth()->id())) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not have permission to edit this campaign'
+            ], 403);
+        }
+
+        $update = CampaignUpdate::where('id', $updateId)
+            ->where('campaign_id', $campaign->id)
+            ->firstOrFail();
+
+        $update->image_url = $update->image ? getImage(getFilePath('campaign') . '/' . $update->image, getFileSize('campaign')) : null;
+
+        return response()->json([
+            'success' => true,
+            'update' => $update
+        ]);
+    }
+
+    /**
+     * Update payment details for campaign
+     */
+    function updatePayment($slug) {
+        $campaign = Campaign::where('slug', $slug)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
+
+        request()->validate([
+            'payout_bank_id' => 'required|exists:payout_banks,id',
+            'bank_account_number' => 'required|string|max:255',
+        ]);
+
+        $payoutBank = \App\Models\PayoutBank::where('id', request('payout_bank_id'))
+            ->where('status', true)
+            ->first();
+
+        if (!$payoutBank) {
+            $toast[] = ['error', 'Selected bank is not available'];
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Selected bank is not available'
+                ], 400);
+            }
+            return back()->withToasts($toast);
+        }
+
+        $campaign->payout_bank_id = request('payout_bank_id');
+        $campaign->bank_account_number = request('bank_account_number');
+        $campaign->bank_account_email = filter_var(request('bank_account_number'), FILTER_VALIDATE_EMAIL) ? request('bank_account_number') : null;
+        $campaign->save();
+
+        // Create admin notification
+        $adminNotification = new AdminNotification();
+        $adminNotification->user_id = auth()->id();
+        $adminNotification->title = auth()->user()->fullname . ' has updated payment details for campaign: ' . $campaign->name;
+        $adminNotification->click_url = urlPath('admin.campaigns.index');
+        $adminNotification->save();
+
+        $toast[] = ['success', 'Payment details updated successfully'];
+
+        if (request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment details updated successfully'
+            ]);
+        }
+
+        return back()->withToasts($toast);
+    }
+
+    /**
+     * Add a collaborator to a campaign
+     */
+    function addCollaborator($slug) {
+        try {
+            $campaign = Campaign::where(function($query) use ($slug) {
+                                $query->where('slug', $slug)
+                                      ->orWhere('id', $slug);
+                            })
+                            ->first();
+
+            if (!$campaign) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Campaign not found'
+                ], 404);
+            }
+
+            // Only campaign owner can add collaborators
+            if ($campaign->user_id != auth()->id()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only the campaign owner can add collaborators'
+                ], 403);
+            }
+
+            $validator = Validator::make(request()->all(), [
+                'user_id' => 'required|exists:users,id'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $validator->errors()->first()
+                ], 422);
+            }
+
+            $userId = request()->input('user_id');
+
+            // Cannot add yourself as collaborator
+            if ($userId == auth()->id()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You cannot add yourself as a collaborator'
+                ], 422);
+            }
+
+            // Check if user is already a collaborator
+            if ($campaign->collaborators()->where('user_id', $userId)->exists()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User is already a collaborator'
+                ], 422);
+            }
+
+            // Add collaborator
+            CampaignCollaborator::create([
+                'campaign_id' => $campaign->id,
+                'user_id' => $userId
+            ]);
+
+            $user = User::find($userId);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Collaborator added successfully',
+                'collaborator' => [
+                    'id' => $user->id,
+                    'name' => $user->fullname ?? $user->username,
+                    'email' => $user->email,
+                    'image' => getImage(getFilePath('userProfile') . '/' . $user->image, getFileSize('userProfile'))
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error adding collaborator: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Remove a collaborator from a campaign
+     */
+    function removeCollaborator($slug, $userId) {
+        try {
+            $campaign = Campaign::where(function($query) use ($slug) {
+                                $query->where('slug', $slug)
+                                      ->orWhere('id', $slug);
+                            })
+                            ->first();
+
+            if (!$campaign) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Campaign not found'
+                ], 404);
+            }
+
+            // Only campaign owner can remove collaborators
+            if ($campaign->user_id != auth()->id()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only the campaign owner can remove collaborators'
+                ], 403);
+            }
+
+            $collaborator = $campaign->collaborators()->where('user_id', $userId)->first();
+
+            if (!$collaborator) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Collaborator not found'
+                ], 404);
+            }
+
+            $collaborator->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Collaborator removed successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error removing collaborator: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Search users for adding as collaborators
+     */
+    function searchUsers() {
+        try {
+            $query = request()->input('q', '');
+
+            if (strlen($query) < 2) {
+                return response()->json([
+                    'success' => true,
+                    'users' => []
+                ]);
+            }
+
+            $users = User::where('status', 1)
+                        ->where(function($q) use ($query) {
+                            $q->where('username', 'like', '%' . $query . '%')
+                              ->orWhere('email', 'like', '%' . $query . '%')
+                              ->orWhere('firstname', 'like', '%' . $query . '%')
+                              ->orWhere('lastname', 'like', '%' . $query . '%');
+                        })
+                        ->where('id', '!=', auth()->id())
+                        ->limit(10)
+                        ->get()
+                        ->map(function($user) {
+                            return [
+                                'id' => $user->id,
+                                'name' => $user->fullname ?? $user->username,
+                                'email' => $user->email,
+                                'username' => $user->username,
+                                'image' => getImage(getFilePath('userProfile') . '/' . $user->image, getFileSize('userProfile'))
+                            ];
+                        });
+
+            return response()->json([
+                'success' => true,
+                'users' => $users
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error searching users: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

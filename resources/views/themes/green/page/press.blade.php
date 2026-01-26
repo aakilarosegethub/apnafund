@@ -124,7 +124,7 @@
     <div class="press-hero mb-5">
         <h1>Pressroom</h1>
         <p>
-            ApnaCrowdfunding is a crowdfunding platform that helps people around the world turn their ideas into reality. It can be a personal project, a social project, a start-up, or anything else. We will make it come true. Working on an ApnaCrowdfunding story? You can belong from any profession and upload your story on ApnaCrowdfunding.
+            {!! apnaCrowdfundingLink() !!} is a crowdfunding platform that helps people around the world turn their ideas into reality. It can be a personal project, a social project, a start-up, or anything else. We will make it come true. Working on an {!! apnaCrowdfundingLink() !!} story? You can belong from any profession and upload your story on {!! apnaCrowdfundingLink() !!}.
         </p>
     </div>
 
@@ -137,9 +137,9 @@
 
     <!-- STATS -->
     <div class="stats-box mb-5">
-        <h4 class="fw-bold">ApnaCrowdfunding at a glance</h4>
+        <h4 class="fw-bold">{!! apnaCrowdfundingLink() !!} at a glance</h4>
         <ul>
-            <li>Since our launch, ApnaCrowdfunding has helped thousands of individuals, families, creators, and entrepreneurs raise funds for causes that truly matter.</li>
+            <li>Since our launch, {!! apnaCrowdfundingLink() !!} has helped thousands of individuals, families, creators, and entrepreneurs raise funds for causes that truly matter.</li>
             <li>Thousands of campaigns launched</li>
             <li>Millions raised for social and creative causes</li>
             <li>Transparent fundraising</li>
@@ -151,14 +151,14 @@
     <div class="our-story mb-5">
         <h4 class="fw-bold">Our Story</h4>
         <p>
-            ApnaCrowdfunding has a simple realization: People want to help but they need the right platform to do so. Countless families, creators, and innovators struggle to access timely financial support.
+            {!! apnaCrowdfundingLink() !!} has a simple realization: People want to help but they need the right platform to do so. Countless families, creators, and innovators struggle to access timely financial support.
         </p>
     </div>
 
     <!-- LEADERSHIP & TEAM -->
     <div class="leadership-box mb-5">
         <h4 class="fw-bold">Leadership & Team</h4>
-        <p>ApnaCrowdfunding is a team of people who believe that crowdfunding can change lives. “Crowdfunding is about compassion and hope.”</p>
+        <p>{!! apnaCrowdfundingLink() !!} is a team of people who believe that crowdfunding can change lives. "Crowdfunding is about compassion and hope."</p>
     </div>
 
     <!-- EXISTING FAQ (unchanged) -->
@@ -167,7 +167,7 @@
 
         <div class="faq-item">
             <div class="faq-question">
-                <span>How does ApnaCrowdfunding work?</span>
+                <span>How does {!! apnaCrowdfundingLink() !!} work?</span>
                 <span class="faq-icon">+</span>
             </div>
             <div class="faq-answer">
@@ -201,7 +201,7 @@
 
         <div class="faq-item">
             <div class="faq-question">
-                <span>How does ApnaCrowdfunding sustain itself?
+                <span>How does {!! apnaCrowdfundingLink() !!} sustain itself?
 </span>
                 <span class="faq-icon">+</span>
             </div>

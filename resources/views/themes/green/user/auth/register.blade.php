@@ -272,6 +272,9 @@
         margin-bottom: 16px;
         font-size: 14px;
     }
+    span{
+        color: #fff !important;
+    }
 </style>
 @endsection
 

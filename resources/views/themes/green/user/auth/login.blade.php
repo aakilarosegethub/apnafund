@@ -1,3 +1,4 @@
+
 @extends($activeTheme . 'layouts.green-home')
 
 @section('custom-css')
@@ -217,6 +218,9 @@
         color: #9b1c1c;
         margin-bottom: 16px;
         border-radius: 4px;
+    }
+    span{
+        color: #fff !important;
     }
 </style>
 @endsection

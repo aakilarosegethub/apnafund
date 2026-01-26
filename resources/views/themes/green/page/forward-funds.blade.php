@@ -160,7 +160,7 @@
         Building the Future Together.
     </h1>
     <p>
-        ApnaCrowdfunding exists for one simple but powerful reason:
+        {!! apnaCrowdfundingLink() !!} exists for one simple but powerful reason:
         to help ideas, causes, and creators turn dreams into reality.
         We believe success is not measured only in revenue, but in lives impacted,
         creativity unlocked, and communities uplifted.
@@ -255,7 +255,7 @@
 <section class="kc-blue">
     <div class="kc-blue-inner">
         <h2>
-            ApnaCrowdfunding is a movement of belief in people, ideas, and collective action.
+            {!! apnaCrowdfundingLink() !!} is a movement of belief in people, ideas, and collective action.
             When you launch or support a campaign here, you’re not just funding a project —
             you’re helping build a more creative, compassionate, and empowered world.
             Together, let’s fund what truly matters.

@@ -77,7 +77,7 @@ class CampaignController extends Controller
     function details($id) {
         $pageTitle  = 'Campaign Details';
         $backRoute  = route('admin.campaigns.index');
-        $campaign   = Campaign::findOrFail($id);
+        $campaign   = Campaign::with('payoutBank')->findOrFail($id);
         $totalDonor = $campaign->deposits()->done()->count();
         $comments   = $campaign->comments()->with('user')->paginate(getPaginate());
         

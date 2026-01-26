@@ -2,8 +2,8 @@
     $activeTheme = activeTheme();
     $activeThemeTrue = activeTheme();
     
-    // Check if campaign belongs to current user
-    if (isset($campaign) && $campaign->user_id !== auth()->id()) {
+    // Check if campaign belongs to current user or user is a collaborator
+    if (isset($campaign) && !$campaign->canBeEditedBy(auth()->id())) {
         abort(403, 'Unauthorized access to this campaign.');
     }
     
@@ -35,6 +35,7 @@
             font-size: 15px;
             font-weight: 500;
             flex-wrap: wrap;
+            align-items: center;
         }
 
         .top-tabs a {
@@ -45,6 +46,27 @@
         .top-tabs a.active {
             color: #000;
             font-weight: 600;
+        }
+
+        /* Preview Button Styles */
+        .top-tabs .btn:hover {
+            background: #f5f5f5 !important;
+            border-color: #16a34a !important;
+            color: #16a34a !important;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .top-tabs {
+                padding: 10px 15px;
+                gap: 15px;
+                font-size: 13px;
+            }
+
+            .top-tabs .btn {
+                padding: 6px 15px !important;
+                font-size: 13px !important;
+            }
         }
 
         /* MAIN AREA */
@@ -432,12 +454,22 @@
             <a href="{{ route('user.campaign.edit.payment', $campaign->slug) }}" class="{{ ($section ?? 'basics') == 'payment' ? 'active' : '' }}">Payment</a>
             <a href="{{ route('user.campaign.edit.boost', $campaign->slug) }}" class="{{ ($section ?? 'basics') == 'boost' ? 'active' : '' }}">Boost</a>
             <a href="{{ route('user.campaign.edit.faq', $campaign->slug) }}" class="{{ ($section ?? 'basics') == 'faq' ? 'active' : '' }}">FAQ</a>
+            <a href="{{ route('user.campaign.edit.updates', $campaign->slug) }}" class="{{ ($section ?? 'basics') == 'updates' ? 'active' : '' }}">Updates</a>
         </div>
-        <div id="topActionButtons" style="display: none; gap: 10px; align-items: center;">
-            <button type="button" id="topExitBtn" class="next-btn" style="margin: 0; padding: 8px 20px; font-size: 14px; background: #666;">Exit</button>
-            <button type="button" id="topSaveBtn" class="next-btn active" style="margin: 0; padding: 8px 20px; font-size: 14px;">Save</button>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <!-- Preview Button -->
+            <a href="{{ route('user.campaign.show', $campaign->slug) }}" target="_blank" class="btn" style="padding: 8px 20px; font-size: 14px; background: #fff; border: 1px solid #ddd; color: #333; text-decoration: none; border-radius: 5px; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;">
+                <i class="fas fa-eye"></i> Preview
+            </a>
+            
+            <!-- Action Buttons (Save/Exit - shown when editing) -->
+            <div id="topActionButtons" style="display: none; gap: 10px; align-items: center;">
+                <button type="button" id="topExitBtn" class="next-btn" style="margin: 0; padding: 8px 20px; font-size: 14px; background: #666;">Exit</button>
+                <button type="button" id="topSaveBtn" class="next-btn active" style="margin: 0; padding: 8px 20px; font-size: 14px;">Save</button>
+            </div>
+            <button type="button" id="topEditBtn" class="d-none next-btn active" style="margin: 0; padding: 8px 20px; font-size: 14px;">Edit</button>
         </div>
-        <button type="button" id="topEditBtn" class="d-none next-btn active" style="margin: 0; padding: 8px 20px; font-size: 14px;">Edit</button>
+    </div>
     </div>
     <div class="main">
         
@@ -478,56 +510,54 @@
 
             <!-- PROJECT TITLE -->
             <div class="box">
-                    <label>Project Title *</label>
-                    <input type="text" name="name" value="{{ old('name', $campaign->name) }}" placeholder="Enter your project title..." required>
+                <label>Project Title *</label>
+                <input type="text" name="name" value="{{ old('name', $campaign->name) }}" placeholder="Enter your project title..." required>
                 <p class="note">Write a clear title so people understand what you are creating.</p>
-                    @error('name')
-                        <p class="note" style="color: red;">{{ $message }}</p>
-                    @enderror
+                @error('name')
+                    <p class="note" style="color: red;">{{ $message }}</p>
+                @enderror
             </div>
 
             <!-- SHORT DESCRIPTION -->
             <div class="box">
-                    <label>Short Description *</label>
-                    <textarea name="description" placeholder="Describe your project in one or two sentences..." required>{{ old('description', $campaign->description) }}</textarea>
+                <label>Short Description *</label>
+                <textarea name="description" rows="4" placeholder="Campaign description will be added here. Describe your project in one or two sentences..." required>{{ old('description', $campaign->description) }}</textarea>
                 <p class="note">This will show on your project card.</p>
-                    @error('description')
-                        <p class="note" style="color: red;">{{ $message }}</p>
-                    @enderror
+                @error('description')
+                    <p class="note" style="color: red;">{{ $message }}</p>
+                @enderror
             </div>
 
             <!-- CATEGORY -->
             <div class="box">
-                    <label>Project Category *</label>
-                    <select name="category_id" required>
-                        <option value="">Select category</option>
-                        @foreach($categories as $category)
-                            <option value="{{ $category->id }}" {{ old('category_id', $campaign->category_id) == $category->id ? 'selected' : '' }}>
-                                {{ $category->name }}
-                            </option>
-                        @endforeach
+                <label>Project Category *</label>
+                <select name="category_id" required>
+                    <option value="">Select category</option>
+                    @foreach($categories as $category)
+                        <option value="{{ $category->id }}" {{ old('category_id', $campaign->category_id) == $category->id ? 'selected' : '' }}>
+                            {{ $category->name }}
+                        </option>
+                    @endforeach
                 </select>
-                    @error('category_id')
-                        <p class="note" style="color: red;">{{ $message }}</p>
-                    @enderror
+                @error('category_id')
+                    <p class="note" style="color: red;">{{ $message }}</p>
+                @enderror
             </div>
 
             <!-- LOCATION -->
             <div class="box">
                 <label>Location</label>
-                    <input type="text" name="location" value="{{ old('location', $campaign->location) }}" placeholder="City, Country">
-                    @error('location')
-                        <p class="note" style="color: red;">{{ $message }}</p>
-                    @enderror
+                <input type="text" name="location" value="{{ old('location', $campaign->location) }}" placeholder="City, Country">
+                <p class="note">Where is your project based?</p>
+                @error('location')
+                    <p class="note" style="color: red;">{{ $message }}</p>
+                @enderror
             </div>
 
             <!-- PROJECT IMAGE -->
             <div class="box">
-                <h2 style="margin-top:0; font-size:22px;">Project image</h2>
-
-                <p style="color:#555; line-height:1.6; font-size:15px;">
-                    Add an image that clearly represents your project...
-                </p>
+                <label>Project Image *</label>
+                <p class="note">Add an image that clearly represents your project.</p>
 
                 @if($campaign->image)
                     <div style="margin-bottom: 15px;">
@@ -537,142 +567,74 @@
                     </div>
                 @endif
 
-                <div class="upload-box">
-                    <label for="projectImage" class="upload-btn">Upload an image</label>
-                    <input type="file" id="projectImage" name="image" accept="image/*">
-                    <img id="preview" class="preview-img" alt="Image Preview" 
-                         @if($campaign->image) 
-                             src="{{ getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')) }}" 
-                             style="display: block;"
-                         @endif>
-                    <p style="margin-top: 12px; font-size: 14px; color:#666;">
-                        Drop an image here, or select a file.<br>Must be JPG, PNG, GIF, or WEBP under 50 MB.
-                    </p>
-                    @error('image')
-                        <p class="note" style="color: red;">{{ $message }}</p>
-                    @enderror
-                </div>
+                <input type="file" name="image" accept="image/*" style="margin-top: 10px;">
+                <p class="note">Must be JPG, PNG, GIF, or WEBP under 50 MB.</p>
+                @error('image')
+                    <p class="note" style="color: red;">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <!-- VIDEO UPLOAD (Optional) -->
+            <div class="box">
+                <label>Project Video (Optional)</label>
+                <p class="note">Upload a video file to showcase your project.</p>
+                
+                @if($campaign->video)
+                    <div style="margin-bottom: 15px; padding: 10px; background: #f0f9f4; border-radius: 6px; border: 1px solid #16a34a;">
+                        <i class="fas fa-video" style="color: #16a34a;"></i>
+                        <span style="margin-left: 8px; color: #16a34a;">Video uploaded</span>
+                    </div>
+                @endif
+                
+                <input type="file" name="video" accept="video/*" style="margin-top: 10px;">
+                <p class="note">Accepted formats: MP4, AVI, MOV. Max size: 100 MB.</p>
+                @error('video')
+                    <p class="note" style="color: red;">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <!-- YOUTUBE URL -->
+            <div class="box">
+                <label>YouTube Video URL (Optional)</label>
+                <input type="url" name="youtube_url" value="{{ old('youtube_url', $campaign->youtube_url) }}" placeholder="https://www.youtube.com/watch?v=...">
+                <p class="note">Add a YouTube link to your project video (e.g., https://www.youtube.com/watch?v=dQw4w9WgXcQ)</p>
+                @error('youtube_url')
+                    <p class="note" style="color: red;">{{ $message }}</p>
+                @enderror
             </div>
 
             <!-- FUNDING GOAL -->
             <div class="box">
-                <h2 style="margin-top:0; font-size:22px;">Funding goal</h2>
-
-                <p style="font-size:15px; color:#555;">
-                    Set an achievable goal that covers what you need to complete your project.
-                </p>
-
-                <label>Goal amount *</label>
+                <label>Funding Goal *</label>
+                <p class="note">Set an achievable goal that covers what you need to complete your project.</p>
                 <input type="number" name="goal_amount" step="0.01" min="0" value="{{ old('goal_amount', $campaign->goal_amount) }}" placeholder="0.00" required>
                 @error('goal_amount')
                     <p class="note" style="color: red;">{{ $message }}</p>
                 @enderror
-
-                <div style="margin-top:18px; border-top:1px solid #eee; padding-top:18px;">
-                    <img src="https://cdn-icons-png.flaticon.com/512/992/992651.png"
-                         style="width:40px; vertical-align:middle; margin-right:10px;">
-                    <a href="#" class="calc-link">Use our calculator</a>
-                    to estimate total costs.
-                </div>
             </div>
 
             <!-- CAMPAIGN DURATION -->
             <div class="box">
-                <h2 style="margin-top:0; font-size:22px;">Campaign duration *</h2>
-                <p style="font-size:15px; color:#555;">
-                    Set a time limit for your campaign. You won't be able to change this after you launch.
-                </p>
-
-                <label>Start Date *</label>
+                <label>Campaign Start Date *</label>
                 <input type="date" name="start_date" value="{{ old('start_date', $campaign->start_date ? $campaign->start_date->format('Y-m-d') : '') }}" required>
                 @error('start_date')
                     <p class="note" style="color: red;">{{ $message }}</p>
                 @enderror
 
-                <label style="margin-top: 15px;">End Date *</label>
-                <input type="date" name="end_date" value="{{ old('end_date', $campaign->end_date ? $campaign->end_date->format('Y-m-d') : '') }}" required>
+                <label style="margin-top: 15px;">Campaign End Date *</label>
+                <input type="date" name="end_date" id="end_date" value="{{ old('end_date', $campaign->end_date ? $campaign->end_date->format('Y-m-d') : '') }}" required>
+                <p class="note">💡 Campaigns can last maximum 30 days from start date.</p>
                 @error('end_date')
                     <p class="note" style="color: red;">{{ $message }}</p>
                 @enderror
-
-                <div class="green-note" style="margin-top: 15px;">✔ Campaigns that last 30 days or less are more likely to be successful.</div>
-                <div class="green-note">✔ Pledge Over Time won't be available for Late Pledge backers.</div>
             </div>
 
-            <!-- SHIPPING SECTION -->
-            <div class="shipping-container">
-
-                <div class="shipping-left">
-                    <h2>Shipping</h2>
-                    <p>Choose when backers pay shipping costs.</p>
-                    <p>
-                        Decide whether charging shipping at pledge, or post-campaign through a pledge manager,
-                        works best for your project.
-                    </p>
-                    <a href="#">Learn more</a>
-                </div>
-
-                <div class="shipping-right">
-                    <div class="shipping-box">
-                        
-                        <div class="ship-option active">
-                            <input type="radio" name="ship" checked>
-                            Charge shipping at pledge
-                            <div class="ship-description">
-                                Set actual shipping costs when adding rewards and add-ons. Backers will pay their
-                                pledge total, including any applicable shipping costs, when your campaign ends successfully.
-                            </div>
-                        </div>
-
-                        <div class="ship-option">
-                            <input type="radio" name="ship">
-                            Charge shipping post-campaign
-                        </div>
-
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- POST-CAMPAIGN SECTION -->
-            <div class="post-container">
-
-                <div class="post-left">
-                    <h2>Post-campaign</h2>
-                    <p>Set up what is next for your project, after your campaign ends successfully.</p>
-
-                    <p>
-                        <strong>Late Pledges:</strong> Keep the momentum going and continue collecting pledges after your
-                        campaign ends. Learn how to maximize funding with this feature in our
-                        <a href="#">Late Pledges guide</a>.
-                    </p>
-
-                    <p>
-                        <strong>Pledge Manager:</strong> The all-in-one toolkit for all your post-campaign needs. Discover more
-                        about the <a href="#">Kickstarter Pledge Manager</a>.
-                    </p>
-                </div>
-
-                <div class="post-right">
-                    <div class="post-box">
-
-                        <div class="post-option">
-                            <input type="radio" name="latePledge">
-                            Yes, enable Late Pledges
-                            <span class="recommended-tag">Recommended</span>
-                        </div>
-
-                        <div class="post-option active">
-                            <input type="radio" name="latePledge" checked>
-                            No, don't enable Late Pledges
-                            <div class="ship-description">
-                                Backers will only be able to pledge to your project until it reaches its deadline.
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-
+            <!-- SAVE AND NEXT BUTTON -->
+            <div class="box" style="text-align: right; background: transparent; border: none; padding: 0; margin-top: 30px;">
+                <input type="hidden" name="next_tab" value="reward">
+                <button type="submit" class="btn btn-success" style="padding: 12px 40px; font-size: 16px; font-weight: 600; background: #16a34a; border: none; border-radius: 6px; cursor: pointer;">
+                    <i class="fas fa-save"></i> Save and Next
+                </button>
             </div>
 
             </form>
@@ -980,14 +942,23 @@
             <p class="subtitle">Tell your project's story and connect with backers.</p>
             
             <div class="box">
-                <label>Project Story *</label>
+                <label>Project Story * <span id="charCount" style="color: #666; font-weight: normal; font-size: 14px;">(Minimum 30 characters)</span></label>
                 <!-- Summernote Editor -->
                 <textarea id="summernote" name="description" required>{{ old('description', $campaign->description ?? '') }}</textarea>
                 
-                <p class="note">Share the story behind your project and why it matters.</p>
+                <p class="note">Share the story behind your project and why it matters. Must be at least 30 characters.</p>
                 @error('description')
                     <p class="note" style="color: red;">{{ $message }}</p>
                 @enderror
+                <p id="storyError" class="note" style="color: red; display: none;"></p>
+            </div>
+
+            <!-- SAVE AND NEXT BUTTON -->
+            <div class="box" style="text-align: right; background: transparent; border: none; padding: 0; margin-top: 30px;">
+                <input type="hidden" name="next_tab" value="people">
+                <button type="submit" class="btn btn-success" id="storySubmitBtn" style="padding: 12px 40px; font-size: 16px; font-weight: 600; background: #16a34a; border: none; border-radius: 6px; cursor: pointer;">
+                    <i class="fas fa-save"></i> Save and Next
+                </button>
             </div>
 
             </form>
@@ -998,25 +969,351 @@
             <p class="subtitle">Manage team members and collaborators.</p>
             
             <div class="box">
-                <p>People section content will be here. You can manage team members for your campaign.</p>
+                <h2 style="margin-top: 0; font-size: 22px; margin-bottom: 15px;">Campaign Creator</h2>
+                <div style="display: flex; align-items: center; gap: 15px; padding: 15px; background: #f9f9f9; border-radius: 8px; margin-bottom: 25px;">
+                    @php
+                        $creator = $campaign->user;
+                    @endphp
+                    <div style="width: 50px; height: 50px; border-radius: 50%; overflow: hidden; background: #ddd; display: flex; align-items: center; justify-content: center;">
+                        @if($creator->image)
+                            <img src="{{ getImage(getFilePath('userProfile') . '/' . $creator->image, getFileSize('userProfile')) }}" alt="{{ $creator->fullname ?? $creator->username }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        @else
+                            <span style="font-size: 20px; color: #666;">{{ strtoupper(substr($creator->fullname ?? $creator->username, 0, 1)) }}</span>
+                        @endif
+                    </div>
+                    <div style="flex: 1;">
+                        <h3 style="margin: 0; font-size: 16px; font-weight: 600;">{{ $creator->fullname ?? $creator->username }}</h3>
+                        <p style="margin: 5px 0 0; font-size: 14px; color: #666;">{{ $creator->email }}</p>
+                    </div>
+                    <span style="padding: 5px 12px; background: #028858; color: white; border-radius: 20px; font-size: 12px; font-weight: 600;">Creator</span>
+                </div>
             </div>
+
+            <div class="box">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0; font-size: 22px;">Collaborators</h2>
+                    @if($campaign->user_id == auth()->id())
+                        <button type="button" id="addCollaboratorBtn" style="padding: 10px 20px; background: #028858; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: 600;">+ Add Collaborator</button>
+                    @endif
+                </div>
+
+                <div id="collaboratorsList">
+                    @forelse($collaborators ?? [] as $collaborator)
+                        <div class="collaborator-item" data-user-id="{{ $collaborator->user_id }}" style="display: flex; align-items: center; gap: 15px; padding: 15px; background: #f9f9f9; border-radius: 8px; margin-bottom: 10px;">
+                            <div style="width: 50px; height: 50px; border-radius: 50%; overflow: hidden; background: #ddd; display: flex; align-items: center; justify-content: center;">
+                                @if($collaborator->user->image)
+                                    <img src="{{ getImage(getFilePath('userProfile') . '/' . $collaborator->user->image, getFileSize('userProfile')) }}" alt="{{ $collaborator->user->fullname ?? $collaborator->user->username }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                @else
+                                    <span style="font-size: 20px; color: #666;">{{ strtoupper(substr($collaborator->user->fullname ?? $collaborator->user->username, 0, 1)) }}</span>
+                                @endif
+                            </div>
+                            <div style="flex: 1;">
+                                <h3 style="margin: 0; font-size: 16px; font-weight: 600;">{{ $collaborator->user->fullname ?? $collaborator->user->username }}</h3>
+                                <p style="margin: 5px 0 0; font-size: 14px; color: #666;">{{ $collaborator->user->email }}</p>
+                            </div>
+                            @if($campaign->user_id == auth()->id())
+                                <button type="button" onclick="removeCollaborator({{ $collaborator->user_id }})" style="padding: 8px 16px; background: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">Remove</button>
+                            @endif
+                        </div>
+                    @empty
+                        <div style="text-align: center; padding: 40px; color: #888;">
+                            <p>No collaborators added yet.</p>
+                            @if($campaign->user_id == auth()->id())
+                                <p style="font-size: 14px; margin-top: 10px;">Click "Add Collaborator" to invite team members.</p>
+                            @endif
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+
+            <!-- Add Collaborator Modal/Form -->
+            @if($campaign->user_id == auth()->id())
+            <div class="box" id="addCollaboratorForm" style="display: none; margin-top: 25px;">
+                <h2 style="margin-top: 0; font-size: 22px; margin-bottom: 20px;">Add Collaborator</h2>
+                
+                <div style="margin-bottom: 20px;">
+                    <label>Search User</label>
+                    <input type="text" id="userSearchInput" placeholder="Search by name, email, or username..." style="width: 100%; padding: 12px; font-size: 15px; border: 1px solid #d9d9d9; border-radius: 8px;">
+                    <p class="note">Start typing to search for users in the system.</p>
+                </div>
+
+                <div id="userSearchResults" style="max-height: 300px; overflow-y: auto; border: 1px solid #e3e3e3; border-radius: 8px; display: none;">
+                    <!-- Search results will appear here -->
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="button" id="saveCollaboratorBtn" style="padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; font-size: 15px; background: #028858; color: white; display: none;">Add Selected User</button>
+                    <button type="button" onclick="cancelAddCollaborator()" style="padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; font-size: 15px; background: #666; color: white;">Cancel</button>
+                </div>
+            </div>
+            @endif
+
+            <script>
+                let selectedUserId = null;
+                let searchTimeout = null;
+
+                @if($campaign->user_id == auth()->id())
+                // Show add collaborator form
+                document.getElementById('addCollaboratorBtn')?.addEventListener('click', function() {
+                    document.getElementById('addCollaboratorForm').style.display = 'block';
+                    document.getElementById('addCollaboratorBtn').style.display = 'none';
+                    document.getElementById('userSearchInput').focus();
+                });
+
+                // User search functionality
+                document.getElementById('userSearchInput')?.addEventListener('input', function() {
+                    const query = this.value.trim();
+                    const resultsDiv = document.getElementById('userSearchResults');
+                    const saveBtn = document.getElementById('saveCollaboratorBtn');
+
+                    // Clear previous timeout
+                    if (searchTimeout) {
+                        clearTimeout(searchTimeout);
+                    }
+
+                    if (query.length < 2) {
+                        resultsDiv.style.display = 'none';
+                        saveBtn.style.display = 'none';
+                        selectedUserId = null;
+                        return;
+                    }
+
+                    // Debounce search
+                    searchTimeout = setTimeout(() => {
+                        fetch("{{ route('user.campaign.collaborators.search') }}?q=" + encodeURIComponent(query), {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success && data.users.length > 0) {
+                                let html = '';
+                                data.users.forEach(user => {
+                                    html += `
+                                        <div class="user-result-item" data-user-id="${user.id}" style="padding: 15px; cursor: pointer; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 15px;" onclick="selectUser(${user.id}, '${user.name.replace(/'/g, "\\'")}', '${user.email.replace(/'/g, "\\'")}')">
+                                            <div style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background: #ddd; display: flex; align-items: center; justify-content: center;">
+                                                ${user.image ? `<img src="${user.image}" alt="${user.name}" style="width: 100%; height: 100%; object-fit: cover;">` : `<span style="font-size: 16px; color: #666;">${user.name.charAt(0).toUpperCase()}</span>`}
+                                            </div>
+                                            <div style="flex: 1;">
+                                                <h4 style="margin: 0; font-size: 15px; font-weight: 600;">${user.name}</h4>
+                                                <p style="margin: 3px 0 0; font-size: 13px; color: #666;">${user.email}</p>
+                                            </div>
+                                        </div>
+                                    `;
+                                });
+                                resultsDiv.innerHTML = html;
+                                resultsDiv.style.display = 'block';
+                            } else {
+                                resultsDiv.innerHTML = '<div style="padding: 20px; text-align: center; color: #888;">No users found</div>';
+                                resultsDiv.style.display = 'block';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            resultsDiv.innerHTML = '<div style="padding: 20px; text-align: center; color: #dc3545;">Error searching users</div>';
+                            resultsDiv.style.display = 'block';
+                        });
+                    }, 300);
+                });
+
+                function selectUser(userId, userName, userEmail) {
+                    selectedUserId = userId;
+                    document.getElementById('userSearchResults').innerHTML = `
+                        <div style="padding: 15px; background: #d1f5d8; border-radius: 8px; display: flex; align-items: center; gap: 15px;">
+                            <div style="flex: 1;">
+                                <h4 style="margin: 0; font-size: 15px; font-weight: 600;">${userName}</h4>
+                                <p style="margin: 3px 0 0; font-size: 13px; color: #666;">${userEmail}</p>
+                            </div>
+                            <span style="color: #028858; font-size: 14px;">Selected</span>
+                        </div>
+                    `;
+                    document.getElementById('saveCollaboratorBtn').style.display = 'block';
+                }
+
+                function cancelAddCollaborator() {
+                    document.getElementById('addCollaboratorForm').style.display = 'none';
+                    document.getElementById('addCollaboratorBtn').style.display = 'block';
+                    document.getElementById('userSearchInput').value = '';
+                    document.getElementById('userSearchResults').innerHTML = '';
+                    document.getElementById('userSearchResults').style.display = 'none';
+                    document.getElementById('saveCollaboratorBtn').style.display = 'none';
+                    selectedUserId = null;
+                }
+
+                // Add collaborator
+                document.getElementById('saveCollaboratorBtn')?.addEventListener('click', function() {
+                    if (!selectedUserId) {
+                        alert('Please select a user');
+                        return;
+                    }
+
+                    const btn = this;
+                    btn.disabled = true;
+                    btn.textContent = 'Adding...';
+
+                    fetch("{{ route('user.campaign.collaborators.add', $campaign->slug) }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || document.querySelector('input[name="_token"]').value
+                        },
+                        body: JSON.stringify({
+                            user_id: selectedUserId
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert(data.message || 'Error adding collaborator');
+                            btn.disabled = false;
+                            btn.textContent = 'Add Selected User';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred. Please try again.');
+                        btn.disabled = false;
+                        btn.textContent = 'Add Selected User';
+                    });
+                });
+
+                // Remove collaborator
+                function removeCollaborator(userId) {
+                    if (!confirm('Are you sure you want to remove this collaborator?')) {
+                        return;
+                    }
+
+                    fetch("{{ route('user.campaign.collaborators.remove', [$campaign->slug, ':userId']) }}".replace(':userId', userId), {
+                        method: 'DELETE',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || document.querySelector('input[name="_token"]').value
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert(data.message || 'Error removing collaborator');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred. Please try again.');
+                    });
+                }
+                @endif
+            </script>
             @endif
 
             @if($currentSection == 'payment')
             <h1>Payment</h1>
-            <p class="subtitle">Configure payment settings for your campaign.</p>
+            <p class="subtitle">Configure payment settings for your campaign. Select your payout bank and provide account details.</p>
             
             <div class="box">
-                <p>Payment section content will be here. Configure how you'll receive payments.</p>
+                <form id="paymentForm" method="POST" action="{{ route('user.campaign.edit.payment.update', $campaign->slug) }}">
+                    @csrf
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label>Select Payout Bank *</label>
+                        <select name="payout_bank_id" id="payout_bank_id" required style="width: 100%; padding: 12px; font-size: 15px; border: 1px solid #d9d9d9; border-radius: 8px;">
+                            <option value="">-- Select Bank --</option>
+                            @foreach($payoutBanks ?? [] as $bank)
+                                <option value="{{ $bank->id }}" {{ $campaign->payout_bank_id == $bank->id ? 'selected' : '' }}>
+                                    {{ $bank->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <p class="note">Select the bank where you want to receive payouts.</p>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <label>Account Number or Email *</label>
+                        <input type="text" name="bank_account_number" id="bank_account_number" 
+                               value="{{ $campaign->bank_account_number ?? '' }}" 
+                               placeholder="Enter account number or email" 
+                               required 
+                               style="width: 100%; padding: 12px; font-size: 15px; border: 1px solid #d9d9d9; border-radius: 8px;">
+                        <p class="note">Enter your bank account number or email address for receiving payouts.</p>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-top: 25px;">
+                        <button type="submit" style="padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; font-size: 15px; background: #028858; color: white;">Save Payment Details</button>
+                    </div>
+                </form>
             </div>
             @endif
 
             @if($currentSection == 'boost')
             <h1>Boost</h1>
-            <p class="subtitle">Promote and boost your campaign visibility.</p>
+            <p class="subtitle">Promote your campaign and reach more backers.</p>
             
-            <div class="box">
-                <p>Boost section content will be here. Promote your campaign to reach more backers.</p>
+            <div class="box" style="text-align: center; padding: 60px 40px;">
+                <!-- Coming Soon Icon -->
+                <div style="margin-bottom: 25px;">
+                    <svg width="80" height="80" viewBox="0 0 100 100" style="opacity: 0.7;">
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#16a34a" stroke-width="3"/>
+                        <path d="M35 50 L45 60 L65 35" fill="none" stroke="#16a34a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="75" cy="25" r="8" fill="#16a34a"/>
+                        <text x="75" y="29" font-size="12" fill="white" text-anchor="middle" font-weight="bold">?</text>
+                    </svg>
+                </div>
+
+                <!-- Coming Soon Text -->
+                <h2 style="font-size: 32px; margin-bottom: 15px; color: #16a34a; font-weight: 600;">
+                    Coming Soon
+                </h2>
+                
+                <p style="font-size: 18px; color: #666; margin-bottom: 30px; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.6;">
+                    We're working on powerful promotion features to help you reach more backers and boost your campaign's visibility.
+                </p>
+
+                <!-- Features Preview -->
+                <div style="display: flex; gap: 30px; justify-content: center; flex-wrap: wrap; margin-top: 40px; text-align: left; max-width: 700px; margin-left: auto; margin-right: auto;">
+                    <div style="flex: 1; min-width: 200px;">
+                        <div style="width: 50px; height: 50px; background: #e8f5e9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                            <i class="fas fa-bullhorn" style="color: #16a34a; font-size: 22px;"></i>
+                        </div>
+                        <h4 style="font-size: 16px; margin-bottom: 8px; color: #333;">Social Media Ads</h4>
+                        <p style="font-size: 14px; color: #666; line-height: 1.5; margin: 0;">
+                            Promote your campaign on Facebook, Instagram, and other platforms.
+                        </p>
+                    </div>
+
+                    <div style="flex: 1; min-width: 200px;">
+                        <div style="width: 50px; height: 50px; background: #e8f5e9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                            <i class="fas fa-chart-line" style="color: #16a34a; font-size: 22px;"></i>
+                        </div>
+                        <h4 style="font-size: 16px; margin-bottom: 8px; color: #333;">Analytics</h4>
+                        <p style="font-size: 14px; color: #666; line-height: 1.5; margin: 0;">
+                            Track your campaign performance with detailed insights.
+                        </p>
+                    </div>
+
+                    <div style="flex: 1; min-width: 200px;">
+                        <div style="width: 50px; height: 50px; background: #e8f5e9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                            <i class="fas fa-users" style="color: #16a34a; font-size: 22px;"></i>
+                        </div>
+                        <h4 style="font-size: 16px; margin-bottom: 8px; color: #333;">Audience Targeting</h4>
+                        <p style="font-size: 14px; color: #666; line-height: 1.5; margin: 0;">
+                            Reach the right people who are interested in your campaign.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Call to Action -->
+                <div style="margin-top: 50px; padding: 25px; background: #f8f9fa; border-radius: 12px; border-left: 4px solid #16a34a;">
+                    <p style="font-size: 15px; color: #555; margin: 0; line-height: 1.6;">
+                        <i class="fas fa-lightbulb" style="color: #16a34a; margin-right: 8px;"></i>
+                        <strong>In the meantime:</strong> Share your campaign on social media, reach out to your network, and engage with your backers to build momentum.
+                    </p>
+                </div>
             </div>
             @endif
 
@@ -1228,6 +1525,340 @@
             </script>
             @endif
 
+            @if($currentSection == 'updates')
+            @php
+                $updates = $updates ?? $campaign->updates()->latest()->get();
+            @endphp
+            
+            <h1>Creator Blog / Updates</h1>
+            <p class="subtitle">Share updates and progress with your backers through blog posts.</p>
+            
+            <!-- Updates List -->
+            <div id="updatesList" style="margin-bottom: 30px;">
+                @forelse($updates as $update)
+                <div class="box update-item" data-update-id="{{ $update->id }}" style="margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                        <div style="flex: 1;">
+                            <h3 style="margin: 0 0 8px; font-size: 18px; font-weight: 600;">{{ $update->title }}</h3>
+                            <p style="margin: 0; color: #666; font-size: 14px; line-height: 1.6;">{{ strLimit(strip_tags($update->content), 150) }}</p>
+                            @if($update->image)
+                                <img src="{{ getImage(getFilePath('campaign') . '/' . $update->image, getFileSize('campaign')) }}" 
+                                     alt="{{ $update->title }}" 
+                                     style="max-width: 200px; max-height: 150px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                            @endif
+                            <p style="margin: 5px 0 0; color: #999; font-size: 12px;">{{ $update->created_at->format('M d, Y') }} • {{ $update->is_published ? 'Published' : 'Draft' }}</p>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-left: 20px;">
+                            <button type="button" onclick="editUpdate({{ $update->id }})" style="padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; background: #007bff; color: white;">Edit</button>
+                            <button type="button" onclick="deleteUpdate({{ $update->id }})" style="padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; background: #dc3545; color: white;">Delete</button>
+                        </div>
+                    </div>
+                </div>
+                @empty
+                <div class="box" style="text-align: center; padding: 40px; color: #888;">
+                    <p>No updates posted yet. Click "Add Update" to create your first blog post.</p>
+                </div>
+                @endforelse
+            </div>
+
+            <!-- Add/Edit Update Form -->
+            <div class="box" id="updateForm" style="display: none;">
+                <h2 id="updateFormTitle" style="margin-top: 0; font-size: 22px; margin-bottom: 20px;">Add Update</h2>
+                
+                <form id="updateFormElement">
+                    @csrf
+                    <input type="hidden" id="updateId" name="update_id">
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label>Title *</label>
+                        <input type="text" id="updateTitle" name="title" placeholder="Enter update title..." required style="width: 100%; padding: 12px; font-size: 15px; border: 1px solid #d9d9d9; border-radius: 8px;">
+                        <p class="note">Write a clear and engaging title for your update.</p>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <label>Content *</label>
+                        <textarea id="updateContent" name="content" placeholder="Write your update content..." required style="width: 100%; min-height: 200px;"></textarea>
+                        <p class="note">Share your progress, milestones, or any news with your backers.</p>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <label>Image (optional)</label>
+                        <div class="upload-box" style="border: 2px dashed #ccc; border-radius: 10px; padding: 20px; text-align: center; margin-top: 10px;">
+                            <input type="file" id="updateImageInput" name="image" accept="image/*" style="display:none">
+                            <button type="button" onclick="document.getElementById('updateImageInput').click();" style="background: #efefef; border: 1px solid #bbb; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-size: 14px;">
+                                Upload Image
+                            </button>
+                            <div id="updateImagePreview" style="margin-top: 15px;"></div>
+                            <div class="note" style="font-size: 13px; color: #888; margin-top: 10px;">
+                                JPG, PNG, GIF, or WEBP, 50 MB maximum
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="updateIsPublished" name="is_published" value="1" checked style="width: auto;">
+                            <span>Publish immediately</span>
+                        </label>
+                        <p class="note">Uncheck to save as draft.</p>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-top: 25px;">
+                        <button type="submit" id="updateSaveBtn" style="padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; font-size: 15px; background: #028858; color: white;">Save Update</button>
+                        <button type="button" onclick="cancelUpdateForm()" style="padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; font-size: 15px; background: #666; color: white;">Cancel</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Add Update Button -->
+            <button type="button" id="addUpdateBtn" onclick="showUpdateForm()" style="padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; font-size: 15px; background: #028858; color: white; margin-top: 20px;">+ Add Update</button>
+
+            <script>
+                // Initialize Summernote for Updates
+                function initializeUpdatesSummernote() {
+                    if (typeof jQuery === 'undefined' || typeof jQuery.fn.summernote === 'undefined') {
+                        setTimeout(initializeUpdatesSummernote, 100);
+                        return;
+                    }
+                    
+                    try {
+                        jQuery('#updateContent').summernote({
+                            height: 250,
+                            minHeight: 250,
+                            maxHeight: 500,
+                            placeholder: 'Write your update content here...',
+                            toolbar: [
+                                ['style', ['style', 'bold', 'italic', 'underline', 'clear']],
+                                ['font', ['strikethrough', 'superscript', 'subscript']],
+                                ['fontsize', ['fontsize']],
+                                ['color', ['color']],
+                                ['para', ['ul', 'ol', 'paragraph']],
+                                ['height', ['height']],
+                                ['insert', ['link', 'picture', 'video']],
+                                ['view', ['fullscreen', 'codeview', 'help']]
+                            ]
+                        });
+                        console.log('Updates Summernote Editor initialized successfully');
+                    } catch (error) {
+                        console.error('Error initializing Updates Summernote Editor:', error);
+                    }
+                }
+                
+                // Wait for jQuery and Summernote library to load
+                function waitForSummernoteAndInitializeUpdates() {
+                    if (typeof jQuery !== 'undefined' && typeof jQuery.fn.summernote !== 'undefined') {
+                        initializeUpdatesSummernote();
+                    } else {
+                        setTimeout(waitForSummernoteAndInitializeUpdates, 100);
+                    }
+                }
+                
+                // Initialize on page load
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', waitForSummernoteAndInitializeUpdates);
+                } else {
+                    waitForSummernoteAndInitializeUpdates();
+                }
+
+                function showUpdateForm() {
+                    document.getElementById('updateForm').style.display = 'block';
+                    document.getElementById('addUpdateBtn').style.display = 'none';
+                    document.getElementById('updateFormTitle').textContent = 'Add Update';
+                    document.getElementById('updateFormElement').reset();
+                    document.getElementById('updateId').value = '';
+                    document.getElementById('updateImagePreview').innerHTML = '';
+                    document.getElementById('updateIsPublished').checked = true;
+                    
+                    // Clear Summernote editor
+                    if (typeof jQuery !== 'undefined' && typeof jQuery.fn.summernote !== 'undefined') {
+                        jQuery('#updateContent').summernote('code', '');
+                    }
+                    
+                    // Scroll to form
+                    document.getElementById('updateForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    
+                    if (typeof window.showActionButtons === 'function') {
+                        window.showActionButtons();
+                    }
+                }
+
+                function cancelUpdateForm() {
+                    document.getElementById('updateForm').style.display = 'none';
+                    document.getElementById('addUpdateBtn').style.display = 'block';
+                    document.getElementById('updateFormElement').reset();
+                    document.getElementById('updateId').value = '';
+                    document.getElementById('updateImagePreview').innerHTML = '';
+                    
+                    // Clear Summernote editor
+                    if (typeof jQuery !== 'undefined' && typeof jQuery.fn.summernote !== 'undefined') {
+                        jQuery('#updateContent').summernote('code', '');
+                    }
+                }
+
+                // Image preview
+                document.getElementById('updateImageInput').addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            document.getElementById('updateImagePreview').innerHTML = 
+                                '<img src="' + e.target.result + '" style="max-width: 300px; max-height: 200px; border-radius: 8px; border: 1px solid #ddd; margin-top: 10px;" alt="Preview">';
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+
+                function editUpdate(id) {
+                    fetch("{{ route('user.campaign.updates.get', [$campaign->slug, ':id']) }}".replace(':id', id), {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const update = data.update;
+                            document.getElementById('updateTitle').value = update.title || '';
+                            
+                            // Set Summernote content
+                            if (typeof jQuery !== 'undefined' && typeof jQuery.fn.summernote !== 'undefined') {
+                                jQuery('#updateContent').summernote('code', update.content || '');
+                            } else {
+                                document.getElementById('updateContent').value = update.content || '';
+                            }
+                            
+                            document.getElementById('updateIsPublished').checked = update.is_published == 1;
+                            document.getElementById('updateId').value = update.id;
+                            document.getElementById('updateFormTitle').textContent = 'Edit Update';
+                            document.getElementById('updateForm').style.display = 'block';
+                            document.getElementById('addUpdateBtn').style.display = 'none';
+                            
+                            // Clear file input
+                            document.getElementById('updateImageInput').value = '';
+                            
+                            // Show existing image if available
+                            if (update.image_url) {
+                                document.getElementById('updateImagePreview').innerHTML = 
+                                    '<img src="' + update.image_url + '" style="max-width: 300px; max-height: 200px; border-radius: 8px; border: 1px solid #ddd; margin-top: 10px;" alt="Preview"><br><small style="color: #666; margin-top: 5px; display: block;">Current image</small>';
+                            } else {
+                                document.getElementById('updateImagePreview').innerHTML = '';
+                            }
+                            
+                            // Scroll to form
+                            document.getElementById('updateForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            
+                            if (typeof window.showActionButtons === 'function') {
+                                window.showActionButtons();
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Failed to load update data');
+                    });
+                }
+
+                function deleteUpdate(id) {
+                    if (!confirm('Are you sure you want to delete this update?')) {
+                        return;
+                    }
+                    
+                    fetch("{{ route('user.campaign.updates.delete', [$campaign->slug, ':id']) }}".replace(':id', id), {
+                        method: 'DELETE',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || document.querySelector('input[name="_token"]').value
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert(data.message || 'Failed to delete update');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred. Please try again.');
+                    });
+                }
+
+                // Update Form Submission
+                document.getElementById('updateFormElement').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    // Sync Summernote content to textarea before submission
+                    if (typeof jQuery !== 'undefined' && typeof jQuery.fn.summernote !== 'undefined') {
+                        const summernoteContent = jQuery('#updateContent').summernote('code');
+                        document.getElementById('updateContent').value = summernoteContent;
+                    }
+                    
+                    const formData = new FormData(this);
+                    const updateId = document.getElementById('updateId').value;
+                    const saveBtn = document.getElementById('updateSaveBtn');
+                    const originalText = saveBtn.textContent;
+                    
+                    saveBtn.disabled = true;
+                    saveBtn.textContent = "Saving...";
+                    
+                    let url;
+                    if (updateId) {
+                        url = "{{ route('user.campaign.updates.update', [$campaign->slug, ':id']) }}".replace(':id', updateId);
+                    } else {
+                        url = "{{ route('user.campaign.updates.store', $campaign->slug) }}";
+                    }
+                    
+                    fetch(url, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert(data.message || 'An error occurred');
+                            saveBtn.disabled = false;
+                            saveBtn.textContent = originalText;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred. Please try again.');
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = originalText;
+                    });
+                });
+
+                // Track form changes
+                const updateForm = document.getElementById('updateFormElement');
+                if (updateForm) {
+                    const formFields = updateForm.querySelectorAll('input, textarea');
+                    formFields.forEach(field => {
+                        field.addEventListener('input', function() {
+                            if (typeof window.showActionButtons === 'function') {
+                                window.showActionButtons();
+                            }
+                        });
+                    });
+                    
+                    // Track Summernote changes
+                    if (typeof jQuery !== 'undefined' && typeof jQuery.fn.summernote !== 'undefined') {
+                        jQuery('#updateContent').on('summernote.change', function() {
+                            if (typeof window.showActionButtons === 'function') {
+                                window.showActionButtons();
+                            }
+                        });
+                    }
+                }
+            </script>
+            @endif
+
         </div>
     </div>
 
@@ -1292,6 +1923,33 @@
         })();
 
         @if($currentSection == 'basics')
+        // Date validation - max 30 days from start date
+        (function() {
+            const startDateField = document.querySelector('input[name="start_date"]');
+            const endDateField = document.querySelector('input[name="end_date"]');
+            
+            function updateEndDateConstraints() {
+                if (startDateField && endDateField && startDateField.value) {
+                    const startDate = new Date(startDateField.value);
+                    const maxEndDate = new Date(startDate);
+                    maxEndDate.setDate(maxEndDate.getDate() + 30);
+                    
+                    // Set min date for end date (day after start date)
+                    const minEndDate = new Date(startDate);
+                    minEndDate.setDate(minEndDate.getDate() + 1);
+                    
+                    endDateField.setAttribute('min', minEndDate.toISOString().split('T')[0]);
+                    endDateField.setAttribute('max', maxEndDate.toISOString().split('T')[0]);
+                }
+            }
+            
+            if (startDateField) {
+                startDateField.addEventListener('change', updateEndDateConstraints);
+                // Initial call to set constraints on page load
+                updateEndDateConstraints();
+            }
+        })();
+        
         // Basics form handling
         (function() {
             const basicsForm = document.getElementById("basicsForm");
@@ -1416,6 +2074,8 @@
                         height: 500,
                         callbacks: {
                             onChange: function(contents, $editable) {
+                                // Update character count
+                                updateCharCount();
                                 // Show action buttons when content changes
                                 if (typeof window.showActionButtons === 'function') {
                                     window.showActionButtons();
@@ -1424,12 +2084,61 @@
                         }
                     });
                     
+                    // Initial character count
+                    updateCharCount();
+                    
                     console.log('Summernote Editor initialized successfully');
                     return true;
                 } catch (error) {
                     console.error('Error initializing Summernote Editor:', error);
                     return false;
                 }
+            }
+
+            // Function to update character count
+            function updateCharCount() {
+                const content = jQuery('#summernote').summernote('code');
+                // Strip HTML tags to get plain text
+                const plainText = content.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+                const charCount = plainText.length;
+                const charCountElement = document.getElementById('charCount');
+                
+                if (charCountElement) {
+                    if (charCount < 30) {
+                        charCountElement.textContent = `(${charCount}/30 characters - ${30 - charCount} more needed)`;
+                        charCountElement.style.color = '#c33';
+                    } else {
+                        charCountElement.textContent = `(${charCount} characters ✓)`;
+                        charCountElement.style.color = '#16a34a';
+                    }
+                }
+            }
+
+            // Function to validate story content
+            function validateStoryContent() {
+                const content = jQuery('#summernote').summernote('code');
+                // Strip HTML tags to get plain text
+                const plainText = content.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+                const charCount = plainText.length;
+                const errorElement = document.getElementById('storyError');
+                
+                if (charCount < 30) {
+                    if (errorElement) {
+                        errorElement.textContent = `Story must be at least 30 characters. You have ${charCount} characters (${30 - charCount} more needed).`;
+                        errorElement.style.display = 'block';
+                    }
+                    
+                    // Show alert
+                    alert(`Error: Story must be at least 30 characters.\n\nYou have ${charCount} characters.\nYou need ${30 - charCount} more characters.`);
+                    
+                    return false;
+                }
+                
+                if (errorElement) {
+                    errorElement.style.display = 'none';
+                }
+                
+                return true;
             }
 
             // Wait for jQuery and Summernote library to load
@@ -1448,13 +2157,26 @@
                 waitForSummernoteAndInitialize();
             }
 
-            // Story form handling
+            // Story form handling with validation
             const storyForm = document.getElementById("storyForm");
             if (storyForm) {
-                // Form submission - Summernote automatically syncs content to textarea
+                // Form submission - validate before submitting
                 storyForm.addEventListener("submit", function(e) {
+                    // Validate content length
+                    if (!validateStoryContent()) {
+                        e.preventDefault();
+                        return false;
+                    }
+                    
                     // Summernote automatically updates the textarea value
+                    const submitBtn = document.getElementById("storySubmitBtn");
                     const topSaveBtn = document.getElementById("topSaveBtn");
+                    
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+                    }
+                    
                     if (topSaveBtn) {
                         topSaveBtn.disabled = true;
                         topSaveBtn.textContent = "Saving...";
@@ -1462,13 +2184,16 @@
                 });
             }
 
-            // Update top save button to handle Summernote content
+            // Update top save button to handle Summernote content with validation
             const topSaveBtn = document.getElementById("topSaveBtn");
             if (topSaveBtn) {
                 topSaveBtn.addEventListener('click', function() {
                     if (storyForm) {
-                        // Summernote automatically syncs content to textarea on form submit
-                        storyForm.submit();
+                        // Validate before submitting
+                        if (validateStoryContent()) {
+                            // Summernote automatically syncs content to textarea on form submit
+                            storyForm.submit();
+                        }
                     }
                 });
             }

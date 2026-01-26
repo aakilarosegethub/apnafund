@@ -19,6 +19,7 @@ class Comment extends Model
     protected $fillable = [
         'user_id',
         'campaign_id',
+        'update_id',
         'name',
         'email',
         'comment',
@@ -41,6 +42,14 @@ class Comment extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the update that owns the comment.
+     */
+    public function campaignUpdate()
+    {
+        return $this->belongsTo(CampaignUpdate::class, 'update_id');
     }
 
     /**

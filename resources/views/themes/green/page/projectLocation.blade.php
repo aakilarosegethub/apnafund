@@ -1,207 +1,215 @@
 @php
     $activeTheme = activeTheme();
-    $activeThemeTrue = activeTheme();
 @endphp
+
 @extends($activeTheme . 'layouts.blank')
 
 @section('custom-css')
 <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: #d4f2f6;
-            margin: 0;
-            padding: 0;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background-color: #d4f2f6;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+    }
 
-        .container {
-            max-width: 500px;
-            width: 90%;
-               padding: 85px 95px;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            background:white;
-        }
+    /* MAIN CARD */
+    .setup-container {
+        max-width: 520px;
+        width: 90%;
+        margin: 80px auto;
+        padding: 65px 60px;
+        background: #fff;
+        border-radius: 14px;
+        box-shadow: 0 18px 40px rgba(0,0,0,.08);
+        text-align: center;
+    }
 
-        h1 {
-            font-size: 30px;
-    font-weight: 800;
-            text-align: center;
-            margin-bottom: 10px;
-        }
+    /* HEADER */
+    .setup-title {
+        font-size: 30px;
+        font-weight: 800;
+        margin-bottom: 12px;
+    }
 
-        p {
-            font-size: 14px;
-            color: #555;
-            text-align: center;
-            margin-bottom: 30px;
-            line-height: 1.5;
-        }
+    .setup-description {
+        font-size: 14px;
+        color: #555;
+        line-height: 1.6;
+        margin-bottom: 35px;
+    }
 
-        select {
-            width: 100%;
-            padding: 12px;
-            font-size: 14px;
-            border: 2px solid #00c6a7;
-            border-radius: 6px;
-            margin-bottom: 15px;
-        }
+    /* FORM */
+    .form-group {
+        text-align: left;
+        margin-bottom: 20px;
+    }
 
-        .info {
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 30px;
-            display: flex;
-            align-items: center;
-        }
+    .form-label {
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 6px;
+        display: block;
+    }
 
-        .info::before {
-            content: "?";
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background-color: #ccc;
-            color: white;
-            text-align: center;
-            line-height: 16px;
-            font-size: 10px;
-            margin-right: 6px;
-        }
+    .form-select {
+        width: 100%;
+        padding: 12px;
+        font-size: 14px;
+        border: 2px solid #00c6a7;
+        border-radius: 8px;
+    }
 
-        .continue-btn {
-            display: block;
-            width: 100%;
-            padding: 12px;
-            background-color: #333;
-            color: white;
-            text-align: center;
-            font-size: 14px;
-            font-weight: 500;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            text-decoration: none;
-        }
+    /* INFO TEXT */
+    .info {
+        font-size: 12px;
+        color: #666;
+        margin: 30px 0;
+        text-align: left;
+        display: flex;
+        align-items: center;
+    }
 
-        .continue-btn:hover {
-            background-color: #555;
-        }
+    .info::before {
+        content: "?";
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #bbb;
+        color: #fff;
+        text-align: center;
+        line-height: 16px;
+        font-size: 10px;
+        margin-right: 8px;
+    }
 
-        .back-link {
-            display: block;
-            margin-top: 15px;
-            font-size: 13px;
-            color: #333;
-            text-decoration: none;
-        }
+    /* BUTTON */
+    .continue-btn {
+        width: 100%;
+        padding: 13px;
+        background: #333;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 600;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: .3s;
+    }
 
-        .back-link:hover {
-            text-decoration: underline;
-        }
-    </style>
+    .continue-btn:hover {
+        background: #555;
+    }
+
+    /* BACK LINK */
+    .back-link {
+        display: block;
+        margin-top: 18px;
+        font-size: 13px;
+        color: #333;
+        text-decoration: none;
+    }
+
+    .back-link:hover {
+        text-decoration: underline;
+    }
+</style>
 @endsection
+
 
 @section('frontend')
-    <!-- Project Location Page -->
-    <div class="setup-container">
-        <h1 class="setup-title">Last one—set a location for your project.</h1>
-        <p class="setup-description">Pick your country of legal residence if you're raising funds as an individual. If you're raising funds for a business or nonprofit, select the country where the entity's tax ID is registered.</p>
+<div class="setup-container">
 
-        <form id="locationForm">
-            <div class="form-group">
-                <label class="form-label">
-                    <i class="fas fa-globe"></i>
-                    Country
-                </label>
-                <select class="form-select" id="country" name="country" required>
-                    <option value="">Select a country</option>
-                    @if(isset($allowedCountries) && !empty($allowedCountries))
-                        @foreach($allowedCountries as $country)
-                            <option value="{{ $country }}">{{ $country }}</option>
-                        @endforeach
-                    @else
-                        {{-- Fallback: Show common countries if settings not configured --}}
-                        <option value="Spain">Spain</option>
-                        <option value="United States">United States</option>
-                        <option value="United Kingdom">United Kingdom</option>
-                        <option value="Canada">Canada</option>
-                        <option value="Pakistan">Pakistan</option>
-                        <option value="India">India</option>
-                    @endif
-                </select>
-            </div>
+    <h1 class="setup-title">
+        Last one—set a location for your project.
+    </h1>
 
-            <div class="info">Who's eligible to run a {{ bs('site_name') ?? 'ApnaCrowdfunding' }} project?</div>
+    <p class="setup-description">
+        Pick your country of legal residence if you're raising funds as an individual.
+        If you're raising funds for a business or nonprofit, select the country where
+        the entity's tax ID is registered.
+    </p>
 
-            <div class="button-group">
-                <button type="submit" class="continue-btn" id="continueBtn">
-                    Continue
-                </button>
-            </div>
+    <form id="locationForm">
 
-            <a href="{{ route('start.project') }}" class="back-link">← Additional subcategory</a>
-        </form>
-    </div>
+        <div class="form-group">
+            <label class="form-label">
+                <i class="fas fa-globe"></i> Country
+            </label>
+
+            <select class="form-select" id="country" name="country" required>
+                <option value="">Select a country</option>
+
+                @if(isset($allowedCountries) && !empty($allowedCountries))
+                    @foreach($allowedCountries as $country)
+                        <option value="{{ $country }}">{{ $country }}</option>
+                    @endforeach
+                @else
+                    <option value="Spain">Spain</option>
+                    <option value="United States">United States</option>
+                    <option value="United Kingdom">United Kingdom</option>
+                    <option value="Canada">Canada</option>
+                    <option value="Pakistan">Pakistan</option>
+                    <option value="India">India</option>
+                @endif
+            </select>
+        </div>
+
+        <div class="info">
+            Who's eligible to run a {{ bs('site_name') ?? 'ApnaCrowdfunding' }} project?
+        </div>
+
+        <button type="submit" class="continue-btn" id="continueBtn">
+            Continue
+        </button>
+
+        <a href="{{ route('start.project') }}" class="back-link">
+            ← Additional subcategory
+        </a>
+
+    </form>
+</div>
 @endsection
+
 
 @section('script')
 <script>
-    document.getElementById('locationForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const country = document.getElementById('country').value;
-        const continueBtn = document.getElementById('continueBtn');
-        
-        if (country) {
-            // Disable button during request
-            continueBtn.disabled = true;
-            continueBtn.textContent = 'Saving...';
-            
-            // Save country in session via AJAX
-            fetch('{{ route("start.project.save.location") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({
-                    country: country
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Redirect to terms page
-                    window.location.href = data.redirect_url;
-                } else {
-                    alert('Error: ' + (data.message || 'Failed to save location'));
-                    continueBtn.disabled = false;
-                    continueBtn.textContent = 'Continue';
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred. Please try again.');
-                continueBtn.disabled = false;
-                continueBtn.textContent = 'Continue';
-            });
+document.getElementById('locationForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const country = document.getElementById('country').value;
+    const btn = document.getElementById('continueBtn');
+
+    if (!country) return;
+
+    btn.disabled = true;
+    btn.innerText = 'Saving...'; 
+
+    fetch('{{ route("start.project.save.location") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ country })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = data.redirect_url;
+        } else {
+            alert(data.message || 'Something went wrong');
+            btn.disabled = false;
+            btn.innerText = 'Continue';
         }
+    })
+    .catch(() => {
+        alert('Server error, try again');
+        btn.disabled = false;
+        btn.innerText = 'Continue';
     });
+});
 </script>
 @endsection
-
-@push('page-style')
-    <style>
-        .start-project-container {
-            padding: 80px 0;
-            min-height: 70vh;
-        }
-    </style>
-@endpush
-

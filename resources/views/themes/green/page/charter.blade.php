@@ -161,7 +161,7 @@
     </h1>
     <p>
         True success is measured by the positive impact we create in people’s lives.
-        ApnaCrowdfunding exists to help dreamers convert their ideas into reality
+        {!! apnaCrowdfundingLink() !!} exists to help dreamers convert their ideas into reality
         through community-driven support and shared belief.
     </p>
 </section>
@@ -218,7 +218,7 @@
             </div>
             <div class="col-md-8">
                 <p>
-                    ApnaCrowdfunding believes opportunity should never depend on privilege.
+                    {!! apnaCrowdfundingLink() !!} believes opportunity should never depend on privilege.
                 </p>
                 <ul class="kc-points">
                     <li>Underserved and rural communities.</li>
@@ -277,7 +277,7 @@
 <section class="kc-blue">
     <div class="kc-blue-inner">
         <h2>
-            ApnaCrowdfunding is more than a platform — it’s a movement built on belief in people
+            {!! apnaCrowdfundingLink() !!} is more than a platform — it's a movement built on belief in people
             and ideas. When you launch or support a campaign, you’re helping fund dreams,
             empower communities, and shape a better future.
             <br><br>

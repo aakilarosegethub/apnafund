@@ -55,7 +55,7 @@
             <div class="row">
                 @forelse($categories as $category)
                     <div class="col-md-3 mb-4">
-                        <a href="{{ route('campaign') }}?category={{ $category->slug }}" class="category-card-link">
+                        <a href="{{ url('') }}/campaigns/category/{{ $category->slug }}" class="category-card-link">
                         <div class="category-card">
                             <div class="category-icon" style="background-color: {{ $category->color ?? '#05ce78' }}20; color: {{ $category->color ?? '#05ce78' }};">
                                 <i class="{{ $category->icon ?? 'fas fa-folder' }}"></i>
@@ -226,7 +226,7 @@
             <div class="container">
                 <h2 class="community-title">@lang('Got questions?')</h2>
                 <p class="community-description">@lang('Our team is here to help you navigate every step of your crowdfunding journey')</p>
-                <a href="{{ route('help') }}" class="btn-theme">@lang('Contact Support')</a>
+                <a href="https://support.apnacrowdfunding.com/" class="btn-theme">@lang('Contact Support')</a>
             </div>
         </div>
     </div>

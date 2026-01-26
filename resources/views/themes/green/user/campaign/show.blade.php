@@ -954,10 +954,58 @@
         <div class="fundraiser-hero">
             <h1 class="banner-title">{{ __(@$campaign->name) }}</h1>
             <div class="fundraiser-banner">
-                <div class="banner-overlay">
-                    <img src="{{ getImage(getFilePath('campaign') . '/' . @$campaign->image, getFileSize('campaign')) }}"
-                        alt="{{ __(@$campaign->name) }}">
-                </div>
+                @if(@$campaign->youtube_url)
+                    <!-- YouTube Video Section -->
+                    @php
+                        $youtubeUrl = @$campaign->youtube_url;
+                        $videoId = '';
+                        if (strpos($youtubeUrl, 'youtu.be/') !== false) {
+                            $videoId = explode('youtu.be/', $youtubeUrl)[1];
+                            $videoId = explode('?', $videoId)[0];
+                        } elseif (strpos($youtubeUrl, 'youtube.com/watch?v=') !== false) {
+                            $videoId = explode('v=', $youtubeUrl)[1];
+                            $videoId = explode('&', $videoId)[0];
+                        } elseif (strpos($youtubeUrl, 'youtube.com/embed/') !== false) {
+                            $videoId = explode('embed/', $youtubeUrl)[1];
+                            $videoId = explode('?', $videoId)[0];
+                        }
+                    @endphp
+                    
+                    @if($videoId)
+                        <!-- Campaign Image with Play Button (Initially Visible) -->
+                        <div id="campaign-image-{{ $videoId }}" class="banner-overlay" style="position: relative; display: block;">
+                            <img src="{{ getImage(getFilePath('campaign') . '/' . @$campaign->image, getFileSize('campaign')) }}" 
+                                 alt="{{ __(@$campaign->name) }}">
+                            
+                            <!-- Play Button Overlay -->
+                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); border-radius: 50%; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10;"
+                                 onclick="showCampaignVideo('{{ $videoId }}')">
+                                <i class="fas fa-play" style="font-size: 30px; color: #05ce78; margin-left: 5px;"></i>
+                            </div>
+                        </div>
+                        
+                        <!-- YouTube Video (Initially Hidden) -->
+                        <div id="youtube-video-{{ $videoId }}" style="width: 100%; height: 100%; display: none;">
+                            <iframe width="100%" height="100%" 
+                                    src="https://www.youtube.com/embed/{{ $videoId }}?autoplay=0&rel=0" 
+                                    frameborder="0" 
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                    allowfullscreen
+                                    style="border-radius: 20px;">
+                            </iframe>
+                        </div>
+                    @else
+                        <div class="banner-overlay">
+                            <img src="{{ getImage(getFilePath('campaign') . '/' . @$campaign->image, getFileSize('campaign')) }}"
+                                alt="{{ __(@$campaign->name) }}">
+                        </div>
+                    @endif
+                @else
+                    <div class="banner-overlay">
+                        <img src="{{ getImage(getFilePath('campaign') . '/' . @$campaign->image, getFileSize('campaign')) }}"
+                            alt="{{ __(@$campaign->name) }}">
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -1302,7 +1350,7 @@
             
             <!-- Latest News Link -->
             <div class="news-link-container mt-4">
-                <a href="#" class="news-link" id="newsLink">
+                <a href="{{ route('campaign.updates', $campaign->slug) }}" class="news-link" id="newsLink">
                     <i class="fas fa-newspaper"></i>
                     <span>Latest News & Updates</span>
                     <i class="fas fa-chevron-right"></i>
@@ -1310,6 +1358,58 @@
             </div>
         </div>
 </div>
+
+<!-- Updates Section -->
+@php
+    $recentUpdates = \App\Models\CampaignUpdate::where('campaign_id', $campaign->id)
+        ->where('is_published', true)
+        ->latest()
+        ->limit(3)
+        ->get();
+@endphp
+
+@if($recentUpdates->count() > 0)
+<div class="fundraiser-container mt-4">
+    <div class="fundraiser-main">
+        <div class="fundraiser-description">
+            <h2 class="donation-details__title">Recent Updates</h2>
+            <p style="color: #666; margin-bottom: 20px;">Latest news and progress updates from the campaign creator.</p>
+            
+            @foreach($recentUpdates as $update)
+            <div style="border-bottom: 1px solid #f0f0f0; padding-bottom: 20px; margin-bottom: 20px;">
+                <h3 style="font-size: 1.3rem; font-weight: 600; margin-bottom: 10px;">
+                    <a href="{{ route('campaign.update.show', [$campaign->slug, $update->slug]) }}" style="color: #333; text-decoration: none;">
+                        {{ $update->title }}
+                    </a>
+                </h3>
+                <div style="color: #999; font-size: 0.9rem; margin-bottom: 10px;">
+                    <i class="fas fa-calendar"></i> {{ $update->created_at->format('M d, Y') }}
+                </div>
+                @if($update->image)
+                <img src="{{ getImage(getFilePath('campaign') . '/' . $update->image, getFileSize('campaign')) }}" 
+                     alt="{{ $update->title }}" 
+                     style="max-width: 100%; max-height: 300px; object-fit: cover; border-radius: 8px; margin-bottom: 10px;">
+                @endif
+                <p style="color: #666; line-height: 1.6; margin-bottom: 10px;">
+                    {!! strLimit(strip_tags($update->content), 200) !!}
+                </p>
+                <a href="{{ route('campaign.update.show', [$campaign->slug, $update->slug]) }}" 
+                   style="color: #028858; text-decoration: none; font-weight: 600;">
+                    Read more →
+                </a>
+            </div>
+            @endforeach
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="{{ route('campaign.updates', $campaign->slug) }}" 
+                   style="display: inline-block; background: #028858; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                    View All Updates
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 
 <script>
 function shareCampaign() {
@@ -1337,6 +1437,24 @@ function shareCampaign() {
             document.execCommand('copy');
             document.body.removeChild(textArea);
             alert('Link copied to clipboard!');
+        }
+    }
+}
+
+// Function to show YouTube video when play button is clicked
+function showCampaignVideo(videoId) {
+    const imageDiv = document.getElementById('campaign-image-' + videoId);
+    const videoDiv = document.getElementById('youtube-video-' + videoId);
+    
+    if (imageDiv && videoDiv) {
+        imageDiv.style.display = 'none';
+        videoDiv.style.display = 'block';
+        
+        // Update iframe src to autoplay
+        const iframe = videoDiv.querySelector('iframe');
+        if (iframe) {
+            const currentSrc = iframe.src;
+            iframe.src = currentSrc.replace('autoplay=0', 'autoplay=1');
         }
     }
 }

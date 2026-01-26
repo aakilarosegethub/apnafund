@@ -101,7 +101,7 @@
 
     /* ------------ BELOW PROJECT CONTENT ------------ */
 
-    #projectBox.container {
+    .container {
         width: 70%;
         margin: auto;
         padding: 30px 0;
@@ -109,7 +109,7 @@
         transition: opacity 0.6s ease;
     }
 
-    #projectBox.container.visible {
+    .container.visible {
         opacity: 1;
         margin-top: 40px;
     }
@@ -354,5 +354,5 @@
             padding: 80px 0;
             min-height: 70vh;
         }
-    </style>
+    </style> 
 @endpush

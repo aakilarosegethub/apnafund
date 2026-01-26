@@ -119,15 +119,15 @@
 
 <!-- INTRO -->
 <div class="container section">
-    <h2>ApnaCrowdfunding – Reward-Based Crowdfunding</h2>
+    <h2>{!! apnaCrowdfundingLink() !!} – Reward-Based Crowdfunding</h2>
     <p>
         We are proud to be the creators of 
-        <a href="https://apnacrowdfunding.com/" class="italic-text"><em>ApnaCrowdfunding</em></a>,
+        {!! apnaCrowdfundingLink() !!},
         a first-of-its-kind, community-driven platform designed to bring reward-based crowdfunding
         to underserved and underdeveloped countries.
         <br><br>
         Our platform is built for people with ideas and dreams but limited access to capital.
-        <em>ApnaCrowdfunding</em> bridges this gap by empowering creators, startups, non-profits,
+        {!! apnaCrowdfundingLink() !!} bridges this gap by empowering creators, startups, non-profits,
         and changemakers with the tools and support they need to turn vision into reality.
         <br><br>
         As a trusted crowdfunding website, we connect passionate innovators with supporters
@@ -151,7 +151,7 @@
 
 <div class="container section">
     <p>
-        <span class="italic-text"><em>ApnaCrowdfunding</em></span> is a creator-first crowdfunding website
+        {!! apnaCrowdfundingLink() !!} is a creator-first crowdfunding website
         built on transparency, independence, and community trust.
         We remove barriers that prevent great ideas from being discovered and supported.
         Unlike traditional funding models, our platform allows creators to retain full control
@@ -167,7 +167,7 @@
         </div>
         <div class="col-md-7">
             <p>
-                ApnaCrowdfunding connects ideas with funding through modern crowdfunding platforms.
+                {!! apnaCrowdfundingLink() !!} connects ideas with funding through modern crowdfunding platforms.
                 Creators launch campaigns, share their stories, and gain support through crowd fundraising,
                 crowd financing, and community sharing.
                 Supporters discover meaningful projects and help bring promising ideas to life.
@@ -254,7 +254,7 @@
         <div class="col-md-7">
             <p>
                 Whether you want to support an idea or launch your own campaign,
-                <span class="italic-text"><em>ApnaCrowdfunding</em></span> gives you the tools,
+                {!! apnaCrowdfundingLink() !!} gives you the tools,
                 reach, and community to succeed.
                 <br><br>
                 <strong>Your idea. Our community. Shared success.</strong>

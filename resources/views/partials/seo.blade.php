@@ -14,10 +14,29 @@
     // Get dynamic page SEO data
     $currentRoute = request()->route();
     $pageKey = null;
+    $dynamicPageSEO = null;
+    $path = request()->path();
     
-    if ($currentRoute) {
+    // First, check if current URL path matches any dynamic page slug
+    $allDynamicPages = \App\Models\SiteData::where('data_key', 'dynamic_pages.element')->get();
+    foreach ($allDynamicPages as $dynamicPage) {
+        if (isset($dynamicPage->data_info['slug']) && $dynamicPage->data_info['slug']) {
+            $pageSlug = $dynamicPage->data_info['slug'];
+            // Check if current path matches the slug (exact match or with leading/trailing slashes)
+            if ($path == $pageSlug || $path == trim($pageSlug, '/') || trim($path, '/') == trim($pageSlug, '/')) {
+                // Found matching dynamic page, use its SEO data
+                $dynamicPageSEO = [
+                    'meta_title' => $dynamicPage->data_info['meta_title'] ?? '',
+                    'meta_description' => $dynamicPage->data_info['meta_description'] ?? '',
+                    'meta_keywords' => $dynamicPage->data_info['meta_keywords'] ?? '',
+                ];
+                break;
+            }
+        }
+    }
+    
+    if ($currentRoute && !$dynamicPageSEO) {
         $routeName = $currentRoute->getName();
-        $path = request()->path();
         
         // Map routes to page keys
         if ($routeName == 'home') {
@@ -47,14 +66,22 @@
         }
     }
     
-    $pageSEO = $pageKey ? getPageSEO($pageKey) : null;
+    // Use dynamic page SEO if found, otherwise use pageKey SEO
+    $pageSEO = $dynamicPageSEO ?: ($pageKey ? getPageSEO($pageKey) : null);
 @endphp
 
 <meta name="title" Content="{{ $pageSEO && $pageSEO['meta_title'] ? $pageSEO['meta_title'] : $setting->siteName(__($pageTitle)) }}">
 
+{{-- Always show description and keywords if available in $pageSEO or $seoContents --}}
+@if($pageSEO && ($pageSEO['meta_description'] || $pageSEO['meta_keywords']))
+    <meta name="description" content="{{ $pageSEO['meta_description'] ?? '' }}">
+    <meta name="keywords" content="{{ $pageSEO['meta_keywords'] ?? '' }}">
+@elseif($seoContents)
+    <meta name="description" content="{{ $seoContents->description ?? '' }}">
+    <meta name="keywords" content="{{ isset($seoContents->keywords) ? implode(',', $seoContents->keywords) : '' }}">
+@endif
+
 @if($seoContents)
-    <meta name="description" content="{{ $pageSEO && $pageSEO['meta_description'] ? $pageSEO['meta_description'] : ($seoContents->description ?? '') }}">
-    <meta name="keywords" content="{{ $pageSEO && $pageSEO['meta_keywords'] ? $pageSEO['meta_keywords'] : (isset($seoContents->keywords) ? implode(',', $seoContents->keywords) : '') }}">
     <link rel="shortcut icon" href="{{ getImage(getFilePath('logoFavicon').'/favicon.png') }}" type="image/x-icon">
 
     {{--<!-- Apple Stuff -->--}}

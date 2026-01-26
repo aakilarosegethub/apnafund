@@ -22,7 +22,7 @@
             min-height: 100vh;
             align-items: center;
             justify-content: center;
-            padding: 2rem;
+        
         }
 
         .setup-container {
@@ -216,10 +216,15 @@
                 padding: 1rem 1.2rem;
             }
         }
+        .flex{
+            display: flex;
+            justify-content: center;
+        }
     </style>
 @endsection
 @section('frontend')
     <!-- Start Project Page -->
+    <div class="flex">
     <div class="setup-container">
         <!-- Logo -->
 
@@ -268,6 +273,7 @@
 
             </div>
         </form>
+    </div>
     </div>
 @endsection
 @section('script')
@@ -402,5 +408,5 @@
             padding: 80px 0;
             min-height: 70vh;
         }
-    </style>
+    </style> 
 @endpush

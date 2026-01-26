@@ -694,7 +694,7 @@
                     <i class="fas fa-check-circle"></i>
                 </div>
                 <h2 class="success-title">Account Created Successfully!</h2>
-                <p class="success-subtitle">Welcome to Apna Crowdfunding! Your account has been created and you can now start building your crowdfunding campaign.</p>
+                <p class="success-subtitle">Welcome to {!! apnaCrowdfundingLink() !!}! Your account has been created and you can now start building your crowdfunding campaign.</p>
                 <button class="btn-theme" onclick="goToHome()">Go to Home</button>
             </div>
         </div>

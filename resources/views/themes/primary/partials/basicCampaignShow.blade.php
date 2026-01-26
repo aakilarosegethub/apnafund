@@ -1,5 +1,65 @@
 <div class="donation-details__img" data-aos="fade-up" data-aos-duration="1500">
-    <img src="{{ getImage(getFilePath('campaign') . '/' . @$campaignData->image, getFileSize('campaign')) }}" alt="{{ $campaignData->name }}">
+    @if(@$campaignData->youtube_url)
+        @php
+            // Extract YouTube video ID from URL
+            $videoId = '';
+            if (preg_match('/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/', $campaignData->youtube_url, $matches)) {
+                $videoId = $matches[1];
+            }
+        @endphp
+        @if($videoId)
+            <div style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px;">
+                <!-- Cover Image with Play Button -->
+                <div id="primary-video-cover-{{ $videoId }}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer; z-index: 10;">
+                    <img src="{{ getImage(getFilePath('campaign') . '/' . @$campaignData->image, getFileSize('campaign')) }}" 
+                         alt="{{ $campaignData->name }}"
+                         style="width: 100%; height: 100%; object-fit: cover;">
+                    
+                    <!-- Green Play Button -->
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(25, 135, 84, 0.9); border-radius: 50%; width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;"
+                         onmouseover="this.style.background='rgba(25, 135, 84, 1)'; this.style.transform='translate(-50%, -50%) scale(1.1)'"
+                         onmouseout="this.style.background='rgba(25, 135, 84, 0.9)'; this.style.transform='translate(-50%, -50%) scale(1)'">
+                        <i class="fas fa-play" style="font-size: 28px; color: white; margin-left: 4px;"></i>
+                    </div>
+                </div>
+                
+                <!-- YouTube Video -->
+                <iframe 
+                    id="primary-video-iframe-{{ $videoId }}"
+                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; display: none;"
+                    src="" 
+                    data-src="https://www.youtube.com/embed/{{ $videoId }}?autoplay=1&rel=0"
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen>
+                </iframe>
+            </div>
+            
+            <script>
+                document.getElementById('primary-video-cover-{{ $videoId }}').addEventListener('click', function() {
+                    var cover = document.getElementById('primary-video-cover-{{ $videoId }}');
+                    var iframe = document.getElementById('primary-video-iframe-{{ $videoId }}');
+                    cover.style.display = 'none';
+                    iframe.style.display = 'block';
+                    iframe.src = iframe.getAttribute('data-src');
+                });
+            </script>
+        @else
+            <img src="{{ getImage(getFilePath('campaign') . '/' . @$campaignData->image, getFileSize('campaign')) }}" alt="{{ $campaignData->name }}">
+        @endif
+    @elseif(@$campaignData->video)
+        <div style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px;">
+            <video 
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;"
+                controls
+                poster="{{ getImage(getFilePath('campaign') . '/' . @$campaignData->image, getFileSize('campaign')) }}">
+                <source src="{{ asset('assets/uploads/campaign/' . $campaignData->video) }}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+    @else
+        <img src="{{ getImage(getFilePath('campaign') . '/' . @$campaignData->image, getFileSize('campaign')) }}" alt="{{ $campaignData->name }}">
+    @endif
 </div>
 <nav>
     <div class="nav nav-tabs custom--tab" id="nav-tab" role="tablist">

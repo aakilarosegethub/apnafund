@@ -49,7 +49,7 @@
             </div>
 
             <div class="footer-bottom">
-                <p>&copy; 2010-2025 Apna Crowdfunding. All rights reserved.</p>
+                <p>&copy; 2010-2025 {!! apnaCrowdfundingLink() !!}. All rights reserved.</p>
             </div>
         </div>
     </footer>

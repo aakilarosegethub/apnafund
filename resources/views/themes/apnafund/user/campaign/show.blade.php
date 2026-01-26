@@ -954,10 +954,58 @@
         <div class="fundraiser-hero">
             <h1 class="banner-title">{{ __(@$campaign->name) }}</h1>
             <div class="fundraiser-banner">
-                <div class="banner-overlay">
-                    <img src="{{ getImage(getFilePath('campaign') . '/' . @$campaign->image, getFileSize('campaign')) }}"
-                        alt="{{ __(@$campaign->name) }}">
-                </div>
+                @if(@$campaign->youtube_url)
+                    <!-- YouTube Video Section -->
+                    @php
+                        $youtubeUrl = @$campaign->youtube_url;
+                        $videoId = '';
+                        if (strpos($youtubeUrl, 'youtu.be/') !== false) {
+                            $videoId = explode('youtu.be/', $youtubeUrl)[1];
+                            $videoId = explode('?', $videoId)[0];
+                        } elseif (strpos($youtubeUrl, 'youtube.com/watch?v=') !== false) {
+                            $videoId = explode('v=', $youtubeUrl)[1];
+                            $videoId = explode('&', $videoId)[0];
+                        } elseif (strpos($youtubeUrl, 'youtube.com/embed/') !== false) {
+                            $videoId = explode('embed/', $youtubeUrl)[1];
+                            $videoId = explode('?', $videoId)[0];
+                        }
+                    @endphp
+                    
+                    @if($videoId)
+                        <!-- Campaign Image with Play Button (Initially Visible) -->
+                        <div id="campaign-image-{{ $videoId }}" class="banner-overlay" style="position: relative; display: block;">
+                            <img src="{{ getImage(getFilePath('campaign') . '/' . @$campaign->image, getFileSize('campaign')) }}" 
+                                 alt="{{ __(@$campaign->name) }}">
+                            
+                            <!-- Play Button Overlay -->
+                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); border-radius: 50%; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10;"
+                                 onclick="showCampaignVideo('{{ $videoId }}')">
+                                <i class="fas fa-play" style="font-size: 30px; color: #05ce78; margin-left: 5px;"></i>
+                            </div>
+                        </div>
+                        
+                        <!-- YouTube Video (Initially Hidden) -->
+                        <div id="youtube-video-{{ $videoId }}" style="width: 100%; height: 100%; display: none;">
+                            <iframe width="100%" height="100%" 
+                                    src="https://www.youtube.com/embed/{{ $videoId }}?autoplay=0&rel=0" 
+                                    frameborder="0" 
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                    allowfullscreen
+                                    style="border-radius: 20px;">
+                            </iframe>
+                        </div>
+                    @else
+                        <div class="banner-overlay">
+                            <img src="{{ getImage(getFilePath('campaign') . '/' . @$campaign->image, getFileSize('campaign')) }}"
+                                alt="{{ __(@$campaign->name) }}">
+                        </div>
+                    @endif
+                @else
+                    <div class="banner-overlay">
+                        <img src="{{ getImage(getFilePath('campaign') . '/' . @$campaign->image, getFileSize('campaign')) }}"
+                            alt="{{ __(@$campaign->name) }}">
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -1337,6 +1385,24 @@ function shareCampaign() {
             document.execCommand('copy');
             document.body.removeChild(textArea);
             alert('Link copied to clipboard!');
+        }
+    }
+}
+
+// Function to show YouTube video when play button is clicked
+function showCampaignVideo(videoId) {
+    const imageDiv = document.getElementById('campaign-image-' + videoId);
+    const videoDiv = document.getElementById('youtube-video-' + videoId);
+    
+    if (imageDiv && videoDiv) {
+        imageDiv.style.display = 'none';
+        videoDiv.style.display = 'block';
+        
+        // Update iframe src to autoplay
+        const iframe = videoDiv.querySelector('iframe');
+        if (iframe) {
+            const currentSrc = iframe.src;
+            iframe.src = currentSrc.replace('autoplay=0', 'autoplay=1');
         }
     }
 }

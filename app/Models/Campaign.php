@@ -37,7 +37,10 @@ class Campaign extends Model
         'start_date',
         'end_date',
         'status',
-        'featured'
+        'featured',
+        'payout_bank_id',
+        'bank_account_number',
+        'bank_account_email'
     ];
 
     /**
@@ -100,6 +103,49 @@ class Campaign extends Model
     public function faqs(): HasMany
     {
         return $this->hasMany(CampaignFaq::class);
+    }
+
+    /**
+     * Get the updates for the campaign.
+     */
+    public function updates(): HasMany
+    {
+        return $this->hasMany(CampaignUpdate::class)->where('is_published', true)->latest();
+    }
+
+    /**
+     * Get all updates for the campaign (including drafts).
+     */
+    public function allUpdates(): HasMany
+    {
+        return $this->hasMany(CampaignUpdate::class)->latest();
+    }
+
+    /**
+     * Get the payout bank for the campaign.
+     */
+    public function payoutBank(): BelongsTo
+    {
+        return $this->belongsTo(PayoutBank::class);
+    }
+
+    /**
+     * Get the collaborators for the campaign.
+     */
+    public function collaborators(): HasMany
+    {
+        return $this->hasMany(CampaignCollaborator::class);
+    }
+
+    /**
+     * Check if a user can edit this campaign.
+     */
+    public function canBeEditedBy($userId): bool
+    {
+        if ($this->user_id == $userId) {
+            return true;
+        }
+        return $this->collaborators()->where('user_id', $userId)->exists();
     }
 
     /**

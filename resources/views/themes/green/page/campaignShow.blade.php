@@ -40,6 +40,29 @@
         object-fit: cover;
     }
 
+    /* ✅ VIDEO WRAPPER STYLE */
+    .campaign-video-wrapper {
+        width: 100%;
+        position: relative;
+        padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+        height: 0;
+        border-radius: 14px;
+        overflow: hidden;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .campaign-video-wrapper iframe,
+    .campaign-video-wrapper video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        border-radius: 14px;
+    }
+
     .campaign-author {
         display: flex;
         align-items: center;
@@ -241,10 +264,74 @@
                 {{ Str::limit(strip_tags(@$campaignData->description), 150) }}
             </p>
 
-            <!-- ✅ IMAGE FIXED HERE -->
-            <img src="{{ getImage(getFilePath('campaign') . '/' . @$campaignData->image, getFileSize('campaign')) }}"
-                 class="campaign-image"
-                 alt="{{ @$campaignData->name }}">
+            <!-- ✅ VIDEO OR IMAGE DISPLAY WITH COVER -->
+            @if(@$campaignData->youtube_url)
+                @php
+                    // Extract YouTube video ID from URL
+                    $videoId = '';
+                    if (preg_match('/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/', $campaignData->youtube_url, $matches)) {
+                        $videoId = $matches[1];
+                    }
+                @endphp
+                @if($videoId)
+                    <div class="campaign-video-wrapper" style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; border-radius: 14px; overflow: hidden; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+                        <!-- Cover Image with Play Button (Initially Visible) -->
+                        <div id="video-cover-{{ $videoId }}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer; z-index: 10;">
+                            <img src="{{ getImage(getFilePath('campaign') . '/' . @$campaignData->image, getFileSize('campaign')) }}" 
+                                 alt="{{ @$campaignData->name }}"
+                                 style="width: 100%; height: 100%; object-fit: cover; border-radius: 14px;">
+                            
+                            <!-- Green Play Button Overlay -->
+                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(25, 135, 84, 0.9); border-radius: 50%; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;"
+                                 onmouseover="this.style.background='rgba(25, 135, 84, 1)'; this.style.transform='translate(-50%, -50%) scale(1.1)'"
+                                 onmouseout="this.style.background='rgba(25, 135, 84, 0.9)'; this.style.transform='translate(-50%, -50%) scale(1)'">
+                                <i class="fas fa-play" style="font-size: 32px; color: white; margin-left: 5px;"></i>
+                            </div>
+                        </div>
+                        
+                        <!-- YouTube Video Iframe (Initially Hidden) -->
+                        <iframe 
+                            id="video-iframe-{{ $videoId }}"
+                            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; display: none;"
+                            src="" 
+                            data-src="https://www.youtube.com/embed/{{ $videoId }}?autoplay=1&rel=0"
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+                    
+                    <script>
+                        // Play video when cover is clicked
+                        document.getElementById('video-cover-{{ $videoId }}').addEventListener('click', function() {
+                            var cover = document.getElementById('video-cover-{{ $videoId }}');
+                            var iframe = document.getElementById('video-iframe-{{ $videoId }}');
+                            
+                            // Hide cover
+                            cover.style.display = 'none';
+                            
+                            // Show and play video
+                            iframe.style.display = 'block';
+                            iframe.src = iframe.getAttribute('data-src');
+                        });
+                    </script>
+                @endif
+            @elseif(@$campaignData->video)
+                <div class="campaign-video-wrapper" style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; border-radius: 14px; overflow: hidden; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+                    <video 
+                        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;"
+                        controls
+                        poster="{{ getImage(getFilePath('campaign') . '/' . @$campaignData->image, getFileSize('campaign')) }}">
+                        <source src="{{ asset('assets/uploads/campaign/' . $campaignData->video) }}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+            @else
+                <!-- IMAGE FALLBACK -->
+                <img src="{{ getImage(getFilePath('campaign') . '/' . @$campaignData->image, getFileSize('campaign')) }}"
+                     class="campaign-image"
+                     alt="{{ @$campaignData->name }}">
+            @endif
 
             <!-- AUTHOR -->
             <div class="campaign-author">
@@ -270,7 +357,7 @@
                     <a class="nav-link {{ $activeTab == 'rewards' ? 'active' : '' }}" href="{{ route('campaign.show', $campaignData->slug) }}?tab=rewards">Rewards</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {{ $activeTab == 'updates' ? 'active' : '' }}" href="{{ route('campaign.show', $campaignData->slug) }}?tab=updates">Updates (0)</a>
+                    <a class="nav-link {{ $activeTab == 'updates' ? 'active' : '' }}" href="{{ route('campaign.show', $campaignData->slug) }}?tab=updates">Updates ({{ $campaignData->updates()->count() }})</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link {{ $activeTab == 'comments' ? 'active' : '' }}" href="{{ route('campaign.show', $campaignData->slug) }}?tab=comments">Comments ({{ $commentCount ?? 0 }})</a>
@@ -510,9 +597,60 @@
                     @endif
                 @endif
 
-                <!-- Updates Tab -->
+                <!-- Updates Section -->
                 @if($activeTab == 'updates')
-                    <p class="text-muted">No updates available at this time.</p>
+                    <div class="updates-section">
+                        <h3 class="mb-4">
+                            <i class="fas fa-bullhorn text-success"></i>
+                            Campaign Updates
+                        </h3>
+                        
+                        @php
+                            $campaignUpdates = $campaignData->updates()->where('is_published', true)->latest()->get();
+                        @endphp
+                        
+                        @if($campaignUpdates && $campaignUpdates->count() > 0)
+                            <div class="row g-3">
+                                @foreach($campaignUpdates as $update)
+                                    <div class="col-md-6">
+                                        <div class="card h-100 border hover-shadow" style="transition: all 0.3s ease;">
+                                            @if($update->image)
+                                                <img src="{{ getImage(getFilePath('campaign') . '/' . $update->image, getFileSize('campaign')) }}" 
+                                                     class="card-img-top" 
+                                                     alt="{{ $update->title }}"
+                                                     style="height: 200px; object-fit: cover;">
+                                            @endif
+                                            <div class="card-body">
+                                                <h5 class="card-title">
+                                                    <a href="{{ route('campaign.update.show', [$campaignData->slug, $update->slug]) }}" 
+                                                       class="text-decoration-none text-dark">
+                                                        {{ $update->title }}
+                                                    </a>
+                                                </h5>
+                                                <div class="d-flex gap-3 mb-3 text-muted small">
+                                                    <span><i class="fas fa-calendar-alt text-success"></i> {{ $update->created_at->format('M d, Y') }}</span>
+                                                    <span><i class="fas fa-clock text-success"></i> {{ $update->created_at->diffForHumans() }}</span>
+                                                </div>
+                                                <p class="card-text text-muted">
+                                                    {{ Str::limit(strip_tags($update->content), 120) }}
+                                                </p>
+                                                <a href="{{ route('campaign.update.show', [$campaignData->slug, $update->slug]) }}" 
+                                                   class="btn btn-success btn-sm">
+                                                    Read Update <i class="fas fa-arrow-right"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="text-center py-5">
+                                <i class="fas fa-newspaper" style="font-size: 3rem; color: #ddd; margin-bottom: 20px;"></i>
+                                <h4 class="mb-2">No Updates Yet</h4>
+                                <p class="text-muted">This campaign hasn't posted any updates yet. Check back later!</p>
+                            </div>
+                        @endif
+                    </div>
                 @endif
             </div>
         </div>

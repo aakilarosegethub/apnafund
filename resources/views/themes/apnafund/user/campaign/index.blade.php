@@ -390,7 +390,7 @@ function deleteCampaign(campaignId) {
         // Create a form and submit it
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = '{{ route("user.campaign.destroy", "") }}/' + campaignId;
+        form.action = '/user/campaign/' + campaignId;
         
         const csrfToken = document.createElement('input');
         csrfToken.type = 'hidden';

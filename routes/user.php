@@ -77,13 +77,24 @@ Route::middleware('auth')->name('user.')->namespace('User')->group(function () {
             Route::get('edit/{slug}/story', 'editSection')->name('edit.story');
             Route::get('edit/{slug}/people', 'editSection')->name('edit.people');
             Route::get('edit/{slug}/payment', 'editSection')->name('edit.payment');
+            Route::post('edit/{slug}/payment', 'updatePayment')->name('edit.payment.update');
             Route::get('edit/{slug}/boost', 'editSection')->name('edit.boost');
             Route::get('edit/{slug}/faq', 'editSection')->name('edit.faq');
+            Route::get('edit/{slug}/updates', 'editSection')->name('edit.updates');
+            // Collaborators routes
+            Route::post('collaborators/add/{slug}', 'addCollaborator')->name('collaborators.add');
+            Route::delete('collaborators/remove/{slug}/{userId}', 'removeCollaborator')->name('collaborators.remove');
+            Route::get('collaborators/search', 'searchUsers')->name('collaborators.search');
             Route::post('image-remove/{id}', 'removeImage')->name('image.remove');
             Route::post('faq/store/{slug}', 'storeFaq')->name('faq.store');
             Route::post('faq/update/{slug}/{faqId}', 'updateFaq')->name('faq.update');
             Route::delete('faq/delete/{slug}/{faqId}', 'deleteFaq')->name('faq.delete');
             Route::get('faq/get/{slug}/{faqId}', 'getFaq')->name('faq.get');
+            // Campaign Updates Routes
+            Route::post('updates/store/{slug}', 'storeUpdate')->name('updates.store');
+            Route::post('updates/update/{slug}/{updateId}', 'updateUpdate')->name('updates.update');
+            Route::delete('updates/delete/{slug}/{updateId}', 'deleteUpdate')->name('updates.delete');
+            Route::get('updates/get/{slug}/{updateId}', 'getUpdate')->name('updates.get');
             Route::post('upload-image', 'uploadImage')->name('upload-image');
             Route::post('upload-external-image', 'uploadExternalImage')->name('upload-external-image');
             Route::post('update/{id}', 'update')->name('update');
@@ -95,6 +106,13 @@ Route::middleware('auth')->name('user.')->namespace('User')->group(function () {
                 Route::post('gallery-remove', 'galleryRemove')->name('remove');
                 Route::post('delete-all-gallery/{id}', 'deleteAllGallery')->name('delete-all');
             });
+        });
+
+        // Campaign Promotion Routes (Meta/Facebook Boost)
+        Route::controller('CampaignPromotionController')->prefix('campaign/promotion')->name('campaign.promotion.')->group(function () {
+            Route::post('{campaignId}/promote', 'promoteCampaign')->name('promote');
+            Route::post('{campaignId}/pause', 'pausePromotion')->name('pause');
+            Route::get('{campaignId}/status', 'getPromotionStatus')->name('status');
         });
 
         // Rewards

@@ -1,0 +1,358 @@
+╔══════════════════════════════════════════════════════════════════╗
+║                                                                  ║
+║          📋 CAMPAIGN PROMOTION - DEPLOYMENT CHECKLIST            ║
+║                                                                  ║
+╚══════════════════════════════════════════════════════════════════╝
+
+Use this checklist to deploy the Campaign Promotion feature.
+Check off each item as you complete it.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 📚 PHASE 1: REVIEW DOCUMENTATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+□ Read IMPLEMENTATION_SUMMARY.txt (this shows what was built)
+□ Read META_API_SETUP.md (how to get Meta credentials)
+□ Read META_PROMOTION_GUIDE.md (complete implementation guide)
+□ Review QUICK_REFERENCE.md (quick lookup)
+□ Review ARCHITECTURE_DIAGRAM.txt (understand the flow)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 🗄️ PHASE 2: DATABASE SETUP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+□ Backup your current database
+   Command: mysqldump -u root -p database_name > backup.sql
+
+□ Run the SQL migration (choose one method):
+
+   Method A - Laravel Migration:
+   □ Run: php artisan migrate
+   
+   Method B - Plain SQL:
+   □ Run: mysql -u root -p database_name < create_campaign_promotions_table.sql
+   
+   Method C - phpMyAdmin:
+   □ Open phpMyAdmin
+   □ Select your database
+   □ Click "Import"
+   □ Upload create_campaign_promotions_table.sql
+   □ Click "Go"
+
+□ Verify table created:
+   SELECT * FROM campaign_promotions LIMIT 1;
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 🔑 PHASE 3: META API CREDENTIALS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+□ Create/Login to Facebook Developer Account
+   URL: https://developers.facebook.com
+
+□ Create a Facebook App (if you don't have one)
+   □ Go to: https://developers.facebook.com/apps/
+   □ Click "Create App"
+   □ Select "Business" type
+   □ Fill in app details
+
+□ Get META_ACCESS_TOKEN
+   □ Go to: https://developers.facebook.com/tools/explorer/
+   □ Select your app from dropdown
+   □ Click "Generate Access Token"
+   □ Grant permissions:
+      - ads_management
+      - pages_read_engagement
+      - ads_read
+   □ Click "Generate Token"
+   □ Copy the token (starts with EAA...)
+   
+   For production:
+   □ Generate Long-Lived Token (60 days)
+   □ Or create System User (permanent token)
+
+□ Get META_AD_ACCOUNT_ID
+   □ Go to: https://business.facebook.com/adsmanager/
+   □ Click Settings (gear icon)
+   □ Click "Account Settings"
+   □ Copy your Ad Account ID
+   □ Remove "act_" prefix (use numbers only)
+   Example: act_123456789 → use 123456789
+
+□ Get META_PAGE_ID
+   □ Go to your Facebook Page
+   □ Click "Settings"
+   □ Click "About" in left menu
+   □ Copy "Page ID"
+   
+   Alternative method:
+   □ Use Graph API Explorer
+   □ Request: GET /me/accounts
+   □ Copy the "id" of your page
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ ⚙️ PHASE 4: ENVIRONMENT CONFIGURATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+□ Open your .env file
+
+□ Add these three lines (see env_meta_example.txt for reference):
+
+   META_ACCESS_TOKEN=your_actual_token_here
+   META_AD_ACCOUNT_ID=your_actual_id_here
+   META_PAGE_ID=your_actual_page_id_here
+
+□ Save the .env file
+
+□ Clear Laravel cache (if using Laravel):
+   □ Run: php artisan config:cache
+   □ Run: php artisan cache:clear
+
+□ Verify environment variables loaded:
+   □ Run: php artisan tinker
+   □ Type: env('META_ACCESS_TOKEN')
+   □ Should show your token (not null)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 🧪 PHASE 5: TESTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Test 1: Access Campaign Edit Page
+□ Login as a campaign owner
+□ Navigate to: /user/campaign/edit/{campaign-slug}
+□ Should see tabs: Basics, Rewards, Story, People, Payment, Boost, FAQ, Updates
+□ Click "Boost" tab
+□ Should see promotion form
+
+Test 2: Verify Form Elements
+□ "Daily Budget" input field visible
+□ "Target Countries" dropdown visible
+□ "Promote Campaign on Facebook" button visible
+□ No JavaScript errors in browser console
+
+Test 3: Check Meta API Connection
+□ Create test route (add to routes/web.php):
+
+   Route::get('/test-meta-connection', function() {
+       try {
+           $result = \App\Helpers\MetaApiHelper::makeRequest(
+               '/act_' . env('META_AD_ACCOUNT_ID'),
+               [],
+               'GET'
+           );
+           return response()->json(['success' => true, 'data' => $result]);
+       } catch (\Exception $e) {
+           return response()->json(['error' => $e->getMessage()], 500);
+       }
+   });
+
+□ Visit: /test-meta-connection in browser
+□ Should see JSON response (not error)
+□ Remove test route after verification
+
+Test 4: Test Promotion Flow
+□ On Boost tab, set budget (e.g., $10)
+□ Select target country (e.g., United States)
+□ Click "Promote Campaign on Facebook"
+□ Loading spinner should appear
+□ Wait for response (10-15 seconds)
+□ Check for success message
+□ Check browser console for any errors
+
+Test 5: Verify in Facebook Ads Manager
+□ Go to: https://business.facebook.com/adsmanager/
+□ Look for new campaign (name starts with "Boost:")
+□ Click on campaign
+□ Verify:
+   □ Campaign status: Active
+   □ Ad Set exists with correct budget
+   □ Ad exists and is active
+   □ Ad links to your campaign page
+
+Test 6: Test Pause Functionality
+□ On Boost tab, click "Pause Promotion"
+□ Confirm action
+□ Check success message
+□ Verify in Facebook Ads Manager (status should be Paused)
+
+Test 7: Check Database
+□ Run query: SELECT * FROM campaign_promotions;
+□ Verify:
+   □ Record created for your test campaign
+   □ meta_campaign_id populated
+   □ meta_adset_id populated
+   □ meta_ad_id populated
+   □ meta_creative_id populated
+   □ status = 'active' or 'paused'
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 🐛 PHASE 6: TROUBLESHOOTING (If Issues Occur)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+If you encounter errors, check:
+
+□ Check Laravel logs:
+   storage/logs/laravel.log
+
+□ Check browser console for JavaScript errors
+
+□ Common errors and solutions:
+
+   Error: "META_ACCESS_TOKEN is not configured"
+   □ Verify .env file has META_ACCESS_TOKEN
+   □ Run: php artisan config:cache
+   □ Restart server
+
+   Error: "Invalid OAuth 2.0 Access Token"
+   □ Token expired - generate new token
+   □ Check token has correct permissions
+   □ Use long-lived token for production
+
+   Error: "META_AD_ACCOUNT_ID is not configured"
+   □ Add to .env file
+   □ Verify format (numbers only, no "act_" prefix)
+   □ Run: php artisan config:cache
+
+   Error: "Campaign not found" or 403 Forbidden
+   □ Verify user owns the campaign
+   □ Or user is added as collaborator
+   □ Check campaign approval status = 1
+
+   Error: CSRF token mismatch
+   □ Verify meta tag in header:
+      <meta name="csrf-token" content="{{ csrf_token() }}">
+   □ Clear browser cache
+   □ Try in incognito mode
+
+   Error: "Only approved campaigns can be promoted"
+   □ Set campaign approval = 1 in database:
+      UPDATE campaigns SET approval = 1 WHERE id = YOUR_CAMPAIGN_ID;
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 🔒 PHASE 7: SECURITY REVIEW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+□ .env file not committed to Git
+   Run: git status
+   Verify .env is in .gitignore
+
+□ Meta access token is secure (not exposed in client-side code)
+
+□ CSRF protection enabled on all POST routes
+
+□ Permission checks working (owner/collaborator only)
+
+□ Campaign approval check working
+
+□ Input validation working (budget, countries)
+
+□ Error messages don't expose sensitive info
+
+□ Logs don't contain access tokens
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 🚀 PHASE 8: PRODUCTION DEPLOYMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+□ Backup production database
+
+□ Deploy code to production server
+
+□ Run migration on production:
+   php artisan migrate --force
+
+□ Update production .env with Meta credentials
+
+□ Clear production cache:
+   php artisan config:cache
+   php artisan cache:clear
+   php artisan route:cache
+
+□ Test on production (use small budget first)
+
+□ Monitor logs for any errors:
+   tail -f storage/logs/laravel.log
+
+□ Set up monitoring/alerting (optional but recommended)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 📊 PHASE 9: POST-DEPLOYMENT VERIFICATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+□ Create test campaign on production
+
+□ Promote test campaign with small budget ($1)
+
+□ Verify ad appears in Facebook Ads Manager
+
+□ Click ad and verify it links to correct campaign page
+
+□ Test pause functionality
+
+□ Check database for correct records
+
+□ Monitor for 24 hours
+
+□ Verify Facebook is not charging more than budget
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 📝 PHASE 10: DOCUMENTATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+□ Document production Meta credentials (secure location)
+
+□ Share access to Facebook Business Manager with team
+
+□ Create user guide for campaign owners (how to promote)
+
+□ Train support team on troubleshooting promotion issues
+
+□ Set up Facebook billing alerts
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ ✅ COMPLETION CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+□ All documentation read and understood
+□ Database table created successfully
+□ Meta API credentials obtained
+□ Environment variables configured
+□ All tests passed
+□ Promotion working on test campaign
+□ Ad visible in Facebook Ads Manager
+□ Security review completed
+□ Deployed to production (if applicable)
+□ Post-deployment verification completed
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 🎉 CONGRATULATIONS!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+If all checkboxes are checked, your Campaign Promotion feature is
+fully deployed and ready to use!
+
+Campaign owners can now promote their campaigns directly from the
+platform using Facebook Marketing API.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 📞 SUPPORT RESOURCES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Meta Marketing API Docs:
+https://developers.facebook.com/docs/marketing-api
+
+Graph API Explorer:
+https://developers.facebook.com/tools/explorer/
+
+Facebook Ads Manager:
+https://business.facebook.com/adsmanager/
+
+Facebook Business Help:
+https://www.facebook.com/business/help
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Date: January 24, 2026
+Version: 1.0.0
+Status: Production Ready ✅
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

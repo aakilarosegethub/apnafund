@@ -226,7 +226,7 @@
             <div class="container">
                 <h2 class="community-title">@lang('Got questions?')</h2>
                 <p class="community-description">@lang('Our team is here to help you navigate every step of your crowdfunding journey')</p>
-                <a href="{{ route('help') }}" class="btn-theme">@lang('Contact Support')</a>
+                <a href="https://support.apnacrowdfunding.com/" class="btn-theme">@lang('Contact Support')</a>
             </div>
         </div>
     </div>

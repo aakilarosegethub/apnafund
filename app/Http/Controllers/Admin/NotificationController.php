@@ -60,8 +60,9 @@ class NotificationController extends Controller
     function templateEdit($id) {
         $template  = NotificationTemplate::findOrFail($id);
         $pageTitle = $template->name;
+        $setting   = bs();
 
-        return view('admin.notification.edit', compact('pageTitle', 'template'));
+        return view('admin.notification.edit', compact('pageTitle', 'template', 'setting'));
     }
 
     function templateUpdate($id){

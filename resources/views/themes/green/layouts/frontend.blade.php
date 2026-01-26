@@ -21,7 +21,6 @@
 
 @endif
 @section('content')
-@section('frontend')
     @php
     
         $isHomePage = request()->routeIs('home') || request()->path() === '/';

@@ -41,9 +41,32 @@ class WebsiteController extends Controller
             // Get counter elements dynamically from admin
             $counterElements = getSiteData('counter.element', false, null, true);
             
+            // Get trending campaign ID if enabled
+            $trendingCampaignId = null;
+            $trendingCampaignContent = SiteData::where('data_key', 'home.trending_campaign')->first();
+            
+            if ($trendingCampaignContent && $trendingCampaignContent->data_info) {
+                $dataInfo = is_array($trendingCampaignContent->data_info) 
+                    ? $trendingCampaignContent->data_info 
+                    : (array)$trendingCampaignContent->data_info;
+                $showTrending = $dataInfo['show_trending'] ?? 0;
+                
+                if ($showTrending == 1) {
+                    $trendingCampaignId = $dataInfo['trending_campaign_id'] ?? null;
+                }
+            }
+            
             // Get featured campaigns (approved and featured, regardless of date status)
+            // Exclude trending campaign if it exists
             try {
-                $featuredCampaigns = Campaign::commonQuery()->approve()->featured()->latest()->limit(6)->get();
+                $query = Campaign::commonQuery()->approve()->featured();
+                
+                // Exclude trending campaign from featured list if it exists
+                if ($trendingCampaignId) {
+                    $query->where('id', '!=', $trendingCampaignId);
+                }
+                
+                $featuredCampaigns = $query->latest()->limit(6)->get();
             } catch (\Exception $e) {
                 \Log::error('Error fetching featured campaigns', ['error' => $e->getMessage()]);
                 $featuredCampaigns = collect(); // Empty collection if error
@@ -157,6 +180,34 @@ class WebsiteController extends Controller
             ? 'Campaigns in ' . $category->name
             : 'Campaigns';
 
+        // Fetch SEO data - first try category's own SEO fields, then category-specific SiteData, then general campaign category SEO
+        $pageSEO = null;
+        if ($category) {
+            // First priority: Use category's own SEO fields from database
+            if (!empty($category->meta_title) || !empty($category->meta_description) || !empty($category->meta_keywords)) {
+                $pageSEO = [
+                    'meta_title' => $category->meta_title ?? '',
+                    'meta_description' => $category->meta_description ?? '',
+                    'meta_keywords' => $category->meta_keywords ?? '',
+                ];
+            } else {
+                // Second priority: Try category-specific SEO from SiteData: campaign_category.{slug}.seo
+                $categorySeoData = SiteData::where('data_key', 'campaign_category.' . $slug . '.seo')->first();
+                if ($categorySeoData && $categorySeoData->data_info) {
+                    $pageSEO = [
+                        'meta_title' => @$categorySeoData->data_info->meta_title ?? @$categorySeoData->data_info['meta_title'] ?? '',
+                        'meta_description' => @$categorySeoData->data_info->meta_description ?? @$categorySeoData->data_info['meta_description'] ?? '',
+                        'meta_keywords' => @$categorySeoData->data_info->meta_keywords ?? @$categorySeoData->data_info['meta_keywords'] ?? '',
+                    ];
+                }
+            }
+        }
+        
+        // Third priority: If no category-specific SEO, try general campaign category SEO
+        if (!$pageSEO || (empty($pageSEO['meta_title']) && empty($pageSEO['meta_description']))) {
+            $pageSEO = getPageSEO('campaign_category');
+        }
+
         // Categories list with counts (same as campaigns())
         $categories = Category::active()
             ->select('name', 'slug')
@@ -186,7 +237,7 @@ class WebsiteController extends Controller
             request()->merge(['category' => $category->slug]);
         }
 
-        return view($this->activeTheme . 'page.campaign', compact('pageTitle', 'categories', 'campaigns', 'category'));
+        return view($this->activeTheme . 'page.campaign', compact('pageTitle', 'categories', 'campaigns', 'category', 'pageSEO'));
     }
 
     function campaignShow($slug) {
@@ -878,7 +929,7 @@ class WebsiteController extends Controller
             $campaign->category_id = session('project_category_id');
             $campaign->name = 'My New Campaign ' . time(); // Temporary name, user will edit
             $campaign->slug = slug($campaign->name);
-            $campaign->description = 'Campaign description will be added here.'; // Temporary description
+            $campaign->description = ''; // User will add description in edit page
             $campaign->location = session('project_country');
             $campaign->goal_amount = 1000; // Default goal amount
             $campaign->raised_amount = 0;
@@ -1393,11 +1444,28 @@ class WebsiteController extends Controller
             $pageSeoData = null;
             $allPageSeo = SiteData::where('data_key', 'page_seo.element')->get();
             
+            // Normalize slug for comparison
+            $normalizedSlug = strtolower(trim($slug, '/'));
+            
             foreach ($allPageSeo as $seoItem) {
                 $seoInfo = is_array($seoItem->data_info) ? $seoItem->data_info : (array)$seoItem->data_info;
-                if (isset($seoInfo['slug']) && $seoInfo['slug'] == $slug) {
-                    $pageSeoData = $seoInfo;
-                    break;
+                if (isset($seoInfo['slug'])) {
+                    $seoSlug = trim($seoInfo['slug'], '/');
+                    $normalizedSeoSlug = strtolower($seoSlug);
+                    
+                    // Check exact match
+                    if ($normalizedSeoSlug == $normalizedSlug) {
+                        $pageSeoData = $seoInfo;
+                        break;
+                    }
+                    // Check if SEO slug is "page/{slug}" format
+                    elseif (strpos($normalizedSeoSlug, 'page/') === 0) {
+                        $seoSlugWithoutPage = substr($normalizedSeoSlug, 5); // Remove "page/" prefix
+                        if ($seoSlugWithoutPage == $normalizedSlug) {
+                            $pageSeoData = $seoInfo;
+                            break;
+                        }
+                    }
                 }
             }
             
@@ -1436,5 +1504,78 @@ class WebsiteController extends Controller
             
             abort(404, 'Page not found');
         }
+    }
+
+    /**
+     * Show campaign updates list
+     */
+    function campaignUpdates($slug) {
+        $pageTitle = 'Campaign Updates';
+        $campaign = Campaign::where('slug', $slug)->approve()->firstOrFail();
+        
+        $updates = \App\Models\CampaignUpdate::where('campaign_id', $campaign->id)
+            ->where('is_published', true)
+            ->latest()
+            ->paginate(10);
+        
+        return view($this->activeTheme . 'page.campaignUpdates', compact('pageTitle', 'campaign', 'updates'));
+    }
+
+    /**
+     * Show single campaign update
+     */
+    function campaignUpdateShow($slug, $updateSlug) {
+        $pageTitle = 'Campaign Update';
+        $campaign = Campaign::where('slug', $slug)->approve()->firstOrFail();
+        
+        $update = \App\Models\CampaignUpdate::where('slug', $updateSlug)
+            ->where('campaign_id', $campaign->id)
+            ->where('is_published', true)
+            ->firstOrFail();
+        
+        // Get comments for this update
+        $comments = Comment::with('user')
+            ->where('update_id', $update->id)
+            ->approve()
+            ->latest()
+            ->get();
+        
+        $commentCount = $comments->count();
+        
+        return view($this->activeTheme . 'page.campaignUpdateShow', compact('pageTitle', 'campaign', 'update', 'comments', 'commentCount'));
+    }
+
+    /**
+     * Store comment on campaign update
+     */
+    function storeUpdateComment($slug, $updateSlug) {
+        $campaign = Campaign::where('slug', $slug)->approve()->firstOrFail();
+        
+        $update = \App\Models\CampaignUpdate::where('slug', $updateSlug)
+            ->where('campaign_id', $campaign->id)
+            ->where('is_published', true)
+            ->firstOrFail();
+        
+        $this->validate(request(), [
+            'comment' => 'required|string|max:1000',
+            'rating' => 'nullable|integer|min:1|max:5',
+            'title' => 'nullable|string|max:200'
+        ]);
+        
+        if (!auth()->check()) {
+            return back()->with('error', 'Please login to comment');
+        }
+        
+        $comment = new Comment();
+        $comment->user_id = auth()->id();
+        $comment->campaign_id = $campaign->id;
+        $comment->update_id = $update->id;
+        $comment->comment = request('comment');
+        $comment->rating = request('rating', 5);
+        $comment->title = request('title');
+        $comment->status = \App\Constants\ManageStatus::CAMPAIGN_COMMENT_PENDING;
+        $comment->save();
+        
+        return back()->with('success', 'Comment submitted successfully. It will be visible after approval.');
     }
 }
