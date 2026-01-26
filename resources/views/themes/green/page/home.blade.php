@@ -310,14 +310,35 @@
     <div class="container">
         @if($showTrending == 1 && $trendingCampaign)
             @php
-                $raised = $trendingCampaign->raised ?? 0;
+                // Get raised amount - use raised_amount field
+                $raised = $trendingCampaign->raised_amount ?? 0;
                 $goal = $trendingCampaign->goal_amount ?? 1;
                 $percentage = min(100, ($raised / $goal) * 100);
                 
-                // Calculate days left
-                $endDate = \Carbon\Carbon::parse($trendingCampaign->end_date);
-                $now = \Carbon\Carbon::now();
-                $daysLeft = max(0, (int)floor($now->diffInDays($endDate, false)));
+                // Calculate days left dynamically
+                $daysLeft = 0;
+                $daysText = 'Days Left';
+                if ($trendingCampaign->end_date) {
+                    try {
+                        $endDate = \Carbon\Carbon::parse($trendingCampaign->end_date);
+                        $now = \Carbon\Carbon::now();
+                        
+                        // Check if campaign has ended
+                        if ($endDate->isPast() || $endDate->isToday()) {
+                            $daysLeft = 0;
+                            $daysText = 'Ended';
+                        } else {
+                            // Calculate integer number of days remaining
+                            $daysLeft = max(0, (int)floor($now->diffInDays($endDate, false)));
+                            $daysText = $daysLeft == 1 ? 'Day Left' : 'Days Left';
+                        }
+                    } catch (\Exception $e) {
+                        $daysLeft = 0;
+                        $daysText = 'Ongoing';
+                    }
+                } else {
+                    $daysText = 'Ongoing';
+                }
             @endphp
 
             <h2 class="section-title-sm mb-4" style="text-align:center;">
@@ -331,7 +352,7 @@
                         <h3>{{ $trendingCampaign->name }}</h3>
 
                         <p>
-                            {{ Str::limit(strip_tags($trendingCampaign->description), 150) }}
+                            {{ Str::limit(strip_tags($trendingCampaign->description), 100) }}
                         </p>
 
                         <div class="featured-stats-modern">
@@ -345,7 +366,7 @@
                             </div>
                             <div>
                                 <strong>{{ $daysLeft }}</strong>
-                                <span>{{ $daysLeft == 1 ? 'Day' : 'Days' }} Left</span>
+                                <span>{{ $daysText }}</span>
                             </div>
                         </div>
 
@@ -484,9 +505,33 @@
                                         <p class="project-description">{{ Str::limit(strip_tags($campaign->description), 80) }}</p>
                                         <div class="mt-3">
                                             @php
-                                                $raised = $campaign->raised ?? 0;
+                                                // Use raised_amount field for accurate raised amount
+                                                $raised = $campaign->raised_amount ?? 0;
                                                 $goal = $campaign->goal_amount ?? 1;
                                                 $percentage = min(100, ($raised / $goal) * 100);
+                                                
+                                                // Calculate days left dynamically
+                                                $daysLeft = 0;
+                                                $daysText = 'Days Left';
+                                                if ($campaign->end_date) {
+                                                    try {
+                                                        $endDate = \Carbon\Carbon::parse($campaign->end_date);
+                                                        $now = \Carbon\Carbon::now();
+                                                        
+                                                        if ($endDate->isPast() || $endDate->isToday()) {
+                                                            $daysLeft = 0;
+                                                            $daysText = 'Ended';
+                                                        } else {
+                                                            $daysLeft = max(0, (int)floor($now->diffInDays($endDate, false)));
+                                                            $daysText = $daysLeft == 1 ? 'Day Left' : 'Days Left';
+                                                        }
+                                                    } catch (\Exception $e) {
+                                                        $daysLeft = 0;
+                                                        $daysText = 'Ongoing';
+                                                    }
+                                                } else {
+                                                    $daysText = 'Ongoing';
+                                                }
                                             @endphp
                                             <div class="progress" style="height: 6px; background: #eee; border-radius: 10px;">
                                                 <div class="progress-bar bg-success" style="width:{{ $percentage }}%"></div>
@@ -494,6 +539,9 @@
                                             <div class="d-flex justify-content-between mt-2 small">
                                                 <span><strong>${{ number_format($raised, 0) }}</strong> raised</span>
                                                 <span>{{ number_format($percentage, 0) }}%</span>
+                                            </div>
+                                            <div class="mt-2 small text-muted">
+                                                <span>{{ $daysLeft }} {{ $daysText }}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -757,45 +805,44 @@
                     <div class="campaign-image" style="background-image: url('{{ getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')) }}'); background-size: cover; background-position: center; background-repeat: no-repeat; height: 250px; width: 100%; display: block; border-top-left-radius: 12px; border-top-right-radius: 12px;"></div>
                     <div class="p-4">
                         <h6 class="fw-semibold mb-2">{{ Str::limit($campaign->name, 40) }}</h6>
-                        <p class="text-muted small mb-3">{{ Str::limit(strip_tags($campaign->description), 60) }}</p>
+                        <p class="text-muted small mb-3">{{ Str::limit(strip_tags($campaign->description), 80) }}</p>
                         <div class="progress mb-3" style="height: 6px;">
                             @php
-                                $raised = $campaign->raised ?? 0;
+                                // Use raised_amount field for accurate raised amount
+                                $raised = $campaign->raised_amount ?? 0;
                                 $goal = $campaign->goal_amount ?? 1;
                                 $percentage = min(100, ($raised / $goal) * 100);
+                                
+                                // Calculate days left dynamically
+                                $daysLeft = 0;
+                                $daysText = 'Days Left';
+                                if ($campaign->end_date) {
+                                    try {
+                                        $endDate = \Carbon\Carbon::parse($campaign->end_date);
+                                        $now = \Carbon\Carbon::now();
+                                        
+                                        // Check if campaign has ended
+                                        if ($endDate->isPast() || $endDate->isToday()) {
+                                            $daysLeft = 0;
+                                            $daysText = 'ENDED';
+                                        } else {
+                                            // Calculate integer number of days remaining
+                                            $daysLeft = max(0, (int)floor($now->diffInDays($endDate, false)));
+                                            $daysText = $daysLeft . ' DAYS LEFT';
+                                        }
+                                    } catch (\Exception $e) {
+                                        $daysLeft = 0;
+                                        $daysText = 'ONGOING';
+                                    }
+                                } else {
+                                    $daysText = 'ONGOING';
+                                }
                             @endphp
                             <div class="progress-bar bg-success" style="width:{{ $percentage }}%"></div>
                         </div>
                         <div class="d-flex justify-content-between small fw-semibold text-dark">
                             <span>${{ number_format($raised, 0) }} RAISED</span>
-                            <span>
-                                @if($campaign->end_date)
-                                    @php
-                                        try {
-                                            $endDate = \Carbon\Carbon::parse($campaign->end_date);
-                                            $now = \Carbon\Carbon::now();
-                                            
-                                            // Check if campaign has ended
-                                            if ($endDate->isPast()) {
-                                                $daysText = '0';
-                                            }
-                                            if ($endDate->isPast() || $endDate->isToday()) {
-                                                $daysText = 'ENDED';
-                                            } else {
-                                                // Calculate integer number of days remaining
-                                                $daysLeft = $now->diffInDays($endDate, false);
-                                                $daysLeft = max(0, (int)$daysLeft);
-                                                $daysText = $daysLeft . ' DAYS LEFT';
-                                            }
-                                        } catch (\Exception $e) {
-                                            $daysText = 'ONGOING';
-                                        }
-                                    @endphp
-                                    {{ $daysText }}
-                                @else
-                                    ONGOING
-                                @endif
-                            </span>
+                            <span>{{ $daysText }}</span>
                         </div>
                     </div>
                 </div>
