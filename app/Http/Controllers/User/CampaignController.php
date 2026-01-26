@@ -826,13 +826,20 @@ class CampaignController extends Controller
                     }
                     return back()->withToasts($toast);
                 }
-            } elseif (request('youtube_url')) {
-                try {
-                    $campaign->youtube_url = request('youtube_url');
-                    $campaign->video = null; // Clear video file when YouTube URL is provided
-                } catch (Exception $e) {
-                    \Log::error('Error setting YouTube URL', ['error' => $e->getMessage()]);
-                    $toast[] = ['error', 'Error setting YouTube URL: ' . $e->getMessage()];
+            } elseif (request()->has('youtube_url')) {
+                // Check if YouTube URL field exists in request (even if empty)
+                $youtubeUrl = trim(request('youtube_url', ''));
+                if (!empty($youtubeUrl)) {
+                    try {
+                        $campaign->youtube_url = $youtubeUrl;
+                        $campaign->video = null; // Clear video file when YouTube URL is provided
+                    } catch (Exception $e) {
+                        \Log::error('Error setting YouTube URL', ['error' => $e->getMessage()]);
+                        $toast[] = ['error', 'Error setting YouTube URL: ' . $e->getMessage()];
+                    }
+                } else {
+                    // Field is empty, clear the YouTube URL from database
+                    $campaign->youtube_url = null;
                 }
             } elseif (request('video_type') === 'youtube' && !request('youtube_url')) {
                 // If YouTube option is selected but no URL provided, clear YouTube URL

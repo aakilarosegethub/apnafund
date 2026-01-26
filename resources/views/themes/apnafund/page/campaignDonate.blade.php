@@ -875,9 +875,9 @@
 
             <!-- Tip Section -->
             <div class="tip-section">
-                <h3 class="section-title">@lang('Tip') {{ $setting->site_name }} @lang('services')</h3>
+                <h3 class="section-title">@lang('Tip') {!! apnaCrowdfundingLink() !!} @lang('services')</h3>
                 <p class="tip-description">
-                    {{ $setting->site_name }} @lang('has a 0% platform fee for organizers.') {{ $setting->site_name }} @lang('will continue offering its services thanks to donors who will leave an optional amount here:')
+                    {!! apnaCrowdfundingLink() !!} @lang('has a 0% platform fee for organizers.') {!! apnaCrowdfundingLink() !!} @lang('will continue offering its services thanks to donors who will leave an optional amount here:')
                 </p>
                 <input type="range" class="tip-slider" id="tipSlider" min="0" max="25" value="17.5" step="0.5">
                 <div style="text-align: center; margin-bottom: 10px;">
@@ -956,7 +956,7 @@
                 <div class="checkbox-item">
                     <div class="checkbox checked" id="marketingCheckbox"></div>
                     <label class="checkbox-label">
-                        @lang('Get occasional marketing updates from') {{ $setting->site_name }}. @lang('You may unsubscribe at any time.')
+                        @lang('Get occasional marketing updates from') {!! apnaCrowdfundingLink() !!}. @lang('You may unsubscribe at any time.')
                                                         </label>
                                         </div>
                                     </div>
@@ -968,7 +968,7 @@
                     <span class="summary-value" id="donationAmount">{{ $setting->cur_sym }}0.00</span>
                                                         </div>
                 <div class="summary-item">
-                    <span class="summary-label">{{ $setting->site_name }} @lang('tip')</span>
+                    <span class="summary-label">{!! apnaCrowdfundingLink() !!} @lang('tip')</span>
                     <span class="summary-value" id="tipAmount">{{ $setting->cur_sym }}0.00</span>
                                                 </div>
                 <div class="summary-item summary-total">
@@ -985,7 +985,7 @@
 
             <!-- Legal Text -->
             <p class="legal-text">
-                @lang('By clicking \'Contribute Now\', you agree to') {{ $setting->site_name }}'s 
+                @lang('By clicking \'Contribute Now\', you agree to') {!! apnaCrowdfundingLink() !!}'s 
                 <a href="#">@lang('Terms of Service')</a>
                 @lang('and') 
                 <a href="#">@lang('Privacy Notice')</a>. 
@@ -999,10 +999,10 @@
             <div class="protection-icon">
                 <i class="fas fa-shield-alt"></i>
                                 </div>
-            <h3 class="protection-title">{{ $setting->site_name }} @lang('protects your contribution')</h3>
+            <h3 class="protection-title">{!! apnaCrowdfundingLink() !!} @lang('protects your contribution')</h3>
             <p class="protection-text">
                 @lang('We guarantee you a full refund for up to a year in the rare case that fraud occurs. See our') 
-                <a href="#">{{ $setting->site_name }} @lang('Giving Guarantee')</a>.
+                <a href="#">{!! apnaCrowdfundingLink() !!} @lang('Giving Guarantee')</a>.
             </p>
                             </div>
                         </div>

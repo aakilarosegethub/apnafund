@@ -43,6 +43,8 @@ class WebsiteController extends Controller
             
             // Get trending campaign ID if enabled
             $trendingCampaignId = null;
+            $trendingCampaign = null;
+            $showTrending = 0;
             $trendingCampaignContent = SiteData::where('data_key', 'home.trending_campaign')->first();
             
             if ($trendingCampaignContent && $trendingCampaignContent->data_info) {
@@ -53,6 +55,16 @@ class WebsiteController extends Controller
                 
                 if ($showTrending == 1) {
                     $trendingCampaignId = $dataInfo['trending_campaign_id'] ?? null;
+                    
+                    // Fetch the trending campaign if ID is provided
+                    if ($trendingCampaignId) {
+                        try {
+                            $trendingCampaign = Campaign::commonQuery()->approve()->where('id', $trendingCampaignId)->first();
+                        } catch (\Exception $e) {
+                            \Log::error('Error fetching trending campaign', ['error' => $e->getMessage()]);
+                            $trendingCampaign = null;
+                        }
+                    }
                 }
             }
             
@@ -71,7 +83,7 @@ class WebsiteController extends Controller
                 \Log::error('Error fetching featured campaigns', ['error' => $e->getMessage()]);
                 $featuredCampaigns = collect(); // Empty collection if error
             }
-            return view($this->activeTheme .'page.home', compact('pageTitle', 'heroContent', 'infoBannerContent', 'featuredProjectsContent', 'featuredCampaigns', 'counterElements'));
+            return view($this->activeTheme .'page.home', compact('pageTitle', 'heroContent', 'infoBannerContent', 'featuredProjectsContent', 'featuredCampaigns', 'counterElements', 'trendingCampaign', 'showTrending'));
         } catch (\Exception $e) {
             \Log::error('Home page error', [
                 'error' => $e->getMessage(),

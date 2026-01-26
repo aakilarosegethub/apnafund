@@ -554,6 +554,35 @@
                 </div>
             </div>
 
+            <!-- VIDEO UPLOAD (Optional) -->
+            <div class="box">
+                <label>Project Video (Optional)</label>
+                <p class="note">Upload a video file to showcase your project.</p>
+                
+                @if($campaign->video)
+                    <div style="margin-bottom: 15px; padding: 10px; background: #f0f9f4; border-radius: 6px; border: 1px solid #16a34a;">
+                        <i class="fas fa-video" style="color: #16a34a;"></i>
+                        <span style="margin-left: 8px; color: #16a34a;">Video uploaded</span>
+                    </div>
+                @endif
+                
+                <input type="file" name="video" accept="video/*" style="margin-top: 10px;">
+                <p class="note">Accepted formats: MP4, AVI, MOV. Max size: 500 MB.</p>
+                @error('video')
+                    <p class="note" style="color: red;">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <!-- YOUTUBE URL -->
+            <div class="box">
+                <label>YouTube Video URL (Optional)</label>
+                <input type="url" name="youtube_url" value="{{ old('youtube_url', $campaign->youtube_url) }}" placeholder="https://www.youtube.com/watch?v=...">
+                <p class="note">Add a YouTube link to your project video (e.g., https://www.youtube.com/watch?v=dQw4w9WgXcQ)</p>
+                @error('youtube_url')
+                    <p class="note" style="color: red;">{{ $message }}</p>
+                @enderror
+            </div>
+
             <!-- FUNDING GOAL -->
             <div class="box">
                 <h2 style="margin-top:0; font-size:22px;">Funding goal</h2>

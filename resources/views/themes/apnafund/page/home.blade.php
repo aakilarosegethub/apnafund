@@ -77,6 +77,26 @@
         </div>
     </section>
 
+    <!-- Trending Campaign Section -->
+    @if($showTrending == 1 && $trendingCampaign)
+        <section class="projects-section">
+            <div class="container">
+                <div class="row">
+                    <div class="col-12">
+                        <h2 class="section-title-sm text-left mb-4">Featured Project</h2>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12 col-lg-6">
+                        <a href="{{ route('campaign.show', $trendingCampaign->slug) }}" class="project-card-link">
+                            @include('partials.campaign-item', ['campaignId' => $trendingCampaign->id, 'featured' => true])
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    @endif
+
     <!-- Projects Section -->
     <section class="projects-section">
         <div class="container">

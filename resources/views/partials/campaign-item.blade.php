@@ -6,14 +6,40 @@
         return;
     }
     
+    // Get raised amount (using accessor which calculates from deposits if needed)
+    $raisedAmount = $campaign->raised_amount ?? 0;
+    
     // Calculate percentage of goal achieved
     $progressPercentage = 0;
     if ($campaign->goal_amount > 0) {
-        $progressPercentage = ($campaign->raised_amount / $campaign->goal_amount) * 100;
+        $progressPercentage = ($raisedAmount / $campaign->goal_amount) * 100;
         $progressPercentage = min(100, $progressPercentage); // Don't exceed 100%
     }
     
-    $daysLeft = now()->diffInDays($campaign->end_date, false);
+    // Calculate days left dynamically
+    $daysLeft = 0;
+    $daysText = 'Days Left';
+    if ($campaign->end_date) {
+        try {
+            $endDate = \Carbon\Carbon::parse($campaign->end_date);
+            $now = \Carbon\Carbon::now();
+            
+            // Check if campaign has ended
+            if ($endDate->isPast() || $endDate->isToday()) {
+                $daysLeft = 0;
+                $daysText = 'Ended';
+            } else {
+                // Calculate integer number of days remaining
+                $daysLeft = max(0, (int)floor($now->diffInDays($endDate, false)));
+                $daysText = $daysLeft == 1 ? 'Day Left' : 'Days Left';
+            }
+        } catch (\Exception $e) {
+            $daysLeft = 0;
+            $daysText = 'Ongoing';
+        }
+    } else {
+        $daysText = 'Ongoing';
+    }
 @endphp
 
 <div class="project-card {{ isset($featured) && $featured ? 'featured-project' : '' }}">
@@ -34,12 +60,12 @@
         <p class="project-description">{{ Str::limit($campaign->short_description, 100) }}</p>
         <div class="project-stats">
             <div class="stat">
-                <span class="stat-value">{{ bs('cur_sym') }}{{ number_format($campaign->raised_amount) }}</span>
+                <span class="stat-value">{{ bs('cur_sym') }}{{ number_format($raisedAmount, 0) }}</span>
                 <span class="stat-label">raised</span>
             </div>
             <div class="stat">
-                <span class="stat-value">{{ ceil(max(0, $daysLeft)) }}</span>
-                <span class="stat-label">days left</span>
+                <span class="stat-value">{{ $daysLeft }}</span>
+                <span class="stat-label">{{ $daysText }}</span>
             </div>
         </div>
     </div>
