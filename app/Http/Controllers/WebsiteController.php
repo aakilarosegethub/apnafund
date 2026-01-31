@@ -13,6 +13,7 @@ use App\Models\SiteData;
 use App\Constants\ManageStatus;
 use App\Models\GatewayCurrency;
 use App\Models\AdminNotification;
+use App\Models\Admin;
 use App\Models\Subscriber;
 use App\Models\User;
 use Illuminate\Support\Facades\Cookie;
@@ -32,6 +33,7 @@ class WebsiteController extends Controller
     function home() {
         try {
             $pageTitle               = 'Home';
+            $setting                = bs(); // Get settings for currency symbol
             
             // Get dynamic home page content
             $heroContent = SiteData::where('data_key', 'home.hero')->first();
@@ -83,7 +85,7 @@ class WebsiteController extends Controller
                 \Log::error('Error fetching featured campaigns', ['error' => $e->getMessage()]);
                 $featuredCampaigns = collect(); // Empty collection if error
             }
-            return view($this->activeTheme .'page.home', compact('pageTitle', 'heroContent', 'infoBannerContent', 'featuredProjectsContent', 'featuredCampaigns', 'counterElements', 'trendingCampaign', 'showTrending'));
+            return view($this->activeTheme .'page.home', compact('pageTitle', 'heroContent', 'infoBannerContent', 'featuredProjectsContent', 'featuredCampaigns', 'counterElements', 'trendingCampaign', 'showTrending', 'setting'));
         } catch (\Exception $e) {
             \Log::error('Home page error', [
                 'error' => $e->getMessage(),
@@ -959,6 +961,39 @@ class WebsiteController extends Controller
             $adminNotification->title = 'New campaign created by ' . auth()->user()->fullname;
             $adminNotification->click_url = urlPath('admin.campaigns.index');
             $adminNotification->save();
+
+            // Send email notification to all admins
+            try {
+                $admins = Admin::all();
+                $user = auth()->user();
+                $campaignName = $campaign->name;
+                $campaignLink = route('admin.campaigns.details', $campaign->id);
+                $userName = $user->fullname ?? $user->username;
+                $userEmail = $user->email ?? 'N/A';
+                
+                foreach ($admins as $admin) {
+                    $emailMessage = "Dear Admin,\n\n";
+                    $emailMessage .= "A new campaign has been created and requires your review.\n\n";
+                    $emailMessage .= "Campaign Details:\n";
+                    $emailMessage .= "- Campaign Name: {$campaignName}\n";
+                    $emailMessage .= "- Campaign ID: {$campaign->id}\n";
+                    $emailMessage .= "- Created By: {$userName}\n";
+                    $emailMessage .= "- Creator Email: {$userEmail}\n";
+                    $emailMessage .= "- Goal Amount: " . showAmount($campaign->goal_amount) . "\n";
+                    $emailMessage .= "- Start Date: " . showDateTime($campaign->start_date) . "\n";
+                    $emailMessage .= "- End Date: " . showDateTime($campaign->end_date) . "\n\n";
+                    $emailMessage .= "Please review and approve/reject the campaign.\n\n";
+                    $emailMessage .= "View Campaign: {$campaignLink}\n\n";
+                    $emailMessage .= "Thank you.";
+                    
+                    notify($admin, 'DEFAULT', [
+                        'message' => $emailMessage,
+                        'subject' => 'New Campaign Created - ' . $campaignName,
+                    ], ['email']);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Failed to send admin email notification: ' . $e->getMessage());
+            }
 
             return response()->json([
                 'success' => true,

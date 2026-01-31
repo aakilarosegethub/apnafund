@@ -86,13 +86,14 @@
             bottom: 0;
             width: 100%;
             height: 100%;
+            background: #f5f5f5;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: contain;
         }
 
         .banner-overlay img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 20px;
+            display: none;
         }
 
         .banner-title {
@@ -973,9 +974,7 @@
                     
                     @if($videoId)
                         <!-- Campaign Image with Play Button (Initially Visible) -->
-                        <div id="campaign-image-{{ $videoId }}" class="banner-overlay" style="position: relative; display: block;">
-                            <img src="{{ getImage(getFilePath('campaign') . '/' . @$campaign->image, getFileSize('campaign')) }}" 
-                                 alt="{{ __(@$campaign->name) }}">
+                        <div id="campaign-image-{{ $videoId }}" class="banner-overlay" style="position: relative; display: block; background-image: url('{{ getImage(getFilePath('campaign') . '/' . @$campaign->image, getFileSize('campaign')) }}');">
                             
                             <!-- Play Button Overlay -->
                             <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); border-radius: 50%; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10;"
@@ -995,16 +994,10 @@
                             </iframe>
                         </div>
                     @else
-                        <div class="banner-overlay">
-                            <img src="{{ getImage(getFilePath('campaign') . '/' . @$campaign->image, getFileSize('campaign')) }}"
-                                alt="{{ __(@$campaign->name) }}">
-                        </div>
+                        <div class="banner-overlay" style="background-image: url('{{ getImage(getFilePath('campaign') . '/' . @$campaign->image, getFileSize('campaign')) }}');"></div>
                     @endif
                 @else
-                    <div class="banner-overlay">
-                        <img src="{{ getImage(getFilePath('campaign') . '/' . @$campaign->image, getFileSize('campaign')) }}"
-                            alt="{{ __(@$campaign->name) }}">
-                    </div>
+                    <div class="banner-overlay" style="background-image: url('{{ getImage(getFilePath('campaign') . '/' . @$campaign->image, getFileSize('campaign')) }}');"></div>
                 @endif
             </div>
         </div>

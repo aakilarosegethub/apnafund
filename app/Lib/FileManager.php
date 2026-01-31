@@ -104,7 +104,7 @@ class FileManager
 
         //upload file or image
         if ($this->isImage) $this->uploadImage();
-        else $this->uploadFile();
+        else $this->uploadFileInternal();
     }
 
     /**
@@ -119,7 +119,13 @@ class FileManager
         //resize the
         if ($this->size) {
             $size = explode('x', strtolower($this->size));
-            $image->resize($size[0], $size[1]);
+            $width = (int) $size[0];
+            $height = (int) $size[1];
+            if ($width > 0 && $height > 0) {
+                $image->fit($width, $height, function ($constraint) {
+                    $constraint->upsize();
+                });
+            }
         }
 
         //save the image
@@ -130,8 +136,26 @@ class FileManager
             if ($this->old) $this->removeFile($this->path . '/thumb_' . $this->old);
 
             $thumb = explode('x', $this->thumb);
-            Image::make($this->file)->resize($thumb[0], $thumb[1])->save($this->path . '/thumb_' . $this->filename);
+            $thumbWidth = (int) $thumb[0];
+            $thumbHeight = (int) $thumb[1];
+            $thumbImage = Image::make($this->file);
+            if ($thumbWidth > 0 && $thumbHeight > 0) {
+                $thumbImage->fit($thumbWidth, $thumbHeight, function ($constraint) {
+                    $constraint->upsize();
+                });
+            }
+            $thumbImage->save($this->path . '/thumb_' . $this->filename);
         }
+    }
+
+    /**
+     * Upload a non-image file using the configured properties.
+     *
+     * @return void
+     */
+    protected function uploadFileInternal(): void
+    {
+        $this->file->move($this->path, $this->filename);
     }
 
 

@@ -179,7 +179,7 @@
                                             <input type="text" class="form--control" name="seo_meta_keywords" 
                                                    value="{{ @$seoContent->data_info->meta_keywords }}" 
                                                    placeholder="@lang('Enter keywords separated by commas')">
-                                            <small class="text--muted">@lang('Example: crowdfunding, donations, charity, help')</small>
+                                            <small class="text--muted">@lang('Example: crowdfunding, contributions, charity, help')</small>
                                         </div>
                                         <div class="col-12">
                                             <label class="form--label">@lang('Meta Author')</label>

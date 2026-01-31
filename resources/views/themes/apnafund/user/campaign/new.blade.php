@@ -544,6 +544,15 @@
                                     </div>
 
                                     <div class="form-group required-field">
+                                        <label for="CampaignShortDescription" class="form-label">Short Description</label>
+                                        <textarea class="form-control" id="CampaignShortDescription" name="short_description" rows="3" placeholder="Describe your project in one or two sentences..." required>{{ old('short_description') }}</textarea>
+                                        <small class="text-muted">This will show on your project card.</small>
+                                        @error('short_description')
+                                            <small class="text-danger">{{ $message }}</small>
+                                        @enderror
+                                    </div>
+
+                                    <div class="form-group required-field">
                                         <label for="CampignDescription" class="form-label">Story  </label>
                                         <div class="editor-shell">
       <!-- The editor -->
@@ -783,9 +792,9 @@
         return;
       }
       
-      // Validate file size (5MB max)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Image size must be less than 5MB');
+      // Validate file size (max from PHP ini)
+      if (file.size > {{ (int) ini_get('upload_max_filesize') }} * 1024 * 1024) {
+        alert('Image size must be less than {{ ini_get('upload_max_filesize') }}');
         return;
       }
       
@@ -1497,10 +1506,10 @@
                     
                     if (files.length === 0) return;
                     
-                    // Validate file sizes (5MB max)
+                    // Validate file sizes (max from PHP ini)
                     const validFiles = files.filter(file => {
-                        if (file.size > 5 * 1024 * 1024) {
-                            alert(`File ${file.name} is too large. Maximum size is 5MB.`);
+                        if (file.size > {{ (int) ini_get('upload_max_filesize') }} * 1024 * 1024) {
+                            alert(`File ${file.name} is too large. Maximum size is {{ ini_get('upload_max_filesize') }}.`);
                             return false;
                         }
                         return true;

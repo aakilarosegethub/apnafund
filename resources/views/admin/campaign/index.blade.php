@@ -22,7 +22,13 @@
                         <td>
                             <div class="table-card-with-image">
                                 <div class="table-card-with-image__img">
-                                    <img src="{{ getImage(getFilePath('userProfile') . '/' . @$campaign->user->image, getFileSize('userProfile'), true) }}" alt="Image">
+                                    @if(@$campaign->user->image)
+                                        <img src="{{ getImage(getFilePath('userProfile') . '/' . $campaign->user->image, getFileSize('userProfile'), true) }}" alt="Image">
+                                    @else
+                                        <div style="width: 40px; height: 40px; border-radius: 50%; background: #e5e7eb; color: #6b7280; display: flex; align-items: center; justify-content: center; font-weight: 600;">
+                                            {{ strtoupper(substr($campaign->user->fullname ?? $campaign->user->username ?? 'U', 0, 1)) }}
+                                        </div>
+                                    @endif
                                 </div>
                                 <div class="table-card-with-image__content">
                                     <p class="fw-semibold">{{ $campaign->user ? $campaign->user->fullname : 'User Not Found' }}</p>
@@ -127,5 +133,49 @@
 @endsection
 
 @push('breadcrumb')
-    <x-searchForm placeholder="Search..." />
+    <div class="d-flex justify-content-between align-items-center w-100">
+        <x-searchForm placeholder="Search..." />
+        <button type="button" class="btn btn--primary btn--sm" id="fixImagesBtn" onclick="fixAllCampaignImages()">
+            <i class="ti ti-photo-edit"></i> Fix Images
+        </button>
+    </div>
+@endpush
+
+@push('page-script')
+<script>
+function fixAllCampaignImages() {
+    if (!confirm('Are you sure you want to fix all campaign images? This will only resize images that are not 1024x576.')) {
+        return;
+    }
+    
+    const btn = document.getElementById('fixImagesBtn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ti ti-loader"></i> Processing...';
+    
+    fetch('{{ route("admin.campaigns.fix-images") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Successfully fixed ' + data.fixed + ' campaign images.');
+        } else {
+            alert('Error: ' + (data.message || 'Failed to fix images'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while fixing images.');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    });
+}
+</script>
 @endpush

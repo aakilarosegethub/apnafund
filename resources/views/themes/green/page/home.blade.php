@@ -167,11 +167,16 @@
 .project-card:hover{
     transform:translateY(-6px);
 }
-
 .project-image{
-    height:220px;
-    background-size:cover;
-    background-position:center;
+    position: relative;
+    width: 100%;
+       height: 505px !important;
+    overflow: hidden;
+
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;   
+    background-color: #f3f3f3;
 }
 
 .project-image-2{
@@ -341,7 +346,7 @@
                 }
             @endphp
 
-            <h2 class="section-title-sm mb-4" style="text-align:center;">
+            <h2 class="section-title-sm mb-4 mt-5" style="text-align:center;">
                 Featured Project
             </h2>
 
@@ -357,7 +362,7 @@
 
                         <div class="featured-stats-modern">
                             <div>
-                                <strong>${{ number_format($raised, 0) }}</strong>
+                                <strong>{{ $setting->cur_sym ?? '$' }}{{ number_format($raised, 0) }}</strong>
                                 <span>Raised</span>
                             </div>
                             <div>
@@ -400,7 +405,7 @@
 
                         <div class="featured-stats-modern">
                             <div>
-                                <strong>$45,000</strong>
+                                <strong>{{ $setting->cur_sym ?? '$' }}45,000</strong>
                                 <span>Raised</span>
                             </div>
                             <div>
@@ -502,7 +507,7 @@
                                     <div class="project-image" style="background-image: url('{{ getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')) }}');"></div>
                                     <div class="project-content">
                                         <h3 class="project-title">{{ Str::limit($campaign->name, 50) }}</h3>
-                                        <p class="project-description">{{ Str::limit(strip_tags($campaign->description), 80) }}</p>
+                                        <p class="project-description">{{ Str::limit(strip_tags($campaign->short_description ?? $campaign->description), 80) }}</p>
                                         <div class="mt-3">
                                             @php
                                                 // Use raised_amount field for accurate raised amount
@@ -537,7 +542,7 @@
                                                 <div class="progress-bar bg-success" style="width:{{ $percentage }}%"></div>
                                             </div>
                                             <div class="d-flex justify-content-between mt-2 small">
-                                                <span><strong>${{ number_format($raised, 0) }}</strong> raised</span>
+                                                <span><strong>{{ $setting->cur_sym ?? '$' }}{{ number_format($raised, 0) }}</strong> raised</span>
                                                 <span>{{ number_format($percentage, 0) }}%</span>
                                             </div>
                                             <div class="mt-2 small text-muted">
@@ -805,7 +810,7 @@
                     <div class="campaign-image" style="background-image: url('{{ getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')) }}'); background-size: cover; background-position: center; background-repeat: no-repeat; height: 250px; width: 100%; display: block; border-top-left-radius: 12px; border-top-right-radius: 12px;"></div>
                     <div class="p-4">
                         <h6 class="fw-semibold mb-2">{{ Str::limit($campaign->name, 40) }}</h6>
-                        <p class="text-muted small mb-3">{{ Str::limit(strip_tags($campaign->description), 80) }}</p>
+                        <p class="text-muted small mb-3">{{ Str::limit(strip_tags($campaign->short_description ?? $campaign->description), 80) }}</p>
                         <div class="progress mb-3" style="height: 6px;">
                             @php
                                 // Use raised_amount field for accurate raised amount
@@ -841,7 +846,7 @@
                             <div class="progress-bar bg-success" style="width:{{ $percentage }}%"></div>
                         </div>
                         <div class="d-flex justify-content-between small fw-semibold text-dark">
-                            <span>${{ number_format($raised, 0) }} RAISED</span>
+                            <span>{{ $setting->cur_sym ?? '$' }}{{ number_format($raised, 0) }} RAISED</span>
                             <span>{{ $daysText }}</span>
                         </div>
                     </div>

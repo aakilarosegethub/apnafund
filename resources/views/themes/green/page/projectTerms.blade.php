@@ -101,11 +101,10 @@
 
     /* ------------ BELOW PROJECT CONTENT ------------ */
 
-    .container {
+    #projectBox {
         width: 70%;
         margin: auto;
         padding: 30px 0;
-        opacity: 0;
         transition: opacity 0.6s ease;
     }
 
@@ -191,7 +190,7 @@
         <div class="ruleLine">
             <div class="lineNumber">1</div>
             <div class="lineText">
-                Projects must <a href="#" onclick="return false;">create something to share</a> with others.
+                Projects must <a href="#" style="cursor: none;" onclick="return false;">create something to share</a> with others.
             </div>
         </div>
         <div class="dividerLine"></div>
@@ -199,7 +198,7 @@
         <div class="ruleLine">
             <div class="lineNumber">2</div>
             <div class="lineText">
-                Projects must be <a href="#" onclick="return false;">honest and clearly presented</a>.
+                Projects must be <a href="#" style="cursor: none;" onclick="return false;">honest and clearly presented</a>.
             </div>
         </div>
         <div class="dividerLine"></div>
@@ -218,7 +217,7 @@
 
         <div class="ruleLine">
             <div class="lineNumber">5</div>
-            <div class="lineText">Projects can't involve <a href="#" onclick="return false;">prohibited items</a>.</div>
+            <div class="lineText">Projects can't involve <a href="#" style="cursor: none;" onclick="return false;">prohibited items</a>.</div>
         </div>
 
         <div class="actionBtn">
@@ -226,13 +225,13 @@
         </div>
 
         <div class="footerText">
-            <a href="#" onclick="return false;">Read more</a> about our rules.
+            <a href="{{ url('our-rules'); }}" target="_blank">Read more</a> about Our Rules.
         </div>
     </div>
 </div>
 
 <!-- =================== PROJECT CONTENT =================== -->
-<div class="container" id="projectBox">
+<div class="container" id="projectBox" style="display:none">
     <h1 class="project-title">Create Your Campaign</h1>
     <p class="byline">Complete the following steps to launch your project</p>
 
@@ -290,6 +289,8 @@
 @section('script')
 <script>
     function hideRules() {
+        $('#ruleBox').hide();
+        $('#projectBox').show();
         document.getElementById("ruleBox").classList.add("hidden");
         document.getElementById("projectBox").classList.add("visible");
     }

@@ -22,7 +22,7 @@
                             <div class="preview-card">
                                 <div class="preview-image">
                                     @if($campaign->image)
-                                        <img src="{{ getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')) }}" alt="{{ __($campaign->name) }}" style="height: 240px !important;">
+                                        <img src="{{ getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')) }}" alt="{{ __($campaign->name) }}" style="width: 100%; height: 100%; object-fit: cover;">
                                     @else
                                         <i class="fas fa-seedling"></i>
                                     @endif
@@ -187,8 +187,10 @@
 }
 
 .preview-image img {
-    height: 240px !important;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
+    display: block;
 }
 
 .preview-image i {

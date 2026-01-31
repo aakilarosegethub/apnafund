@@ -34,7 +34,7 @@
                         <li class="dropdown-title">@lang('Shortcuts')</li>
                         <li class="scroll">
                             <div class="shortcut-dropdown__item">
-                                <a href="{{ route('admin.donations.pending') }}" class="shortcut-dropdown__link" title="@lang('Pending Donations')">
+                                <a href="{{ route('admin.donations.pending') }}" class="shortcut-dropdown__link" title="@lang('Pending Contributions')">
                                     <i class="ti ti-moneybag"></i>
                                 </a>
                                 <a href="{{ route('admin.withdraw.pending') }}" class="shortcut-dropdown__link" title="@lang('Pending Withdrawals')">

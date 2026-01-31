@@ -406,7 +406,6 @@ class FundController extends BaseApiController
     public function categoryWiseFund(Request $request): JsonResponse
     {
         $data = $this->getRequestData($request);
-
         if (empty($data['cat_id'])) {
             return response()->json([
                 "ResponseCode" => "401",
@@ -422,7 +421,7 @@ class FundController extends BaseApiController
         // campaigns table: status = 1 (approved), status = 2 (pending), status = 0 (rejected)
         // For public API, show only approved campaigns (status = 1)
         if ($cat_id != 0) {
-            $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE category_id=" . $cat_id . " AND status = 1 AND (end_date IS NULL OR end_date >= '" . $timestamp . "') ORDER BY id DESC");
+            $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE category_id=" . $cat_id . " AND status = 1  ORDER BY id DESC");
         } else {
             $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE status = 1 AND (end_date IS NULL OR end_date >= '" . $timestamp . "') ORDER BY id DESC");
         }

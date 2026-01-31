@@ -11,6 +11,9 @@
     $dashboardNavigation = getDashboardNavigation();
     $notificationTypes = getNotificationTypes();
     $userMenuItems = getUserMenuItems();
+    $detailImageName = @$campaignData->image_original ?: @$campaignData->image ?: @$campaign->image;
+    $detailImagePath = @$campaignData->image_original ? getFilePath('campaignOriginal') : getFilePath('campaign');
+    $detailImageUrl = $detailImageName ? getImage($detailImagePath . '/' . $detailImageName) : '';
 @endphp
 @extends($activeTheme . 'layouts.frontend')
 @section('style')
@@ -2362,7 +2365,7 @@
                                 <div style="width: 100%; height: 400px; border-radius: 10px; overflow: hidden; position: relative;">
                                     <!-- Campaign Image with Play Button (Initially Visible) -->
                                     <div id="campaign-image-{{ $videoId }}" style="width: 100%; height: 100%; position: relative; display: block;">
-                                        <img src="{{ getImage(getFilePath('campaign') . '/' . (@$campaignData->image ?? @$campaign->image), getFileSize('campaign')) }}" 
+                                        <img src="{{ $detailImageUrl }}" 
                                              alt="{{ @$campaignData->name ?? @$campaign->name }}" 
                                              style="width: 100%; height: 100%; object-fit: cover;">
                                         
@@ -2386,11 +2389,11 @@
                                 </div>
                             @else
                                 <!-- Fallback to campaign image if video ID not found -->
-                                <img src="{{ getImage(getFilePath('campaign') . '/' . (@$campaignData->image ?? @$campaign->image), getFileSize('campaign')) }}" alt="{{ @$campaignData->name ?? @$campaign->name }}">
+                                <img src="{{ $detailImageUrl }}" alt="{{ @$campaignData->name ?? @$campaign->name }}">
                             @endif
                         @else
                             <!-- Regular Image Display -->
-                        <img src="{{ getImage(getFilePath('campaign') . '/' . @$campaignData->image, getFileSize('campaign')) }}"
+                        <img src="{{ $detailImageUrl }}"
                                 alt="{{ @$campaignData->name }}">
                         @endif
                     </div>
@@ -3408,7 +3411,7 @@
             window.shareOnPinterest = function() {
                 const url = encodeURIComponent(document.getElementById('shareUrl').value);
                 const title = encodeURIComponent('{{ @$campaignData->name }}');
-                const image = encodeURIComponent('{{ getImage(getFilePath("campaign") . "/" . @$campaignData->image, getFileSize("campaign")) }}');
+                const image = encodeURIComponent('{{ $detailImageUrl }}');
                 const shareUrl = `https://pinterest.com/pin/create/button/?url=${url}&media=${image}&description=${title}`;
                 window.open(shareUrl, '_blank', 'width=600,height=400');
             };

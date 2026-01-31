@@ -20,7 +20,7 @@ if(isset($_GET['test'])){   die('home');
         // For direct routes like /about, /faq, etc., use the first segment as slug
         $currentSlug = $currentSection;
     }
-    
+    $currentSlug = $currentPath;
     // Check if this is home page
     $isHomePage = ($currentSection == '' || $currentSection == '/' || request()->path() == '/' || $currentPath == '');
     
@@ -113,8 +113,11 @@ if(isset($_GET['test'])){   die('home');
     // Get meta robots
     $metaRobots = $pageSeo->meta_robots ?? $seoData->meta_robots ?? 'index, follow';
     
-    // Get canonical URL
-    $canonicalUrl = $pageSeo->canonical_url ?? $seoData->canonical_url ?? url()->current();
+    // Get canonical URL (fallback to current URL if empty)
+    $canonicalUrl = $pageSeo->canonical_url ?? $seoData->canonical_url ?? null;
+    if (!$canonicalUrl) {
+        $canonicalUrl = url()->current();
+    }
     
     // Get OG and Twitter images from page_seo if available
     $ogImage = null;
@@ -407,8 +410,9 @@ body{
     padding:10px 0;
   }
 }
-span{
-	color: #05ce78;
+.project-image {
+    height: 290px !important;
+    background-size: contain !important;
 }
 /* ===== SMALL MOBILE ===== */
 @media(max-width:480px){
@@ -501,6 +505,35 @@ span{
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    // Matches ALL variations of ApnaCrowdfunding
+    const regex = /apnacrowdfunding/gi;
+    const replacementText = "ApnaCrowdFunding";
+
+    const blockedTags = ["A", "SCRIPT", "STYLE", "NOSCRIPT"];
+
+    function processElement(el) {
+        if (blockedTags.includes(el.tagName)) return;
+
+        if (el.children.length === 0) {
+            const html = el.innerHTML;
+            if (regex.test(html)) {
+                el.innerHTML = html.replace(
+                    regex,
+                    "<i>" + replacementText + "</i>"
+                );
+            }
+            return;
+        }
+
+        Array.from(el.children).forEach(processElement);
+    }
+
+    processElement(document.body);
+});
+</script>
 
 @stack('scripts')
 @stack('page-script')

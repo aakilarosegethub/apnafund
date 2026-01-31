@@ -191,7 +191,7 @@
                         <tr>
                             @php $percentage = donationPercentage($campaign->goal_amount, $campaign->raised_amount) @endphp
 
-                            <td class="fw-semibold">@lang('Donation Progress'):</td>
+                            <td class="fw-semibold">@lang('Contribution Progress'):</td>
                             <td>
                                 <div class="progress custom--progress" role="progressbar" aria-label="Basic example" aria-valuenow="{{ $percentage }}" aria-valuemin="0" aria-valuemax="100">
                                     <div class="progress-bar" style="width: {{ $percentage }}%"></div>

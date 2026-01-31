@@ -28,6 +28,7 @@
 
         @stack('page-script-lib')
         @stack('page-script')
+        @stack('script')
 
         <script src="{{ asset('assets/admin/js/main.js') }}"></script>
 

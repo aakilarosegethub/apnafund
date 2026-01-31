@@ -98,7 +98,9 @@ Route::middleware(['admin'])->group(function () {
         Route::get('expired', 'expired')->name('expired');
         Route::get('details/{id}', 'details')->name('details');
         Route::get('edit/{id}', 'edit')->name('edit');
+        Route::post('upload-campaign-image', 'uploadCampaignImage')->name('upload-campaign-image');
         Route::post('update/{id}', 'update')->name('update');
+        Route::post('fix-images', 'fixAllImages')->name('fix-images');
         Route::post('status-update/{id}/{type}', 'updateStatus')->name('status.update');
         Route::post('featured-update/{id}', 'updateFeatured')->name('featured.update');
     });

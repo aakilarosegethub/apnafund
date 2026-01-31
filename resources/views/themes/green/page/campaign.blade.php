@@ -84,7 +84,7 @@
                                         <div class="campaign-image" style="background-image: url('{{ getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')) }}'); background-size: cover; background-position: center; background-repeat: no-repeat; height: 250px; width: 100%; display: block; border-top-left-radius: 12px; border-top-right-radius: 12px;"></div>
                                         <div class="p-4">
                                             <h6 class="fw-semibold mb-2">{{ Str::limit($campaign->name, 40) }}</h6>
-                                            <p class="text-muted small mb-3">{{ Str::limit(strip_tags($campaign->description), 60) }}</p>
+                                            <p class="text-muted small mb-3">{{ Str::limit(strip_tags($campaign->short_description ?? $campaign->description), 60) }}</p>
                                             <div class="progress mb-3" style="height: 6px;">
                                                 @php
                                                     $raised = $campaign->raised ?? 0;

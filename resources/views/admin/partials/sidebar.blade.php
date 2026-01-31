@@ -198,7 +198,7 @@
                         <span class="badge bg--danger py-1 px-1"></span>
                     @endif
                 </span>
-                <span class="sidebar-txt">@lang('Donations')</span>
+                <span class="sidebar-txt">@lang('Contributions')</span>
             </a>
             <ul class="sidebar-dropdown-menu">
                 <li class="sidebar-dropdown-item">
@@ -222,6 +222,11 @@
                 <li class="sidebar-dropdown-item">
                     <a href="{{ route('admin.donations.cancelled') }}" class="sidebar-link {{ navigationActive('admin.donations.cancelled', 1) }}">
                         @lang('Cancelled')
+                    </a>
+                </li>
+                <li class="sidebar-dropdown-item">
+                    <a href="{{ route('admin.rewards.tracking') }}" class="sidebar-link {{ navigationActive('admin.rewards.tracking', 1) }}">
+                        @lang('Rewards Tracking')
                     </a>
                 </li>
             </ul>

@@ -175,7 +175,7 @@ font-size:20px;
             <h1>Creator’s Guide</h1>
             <p>
                 Learn how to launch, grow, and fund your ideas on
-                <strong>ApnaCrowdfunding</strong>.
+                {!! apnaCrowdfundingLink() !!}.
             </p>
             <a href="#" class="btn btn-light mt-3">Start Your Journey</a>
         </div>
@@ -188,9 +188,9 @@ font-size:20px;
     <section class="section">
         <div class="container text-center">
             <p class="lead">
-               This is your personal guide for learning how to create projects on   <strong>ApnaCrowdfunding</strong>. Whether a dream is becoming a reality or you are starting your own start-up, Creator’s  Guide is built for online crowdfunding for creators. It gives you tools, tips and step by step resources to support your resources.
+               This is your personal guide for learning how to create projects on   {!! apnaCrowdfundingLink() !!}. Whether a dream is becoming a reality or you are starting your own start-up, Creator's  Guide is built for online crowdfunding for creators. It gives you tools, tips and step by step resources to support your resources.
 
-As one of the most trusted crowdfunding platforms in Pakistan, ApnaCrowdfunding gives creators everything they need to launch, grow and successfully deliver their projects—all in one place. 
+As one of the most trusted crowdfunding platforms in Pakistan, {!! apnaCrowdfundingLink() !!} gives creators everything they need to launch, grow and successfully deliver their projects—all in one place. 
 
             </p>
         </div>
@@ -207,7 +207,7 @@ As one of the most trusted crowdfunding platforms in Pakistan, ApnaCrowdfunding 
                         They can raise funds directly from people who believe in their dreams.
                     </p>
                     <p>
-                        On ApnaCrowdfunding, crowdfunding becomes
+                        On {!! apnaCrowdfundingLink() !!}, crowdfunding becomes
                         <strong>simple, structured, and achievable</strong>.
                     </p>
                 </div>
@@ -400,7 +400,7 @@ As one of the most trusted crowdfunding platforms in Pakistan, ApnaCrowdfunding 
     <!-- TOOLKIT -->
     <section class="section">
         <div class="container">
-            <h2 class="section-title">Toolkit from ApnaCrowdfunding</h2>
+            <h2 class="section-title">Toolkit from {!! apnaCrowdfundingLink() !!}</h2>
 
             <ul class="checklist">
                 <li>Dashboard with real-time analytics</li>

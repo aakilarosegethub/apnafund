@@ -27,7 +27,7 @@
                                 </div>
                                 <div class="col-md-9">
                                     <h4>{{ $campaign->name }}</h4>
-                                    <p class="text-muted">{{ strLimit($campaign->description, 150) }}</p>
+                                    <p class="text-muted">{{ strLimit($campaign->short_description ?? $campaign->description, 150) }}</p>
                                     <div class="row">
                                         <div class="col-6">
                                             <small class="text-muted">@lang('Goal'):</small>

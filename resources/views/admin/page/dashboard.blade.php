@@ -57,7 +57,7 @@
                     <i class="ti ti-moneybag"></i>
                 </div>
                 <h3 class="dashboard-widget-2__number">{{ $setting->cur_sym }}{{ showAmount($widget['depositDone']) }}</h3>
-                <p class="dashboard-widget-2__txt">@lang('Total Donated Amount')</p>
+                <p class="dashboard-widget-2__txt">@lang('Total Contributed Amount')</p>
                 <div class="dashboard-widget-2__vector">
                     <img src="{{ asset('assets/admin/images/completed.png') }}" alt="Image">
                 </div>
@@ -67,7 +67,7 @@
                     <i class="ti ti-rotate-clockwise-2"></i>
                 </div>
                 <h3 class="dashboard-widget-2__number">{{ $widget['depositPending'] }}</h3>
-                <p class="dashboard-widget-2__txt">@lang('Pending Donations')</p>
+                <p class="dashboard-widget-2__txt">@lang('Pending Contributions')</p>
                 <div class="dashboard-widget-2__vector">
                     <img src="{{ asset('assets/admin/images/pending.png') }}" alt="Image">
                 </div>
@@ -77,7 +77,7 @@
                     <i class="ti ti-x"></i>
                 </div>
                 <h3 class="dashboard-widget-2__number">{{ $widget['depositCancelled'] }}</h3>
-                <p class="dashboard-widget-2__txt">@lang('Cancelled Donations')</p>
+                <p class="dashboard-widget-2__txt">@lang('Cancelled Contributions')</p>
                 <div class="dashboard-widget-2__vector">
                     <img src="{{ asset('assets/admin/images/cancelled.png') }}" alt="Image">
                 </div>
@@ -87,7 +87,7 @@
                     <i class="ti ti-coins"></i>
                 </div>
                 <h3 class="dashboard-widget-2__number">{{ $setting->cur_sym }}{{ showAmount($widget['depositCharge']) }}</h3>
-                <p class="dashboard-widget-2__txt">@lang('Total Charge for Donated Amount')</p>
+                <p class="dashboard-widget-2__txt">@lang('Total Charge for Contributed Amount')</p>
                 <div class="dashboard-widget-2__vector">
                     <img src="{{ asset('assets/admin/images/charge.png') }}" alt="Image">
                 </div>
@@ -208,7 +208,7 @@
     <div class="col-xl-6">
         <div class="custom--card h-auto">
             <div class="card-header">
-                <h3 class="title">@lang('Donation') & @lang('Withdraw')</h3>
+                <h3 class="title">@lang('Contribution') & @lang('Withdraw')</h3>
                 <small>@lang('Progress report for last 12 months')</small>
             </div>
             <div class="card-body px-0 pb-0">
@@ -304,7 +304,7 @@
 
         let options = {
             series: [{
-                name: 'Total Donation',
+                name: 'Total Contribution',
                 data: [
                     @foreach($months as $month)
                         {{ getAmount(@$depositsMonth->where('months', $month)->first()->depositAmount) }},

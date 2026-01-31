@@ -7,17 +7,44 @@ use App\Models\Campaign;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\File;
+use Symfony\Component\HttpFoundation\Response;
 
 class RewardController extends Controller
 {
+    /**
+     * Resolve campaign and enforce edit permission.
+     *
+     * @return \App\Models\Campaign|\Symfony\Component\HttpFoundation\Response
+     */
+    private function resolveCampaign(string $slug)
+    {
+        $campaign = Campaign::where('slug', $slug)->firstOrFail();
+
+        if (!$campaign->canBeEditedBy(auth()->id())) {
+            $message = 'You do not have permission to manage rewards for this campaign';
+
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                ], 403);
+            }
+
+            $toast[] = ['error', $message];
+            return back()->withToasts($toast);
+        }
+
+        return $campaign;
+    }
     /**
      * Display rewards for a specific campaign.
      */
     public function index($slug)
     {
-        $campaign = Campaign::where('slug', $slug)
-            ->where('user_id', auth()->id())
-            ->firstOrFail();
+        $campaign = $this->resolveCampaign($slug);
+        if ($campaign instanceof Response) {
+            return $campaign;
+        }
 
         $rewards = $campaign->rewards()->active()->orderBy('minimum_amount')->get();
 
@@ -30,9 +57,10 @@ class RewardController extends Controller
      */
     public function create($slug)
     {
-        $campaign = Campaign::where('slug', $slug)
-            ->where('user_id', auth()->id())
-            ->firstOrFail();
+        $campaign = $this->resolveCampaign($slug);
+        if ($campaign instanceof Response) {
+            return $campaign;
+        }
 
         $pageTitle = 'Add New Reward';
         
@@ -44,9 +72,10 @@ class RewardController extends Controller
      */
     public function store(Request $request, $slug)
     {
-        $campaign = Campaign::where('slug', $slug)
-            ->where('user_id', auth()->id())
-            ->firstOrFail();
+        $campaign = $this->resolveCampaign($slug);
+        if ($campaign instanceof Response) {
+            return $campaign;
+        }
 
         try {
             $validated = $request->validate([
@@ -57,7 +86,7 @@ class RewardController extends Controller
                 'type' => 'nullable|in:digital,physical',
                 'color_theme' => 'nullable|string',
                 'terms_conditions' => 'nullable|string',
-                'image' => ['nullable', File::types(['png', 'jpg', 'jpeg', 'gif', 'webp'])->max(5120)],
+                'image' => ['nullable', File::types(['png', 'jpg', 'jpeg', 'gif', 'webp'])->max(51200)],
             ], [
                 'title.required' => 'Reward title is required',
                 'title.max' => 'Reward title cannot exceed 255 characters',
@@ -69,7 +98,7 @@ class RewardController extends Controller
                 'quantity.integer' => 'Quantity must be a valid number',
                 'quantity.min' => 'Quantity must be at least 1',
                 'type.in' => 'Reward type must be either digital or physical',
-                'image.max' => 'Image size must be less than 5MB',
+                'image.max' => 'Image size must be less than 50MB',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             if ($request->ajax() || $request->wantsJson()) {
@@ -96,10 +125,10 @@ class RewardController extends Controller
             try {
                 // Validate image file
                 $imageFile = $request->image;
-                $maxSize = 5120; // 5MB in KB
+                $maxSize = 51200; // 50MB in KB
                 
                 if ($imageFile->getSize() > $maxSize * 1024) {
-                    throw new \Exception('Image size must be less than 5MB');
+                    throw new \Exception('Image size must be less than 50MB');
                 }
                 
                 $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
@@ -186,9 +215,10 @@ class RewardController extends Controller
      */
     public function edit($slug, $rewardId)
     {
-        $campaign = Campaign::where('slug', $slug)
-            ->where('user_id', auth()->id())
-            ->firstOrFail();
+        $campaign = $this->resolveCampaign($slug);
+        if ($campaign instanceof Response) {
+            return $campaign;
+        }
 
         $reward = $campaign->rewards()->findOrFail($rewardId);
 
@@ -227,9 +257,10 @@ class RewardController extends Controller
      */
     public function update(Request $request, $slug, $rewardId)
     {
-        $campaign = Campaign::where('slug', $slug)
-            ->where('user_id', auth()->id())
-            ->firstOrFail();
+        $campaign = $this->resolveCampaign($slug);
+        if ($campaign instanceof Response) {
+            return $campaign;
+        }
 
         $reward = $campaign->rewards()->findOrFail($rewardId);
 
@@ -242,7 +273,7 @@ class RewardController extends Controller
                 'type' => 'nullable|in:digital,physical',
                 'color_theme' => 'nullable|string',
                 'terms_conditions' => 'nullable|string',
-                'image' => ['nullable', File::types(['png', 'jpg', 'jpeg', 'gif', 'webp'])->max(5120)],
+                'image' => ['nullable', File::types(['png', 'jpg', 'jpeg', 'gif', 'webp'])->max(51200)],
             ], [
                 'title.required' => 'Reward title is required',
                 'title.max' => 'Reward title cannot exceed 255 characters',
@@ -254,7 +285,7 @@ class RewardController extends Controller
                 'quantity.integer' => 'Quantity must be a valid number',
                 'quantity.min' => 'Quantity must be at least 1',
                 'type.in' => 'Reward type must be either digital or physical',
-                'image.max' => 'Image size must be less than 5MB',
+                'image.max' => 'Image size must be less than 50MB',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             if ($request->ajax() || $request->wantsJson()) {
@@ -279,10 +310,10 @@ class RewardController extends Controller
             try {
                 // Validate image file
                 $imageFile = $request->image;
-                $maxSize = 5120; // 5MB in KB
+                $maxSize = 51200; // 50MB in KB
                 
                 if ($imageFile->getSize() > $maxSize * 1024) {
-                    throw new \Exception('Image size must be less than 5MB');
+                    throw new \Exception('Image size must be less than 50MB');
                 }
                 
                 $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
@@ -369,9 +400,10 @@ class RewardController extends Controller
      */
     public function destroy($slug, $rewardId)
     {
-        $campaign = Campaign::where('slug', $slug)
-            ->where('user_id', auth()->id())
-            ->firstOrFail();
+        $campaign = $this->resolveCampaign($slug);
+        if ($campaign instanceof Response) {
+            return $campaign;
+        }
 
         $reward = $campaign->rewards()->findOrFail($rewardId);
         $reward->delete();
@@ -393,9 +425,10 @@ class RewardController extends Controller
      */
     public function toggleStatus($slug, $rewardId)
     {
-        $campaign = Campaign::where('slug', $slug)
-            ->where('user_id', auth()->id())
-            ->firstOrFail();
+        $campaign = $this->resolveCampaign($slug);
+        if ($campaign instanceof Response) {
+            return $campaign;
+        }
 
         $reward = $campaign->rewards()->findOrFail($rewardId);
         $reward->is_active = !$reward->is_active;

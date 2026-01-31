@@ -4,14 +4,16 @@ use Illuminate\Support\Facades\Route;
 
 Route::namespace('User\Auth')->name('user.')->group(function () {
     // User Login and Logout Process
-    Route::controller('LoginController')->group(function () {
+    Route::controller('LoginController')->middleware('guest')->group(function () {
         Route::get('/login', 'loginForm')->name('login.form');
         Route::post('/login', 'login')->name('login');
+    });
+    Route::controller('LoginController')->group(function () {
         Route::get('logout', 'logout')->middleware('auth')->name('logout');
     });
 
     // User Registration Process
-    Route::controller('RegisterController')->group(function () {
+    Route::controller('RegisterController')->middleware('guest')->group(function () {
         Route::get('register', 'registerBusinessForm')->name('register');
         Route::get('register-business', 'registerBusinessForm')->name('register.business');
         Route::post('register', 'register')->middleware('register.status');
@@ -96,7 +98,10 @@ Route::middleware('auth')->name('user.')->namespace('User')->group(function () {
             Route::delete('updates/delete/{slug}/{updateId}', 'deleteUpdate')->name('updates.delete');
             Route::get('updates/get/{slug}/{updateId}', 'getUpdate')->name('updates.get');
             Route::post('upload-image', 'uploadImage')->name('upload-image');
+            Route::post('edit/{slug}/story/media', 'uploadStoryMedia')->name('story.media');
             Route::post('upload-external-image', 'uploadExternalImage')->name('upload-external-image');
+            Route::post('upload-campaign-image', 'uploadCampaignImage')->name('upload-campaign-image');
+            Route::post('upload-campaign-video', 'uploadCampaignVideo')->name('upload-campaign-video');
             Route::post('update/{id}', 'update')->name('update');
             Route::get('details/{slug}', 'show')->name('show');
             Route::delete('{id}', 'destroy')->name('destroy');

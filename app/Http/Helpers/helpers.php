@@ -126,6 +126,97 @@ function getFileSize($key) {
     return null;
 }
 
+/**
+ * Save an Intervention image instance as WebP.
+ * Falls back to cwebp when GD WebP support is missing (XAMPP PHP).
+ */
+function saveImageAsWebp($image, $destPath, $quality = 90) {
+    // Try Intervention encode first (works for GD or Imagick drivers)
+    try {
+        $image->encode('webp', $quality)->save($destPath);
+        return;
+    } catch (\Exception $e) {
+        // Continue to cwebp fallback
+    }
+
+    $cwebp = '/usr/local/bin/cwebp';
+    if (!is_executable($cwebp)) {
+        throw new \Exception('WebP format is not supported by the server. Please enable WebP support.');
+    }
+
+    $tmpBase = tempnam(sys_get_temp_dir(), 'webp_');
+    $tmpPng = $tmpBase . '.png';
+    @rename($tmpBase, $tmpPng);
+
+    $image->encode('png')->save($tmpPng);
+
+    $command = escapeshellarg($cwebp)
+        . ' -quiet -q ' . intval($quality)
+        . ' ' . escapeshellarg($tmpPng)
+        . ' -o ' . escapeshellarg($destPath);
+
+    exec($command, $output, $exitCode);
+    @unlink($tmpPng);
+
+    if ($exitCode !== 0 || !file_exists($destPath)) {
+        throw new \Exception('WebP conversion failed. Please ensure cwebp is available.');
+    }
+}
+
+/**
+ * Save an uploaded image (or file path) as WebP with optional resize.
+ * Uses Intervention first; falls back to cwebp if the driver can't read the source.
+ */
+function saveUploadedImageAsWebp($source, $destPath, $quality = 90, $maxWidth = null, $maxHeight = null) {
+    try {
+        $image = \Intervention\Image\Facades\Image::make($source);
+        if ($maxWidth && $maxHeight) {
+            $image->fit($maxWidth, $maxHeight, function ($constraint) {
+                $constraint->upsize();
+            });
+        }
+        saveImageAsWebp($image, $destPath, $quality);
+        return;
+    } catch (\Exception $e) {
+        // Continue to cwebp fallback
+    }
+
+    $sourcePath = is_string($source) ? $source : $source->getRealPath();
+    saveWebpFromSource($sourcePath, $destPath, $quality, $maxWidth, $maxHeight);
+}
+
+/**
+ * Convert a source file to WebP via cwebp with optional resize.
+ */
+function saveWebpFromSource($sourcePath, $destPath, $quality = 90, $maxWidth = null, $maxHeight = null) {
+    $cwebp = '/usr/local/bin/cwebp';
+    if (!is_executable($cwebp)) {
+        throw new \Exception('WebP format is not supported by the server. Please enable WebP support.');
+    }
+
+    $resizeArgs = '';
+    if ($maxWidth && $maxHeight) {
+        $size = @getimagesize($sourcePath);
+        if ($size && $size[0] > 0 && $size[1] > 0) {
+            $ratio = min($maxWidth / $size[0], $maxHeight / $size[1]);
+            $newW = max(1, (int) floor($size[0] * $ratio));
+            $newH = max(1, (int) floor($size[1] * $ratio));
+            $resizeArgs = ' -resize ' . $newW . ' ' . $newH;
+        }
+    }
+
+    $command = escapeshellarg($cwebp)
+        . ' -quiet -q ' . intval($quality)
+        . $resizeArgs
+        . ' ' . escapeshellarg($sourcePath)
+        . ' -o ' . escapeshellarg($destPath);
+
+    exec($command, $output, $exitCode);
+    if ($exitCode !== 0 || !file_exists($destPath)) {
+        throw new \Exception('WebP conversion failed. Please ensure cwebp is available.');
+    }
+}
+
 function getPageSEO($pageKey) {
     $seoData = SiteData::where('data_key', $pageKey . '.seo')->first();
     

@@ -489,9 +489,9 @@
             <!-- SHORT DESCRIPTION -->
             <div class="box">
                     <label>Short Description *</label>
-                    <textarea name="description" placeholder="Describe your project in one or two sentences..." required>{{ old('description', $campaign->description) }}</textarea>
+                    <textarea name="short_description" placeholder="Describe your project in one or two sentences..." required>{{ old('short_description', $campaign->short_description) }}</textarea>
                 <p class="note">This will show on your project card.</p>
-                    @error('description')
+                    @error('short_description')
                         <p class="note" style="color: red;">{{ $message }}</p>
                     @enderror
             </div>
@@ -540,6 +540,8 @@
                 <div class="upload-box">
                     <label for="projectImage" class="upload-btn">Upload an image</label>
                     <input type="file" id="projectImage" name="image" accept="image/*">
+                    <input type="hidden" name="uploaded_image" id="uploadedImageName" value="">
+                    <input type="hidden" name="uploaded_image_original" id="uploadedImageOriginalName" value="">
                     <img id="preview" class="preview-img" alt="Image Preview" 
                          @if($campaign->image) 
                              src="{{ getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')) }}" 
@@ -548,6 +550,8 @@
                     <p style="margin-top: 12px; font-size: 14px; color:#666;">
                         Drop an image here, or select a file.<br>Must be JPG, PNG, GIF, or WEBP under 50 MB.
                     </p>
+                    <div id="imageErrorMsg" class="note" style="color: red; display: none; margin-top: 5px;"></div>
+                    <div id="imageUploadStatus" class="note" style="display: none; margin-top: 5px;"></div>
                     @error('image')
                         <p class="note" style="color: red;">{{ $message }}</p>
                     @enderror
@@ -566,8 +570,11 @@
                     </div>
                 @endif
                 
-                <input type="file" name="video" accept="video/*" style="margin-top: 10px;">
+                <input type="file" name="video" id="campaignVideoInput" accept="video/*" style="margin-top: 10px;">
+                <input type="hidden" name="uploaded_video" id="uploadedVideoName" value="">
                 <p class="note">Accepted formats: MP4, AVI, MOV. Max size: 500 MB.</p>
+                <div id="videoErrorMsg" class="note" style="color: red; display: none; margin-top: 5px;"></div>
+                <div id="videoUploadStatus" class="note" style="display: none; margin-top: 5px;"></div>
                 @error('video')
                     <p class="note" style="color: red;">{{ $message }}</p>
                 @enderror
@@ -1392,14 +1399,34 @@
                 });
             }
 
-            // Image preview functionality
+            // Image preview + upload functionality
             const projectImage = document.getElementById("projectImage");
             const preview = document.getElementById("preview");
 
             if (projectImage) {
                 projectImage.addEventListener("change", function() {
                     const file = this.files[0];
+                    const uploadStatus = document.getElementById("imageUploadStatus");
+                    const errorMsg = document.getElementById("imageErrorMsg");
+                    const uploadedImageName = document.getElementById("uploadedImageName");
+                    const uploadedImageOriginalName = document.getElementById("uploadedImageOriginalName");
+                    const topSaveBtn = document.getElementById("topSaveBtn");
+
                     if (file) {
+                        if (errorMsg) {
+                            errorMsg.textContent = "";
+                            errorMsg.style.display = "none";
+                        }
+                        if (uploadStatus) {
+                            uploadStatus.textContent = "Uploading image...";
+                            uploadStatus.style.display = "block";
+                            uploadStatus.style.color = "#16a34a";
+                        }
+                        if (topSaveBtn) {
+                            topSaveBtn.disabled = true;
+                            topSaveBtn.textContent = "Uploading...";
+                        }
+
                         const reader = new FileReader();
                         reader.onload = e => {
                             preview.src = e.target.result;
@@ -1410,10 +1437,148 @@
                         if (typeof window.showActionButtons === 'function') {
                             window.showActionButtons();
                         }
+
+                        const formData = new FormData();
+                        formData.append('image', file);
+                        formData.append('_token', '{{ csrf_token() }}');
+
+                        fetch('{{ route("user.campaign.upload-campaign-image") }}', {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                if (uploadedImageName) {
+                                    uploadedImageName.value = data.image;
+                                }
+                                if (uploadedImageOriginalName) {
+                                    uploadedImageOriginalName.value = data.image_original || "";
+                                }
+                                if (preview && data.image_url) {
+                                    preview.src = data.image_url;
+                                    preview.style.display = "block";
+                                }
+                                if (uploadStatus) {
+                                    uploadStatus.textContent = "✓ Image uploaded successfully";
+                                    uploadStatus.style.color = "#16a34a";
+                                }
+                            } else {
+                                if (errorMsg) {
+                                    errorMsg.textContent = data.message || "Image upload failed";
+                                    errorMsg.style.display = "block";
+                                }
+                                if (uploadStatus) {
+                                    uploadStatus.style.display = "none";
+                                }
+                            }
+                        })
+                        .catch(() => {
+                            if (errorMsg) {
+                                errorMsg.textContent = "Failed to upload image. Please try again.";
+                                errorMsg.style.display = "block";
+                            }
+                            if (uploadStatus) {
+                                uploadStatus.style.display = "none";
+                            }
+                        })
+                        .finally(() => {
+                            if (topSaveBtn) {
+                                topSaveBtn.disabled = false;
+                                topSaveBtn.textContent = "Save";
+                            }
+                        });
                     } else {
                         if (!preview.src || preview.src === '') {
                             preview.style.display = "none";
                         }
+                        if (uploadedImageName) uploadedImageName.value = "";
+                        if (uploadedImageOriginalName) uploadedImageOriginalName.value = "";
+                        if (uploadStatus) uploadStatus.style.display = "none";
+                        if (errorMsg) errorMsg.style.display = "none";
+                    }
+                });
+            }
+
+            // Campaign video upload on selection
+            const campaignVideoInput = document.getElementById("campaignVideoInput");
+            const videoErrorMsg = document.getElementById("videoErrorMsg");
+            const videoUploadStatus = document.getElementById("videoUploadStatus");
+            const uploadedVideoName = document.getElementById("uploadedVideoName");
+
+            if (campaignVideoInput) {
+                campaignVideoInput.addEventListener("change", function() {
+                    const file = this.files[0];
+                    const topSaveBtn = document.getElementById("topSaveBtn");
+
+                    if (file) {
+                        if (videoErrorMsg) {
+                            videoErrorMsg.textContent = "";
+                            videoErrorMsg.style.display = "none";
+                        }
+                        if (videoUploadStatus) {
+                            videoUploadStatus.textContent = "Uploading video...";
+                            videoUploadStatus.style.display = "block";
+                            videoUploadStatus.style.color = "#16a34a";
+                        }
+                        if (topSaveBtn) {
+                            topSaveBtn.disabled = true;
+                            topSaveBtn.textContent = "Uploading...";
+                        }
+
+                        const formData = new FormData();
+                        formData.append('video', file);
+                        formData.append('_token', '{{ csrf_token() }}');
+
+                        fetch('{{ route("user.campaign.upload-campaign-video") }}', {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                if (uploadedVideoName) {
+                                    uploadedVideoName.value = data.video;
+                                }
+                                if (videoUploadStatus) {
+                                    videoUploadStatus.textContent = "✓ Video uploaded successfully";
+                                    videoUploadStatus.style.color = "#16a34a";
+                                }
+                            } else {
+                                if (videoErrorMsg) {
+                                    videoErrorMsg.textContent = data.message || "Video upload failed";
+                                    videoErrorMsg.style.display = "block";
+                                }
+                                if (videoUploadStatus) {
+                                    videoUploadStatus.style.display = "none";
+                                }
+                            }
+                        })
+                        .catch(() => {
+                            if (videoErrorMsg) {
+                                videoErrorMsg.textContent = "Failed to upload video. Please try again.";
+                                videoErrorMsg.style.display = "block";
+                            }
+                            if (videoUploadStatus) {
+                                videoUploadStatus.style.display = "none";
+                            }
+                        })
+                        .finally(() => {
+                            if (topSaveBtn) {
+                                topSaveBtn.disabled = false;
+                                topSaveBtn.textContent = "Save";
+                            }
+                        });
+                    } else {
+                        if (uploadedVideoName) uploadedVideoName.value = "";
+                        if (videoUploadStatus) videoUploadStatus.style.display = "none";
+                        if (videoErrorMsg) videoErrorMsg.style.display = "none";
                     }
                 });
             }

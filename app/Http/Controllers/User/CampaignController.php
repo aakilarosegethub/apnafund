@@ -15,11 +15,15 @@ use App\Models\CampaignUpdate;
 use App\Models\CampaignCollaborator;
 use App\Models\User;
 use App\Models\AdminNotification;
+use App\Models\Admin;
 use App\Http\Controllers\Controller;
 use App\Services\YouTubeUploadService;
 use App\Constants\ManageStatus;
 use Illuminate\Validation\Rules\File;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
+use Intervention\Image\Facades\Image as InterventionImage;
 
 class CampaignController extends Controller
 {
@@ -87,7 +91,7 @@ class CampaignController extends Controller
      */
     function galleryUpload() {
         $validator = Validator::make(request()->all(), [
-            'file' => ['required', File::types(['png', 'jpg', 'jpeg'])],
+            'file' => ['required', File::types(['png', 'jpg', 'jpeg', 'webp'])],
         ]);
 
         if ($validator->fails()) {
@@ -105,6 +109,126 @@ class CampaignController extends Controller
             'message' => 'File successfully uploaded',
             'image'   => $gallery->image,
         ]);
+    }
+
+    /**
+     * Upload campaign image immediately on selection
+     */
+    function uploadCampaignImage() {
+        try {
+            $validator = Validator::make(request()->all(), [
+                'image' => 'required|image|mimes:jpeg,jpg,png,gif,webp|max:51200', // 50MB max
+            ], [
+                'image.max' => 'Campaign image must be under 50 MB.',
+            ]);
+
+            if ($validator->fails()) {
+                $file = request()->file('image');
+                $actualFileSizeKb = null;
+                if ($file && $file->isValid()) {
+                    $actualFileSizeKb = round($file->getSize() / 1024, 2);
+                }
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors(),
+                    'max_size_mb' => 50,
+                    'actual_size_kb' => $actualFileSizeKb
+                ], 400);
+            }
+
+            $imageFile = request('image');
+            // Store original image (no resize) for detail page
+            $originalFilename = fileUploader($imageFile, getFilePath('campaignOriginal'));
+            
+            // Enforce WebP output
+            $extension = 'webp';
+            $quality = 90;
+            
+            // Generate new filename
+            $filename = uniqid() . time() . '.' . $extension;
+            $path = public_path(getFilePath('campaign'));
+            
+            // Create directory if doesn't exist
+            if (!file_exists($path)) {
+                mkdir($path, 0775, true);
+            }
+            
+            // Resize and convert to WebP (with fallback if GD can't read WebP input)
+            $imageSize = getFileSize('campaign');
+            $sizeParts = $imageSize ? explode('x', strtolower($imageSize)) : [855, 475];
+            $targetWidth = (int) ($sizeParts[0] ?? 855);
+            $targetHeight = (int) ($sizeParts[1] ?? 475);
+            saveUploadedImageAsWebp($imageFile, $path . '/' . $filename, $quality, $targetWidth, $targetHeight);
+            
+            // Create thumbnail
+            $thumbSize = getThumbSize('campaign');
+            if ($thumbSize) {
+                $thumbDimensions = explode('x', $thumbSize);
+                saveUploadedImageAsWebp($imageFile, $path . '/thumb_' . $filename, $quality, $thumbDimensions[0], $thumbDimensions[1]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Image uploaded successfully',
+                'image' => $filename,
+                'image_url' => asset(getFilePath('campaign') . '/' . $filename),
+                'image_original' => $originalFilename,
+                'image_original_url' => asset(getFilePath('campaignOriginal') . '/' . $originalFilename)
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Campaign image upload failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Image upload failed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Upload campaign video immediately on selection
+     */
+    function uploadCampaignVideo() {
+        try {
+            $validator = Validator::make(request()->all(), [
+                'video' => ['required', File::types(['mp4', 'avi', 'mov', 'wmv', 'flv', '3gp']), 'max:512000'], // 500MB max
+            ], [
+                'video.max' => 'Video file size must be less than 500MB.',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors(),
+                ], 400);
+            }
+
+            $videoFile = request('video');
+            $filename = fileUploader($videoFile, getFilePath('campaign'));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Video uploaded successfully',
+                'video' => $filename,
+                'video_url' => asset(getFilePath('campaign') . '/' . $filename),
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Campaign video upload failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Video upload failed: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -185,11 +309,12 @@ class CampaignController extends Controller
             
             $this->validate(request(), [
                 'category_id'         => 'required|integer|gt:0',
-                'image'               => ['nullable', File::types(['png', 'jpg', 'jpeg'])], // Made optional for draft creation
+                'image'               => ['nullable', File::types(['png', 'jpg', 'jpeg', 'webp'])], // Made optional for draft creation
                 'video'               => ['nullable', File::types(['mp4', 'avi', 'mov', 'wmv', 'flv', '3gp']), 'max:512000'], // 500MB max
                 'youtube_url'         => 'nullable|url',
                 'location'            => 'nullable|string|max:255',
                 'name'                => 'required|string|max:190|unique:campaigns,name',
+                'short_description'   => 'required|string|max:255',
                 'description'         => 'required|min:30',
                 'goal_amount'         => 'nullable|numeric|gt:0',
                 'start_date'          => 'nullable|date_format:Y-m-d|after_or_equal:today',
@@ -197,6 +322,9 @@ class CampaignController extends Controller
             ], [
                 'category_id.required' => 'The category field is required.',
                 'category_id.integer'  => 'The category must be an integer.',
+                'short_description.required' => 'The short description field is required.',
+                'short_description.max' => 'The short description may not be greater than 255 characters.',
+                'image.max'            => 'Campaign image must be under 50 MB.',
                 'video.max'           => 'Video file size must be less than 500MB.',
                 'youtube_url.url'     => 'YouTube URL must be a valid URL.',
                 'youtube_url.regex'   => 'Please enter a valid YouTube URL.',
@@ -275,7 +403,11 @@ class CampaignController extends Controller
             // Upload main image (optional - can be added later in edit)
             if (request()->hasFile('image')) {
                 try {
-                    $campaign->image = fileUploader(request('image'), getFilePath('campaign'), getFileSize('campaign'), null, getThumbSize('campaign'));
+                    $imageFile = request('image');
+                    // Store original image (no resize) for detail page
+                    $campaign->image_original = fileUploader($imageFile, getFilePath('campaignOriginal'));
+                    // Store cropped image + thumb for cards
+                    $campaign->image = fileUploader($imageFile, getFilePath('campaign'), getFileSize('campaign'), null, getThumbSize('campaign'));
                 } catch (Exception) {
                     $toast[] = ['error', 'Image uploading process has failed'];
                     if (request()->ajax()) {
@@ -289,6 +421,7 @@ class CampaignController extends Controller
             } else {
                 // Set a placeholder or null - can be added in edit page
                 $campaign->image = null;
+                $campaign->image_original = null;
             }
 
             // Handle video upload or YouTube URL
@@ -351,6 +484,7 @@ class CampaignController extends Controller
             $campaign->location    = request('location');
             $purifier              = new HTMLPurifier();
             $campaign->description = request('description');
+            $campaign->short_description = request('short_description');
 
             $campaign->goal_amount     = $goalAmount;
             $campaign->start_date        = Carbon::parse($startDate);
@@ -379,6 +513,39 @@ class CampaignController extends Controller
             $adminNotification->title     = 'New campaign created by ' . auth()->user()->fullname;
             $adminNotification->click_url = urlPath('admin.campaigns.index');
             $adminNotification->save();
+
+            // Send email notification to all admins
+            try {
+                $admins = Admin::all();
+                $user = auth()->user();
+                $campaignName = $campaign->name;
+                $campaignLink = route('admin.campaigns.details', $campaign->id);
+                $userName = $user->fullname ?? $user->username;
+                $userEmail = $user->email ?? 'N/A';
+                
+                foreach ($admins as $admin) {
+                    $emailMessage = "Dear Admin,\n\n";
+                    $emailMessage .= "A new campaign has been created and requires your review.\n\n";
+                    $emailMessage .= "Campaign Details:\n";
+                    $emailMessage .= "- Campaign Name: {$campaignName}\n";
+                    $emailMessage .= "- Campaign ID: {$campaign->id}\n";
+                    $emailMessage .= "- Created By: {$userName}\n";
+                    $emailMessage .= "- Creator Email: {$userEmail}\n";
+                    $emailMessage .= "- Goal Amount: " . showAmount($campaign->goal_amount) . "\n";
+                    $emailMessage .= "- Start Date: " . showDateTime($campaign->start_date) . "\n";
+                    $emailMessage .= "- End Date: " . showDateTime($campaign->end_date) . "\n\n";
+                    $emailMessage .= "Please review and approve/reject the campaign.\n\n";
+                    $emailMessage .= "View Campaign: {$campaignLink}\n\n";
+                    $emailMessage .= "Thank you.";
+                    
+                    notify($admin, 'DEFAULT', [
+                        'message' => $emailMessage,
+                        'subject' => 'New Campaign Created - ' . $campaignName,
+                    ], ['email']);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Failed to send admin email notification: ' . $e->getMessage());
+            }
 
             $toast[] = ['success', 'Campaign successfully created'];
 
@@ -611,12 +778,12 @@ class CampaignController extends Controller
                 // Basics section - all fields required
                 $this->validate(request(), [
                     'category_id'         => 'required|integer|gt:0',
-                    'image'               => ['nullable', File::types(['png', 'jpg', 'jpeg'])],
+                    'image'               => ['nullable', File::types(['png', 'jpg', 'jpeg', 'webp'])],
                     'video'               => ['nullable', File::types(['mp4', 'avi', 'mov', 'wmv', 'flv', '3gp']), 'max:512000'], // 500MB max
                     'youtube_url'         => 'nullable|url',
                     'location'            => 'nullable|string|max:255',
                     'name'                => 'required|string|max:190|unique:campaigns,name,' . $id,
-                    'description'         => 'required|min:30',
+                    'short_description'   => 'required|string|max:255',
                     'goal_amount'         => 'required|numeric|gt:0',
                     'start_date'          => 'required|date_format:Y-m-d',
                     'end_date'            => 'required|date_format:Y-m-d|after:start_date|before_or_equal:' . Carbon::parse(request('start_date'))->addDays(30)->format('Y-m-d'),
@@ -625,10 +792,13 @@ class CampaignController extends Controller
                     'category_id.required' => 'The category field is required.',
                     'category_id.integer'  => 'The category must be an integer.',
                     'name.required' => 'The name field is required.',
+                    'short_description.required' => 'The short description field is required.',
+                    'short_description.max' => 'The short description may not be greater than 255 characters.',
                     'goal_amount.required' => 'The goal amount field is required.',
                     'start_date.required' => 'The start date field is required.',
                     'end_date.required' => 'The end date field is required.',
                     'end_date.before_or_equal' => 'The campaign can last maximum 30 days from start date.',
+                    'image.max'            => 'Campaign image must be under 50 MB.',
                     'video.max'           => 'Video file size must be less than 500MB.',
                     'youtube_url.url'     => 'YouTube URL must be a valid URL.',
                     'youtube_url.regex'   => 'Please enter a valid YouTube URL.',
@@ -711,7 +881,7 @@ class CampaignController extends Controller
                 $campaign->slug        = slug(request('name'));
                 $campaign->location    = request('location');
                 $purifier              = new HTMLPurifier();
-                $campaign->description = request('description');
+                $campaign->short_description = request('short_description');
                 $campaign->goal_amount = request('goal_amount');
                 $campaign->start_date  = Carbon::parse(request('start_date'));
                 $campaign->end_date    = Carbon::parse(request('end_date'));
@@ -722,10 +892,10 @@ class CampaignController extends Controller
                 try {
                     // Validate image file
                     $imageFile = request('image');
-                    $maxSize = 5120; // 5MB in KB
+                    $maxSize = 51200; // 50MB in KB
                     
                     if ($imageFile->getSize() > $maxSize * 1024) {
-                        throw new Exception('Image size must be less than 5MB');
+                        throw new Exception('Image size must be less than 50MB');
                     }
                     
                     $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
@@ -781,7 +951,94 @@ class CampaignController extends Controller
                         }
                     }
                     
-                    $campaign->image = fileUploader(request('image'), getFilePath('campaign'), getFileSize('campaign'), @$campaign->image, getThumbSize('campaign'));
+                    // Handle image upload - check if already uploaded via AJAX
+                    if (request('uploaded_image')) {
+                        // Use already uploaded image
+                        $uploadedImageName = request('uploaded_image');
+                        $uploadedOriginalName = request('uploaded_image_original');
+                        $imagePath = public_path(getFilePath('campaign') . '/' . $uploadedImageName);
+                        
+                        // Verify the uploaded image exists
+                        if (file_exists($imagePath)) {
+                            // Remove old image if exists
+                            if ($campaign->image && $campaign->image != $uploadedImageName) {
+                                $oldImagePath = public_path(getFilePath('campaign') . '/' . $campaign->image);
+                                if (file_exists($oldImagePath)) {
+                                    @unlink($oldImagePath);
+                                }
+                                // Remove old thumbnail if exists
+                                $oldThumbPath = public_path(getFilePath('campaign') . '/thumb_' . $campaign->image);
+                                if (file_exists($oldThumbPath)) {
+                                    @unlink($oldThumbPath);
+                                }
+                            }
+                            $campaign->image = $uploadedImageName;
+                            if ($uploadedOriginalName) {
+                                if ($campaign->image_original && $campaign->image_original !== $uploadedOriginalName) {
+                                    $oldOriginalPath = public_path(getFilePath('campaignOriginal') . '/' . $campaign->image_original);
+                                    if (file_exists($oldOriginalPath)) {
+                                        @unlink($oldOriginalPath);
+                                    }
+                                }
+                                $campaign->image_original = $uploadedOriginalName;
+                            }
+                        }
+                    } elseif (request()->hasFile('image')) {
+                        $imageFile = request('image');
+                        $oldImage = @$campaign->image;
+                        $oldOriginal = @$campaign->image_original;
+                        
+                        // Remove old image if exists
+                        if ($oldImage) {
+                            $oldImagePath = public_path(getFilePath('campaign') . '/' . $oldImage);
+                            if (file_exists($oldImagePath)) {
+                                @unlink($oldImagePath);
+                            }
+                            // Remove thumbnail if exists
+                            $oldThumbPath = public_path(getFilePath('campaign') . '/thumb_' . $oldImage);
+                            if (file_exists($oldThumbPath)) {
+                                @unlink($oldThumbPath);
+                            }
+                        }
+                        if ($oldOriginal) {
+                            $oldOriginalPath = public_path(getFilePath('campaignOriginal') . '/' . $oldOriginal);
+                            if (file_exists($oldOriginalPath)) {
+                                @unlink($oldOriginalPath);
+                            }
+                        }
+                        
+                        // Enforce WebP output
+                        $extension = 'webp';
+                        $quality = 90;
+                        
+                        // Generate new filename
+                        $filename = uniqid() . time() . '.' . $extension;
+                        $path = public_path(getFilePath('campaign'));
+                        
+                        // Create directory if doesn't exist
+                        if (!file_exists($path)) {
+                            mkdir($path, 0775, true);
+                        }
+                        
+                        // Store original image (no resize) for detail page
+                        $campaign->image_original = fileUploader($imageFile, getFilePath('campaignOriginal'));
+
+                        // Resize and convert to WebP (with fallback if GD can't read WebP input)
+                        $imageSize = getFileSize('campaign');
+                        $sizeParts = $imageSize ? explode('x', strtolower($imageSize)) : [855, 475];
+                        $targetWidth = (int) ($sizeParts[0] ?? 855);
+                        $targetHeight = (int) ($sizeParts[1] ?? 475);
+                        saveUploadedImageAsWebp($imageFile, $path . '/' . $filename, $quality, $targetWidth, $targetHeight);
+                        
+                        // Create thumbnail
+                        $thumbSize = getThumbSize('campaign');
+                        if ($thumbSize) {
+                            $thumbDimensions = explode('x', $thumbSize);
+                            saveUploadedImageAsWebp($imageFile, $path . '/thumb_' . $filename, $quality, $thumbDimensions[0], $thumbDimensions[1]);
+                        }
+                        
+                        $campaign->image = $filename;
+                    }
                 } catch (Exception $e) {
                     \Log::error('Image upload failed', [
                         'error' => $e->getMessage(),
@@ -812,7 +1069,21 @@ class CampaignController extends Controller
             }
 
             // Handle video upload or YouTube URL update
-            if (request()->hasFile('video')) {
+            if (request('uploaded_video')) {
+                $uploadedVideoName = request('uploaded_video');
+                $videoPath = public_path(getFilePath('campaign') . '/' . $uploadedVideoName);
+
+                if (file_exists($videoPath)) {
+                    if ($campaign->video && $campaign->video !== $uploadedVideoName) {
+                        $oldVideoPath = public_path(getFilePath('campaign') . '/' . $campaign->video);
+                        if (file_exists($oldVideoPath)) {
+                            @unlink($oldVideoPath);
+                        }
+                    }
+                    $campaign->video = $uploadedVideoName;
+                    $campaign->youtube_url = null; // Clear YouTube URL if file is uploaded
+                }
+            } elseif (request()->hasFile('video')) {
                 try {
                     $campaign->video = fileUploader(request('video'), getFilePath('campaign'), getFileSize('campaign'), @$campaign->video);
                     $campaign->youtube_url = null; // Clear YouTube URL if file is uploaded
@@ -913,6 +1184,26 @@ class CampaignController extends Controller
                 ], 422);
             }
             throw $e;
+        } catch (QueryException $e) {
+            \Log::error('SQL error while updating campaign', [
+                'campaign_id' => $id,
+                'user_id' => auth()->id(),
+                'message' => $e->getMessage(),
+                'sql' => $e->getSql(),
+                'bindings' => $e->getBindings(),
+            ]);
+
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'SQL error while updating the campaign: ' . $e->getMessage(),
+                    'sql' => $e->getSql(),
+                    'bindings' => $e->getBindings(),
+                ], 500);
+            }
+
+            $toast[] = ['error', 'SQL error while updating the campaign: ' . $e->getMessage()];
+            return back()->withToasts($toast);
         } catch (Exception $e) {
             if (request()->ajax()) {
                 return response()->json([
@@ -1049,7 +1340,7 @@ class CampaignController extends Controller
             
             // Validate file
             $validator = Validator::make(['file' => $file], [
-                'file' => ['required', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:5120'] // 5MB max
+                'file' => ['required', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:51200'] // 50MB max
             ]);
 
             if ($validator->fails()) {
@@ -1085,6 +1376,75 @@ class CampaignController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while uploading the image: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Handle story editor media uploads (images/videos)
+    public function uploadStoryMedia($slug) {
+        try {
+            $campaign = Campaign::where('slug', $slug)
+                ->orWhere('id', $slug)
+                ->firstOrFail();
+
+            if (!$campaign->canBeEditedBy(auth()->id())) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to upload media for this campaign'
+                ], 403);
+            }
+
+            $file = request()->file('file');
+            if (!$file) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No file provided'
+                ], 400);
+            }
+
+            $mimeType = $file->getMimeType() ?? '';
+            $isVideo = Str::startsWith($mimeType, 'video/');
+
+            $rules = $isVideo
+                ? ['file' => ['required', 'mimes:mp4,webm,ogg,mov', 'max:51200']]
+                : ['file' => ['required', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:51200']];
+
+            $validator = Validator::make(['file' => $file], $rules);
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $validator->errors()->first('file')
+                ], 400);
+            }
+
+            if ($isVideo) {
+                $uploadedFile = fileUploader($file, getFilePath('storyVideo'), getFileSize('storyVideo'));
+                $url = asset(getFilePath('storyVideo') . '/' . $uploadedFile);
+                return response()->json([
+                    'success' => true,
+                    'type' => 'video',
+                    'mime' => $mimeType,
+                    'location' => $url
+                ]);
+            }
+
+            $uploadedFile = fileUploader($file, getFilePath('storyImage'));
+            $url = asset(getFilePath('storyImage') . '/' . $uploadedFile);
+
+            return response()->json([
+                'success' => true,
+                'type' => 'image',
+                'location' => $url
+            ]);
+        } catch (Exception $e) {
+            \Log::error('Story media upload failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while uploading media: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -1354,7 +1714,7 @@ class CampaignController extends Controller
         request()->validate([
             'title' => 'required|string|max:500',
             'content' => 'required|string|min:30',
-            'image' => ['nullable', File::types(['png', 'jpg', 'jpeg'])],
+            'image' => ['nullable', File::types(['png', 'jpg', 'jpeg', 'webp'])],
             'is_published' => 'nullable|boolean'
         ]);
 
@@ -1420,7 +1780,7 @@ class CampaignController extends Controller
         request()->validate([
             'title' => 'required|string|max:500',
             'content' => 'required|string|min:30',
-            'image' => ['nullable', File::types(['png', 'jpg', 'jpeg'])],
+            'image' => ['nullable', File::types(['png', 'jpg', 'jpeg', 'webp'])],
             'is_published' => 'nullable|boolean'
         ]);
 

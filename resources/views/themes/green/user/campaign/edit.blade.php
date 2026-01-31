@@ -521,9 +521,9 @@
             <!-- SHORT DESCRIPTION -->
             <div class="box">
                 <label>Short Description *</label>
-                <textarea name="description" rows="4" placeholder="Campaign description will be added here. Describe your project in one or two sentences..." required>{{ old('description', $campaign->description) }}</textarea>
+                <textarea name="short_description" rows="4" placeholder="Campaign description will be added here. Describe your project in one or two sentences..." required>{{ old('short_description', $campaign->short_description) }}</textarea>
                 <p class="note">This will show on your project card.</p>
-                @error('description')
+                @error('short_description')
                     <p class="note" style="color: red;">{{ $message }}</p>
                 @enderror
             </div>
@@ -559,16 +559,21 @@
                 <label>Project Image *</label>
                 <p class="note">Add an image that clearly represents your project.</p>
 
-                @if($campaign->image)
-                    <div style="margin-bottom: 15px;">
+                <div id="campaignImagePreview" style="margin-bottom: 15px;">
+                    @if($campaign->image)
                         <img src="{{ getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')) }}" 
                              alt="Current Image" 
+                             id="currentCampaignImage"
                              style="max-width: 300px; max-height: 200px; border-radius: 8px; border: 1px solid #ddd;">
-                    </div>
-                @endif
+                    @endif
+                </div>
 
-                <input type="file" name="image" accept="image/*" style="margin-top: 10px;">
-                <p class="note">Must be JPG, PNG, GIF, or WEBP under 50 MB.</p>
+                <input type="file" name="image" id="campaignImageInput" accept="image/*" style="margin-top: 10px;">
+                <input type="hidden" name="uploaded_image" id="uploadedImageName" value="">
+                <input type="hidden" name="uploaded_image_original" id="uploadedImageOriginalName" value="">
+                <p class="note">JPG, PNG, GIF, or WEBP under {{ ini_get('upload_max_filesize') }}.</p>
+                <div id="imageErrorMsg" class="note" style="color: red; display: none; margin-top: 5px;"></div>
+                <div id="imageUploadStatus" class="note" style="display: none; margin-top: 5px;"></div>
                 @error('image')
                     <p class="note" style="color: red;">{{ $message }}</p>
                 @enderror
@@ -586,8 +591,11 @@
                     </div>
                 @endif
                 
-                <input type="file" name="video" accept="video/*" style="margin-top: 10px;">
-                <p class="note">Accepted formats: MP4, AVI, MOV. Max size: 100 MB.</p>
+                <input type="file" name="video" id="campaignVideoInput" accept="video/*" style="margin-top: 10px;">
+                <input type="hidden" name="uploaded_video" id="uploadedVideoName" value="">
+                <p class="note">Accepted formats: MP4, AVI, MOV. Max size: 500 MB.</p>
+                <div id="videoErrorMsg" class="note" style="color: red; display: none; margin-top: 5px;"></div>
+                <div id="videoUploadStatus" class="note" style="display: none; margin-top: 5px;"></div>
                 @error('video')
                     <p class="note" style="color: red;">{{ $message }}</p>
                 @enderror
@@ -632,7 +640,7 @@
             <!-- SAVE AND NEXT BUTTON -->
             <div class="box" style="text-align: right; background: transparent; border: none; padding: 0; margin-top: 30px;">
                 <input type="hidden" name="next_tab" value="reward">
-                <button type="submit" class="btn btn-success" style="padding: 12px 40px; font-size: 16px; font-weight: 600; background: #16a34a; border: none; border-radius: 6px; cursor: pointer;">
+                <button type="submit" id="basicsSubmitBtn" class="btn btn-success" style="padding: 12px 40px; font-size: 16px; font-weight: 600; background: #16a34a; border: none; border-radius: 6px; cursor: pointer;">
                     <i class="fas fa-save"></i> Save and Next
                 </button>
             </div>
@@ -2046,6 +2054,220 @@
                     }
                 });
             }
+
+            // Image validation function for campaign image
+            function validateCampaignImage(file) {
+                // For now, always return true as requested
+                // This function can be extended later for AI image safety check
+                return true;
+            }
+
+            // Campaign image validation on selection
+            const campaignImageInput = document.getElementById("campaignImageInput");
+            const imageErrorMsg = document.getElementById("imageErrorMsg");
+            const basicsSubmitBtn = document.getElementById("basicsSubmitBtn");
+            const campaignImagePreview = document.getElementById("campaignImagePreview");
+
+            if (campaignImageInput && imageErrorMsg && basicsSubmitBtn) {
+                const uploadedImageName = document.getElementById("uploadedImageName");
+                const uploadedImageOriginalName = document.getElementById("uploadedImageOriginalName");
+                const imageUploadStatus = document.getElementById("imageUploadStatus");
+                
+                campaignImageInput.addEventListener("change", function() {
+                    const file = this.files[0];
+                    if (file) {
+                        // Validate image
+                        const isValid = validateCampaignImage(file);
+                        
+                        if (!isValid) {
+                            imageErrorMsg.textContent = "Image is not valid. Please select a different image.";
+                            imageErrorMsg.style.display = "block";
+                            imageUploadStatus.style.display = "none";
+                            basicsSubmitBtn.disabled = true;
+                            basicsSubmitBtn.style.opacity = "0.5";
+                            basicsSubmitBtn.style.cursor = "not-allowed";
+                            
+                            // Hide preview if invalid
+                            if (campaignImagePreview) {
+                                const currentImg = document.getElementById("currentCampaignImage");
+                                if (currentImg) currentImg.style.display = "none";
+                            }
+                        } else {
+                            imageErrorMsg.style.display = "none";
+                            
+                            // Show uploading status
+                            imageUploadStatus.textContent = "Uploading image...";
+                            imageUploadStatus.style.color = "#16a34a";
+                            imageUploadStatus.style.display = "block";
+                            
+                            // Disable submit button while uploading
+                            basicsSubmitBtn.disabled = true;
+                            basicsSubmitBtn.style.opacity = "0.5";
+                            basicsSubmitBtn.style.cursor = "not-allowed";
+                            
+                            // Show preview immediately
+                            if (campaignImagePreview) {
+                                const reader = new FileReader();
+                                reader.onload = function(e) {
+                                    // Hide current image if exists
+                                    const currentImg = document.getElementById("currentCampaignImage");
+                                    if (currentImg) currentImg.style.display = "none";
+                                    
+                                    // Create or update preview
+                                    let previewImg = campaignImagePreview.querySelector('img:not(#currentCampaignImage)');
+                                    if (!previewImg) {
+                                        previewImg = document.createElement('img');
+                                        previewImg.style.cssText = "max-width: 300px; max-height: 200px; border-radius: 8px; border: 1px solid #ddd;";
+                                        campaignImagePreview.appendChild(previewImg);
+                                    }
+                                    previewImg.src = e.target.result;
+                                    previewImg.alt = "Image Preview";
+                                };
+                                reader.readAsDataURL(file);
+                            }
+                            
+                            // Upload image immediately via AJAX
+                            const formData = new FormData();
+                            formData.append('image', file);
+                            formData.append('_token', '{{ csrf_token() }}');
+                            
+                            fetch('{{ route("user.campaign.upload-campaign-image") }}', {
+                                method: 'POST',
+                                body: formData
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    // Store uploaded image name
+                                    if (uploadedImageName) {
+                                        uploadedImageName.value = data.image;
+                                    }
+                                    if (uploadedImageOriginalName) {
+                                        uploadedImageOriginalName.value = data.image_original || "";
+                                    }
+                                    
+                                    // Update preview with uploaded image URL
+                                    if (campaignImagePreview && data.image_url) {
+                                        let previewImg = campaignImagePreview.querySelector('img:not(#currentCampaignImage)');
+                                        if (previewImg) {
+                                            previewImg.src = data.image_url;
+                                        }
+                                    }
+                                    
+                                    // Show success message
+                                    imageUploadStatus.textContent = "✓ Image uploaded successfully";
+                                    imageUploadStatus.style.color = "#16a34a";
+                                    
+                                    // Enable submit button
+                                    basicsSubmitBtn.disabled = false;
+                                    basicsSubmitBtn.style.opacity = "1";
+                                    basicsSubmitBtn.style.cursor = "pointer";
+                                } else {
+                                    // Show error
+                                    imageErrorMsg.textContent = data.message || "Image upload failed";
+                                    imageErrorMsg.style.display = "block";
+                                    imageUploadStatus.style.display = "none";
+                                    basicsSubmitBtn.disabled = true;
+                                    basicsSubmitBtn.style.opacity = "0.5";
+                                    basicsSubmitBtn.style.cursor = "not-allowed";
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Upload error:', error);
+                                imageErrorMsg.textContent = "Failed to upload image. Please try again.";
+                                imageErrorMsg.style.display = "block";
+                                imageUploadStatus.style.display = "none";
+                                basicsSubmitBtn.disabled = true;
+                                basicsSubmitBtn.style.opacity = "0.5";
+                                basicsSubmitBtn.style.cursor = "not-allowed";
+                            });
+                        }
+                    } else {
+                        // No file selected, enable submit button
+                        imageErrorMsg.style.display = "none";
+                        imageUploadStatus.style.display = "none";
+                        if (uploadedImageName) uploadedImageName.value = "";
+                        if (uploadedImageOriginalName) uploadedImageOriginalName.value = "";
+                        basicsSubmitBtn.disabled = false;
+                        basicsSubmitBtn.style.opacity = "1";
+                        basicsSubmitBtn.style.cursor = "pointer";
+                        
+                        // Show current image again if exists
+                        if (campaignImagePreview) {
+                            const currentImg = document.getElementById("currentCampaignImage");
+                            if (currentImg) currentImg.style.display = "block";
+                            const previewImg = campaignImagePreview.querySelector('img:not(#currentCampaignImage)');
+                            if (previewImg) previewImg.remove();
+                        }
+                    }
+                });
+            }
+
+            // Campaign video upload on selection
+            const campaignVideoInput = document.getElementById("campaignVideoInput");
+            const videoErrorMsg = document.getElementById("videoErrorMsg");
+            const videoUploadStatus = document.getElementById("videoUploadStatus");
+            const uploadedVideoName = document.getElementById("uploadedVideoName");
+
+            if (campaignVideoInput && videoErrorMsg && basicsSubmitBtn) {
+                campaignVideoInput.addEventListener("change", function() {
+                    const file = this.files[0];
+                    if (file) {
+                        videoErrorMsg.style.display = "none";
+                        videoUploadStatus.textContent = "Uploading video...";
+                        videoUploadStatus.style.color = "#16a34a";
+                        videoUploadStatus.style.display = "block";
+
+                        basicsSubmitBtn.disabled = true;
+                        basicsSubmitBtn.style.opacity = "0.5";
+                        basicsSubmitBtn.style.cursor = "not-allowed";
+
+                        const formData = new FormData();
+                        formData.append('video', file);
+                        formData.append('_token', '{{ csrf_token() }}');
+
+                        fetch('{{ route("user.campaign.upload-campaign-video") }}', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                if (uploadedVideoName) {
+                                    uploadedVideoName.value = data.video;
+                                }
+                                videoUploadStatus.textContent = "✓ Video uploaded successfully";
+                                videoUploadStatus.style.color = "#16a34a";
+                                basicsSubmitBtn.disabled = false;
+                                basicsSubmitBtn.style.opacity = "1";
+                                basicsSubmitBtn.style.cursor = "pointer";
+                            } else {
+                                videoErrorMsg.textContent = data.message || "Video upload failed";
+                                videoErrorMsg.style.display = "block";
+                                videoUploadStatus.style.display = "none";
+                                basicsSubmitBtn.disabled = true;
+                                basicsSubmitBtn.style.opacity = "0.5";
+                                basicsSubmitBtn.style.cursor = "not-allowed";
+                            }
+                        })
+                        .catch(() => {
+                            videoErrorMsg.textContent = "Failed to upload video. Please try again.";
+                            videoErrorMsg.style.display = "block";
+                            videoUploadStatus.style.display = "none";
+                            basicsSubmitBtn.disabled = true;
+                            basicsSubmitBtn.style.opacity = "0.5";
+                            basicsSubmitBtn.style.cursor = "not-allowed";
+                        });
+                    } else {
+                        videoErrorMsg.style.display = "none";
+                        videoUploadStatus.style.display = "none";
+                        if (uploadedVideoName) uploadedVideoName.value = "";
+                        basicsSubmitBtn.disabled = false;
+                        basicsSubmitBtn.style.opacity = "1";
+                        basicsSubmitBtn.style.cursor = "pointer";
+                    }
+                });
+            }
         })();
         @endif
 
@@ -2061,6 +2283,61 @@
                 }
                 
                 try {
+                    const uploadUrl = "{{ route('user.campaign.story.media', $campaign->slug) }}";
+
+                    function uploadStoryFile(file) {
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        formData.append('_token', '{{ csrf_token() }}');
+
+                        return fetch(uploadUrl, {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(response => response.json());
+                    }
+
+                    function insertVideo(url, mimeType) {
+                        const safeUrl = String(url || '').replace(/"/g, '&quot;');
+                        const safeType = String(mimeType || 'video/mp4').replace(/"/g, '&quot;');
+                        const videoHtml = `
+                            <video controls style="max-width: 100%;">
+                                <source src="${safeUrl}" type="${safeType}">
+                            </video>
+                        `;
+                        jQuery('#summernote').summernote('pasteHTML', videoHtml);
+                    }
+
+                    const uploadVideoButton = function(context) {
+                        const ui = jQuery.summernote.ui;
+                        return ui.button({
+                            contents: '<i class="fa fa-video"></i>',
+                            tooltip: 'Upload Video',
+                            click: function () {
+                                const input = document.createElement('input');
+                                input.type = 'file';
+                                input.accept = 'video/*';
+                                input.onchange = function () {
+                                    const file = input.files && input.files[0];
+                                    if (!file) return;
+                                    uploadStoryFile(file)
+                                        .then(data => {
+                                            if (data && data.type === 'video' && data.location) {
+                                                insertVideo(data.location, data.mime);
+                                            } else {
+                                                alert(data?.message || 'Video upload failed');
+                                            }
+                                        })
+                                        .catch(() => alert('Video upload failed'));
+                                };
+                                input.click();
+                            }
+                        }).render();
+                    };
+
                     jQuery('#summernote').summernote({
                         toolbar: [
                             // [groupName, [list of button]]
@@ -2069,10 +2346,27 @@
                             ['fontsize', ['fontsize']],
                             ['color', ['color']],
                             ['para', ['ul', 'ol', 'paragraph']],
+                            ['insert', ['picture', 'link', 'uploadVideo']],
                             ['height', ['height']]
                         ],
                         height: 500,
+                        buttons: {
+                            uploadVideo: uploadVideoButton
+                        },
                         callbacks: {
+                            onImageUpload: function(files) {
+                                Array.from(files).forEach(function(file) {
+                                    uploadStoryFile(file)
+                                        .then(data => {
+                                            if (data && data.type === 'image' && data.location) {
+                                                jQuery('#summernote').summernote('insertImage', data.location);
+                                            } else {
+                                                alert(data?.message || 'Image upload failed');
+                                            }
+                                        })
+                                        .catch(() => alert('Image upload failed'));
+                                });
+                            },
                             onChange: function(contents, $editable) {
                                 // Update character count
                                 updateCharCount();

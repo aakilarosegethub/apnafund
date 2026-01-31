@@ -23,7 +23,7 @@
                         <div class="dashboard-widget-4__icon">
                             <i class="ti ti-moneybag"></i>
                         </div>
-                        <p class="dashboard-widget-4__txt">@lang('Total Received Donation')</p>
+                        <p class="dashboard-widget-4__txt">@lang('Total Received Contribution')</p>
                     </div>
                     <h3 class="dashboard-widget-4__number">{{ showAmount($totalReceivedDonation) . ' ' . __($setting->site_cur) }}</h3>
                     <div class="dashboard-widget-4__vector">
@@ -51,7 +51,7 @@
                         <div class="dashboard-widget-4__icon">
                             <i class="ti ti-cash"></i>
                         </div>
-                        <p class="dashboard-widget-4__txt">@lang('Total Given Donation')</p>
+                        <p class="dashboard-widget-4__txt">@lang('Total Given Contribution')</p>
                     </div>
                     <h3 class="dashboard-widget-4__number">{{ showAmount($totalGivenDonation) . ' ' . __($setting->site_cur) }}</h3>
                     <div class="dashboard-widget-4__vector">

@@ -48,10 +48,22 @@ class FileDetails
             'thumb' => '415x230',
         ];
 
+        $data['campaignOriginal'] = [
+            'path' => 'assets/universal/images/campaign/original',
+        ];
+
         $data['reward'] = [
             'path'  => 'assets/universal/images/reward',
             'size'  => '400x300',
             'thumb' => '200x150',
+        ];
+
+        $data['storyImage'] = [
+            'path' => 'assets/universal/images/story',
+        ];
+
+        $data['storyVideo'] = [
+            'path' => 'assets/universal/videos/story',
         ];
 
         $data['document'] = [

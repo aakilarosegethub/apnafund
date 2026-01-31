@@ -79,14 +79,18 @@
 
                         <div class="col-12">
                             <label class="form--label">@lang('Current Image')</label>
-                            @if($campaign->image)
-                                <div class="mb-3">
-                                    <img src="{{ getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')) }}" alt="{{ $campaign->name }}" style="max-width: 400px; max-height: 300px; object-fit: cover; border: 1px solid #ddd; padding: 5px; border-radius: 5px;">
-                                </div>
-                            @endif
+                            <div class="mb-3" id="adminCampaignImagePreview">
+                                @if($campaign->image)
+                                    <img src="{{ getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')) }}" alt="{{ $campaign->name }}" id="adminCurrentCampaignImage" style="max-width: 400px; max-height: 300px; object-fit: cover; border: 1px solid #ddd; padding: 5px; border-radius: 5px;">
+                                @endif
+                            </div>
                             <label class="form--label">@lang('Change Image')</label>
-                            <input type="file" class="form--control" name="image" accept="image/png,image/jpg,image/jpeg">
-                            <small class="text-muted">@lang('Leave empty to keep current image. Formats: PNG, JPG, JPEG')</small>
+                            <input type="file" class="form--control" name="image" id="adminCampaignImageInput" accept="image/png,image/jpg,image/jpeg,image/webp">
+                            <input type="hidden" name="uploaded_image" id="adminUploadedImageName" value="">
+                            <input type="hidden" name="uploaded_image_original" id="adminUploadedImageOriginalName" value="">
+                            <small class="text-muted">@lang('Leave empty to keep current image. Formats: PNG, JPG, JPEG, WEBP')</small>
+                            <div id="adminImageErrorMsg" class="text-danger mt-2" style="display: none;"></div>
+                            <div id="adminImageUploadStatus" class="text-muted mt-1" style="display: none;"></div>
                             @error('image')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
@@ -135,6 +139,92 @@
         </div>
     </div>
 @endsection
+
+@push('script')
+<script>
+    (function() {
+        const imageInput = document.getElementById("adminCampaignImageInput");
+        const imageErrorMsg = document.getElementById("adminImageErrorMsg");
+        const imageUploadStatus = document.getElementById("adminImageUploadStatus");
+        const previewWrap = document.getElementById("adminCampaignImagePreview");
+        const uploadedImageName = document.getElementById("adminUploadedImageName");
+        const uploadedImageOriginalName = document.getElementById("adminUploadedImageOriginalName");
+        const submitBtn = document.querySelector('button[type="submit"]');
+
+        if (!imageInput) return;
+
+        imageInput.addEventListener("change", function() {
+            const file = this.files[0];
+            if (!file) {
+                if (imageErrorMsg) imageErrorMsg.style.display = "none";
+                if (imageUploadStatus) imageUploadStatus.style.display = "none";
+                if (uploadedImageName) uploadedImageName.value = "";
+                if (uploadedImageOriginalName) uploadedImageOriginalName.value = "";
+                return;
+            }
+
+            if (imageErrorMsg) imageErrorMsg.style.display = "none";
+            if (imageUploadStatus) {
+                imageUploadStatus.textContent = "Uploading image...";
+                imageUploadStatus.style.display = "block";
+            }
+            if (submitBtn) {
+                submitBtn.disabled = true;
+            }
+
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('_token', '{{ csrf_token() }}');
+
+            fetch('{{ route("admin.campaigns.upload-campaign-image") }}', {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (uploadedImageName) uploadedImageName.value = data.image;
+                    if (uploadedImageOriginalName) uploadedImageOriginalName.value = data.image_original || "";
+
+                    if (previewWrap && data.image_url) {
+                        let previewImg = previewWrap.querySelector('img:not(#adminCurrentCampaignImage)');
+                        const currentImg = document.getElementById("adminCurrentCampaignImage");
+                        if (currentImg) currentImg.style.display = "none";
+                        if (!previewImg) {
+                            previewImg = document.createElement('img');
+                            previewImg.style.cssText = "max-width: 400px; max-height: 300px; object-fit: cover; border: 1px solid #ddd; padding: 5px; border-radius: 5px;";
+                            previewWrap.appendChild(previewImg);
+                        }
+                        previewImg.src = data.image_url;
+                        previewImg.alt = "Image Preview";
+                    }
+
+                    if (imageUploadStatus) {
+                        imageUploadStatus.textContent = "✓ Image uploaded successfully";
+                    }
+                } else {
+                    if (imageErrorMsg) {
+                        imageErrorMsg.textContent = data.message || "Image upload failed";
+                        imageErrorMsg.style.display = "block";
+                    }
+                    if (imageUploadStatus) imageUploadStatus.style.display = "none";
+                }
+            })
+            .catch(() => {
+                if (imageErrorMsg) {
+                    imageErrorMsg.textContent = "Failed to upload image. Please try again.";
+                    imageErrorMsg.style.display = "block";
+                }
+                if (imageUploadStatus) imageUploadStatus.style.display = "none";
+            })
+            .finally(() => {
+                if (submitBtn) submitBtn.disabled = false;
+            });
+        });
+    })();
+</script>
+@endpush
 
 @push('breadcrumb')
     <a href="{{ route('admin.campaigns.index') }}" class="btn btn--sm btn--secondary">

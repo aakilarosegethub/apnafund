@@ -12,7 +12,7 @@
                                 <i class="ti ti-circle-check"></i>
                             </div>
                         </div>
-                        <p class="dashboard-widget-3__txt">@lang('Done Donation Amount')</p>
+                        <p class="dashboard-widget-3__txt">@lang('Done Contribution Amount')</p>
                     </a>
                 </div>
                 <div class="col-xl-3 col-sm-6">
@@ -23,7 +23,7 @@
                                 <i class="ti ti-coins"></i>
                             </div>
                         </div>
-                        <p class="dashboard-widget-3__txt">@lang('Total Charge for Donated Amount')</p>
+                        <p class="dashboard-widget-3__txt">@lang('Total Charge for Contributed Amount')</p>
                     </a>
                 </div>
                 <div class="col-xl-3 col-sm-6">
@@ -34,7 +34,7 @@
                                 <i class="ti ti-rotate-clockwise-2"></i>
                             </div>
                         </div>
-                        <p class="dashboard-widget-3__txt">@lang('Pending Donation Amount')</p>
+                        <p class="dashboard-widget-3__txt">@lang('Pending Contribution Amount')</p>
                     </a>
                 </div>
                 <div class="col-xl-3 col-sm-6">
@@ -45,7 +45,7 @@
                                 <i class="ti ti-circle-x"></i>
                             </div>
                         </div>
-                        <p class="dashboard-widget-3__txt">@lang('Cancelled Donation Amount')</p>
+                        <p class="dashboard-widget-3__txt">@lang('Cancelled Contribution Amount')</p>
                     </a>
                 </div>
             </div>
@@ -59,9 +59,9 @@
                     <th>@lang('Donor')</th>
                     <th>@lang('Campaign')</th>
                     <th>@lang('Gateway') | @lang('Transaction')</th>
-                    <th>@lang('Donation Date')</th>
+                    <th>@lang('Contribution Date')</th>
                     <th>@lang('User Type')</th>
-                    <th>@lang('Donation Type')</th>
+                    <th>@lang('Contribution Type')</th>
                     <th>@lang('Amount')</th>
                     <th>@lang('Reward')</th>
                     <th>@lang('Conversion')</th>
@@ -193,7 +193,7 @@
                                         </button>
                                         <ul class="dropdown-menu">
                                             <li>
-                                                <button type="button" class="dropdown-item decisionBtn" data-question="@lang('Do you want to approve this donation?')" data-action="{{ route('admin.donations.approve', $deposit->id) }}">
+                                                <button type="button" class="dropdown-item decisionBtn" data-question="@lang('Do you want to approve this contribution?')" data-action="{{ route('admin.donations.approve', $deposit->id) }}">
                                                     <span class="dropdown-icon"><i class="ti ti-circle-check text--success"></i></span> @lang('Approve')
                                                 </button>
                                             </li>
@@ -222,7 +222,7 @@
     <div class="col-12">
         <div class="custom--offcanvas offcanvas offcanvas-end" tabindex="-1" id="depositDetails" aria-labelledby="depositDetailsLabel">
             <div class="offcanvas-header">
-                <h5 class="offcanvas-title" id="depositDetailsLabel">@lang('Donation Details')</h5>
+                <h5 class="offcanvas-title" id="depositDetailsLabel">@lang('Contribution Details')</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
             <div class="offcanvas-body">
@@ -250,7 +250,7 @@
                             <div class="modal-thumb">
                                 <img src="{{ asset('assets/admin/images/light.png') }}" alt="Image">
                             </div>
-                            <h2 class="modal-title" id="cancelDepositModalLabel">@lang('Cancel Donation')</h2>
+                            <h2 class="modal-title" id="cancelDepositModalLabel">@lang('Cancel Contribution')</h2>
                             <form action="" method="POST">
                                 @csrf
                                 <label class="form--label">@lang('Reason') :</label>
@@ -367,7 +367,7 @@
                                     <td>${donorHtml}</td>
                                 </tr>
                                 <tr>
-                                    <td class="fw-bold">@lang('Donation Type')</td>
+                                    <td class="fw-bold">@lang('Contribution Type')</td>
                                     <td>${donationHtml}</td>
                                 </tr>
                                 <tr>
@@ -388,7 +388,7 @@
                 let downloadUrl = $(this).data('url');
 
                 if (userData) {
-                    let infoHtml = `<h6 class="mb-2">@lang('Donation User Data')</h6>
+                    let infoHtml = `<h6 class="mb-2">@lang('Contribution User Data')</h6>
                                     <table class="table table-borderless mb-3">
                                         <tbody>`;
 
