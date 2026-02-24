@@ -2497,11 +2497,28 @@
                 </div>
                 <a href="{{ route('creator.profile', $campaignData->user->username ?? $campaignData->user->id) }}" class="btn-share">View Profile</a>
                 @if(auth()->id() != $campaignData->user_id)
-                    @guest
-                        <a href="{{ route('user.login.form', ['redirect' => route('user.inbox.index', ['start' => $campaignData->user_id, 'campaign_id' => $campaignData->id, 'campaign_slug' => $campaignData->slug, 'campaign_title' => $campaignData->title, 'creator_name' => $campaignData->user->fullname ?? $campaignData->user->username ?? $campaignData->user->name ?? ''])]) }}" class="btn-donate" style="margin-left: 8px;">Contact Creator</a>
-                    @else
-                        <a href="{{ route('user.inbox.index', ['start' => $campaignData->user_id, 'campaign_id' => $campaignData->id, 'campaign_slug' => $campaignData->slug, 'campaign_title' => $campaignData->title, 'creator_name' => $campaignData->user->fullname ?? $campaignData->user->username ?? $campaignData->user->name ?? '']) }}" class="btn-donate" style="margin-left: 8px;">Contact Creator</a>
-                    @endguest
+                    @php
+                        $creator = $campaignData->user;
+                        $hasCall = !empty($creator->mobile);
+                        $hasEmail = !empty($creator->email);
+                        $hasWhatsapp = !empty($creator->whatsapp);
+                        $hasAnyContact = $hasCall || $hasEmail || $hasWhatsapp;
+                        $waMsg = str_replace('[campaign_name]', $campaignData->name ?? '', $whatsappContactMessage ?? '');
+                        $waMsgEnc = rawurlencode($waMsg);
+                    @endphp
+                    @if($hasAnyContact)
+                        <div class="d-flex align-items-center gap-2" style="margin-left: 8px;">
+                            @if($hasCall)
+                                <a href="tel:{{ preg_replace('/[^0-9+]/', '', $creator->mobile) }}" class="btn-donate" style="padding: 8px 12px;" title="Call"><i class="fas fa-phone"></i></a>
+                            @endif
+                            @if($hasEmail)
+                                <a href="mailto:{{ $creator->email }}" class="btn-donate" style="padding: 8px 12px;" title="Email"><i class="fas fa-envelope"></i></a>
+                            @endif
+                            @if($hasWhatsapp)
+                                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $creator->whatsapp) }}{{ $waMsg ? '?text=' . $waMsgEnc : '' }}" target="_blank" class="btn-donate" style="padding: 8px 12px; background:#25d366;" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                            @endif
+                        </div>
+                    @endif
                 @endif
             </div>
             @endif
@@ -2828,7 +2845,6 @@
                                 stroke-dashoffset="{{ 251.2 - (251.2 * floatval($percentage) / 100) }}"
                             />
                         </svg>
-                        {}
                         <span class="progress-percentage">{{ $percentage . '%' }}</span>
                     </div>
                 </div>
@@ -2837,11 +2853,28 @@
                     <a href="#" class="btn-share-card" onclick="openShareModal()">Share</a>
                     <a href="{{ url('campaign/' . @$campaignData->slug . '/contribute') }}" class="btn-donate-card">Contribute now</a>
                     @if(auth()->id() != $campaignData->user_id)
-                        @guest
-                            <a href="{{ route('user.login.form', ['redirect' => route('user.inbox.index', ['start' => $campaignData->user_id, 'campaign_id' => $campaignData->id, 'campaign_slug' => $campaignData->slug, 'campaign_title' => $campaignData->title, 'creator_name' => $campaignData->user->fullname ?? $campaignData->user->username ?? $campaignData->user->name ?? ''])]) }}" class="btn-share-card" style="background: #0d6efd;">Contact Creator</a>
-                        @else
-                            <a href="{{ route('user.inbox.index', ['start' => $campaignData->user_id, 'campaign_id' => $campaignData->id, 'campaign_slug' => $campaignData->slug, 'campaign_title' => $campaignData->title, 'creator_name' => $campaignData->user->fullname ?? $campaignData->user->username ?? $campaignData->user->name ?? '']) }}" class="btn-share-card" style="background: #0d6efd;">Contact Creator</a>
-                        @endguest
+                        @php
+                            $creator2 = $campaignData->user;
+                            $hasCall2 = !empty($creator2->mobile);
+                            $hasEmail2 = !empty($creator2->email);
+                            $hasWhatsapp2 = !empty($creator2->whatsapp);
+                            $hasAnyContact2 = $hasCall2 || $hasEmail2 || $hasWhatsapp2;
+                            $waMsg2 = str_replace('[campaign_name]', $campaignData->name ?? '', $whatsappContactMessage ?? '');
+                            $waMsgEnc2 = rawurlencode($waMsg2);
+                        @endphp
+                        @if($hasAnyContact2)
+                            <div class="d-flex gap-2">
+                                @if($hasCall2)
+                                    <a href="tel:{{ preg_replace('/[^0-9+]/', '', $creator2->mobile) }}" class="btn-share-card" style="background: #0d6efd; padding: 8px 12px;" title="Call"><i class="fas fa-phone"></i></a>
+                                @endif
+                                @if($hasEmail2)
+                                    <a href="mailto:{{ $creator2->email }}" class="btn-share-card" style="background: #0d6efd; padding: 8px 12px;" title="Email"><i class="fas fa-envelope"></i></a>
+                                @endif
+                                @if($hasWhatsapp2)
+                                    <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $creator2->whatsapp) }}{{ $waMsg2 ? '?text=' . $waMsgEnc2 : '' }}" target="_blank" class="btn-share-card" style="background: #25d366; padding: 8px 12px;" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                                @endif
+                            </div>
+                        @endif
                     @endif
                 </div>
 

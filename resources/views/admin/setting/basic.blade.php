@@ -84,6 +84,27 @@
                         </div>
                     </div>
                     
+                    <!-- WhatsApp Settings -->
+                    <div class="col-12 mt-4">
+                        <div class="card border">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">@lang('WhatsApp Settings')</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group mb-3">
+                                    <label class="form--label">@lang('Contact Creator - WhatsApp Start Message')</label>
+                                    <textarea class="form--control" name="whatsapp_contact_creator_message" rows="3" placeholder="Hi! I'm interested in [campaign_name]">{{ $whatsappContactMessage ?? '' }}</textarea>
+                                    <small class="form-text text-muted">@lang('Use') <code>[campaign_name]</code> @lang('to insert campaign name. Shown when backer clicks WhatsApp on campaign page.')</small>
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label class="form--label">@lang('Footer Chatbot - Admin WhatsApp Number')</label>
+                                    <input type="text" class="form--control" name="whatsapp_chatbot_number" value="{{ $whatsappChatbotNumber ?? '' }}" placeholder="923001234567">
+                                    <small class="form-text text-muted">@lang('Fixed chatbot icon in footer opens this number. Include country code without +.')</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <!-- Allowed Countries Section -->
                     <div class="col-12 mt-4">
                         <div class="card border">

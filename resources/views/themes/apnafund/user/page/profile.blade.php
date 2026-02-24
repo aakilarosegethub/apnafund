@@ -45,10 +45,17 @@
                                 <div class="form-group mb-3">
                                     <label for="businessEmail" class="form-label">Email</label>
                                     <input type="email" class="form-control" id="businessEmail" value="{{ $user->email }}" readonly>
+                                    <small class="text-muted">Used for Contact Creator. From your account.</small>
                                 </div>
                                 <div class="form-group mb-3">
-                                    <label for="businessPhone" class="form-label">Phone</label>
-                                    <input type="tel" class="form-control" id="businessPhone" value="{{ $user->mobile }}" readonly>
+                                    <label for="businessPhone" class="form-label">Phone / Call</label>
+                                    <input type="tel" class="form-control" id="businessPhone" name="mobile" value="{{ $user->mobile }}" placeholder="e.g. 923001234567">
+                                    <small class="text-muted">Shown on your campaign if set. Include country code.</small>
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label for="businessWhatsapp" class="form-label">WhatsApp</label>
+                                    <input type="tel" class="form-control" id="businessWhatsapp" name="whatsapp" value="{{ $user->whatsapp }}" placeholder="e.g. 923001234567">
+                                    <small class="text-muted">Shown on your campaign if set. Include country code without +.</small>
                                 </div>
                                 <div class="form-group mb-3">
                                     <label for="state" class="form-label">State</label>

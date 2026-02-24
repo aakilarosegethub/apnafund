@@ -347,11 +347,28 @@
                     <span><i class="fa-solid fa-location-dot"></i> {{ $campaignData->location ?? 'Location not specified' }}</span>
                 </div>
                 @if(auth()->id() != $campaignData->user_id)
-                    @guest
-                        <a href="{{ route('user.login.form', ['redirect' => route('user.inbox.index', ['start' => $campaignData->user_id, 'campaign_id' => $campaignData->id, 'campaign_slug' => $campaignData->slug, 'campaign_title' => $campaignData->title, 'creator_name' => $campaignData->user->fullname ?? $campaignData->user->username ?? $campaignData->user->name ?? ''])]) }}" class="btn btn-success btn-sm ms-2">Contact Creator</a>
-                    @else
-                        <a href="{{ route('user.inbox.index', ['start' => $campaignData->user_id, 'campaign_id' => $campaignData->id, 'campaign_slug' => $campaignData->slug, 'campaign_title' => $campaignData->title, 'creator_name' => $campaignData->user->fullname ?? $campaignData->user->username ?? $campaignData->user->name ?? '']) }}" class="btn btn-success btn-sm ms-2">Contact Creator</a>
-                    @endguest
+                    @php
+                        $creator = $campaignData->user;
+                        $hasCall = !empty($creator->mobile);
+                        $hasEmail = !empty($creator->email);
+                        $hasWhatsapp = !empty($creator->whatsapp);
+                        $hasAnyContact = $hasCall || $hasEmail || $hasWhatsapp;
+                        $waMsg = str_replace('[campaign_name]', $campaignData->name ?? '', $whatsappContactMessage ?? '');
+                        $waMsgEnc = rawurlencode($waMsg);
+                    @endphp
+                    @if($hasAnyContact)
+                        <div class="d-flex align-items-center gap-2 ms-2">
+                            @if($hasCall)
+                                <a href="tel:{{ preg_replace('/[^0-9+]/', '', $creator->mobile) }}" class="btn btn-outline-success btn-sm" title="Call"><i class="fas fa-phone"></i></a>
+                            @endif
+                            @if($hasEmail)
+                                <a href="mailto:{{ $creator->email }}" class="btn btn-outline-success btn-sm" title="Email"><i class="fas fa-envelope"></i></a>
+                            @endif
+                            @if($hasWhatsapp)
+                                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $creator->whatsapp) }}{{ $waMsg ? '?text=' . $waMsgEnc : '' }}" target="_blank" class="btn btn-outline-success btn-sm" title="WhatsApp"><i class="fab fa-whatsapp" style="color:#25d366"></i></a>
+                            @endif
+                        </div>
+                    @endif
                 @endif
             </div>
 

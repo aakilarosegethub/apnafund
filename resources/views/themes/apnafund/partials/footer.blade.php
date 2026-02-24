@@ -53,3 +53,41 @@
             </div>
         </div>
     </footer>
+
+@if(!empty($whatsappChatbotNumber))
+<a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $whatsappChatbotNumber) }}" target="_blank" class="whatsapp-chatbot-fab" title="Chat with us">
+    <i class="fab fa-whatsapp"></i>
+</a>
+<style>
+.whatsapp-chatbot-fab {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    background: #25d366;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.5);
+    z-index: 9999;
+    transition: transform 0.2s;
+}
+.whatsapp-chatbot-fab:hover {
+    color: #fff;
+    transform: scale(1.08);
+}
+@media (max-width: 768px) {
+    .whatsapp-chatbot-fab {
+        bottom: 16px;
+        right: 16px;
+        width: 48px;
+        height: 48px;
+        font-size: 24px;
+    }
+}
+</style>
+@endif

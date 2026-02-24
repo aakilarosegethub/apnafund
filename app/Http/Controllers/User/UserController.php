@@ -77,7 +77,9 @@ class UserController extends Controller
         $donations   = $report['donationAmount']->toArray();
         $withdrawals = $report['withdrawAmount']->toArray();
 
-        return view($this->activeTheme . 'user.page.dashboard', compact('pageTitle', 'kycContent', 'user', 'widgetData', 'donations', 'withdrawals'));
+        $showContactWarning = ($user->campaigns_count > 0) && !$user->mobile && !$user->whatsapp;
+
+        return view($this->activeTheme . 'user.page.dashboard', compact('pageTitle', 'kycContent', 'user', 'widgetData', 'donations', 'withdrawals', 'showContactWarning'));
     }
 
     function kycForm() {
@@ -136,6 +138,8 @@ class UserController extends Controller
         $this->validate(request(), [
             'firstname' => 'required|string',
             'lastname'  => 'required|string',
+            'mobile'    => 'nullable|string|max:30',
+            'whatsapp'  => 'nullable|string|max:30',
             'image'     => ['nullable', File::types(['png', 'jpg', 'jpeg'])],
         ], [
             'firstname.required' => 'First name field is required',
@@ -156,6 +160,8 @@ class UserController extends Controller
 
         $user->firstname = request('firstname');
         $user->lastname  = request('lastname');
+        $user->mobile    = request('mobile');
+        $user->whatsapp  = request('whatsapp');
 
         $user->address = [
             'state'   => request('state'),

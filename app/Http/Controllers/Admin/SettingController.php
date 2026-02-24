@@ -21,6 +21,16 @@ class SettingController extends Controller
         
         // Get allowed countries settings
         $allowedCountriesData = SiteData::where('data_key', 'general.allowed_countries')->first();
+        
+        // WhatsApp settings
+        $whatsappData = SiteData::where('data_key', 'general.whatsapp_settings')->first();
+        $whatsappContactMessage = '';
+        $whatsappChatbotNumber = '';
+        if ($whatsappData && $whatsappData->data_info) {
+            $wi = is_array($whatsappData->data_info) ? $whatsappData->data_info : (array)$whatsappData->data_info;
+            $whatsappContactMessage = $wi['contact_creator_message'] ?? '';
+            $whatsappChatbotNumber = $wi['chatbot_number'] ?? '';
+        }
         $selectedCountries = [];
         $useSelectedOnly = false;
         
@@ -33,7 +43,7 @@ class SettingController extends Controller
         // Get all countries list
         $allCountries = $this->getAllCountriesList();
 
-        return view('admin.setting.basic', compact('pageTitle', 'timeRegions', 'selectedCountries', 'useSelectedOnly', 'allCountries'));
+        return view('admin.setting.basic', compact('pageTitle', 'timeRegions', 'selectedCountries', 'useSelectedOnly', 'allCountries', 'whatsappContactMessage', 'whatsappChatbotNumber'));
     }
     
     private function getAllCountriesList() {
@@ -114,6 +124,18 @@ class SettingController extends Controller
             'selected_countries' => $selectedCountries
         ];
         $allowedCountriesData->save();
+
+        // Save WhatsApp settings
+        $whatsappData = SiteData::where('data_key', 'general.whatsapp_settings')->first();
+        if (!$whatsappData) {
+            $whatsappData = new SiteData();
+            $whatsappData->data_key = 'general.whatsapp_settings';
+        }
+        $whatsappData->data_info = [
+            'contact_creator_message' => request('whatsapp_contact_creator_message', ''),
+            'chatbot_number' => request('whatsapp_chatbot_number', ''),
+        ];
+        $whatsappData->save();
 
         $toast[] = ['success', 'Basic setting update success'];
         return back()->withToasts($toast);

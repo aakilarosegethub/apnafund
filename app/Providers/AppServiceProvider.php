@@ -51,6 +51,15 @@ class AppServiceProvider extends ServiceProvider
         $activeTheme                    = $setting ? activeTheme() : 'themes.primary.';
         $shareToView['setting']         = $setting;
         $shareToView['activeTheme']     = $activeTheme;
+        $whatsappChatbotNumber = '';
+        try {
+            $wd = SiteData::where('data_key', 'general.whatsapp_settings')->first();
+            if ($wd && $wd->data_info) {
+                $wi = is_array($wd->data_info) ? $wd->data_info : (array)$wd->data_info;
+                $whatsappChatbotNumber = $wi['chatbot_number'] ?? '';
+            }
+        } catch (\Exception $e) {}
+        $shareToView['whatsappChatbotNumber'] = $whatsappChatbotNumber;
         $shareToView['activeThemeTrue'] = $setting ? activeTheme(true) : 'assets/themes/primary/';
         $shareToView['emptyMessage']    = 'No data found';
 

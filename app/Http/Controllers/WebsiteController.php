@@ -307,7 +307,15 @@ class WebsiteController extends Controller
             ->orderBy('id')
             ->get();
 
-        return view($this->activeTheme . 'page.campaignShow', compact('pageTitle', 'campaignData', 'relatedCampaigns', 'seoContents', 'authUser', 'comments', 'commentCount', 'countries', 'gatewayCurrencies', 'donations', 'faqs'));
+        // WhatsApp Contact Creator message template
+        $whatsappData = \App\Models\SiteData::where('data_key', 'general.whatsapp_settings')->first();
+        $whatsappContactMessage = '';
+        if ($whatsappData && $whatsappData->data_info) {
+            $wi = is_array($whatsappData->data_info) ? $whatsappData->data_info : (array)$whatsappData->data_info;
+            $whatsappContactMessage = $wi['contact_creator_message'] ?? '';
+        }
+
+        return view($this->activeTheme . 'page.campaignShow', compact('pageTitle', 'campaignData', 'relatedCampaigns', 'seoContents', 'authUser', 'comments', 'commentCount', 'countries', 'gatewayCurrencies', 'donations', 'faqs', 'whatsappContactMessage'));
     }
 
     function campaignDonate($slug) {
