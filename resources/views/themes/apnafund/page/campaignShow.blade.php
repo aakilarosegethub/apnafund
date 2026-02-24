@@ -2496,6 +2496,13 @@
                     </a>
                 </div>
                 <a href="{{ route('creator.profile', $campaignData->user->username ?? $campaignData->user->id) }}" class="btn-share">View Profile</a>
+                @if(auth()->id() != $campaignData->user_id)
+                    @guest
+                        <a href="{{ route('user.login.form', ['redirect' => route('user.inbox.index', ['start' => $campaignData->user_id, 'campaign_id' => $campaignData->id, 'campaign_slug' => $campaignData->slug, 'campaign_title' => $campaignData->title, 'creator_name' => $campaignData->user->fullname ?? $campaignData->user->username ?? $campaignData->user->name ?? ''])]) }}" class="btn-donate" style="margin-left: 8px;">Contact Creator</a>
+                    @else
+                        <a href="{{ route('user.inbox.index', ['start' => $campaignData->user_id, 'campaign_id' => $campaignData->id, 'campaign_slug' => $campaignData->slug, 'campaign_title' => $campaignData->title, 'creator_name' => $campaignData->user->fullname ?? $campaignData->user->username ?? $campaignData->user->name ?? '']) }}" class="btn-donate" style="margin-left: 8px;">Contact Creator</a>
+                    @endguest
+                @endif
             </div>
             @endif
 
@@ -2829,6 +2836,13 @@
                 <div class="action-buttons">
                     <a href="#" class="btn-share-card" onclick="openShareModal()">Share</a>
                     <a href="{{ url('campaign/' . @$campaignData->slug . '/contribute') }}" class="btn-donate-card">Contribute now</a>
+                    @if(auth()->id() != $campaignData->user_id)
+                        @guest
+                            <a href="{{ route('user.login.form', ['redirect' => route('user.inbox.index', ['start' => $campaignData->user_id, 'campaign_id' => $campaignData->id, 'campaign_slug' => $campaignData->slug, 'campaign_title' => $campaignData->title, 'creator_name' => $campaignData->user->fullname ?? $campaignData->user->username ?? $campaignData->user->name ?? ''])]) }}" class="btn-share-card" style="background: #0d6efd;">Contact Creator</a>
+                        @else
+                            <a href="{{ route('user.inbox.index', ['start' => $campaignData->user_id, 'campaign_id' => $campaignData->id, 'campaign_slug' => $campaignData->slug, 'campaign_title' => $campaignData->title, 'creator_name' => $campaignData->user->fullname ?? $campaignData->user->username ?? $campaignData->user->name ?? '']) }}" class="btn-share-card" style="background: #0d6efd;">Contact Creator</a>
+                        @endguest
+                    @endif
                 </div>
 
                 <div class="donation-stats">

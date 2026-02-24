@@ -54,4 +54,19 @@ return [
         'database_id' => env('FIREBASE_DATABASE_ID', '(default)'),
         'collection_prefix' => env('FIREBASE_COLLECTION_PREFIX', 'apnacrowdfunding'),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Firebase Web/Client SDK (for browser chat)
+    |--------------------------------------------------------------------------
+    | Public config for Firebase JS SDK - safe to expose to frontend.
+    */
+    'client' => [
+        'api_key' => env('FIREBASE_API_KEY'),
+        'auth_domain' => env('FIREBASE_AUTH_DOMAIN'),
+        'project_id' => env('FIREBASE_PROJECT_ID'),
+        'storage_bucket' => env('FIREBASE_STORAGE_BUCKET'),
+        'messaging_sender_id' => env('FIREBASE_MESSAGING_SENDER_ID'),
+        'app_id' => env('FIREBASE_APP_ID'),
+    ],
 ];

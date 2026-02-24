@@ -333,8 +333,11 @@
             <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
                 @foreach($dashboardNavigation as $nav)
                 <li class="nav-item" role="presentation">
-                    <a href="{{ route($nav['route']) }}" class="nav-link {{ request()->routeIs($nav['route']) ? 'active' : '' }}">
+                    <a href="{{ route($nav['route']) }}" class="nav-link {{ request()->routeIs($nav['route']) ? 'active' : '' }}" @if(($nav['id'] ?? '') === 'inbox') id="nav-inbox" data-inbox-badge @endif>
                         <i class="{{ $nav['icon'] }} me-2"></i>{{ $nav['title'] }}
+                        @if(($nav['id'] ?? '') === 'inbox')
+                            <span class="ms-1 badge bg-danger rounded-pill" id="inbox-unread-badge" style="display: none;">0</span>
+                        @endif
                     </a>
                 </li>
                 @endforeach
@@ -394,7 +397,8 @@
         }
 
         // File upload handling
-        document.getElementById('gigImages').addEventListener('change', function(e) {
+        var gigImages = document.getElementById('gigImages');
+        if (gigImages) gigImages.addEventListener('change', function(e) {
             const files = e.target.files;
             if (files.length > 0) {
                 showAlert(`${files.length} image(s) selected successfully!`, 'info');
@@ -435,7 +439,8 @@
         }
 
         // Reward image upload handling
-        document.getElementById('rewardImage').addEventListener('change', function(e) {
+        var rewardImage = document.getElementById('rewardImage');
+        if (rewardImage) rewardImage.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
                 if (file.size > 2 * 1024 * 1024) { // 2MB limit
@@ -448,7 +453,8 @@
         });
 
         // Reward color theme preview
-        document.getElementById('rewardColor').addEventListener('change', function(e) {
+        var rewardColor = document.getElementById('rewardColor');
+        if (rewardColor) rewardColor.addEventListener('change', function(e) {
             const color = e.target.value;
             // You can add preview functionality here
             console.log('Selected color theme:', color);
@@ -477,6 +483,131 @@
         @stack('page-script-lib')
         @yield('page-script')
         @yield('script')
+        <script>
+        (function() {
+            var badge = document.getElementById('inbox-unread-badge');
+            if (!badge) return;
+            fetch('{{ route("user.inbox.unread.count") }}', { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    if (d.count > 0) {
+                        badge.textContent = d.count > 99 ? '99+' : d.count;
+                        badge.style.display = 'inline';
+                    }
+                })
+                .catch(function() {});
+        })();
+        </script>
+        @if(isset($inboxFirebaseConfig) && $inboxFirebaseConfig && isset($inboxUserId) && $inboxUserId)
+        @if(!request()->routeIs('user.inbox.index'))
+        <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+        @endif
+        <script>
+        (function() {
+            var cfg = @json($inboxFirebaseConfig);
+            var tokenUrl = @json($inboxTokenUrl);
+            var currentUserId = @json($inboxUserId);
+            if (!cfg.apiKey || !cfg.projectId || !tokenUrl) return;
+            if (typeof firebase === 'undefined') return;
+            var app = firebase.apps && firebase.apps.length > 0 ? firebase.app() : firebase.initializeApp(cfg);
+            var auth = firebase.auth(app);
+            var db = firebase.firestore(app);
+            var convColl = (cfg.chatCollectionPrefix || 'apnacrowdfunding') + '_conversations';
+            var lastKnownMessageAt = {};
+            var _inboxAudioCtx = null;
+            try { _inboxAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+            function _initInboxAudio() {
+                if (!_inboxAudioCtx) try { _inboxAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+                if (_inboxAudioCtx && _inboxAudioCtx.state === 'suspended') _inboxAudioCtx.resume();
+            }
+            ['click','keydown','touchstart','mousedown'].forEach(function(ev) {
+                document.addEventListener(ev, function() { _initInboxAudio(); try { sessionStorage.setItem('inboxSoundEnabled','1'); } catch(e) {} }, { once: true });
+            });
+            function playNotificationSound() {
+                try {
+                    if (!_inboxAudioCtx) return;
+                    if (_inboxAudioCtx.state === 'suspended') _inboxAudioCtx.resume();
+                    var osc = _inboxAudioCtx.createOscillator();
+                    var gain = _inboxAudioCtx.createGain();
+                    osc.connect(gain);
+                    gain.connect(_inboxAudioCtx.destination);
+                    osc.frequency.value = 800;
+                    osc.type = 'sine';
+                    gain.gain.setValueAtTime(0.3, _inboxAudioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, _inboxAudioCtx.currentTime + 0.2);
+                    osc.start(_inboxAudioCtx.currentTime);
+                    osc.stop(_inboxAudioCtx.currentTime + 0.2);
+                } catch (e) {}
+            }
+            function showInboxToast(senderName, preview) {
+                var el = document.getElementById('inbox-msg-toast');
+                if (el) el.remove();
+                el = document.createElement('div');
+                el.id = 'inbox-msg-toast';
+                el.style.cssText = 'position:fixed;top:20px;right:20px;padding:14px 20px;border-radius:10px;z-index:99999;font-size:14px;box-shadow:0 4px 16px rgba(0,0,0,0.2);background:linear-gradient(135deg,#05ce78,#04b367);color:#fff;cursor:pointer;max-width:320px;';
+                el.innerHTML = '<strong>' + (senderName ? ('New message from ' + senderName.replace(/</g,'&lt;')) : 'New message') + '</strong><br><span style="opacity:0.95;font-size:13px;">' + (preview || 'You have a new message').substring(0, 60).replace(/</g,'&lt;') + '</span>';
+                el.onclick = function() { el.remove(); window.location.href = '{{ route("user.inbox.index") }}'; };
+                document.body.appendChild(el);
+                setTimeout(function() { if (el.parentNode) el.remove(); }, 6000);
+            }
+            function showMessageNotification(senderName, preview) {
+                showInboxToast(senderName, preview);
+                if (!('Notification' in window)) return;
+                if (Notification.permission === 'granted') {
+                    var n = new Notification(senderName ? ('New message from ' + senderName) : 'New message', {
+                        body: (preview || 'You have a new message').substring(0, 80),
+                        tag: 'inbox-msg'
+                    });
+                    n.onclick = function() { window.focus(); if (window.location.pathname.indexOf('/user/inbox') === -1) window.location.href = '{{ route("user.inbox.index") }}'; };
+                }
+            }
+            function notifyNewMessage(doc, otherName, lastMsg) {
+                playNotificationSound();
+                showMessageNotification(otherName, lastMsg);
+            }
+            function requestNotificationPermission() {
+                if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+            }
+            function startInboxListener() {
+                var q = db.collection(convColl).where('participants', 'array-contains', currentUserId).orderBy('last_message_at', 'desc');
+                q.onSnapshot(function(snap) {
+                    var changes = snap.docChanges ? snap.docChanges() : [];
+                    changes.forEach(function(change) {
+                        var doc = change.doc;
+                        var d = doc.data();
+                        var lastSenderId = d.last_sender_id;
+                        var lastAt = d.last_message_at ? (d.last_message_at.toDate ? d.last_message_at.toDate().getTime() : 0) : 0;
+                        if (change.type === 'modified' && lastSenderId && lastSenderId !== currentUserId) {
+                            var prevAt = lastKnownMessageAt[doc.id] || 0;
+                            if (lastAt > prevAt) {
+                                var oid = (d.participants || []).find(function(p) { return p !== currentUserId; });
+                                var otherName = (d.participant_names || {})[oid] || d.campaign_title || '';
+                                notifyNewMessage(doc, otherName, d.last_message);
+                            }
+                        }
+                        lastKnownMessageAt[doc.id] = lastAt;
+                    });
+                    if (changes.length === 0) {
+                        snap.docs.forEach(function(doc) {
+                            var d = doc.data();
+                            lastKnownMessageAt[doc.id] = d.last_message_at ? (d.last_message_at.toDate ? d.last_message_at.toDate().getTime() : 0) : 0;
+                        });
+                    }
+                }, function() {});
+            }
+            requestNotificationPermission();
+            fetch(tokenUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.token) return auth.signInWithCustomToken(data.token);
+                })
+                .then(function() { startInboxListener(); })
+                .catch(function() {});
+        })();
+        </script>
+        @endif
         
 </body>
 

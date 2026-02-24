@@ -1,0 +1,54 @@
+Step 7: Campaign Approval Lifecycle Only
+
+This file explains only the campaign approval lifecycle.
+It starts when a user creates a campaign and ends when admin
+approves or rejects the campaign.
+
+1) User creates a campaign
+File path: app/Http/Controllers/User/CampaignController.php
+Class name: CampaignController
+Method name: store
+What this method does: Validates input, creates a Campaign record,
+and sets initial status to pending.
+Why this step exists: New campaigns must wait for admin review.
+Status changes: Campaign status -> CAMPAIGN_PENDING.
+CRITICAL: New campaigns must always start as pending.
+
+2) User updates a campaign
+File path: app/Http/Controllers/User/CampaignController.php
+Class name: CampaignController
+Method name: update
+What this method does: Validates and updates campaign details.
+Why this step exists: The creator can fix or improve campaign data.
+Status changes: None in this method.
+CRITICAL: Updating a campaign must not auto-approve it.
+
+3) Admin approves or rejects a campaign
+File path: app/Http/Controllers/Admin/CampaignController.php
+Class name: CampaignController
+Method name: updateStatus
+What this method does: Sets campaign status to approved or rejected
+and notifies the creator.
+Why this step exists: Admin controls which campaigns go public.
+Status changes: CAMPAIGN_APPROVED or CAMPAIGN_REJECTED.
+CRITICAL: Only admin can change approval status.
+
+4) Status checks used in public listings
+File path: app/Models/Campaign.php
+Class name: Campaign
+Method name: scopeApprove, scopeCampaignCheck, scopeUpcomingCheck
+What this method does: Filters campaigns to approved + valid time window
+for public pages (running or upcoming).
+Why this step exists: Public listings must not show pending or rejected campaigns.
+Status changes: None (read-only filters).
+CRITICAL: Public listings must always require approved status.
+
+5) Public listings apply the approval checks
+File path: app/Http/Controllers/WebsiteController.php
+Class name: WebsiteController
+Method name: campaigns, homeNew, campaignShow (and similar listing methods)
+What this method does: Uses approve() and campaignCheck()/upcomingCheck()
+to show only approved campaigns.
+Why this step exists: Public users should see only approved content.
+Status changes: None.
+CRITICAL: Do not remove approve() from public listing queries.

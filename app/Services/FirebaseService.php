@@ -26,7 +26,12 @@ class FirebaseService
                 ->withProjectId($this->projectId);
 
             $this->auth = $factory->createAuth();
-            $this->firestore = $factory->createFirestore();
+            try {
+                $this->firestore = $factory->createFirestore();
+            } catch (Exception $e) {
+                Log::warning('Firebase Firestore init failed (Auth OK): ' . $e->getMessage());
+                $this->firestore = null; // Chat token works without Firestore; unread count will return 0
+            }
         } catch (Exception $e) {
             Log::error('Firebase initialization failed: ' . $e->getMessage());
             throw new Exception('Firebase service initialization failed');
@@ -210,6 +215,59 @@ class FirebaseService
         } catch (Exception $e) {
             Log::error('Firebase Get User Error: ' . $e->getMessage());
             return null;
+        }
+    }
+
+    /**
+     * Create custom token for Laravel user (for Firestore chat auth).
+     * UID in token = Laravel user id so Firestore rules can allow access.
+     */
+    public function createCustomTokenForUser(string $uid, array $claims = [], int $ttl = 3600): array
+    {
+        try {
+            $token = $this->auth->createCustomToken($uid, $claims, $ttl);
+            return [
+                'success' => true,
+                'token' => $token->toString(),
+            ];
+        } catch (Exception $e) {
+            Log::error('Firebase Custom Token Error: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Get count of conversations with unread messages for the given user (for nav badge).
+     */
+    public function getChatUnreadCount(string $userId): int
+    {
+        if (!$this->firestore) {
+            return 0;
+        }
+        try {
+            $prefix = config('firebase.firestore.collection_prefix', 'apnacrowdfunding');
+            $coll = $this->firestore->database()->collection($prefix . '_conversations');
+            $query = $coll->where('participants', 'array-contains', $userId);
+            $docs = $query->documents();
+            $count = 0;
+            foreach ($docs as $doc) {
+                if (!$doc->exists()) {
+                    continue;
+                }
+                $d = $doc->data();
+                $lastSender = $d['last_sender_id'] ?? null;
+                $readBy = $d['read_by'] ?? [];
+                if ($lastSender && $lastSender !== $userId && empty($readBy[$userId])) {
+                    $count++;
+                }
+            }
+            return $count;
+        } catch (Exception $e) {
+            Log::debug('Firebase getChatUnreadCount: ' . $e->getMessage());
+            return 0;
         }
     }
 }

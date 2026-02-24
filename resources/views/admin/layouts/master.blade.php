@@ -32,6 +32,7 @@
 
 @push('page-style-lib')
     <link rel="stylesheet" href="{{ asset('assets/admin/css/overlayScrollbars.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/admin/css/shortcode-keys-table.css') }}">
 @endpush
 
 @push('page-script-lib')

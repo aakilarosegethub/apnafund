@@ -13,6 +13,7 @@ use App\Models\Category;
 use App\Models\CampaignFaq;
 use App\Models\CampaignUpdate;
 use App\Models\CampaignCollaborator;
+use App\Models\GatewayCurrency;
 use App\Models\User;
 use App\Models\AdminNotification;
 use App\Models\Admin;
@@ -627,6 +628,18 @@ class CampaignController extends Controller
                 return back()->withToasts($toast);
             }
 
+            // Redirect to pay registration fee if enabled and not yet paid
+            $setting = bs();
+            if (!empty($setting->registration_fee_enabled) && ($setting->registration_fee_min ?? 0) > 0) {
+                $hasPaid = Deposit::where('campaign_id', $campaign->id)
+                    ->where('deposit_type', 'registration_fee')
+                    ->where('status', ManageStatus::PAYMENT_SUCCESS)
+                    ->exists();
+                if (!$hasPaid && request()->route()->getName() !== 'user.campaign.pay.registration.fee') {
+                    return redirect()->route('user.campaign.pay.registration.fee', $campaign->slug);
+                }
+            }
+
             // Get section from route name
             $routeName = request()->route()->getName();
             if (strpos($routeName, 'basics') !== false) {
@@ -687,6 +700,111 @@ class CampaignController extends Controller
             $toast[] = ['error', 'Error loading campaign: ' . $e->getMessage()];
             return back()->withToasts($toast);
         }
+    }
+
+    /**
+     * Pay registration fee page (campaign creation charge)
+     */
+    function payRegistrationFee($slug) {
+        $campaign = Campaign::where('slug', $slug)->where('user_id', auth()->id())->firstOrFail();
+        $setting = bs();
+        if (empty($setting->registration_fee_enabled) || ($setting->registration_fee_min ?? 0) <= 0) {
+            return redirect()->route('user.campaign.edit.basics', $campaign->slug);
+        }
+        $hasPaid = Deposit::where('campaign_id', $campaign->id)
+            ->where('deposit_type', 'registration_fee')
+            ->where('status', ManageStatus::PAYMENT_SUCCESS)
+            ->exists();
+        if ($hasPaid) {
+            return redirect()->route('user.campaign.edit.basics', $campaign->slug);
+        }
+        $feeAmount = (float) ($setting->registration_fee_min ?? 0);
+        $userCountry = auth()->user()->country_name ?? '';
+        $gatewayCurrencies = GatewayCurrency::whereHas('method', function ($q) use ($userCountry) {
+                $q->where('status', true);
+                if ($userCountry) {
+                    $q->forCountry($userCountry);
+                }
+            })
+            ->where('status', true)
+            ->where('min_amount', '<=', $feeAmount)
+            ->where('max_amount', '>=', $feeAmount)
+            ->orderBy('method_code')
+            ->get();
+        if ($gatewayCurrencies->isEmpty()) {
+            $gatewayCurrencies = GatewayCurrency::whereHas('method', function ($q) use ($userCountry) {
+                    $q->where('status', true);
+                    if ($userCountry) {
+                        $q->forCountry($userCountry);
+                    }
+                })
+                ->where('status', true)
+                ->orderBy('method_code')
+                ->get();
+        }
+        $feeAmountUsd = $feeAmount; // Platform currency - treat as base for display
+        return view($this->activeTheme . 'user.campaign.pay-registration-fee', compact('campaign', 'feeAmountUsd', 'gatewayCurrencies'));
+    }
+
+    /**
+     * Submit registration fee - create deposit and redirect to payment
+     */
+    function submitRegistrationFee($slug) {
+        $campaign = Campaign::where('slug', $slug)->where('user_id', auth()->id())->firstOrFail();
+        $setting = bs();
+        if (empty($setting->registration_fee_enabled) || ($setting->registration_fee_min ?? 0) <= 0) {
+            return redirect()->route('user.campaign.edit.basics', $campaign->slug);
+        }
+        $hasPaid = Deposit::where('campaign_id', $campaign->id)
+            ->where('deposit_type', 'registration_fee')
+            ->where('status', ManageStatus::PAYMENT_SUCCESS)
+            ->exists();
+        if ($hasPaid) {
+            return redirect()->route('user.campaign.edit.basics', $campaign->slug);
+        }
+        request()->validate([
+            'gateway' => 'required|exists:gateways,code',
+            'currency' => 'required|string|max:10',
+        ]);
+        $feeAmount = (float) ($setting->registration_fee_min ?? 0);
+        $userCountry = auth()->user()->country_name ?? '';
+        $gatewayData = GatewayCurrency::whereHas('method', function ($q) use ($userCountry) {
+                $q->where('status', true);
+                if ($userCountry) {
+                    $q->forCountry($userCountry);
+                }
+            })
+            ->where('method_code', request('gateway'))
+            ->where('currency', request('currency'))
+            ->where('status', true)
+            ->firstOrFail();
+        $charge = $gatewayData->fixed_charge + (($feeAmount * $gatewayData->percent_charge) / 100);
+        $payable = $feeAmount + $charge;
+        $finalAmount = $payable * $gatewayData->rate;
+        $deposit = new Deposit();
+        $deposit->campaign_id = $campaign->id;
+        $deposit->user_id = auth()->id();
+        $deposit->deposit_type = 'registration_fee';
+        $deposit->donor_type = ManageStatus::KNOWN_DONOR;
+        $deposit->full_name = auth()->user()->fullname;
+        $deposit->email = auth()->user()->email;
+        $deposit->phone = auth()->user()->mobile ?? '';
+        $deposit->country = auth()->user()->country_name ?? '';
+        $deposit->receiver_id = 0;
+        $deposit->method_code = $gatewayData->method_code;
+        $deposit->amount = $feeAmount;
+        $deposit->method_currency = strtoupper($gatewayData->currency);
+        $deposit->charge = $charge;
+        $deposit->rate = $gatewayData->rate;
+        $deposit->final_amount = $finalAmount; // column name in DB
+        $deposit->btc_amount = 0;
+        $deposit->btc_wallet = '';
+        $deposit->trx = getTrx();
+        $deposit->status = ManageStatus::PAYMENT_INITIATE;
+        $deposit->save();
+        session()->put('Track', $deposit->trx);
+        session()->put('registration_fee_campaign_slug', $campaign->slug);
+        return to_route('user.deposit.confirm');
     }
 
     /**

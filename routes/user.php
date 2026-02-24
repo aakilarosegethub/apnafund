@@ -83,6 +83,9 @@ Route::middleware('auth')->name('user.')->namespace('User')->group(function () {
             Route::get('edit/{slug}/boost', 'editSection')->name('edit.boost');
             Route::get('edit/{slug}/faq', 'editSection')->name('edit.faq');
             Route::get('edit/{slug}/updates', 'editSection')->name('edit.updates');
+            // Campaign Registration Fee
+            Route::get('{slug}/pay-registration-fee', 'payRegistrationFee')->name('pay.registration.fee');
+            Route::post('{slug}/pay-registration-fee', 'submitRegistrationFee')->name('pay.registration.fee.submit');
             // Collaborators routes
             Route::post('collaborators/add/{slug}', 'addCollaborator')->name('collaborators.add');
             Route::delete('collaborators/remove/{slug}/{userId}', 'removeCollaborator')->name('collaborators.remove');
@@ -133,6 +136,14 @@ Route::middleware('auth')->name('user.')->namespace('User')->group(function () {
 
         // Reward Fulfillment
         Route::post('reward/fulfill', 'UserController@fulfillReward')->name('reward.fulfill');
+
+        // Chat / Inbox
+        Route::controller('ChatController')->prefix('inbox')->name('inbox.')->group(function () {
+            Route::get('/', 'inbox')->name('index');
+            Route::get('firebase-token', 'getFirebaseToken')->name('firebase.token');
+            Route::get('unread-count', 'unreadCount')->name('unread.count');
+            Route::get('creator-names', 'getCreatorNames')->name('creator.names');
+        });
 
         // User Operation
         Route::controller('UserController')->group(function () {

@@ -1,0 +1,209 @@
+{
+  "info": {
+    "_postman_id": "apnafund-campaign-api-001",
+    "name": "Campaign API (ApnaFund)",
+    "description": "All APIs linked to campaigns table. Params match campaigns columns. Auth token required (except Login, Get by ID Home, Category Wise, Search).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{auth_token}}", "type": "string" }]
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8001" },
+    { "key": "auth_token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Login",
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "POST",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"mobile\": \"user@example.com\",\n    \"password\": \"password123\",\n    \"ccode\": \"+92\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": "{{base_url}}/api/user_login.php",
+        "description": "Login – token milega, auth_token mein paste karo."
+      }
+    },
+    {
+      "name": "Campaign Create",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "category_id", "value": "1", "description": "campaigns.category_id (required)", "type": "text" },
+            { "key": "name", "value": "My Campaign", "description": "campaigns.name (required)", "type": "text" },
+            { "key": "description", "value": "Full campaign description – min 30 chars.", "description": "campaigns.description (required)", "type": "text" },
+            { "key": "short_description", "value": "Short summary", "description": "campaigns.short_description", "type": "text" },
+            { "key": "goal_amount", "value": "50000", "description": "campaigns.goal_amount (required)", "type": "text" },
+            { "key": "location", "value": "Lahore, Pakistan", "description": "campaigns.location", "type": "text" },
+            { "key": "start_date", "value": "", "description": "campaigns.start_date YYYY-MM-DD", "type": "text" },
+            { "key": "end_date", "value": "", "description": "campaigns.end_date YYYY-MM-DD", "type": "text" },
+            { "key": "image", "type": "file", "src": [], "description": "campaigns.image (required)" }
+          ]
+        },
+        "url": "{{base_url}}/api/fundraise.php",
+        "description": "Insert into campaigns table. Returns fund_id (campaign id)."
+      }
+    },
+    {
+      "name": "Campaign Get by ID",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "fund_id", "value": "1", "description": "campaigns.id (Campaign ID)" },
+            { "key": "status", "value": "Home", "description": "Home=public, other=own only (auth required)" }
+          ]
+        },
+        "url": "{{base_url}}/api/fundidwise.php",
+        "description": "Get campaign from campaigns + campaign_updates. funddata = campaign row, fundupdate = campaign_updates."
+      }
+    },
+    {
+      "name": "Campaign List",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "status", "value": "Pending", "description": "Pending | Completed | Cancelled (campaigns.status)" }
+          ]
+        },
+        "url": "{{base_url}}/api/fundlist.php",
+        "description": "User ke campaigns (campaigns WHERE user_id)."
+      }
+    },
+    {
+      "name": "Campaign Update (add update)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "campaign_id", "value": "1", "description": "campaign_updates.campaign_id (required)", "type": "text" },
+            { "key": "title", "value": "Update title", "description": "campaign_updates.title", "type": "text" },
+            { "key": "content", "value": "Update content – min 30 chars.", "description": "campaign_updates.content (required)", "type": "text" },
+            { "key": "image", "type": "file", "src": [], "description": "campaign_updates.image (optional)" }
+          ]
+        },
+        "url": "{{base_url}}/api/fund_update.php",
+        "description": "Insert into campaign_updates table (linked to campaigns)."
+      }
+    },
+    {
+      "name": "Campaign Edit",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "record_id", "value": "1", "description": "campaigns.id" },
+            { "key": "uid", "value": "", "description": "campaigns.user_id (owner)" },
+            { "key": "cat_id", "value": "1", "description": "campaigns.category_id" },
+            { "key": "title", "value": "Updated Title", "description": "campaigns.name" },
+            { "key": "fund_amt", "value": "60000", "description": "campaigns.goal_amount" },
+            { "key": "fund_story", "value": "Updated description", "type": "text", "description": "campaigns.description" },
+            { "key": "full_address", "value": "", "description": "campaigns.location" },
+            { "key": "exp_date", "value": "", "description": "campaigns.end_date" },
+            { "key": "status", "value": "Pending", "description": "campaigns.status" }
+          ]
+        },
+        "url": "{{base_url}}/api/edit_fund.php",
+        "description": "Update campaigns table."
+      }
+    },
+    {
+      "name": "Campaign Cancel",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "fund_id", "value": "1", "description": "campaigns.id" },
+            { "key": "reject_comment", "value": "", "description": "Optional" }
+          ]
+        },
+        "url": "{{base_url}}/api/fund_cancle.php",
+        "description": "campaigns.status = 0 (cancelled)."
+      }
+    },
+    {
+      "name": "Campaign Complete",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "fund_id", "value": "1", "description": "campaigns.id" }
+          ]
+        },
+        "url": "{{base_url}}/api/fund_complete.php",
+        "description": "campaigns.end_date = today."
+      }
+    },
+    {
+      "name": "Campaign Delete",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "fund_id", "value": "1", "description": "campaigns.id" }
+          ]
+        },
+        "url": "{{base_url}}/api/fund_delete.php",
+        "description": "Delete from campaigns + campaign_updates."
+      }
+    },
+    {
+      "name": "Category Wise Campaigns",
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "POST",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "cat_id", "value": "1", "description": "campaigns.category_id (0 = all)" }
+          ]
+        },
+        "url": "{{base_url}}/api/catwisefund.php",
+        "description": "campaigns WHERE category_id, status=1 (approved). Public, no auth."
+      }
+    },
+    {
+      "name": "Search Campaigns",
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "POST",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "keyword", "value": "education", "description": "Search in campaigns.name, description, location" }
+          ]
+        },
+        "url": "{{base_url}}/api/search_fund.php",
+        "description": "campaigns WHERE name/description/location LIKE. Public, no auth."
+      }
+    }
+  ]
+}

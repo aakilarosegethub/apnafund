@@ -1,0 +1,424 @@
+<?php 
+require 'Gofund.php';
+$h = new Gofund($fund);
+$query = "SELECT * FROM `tbl_setting`";
+		  $set = $h->fetchData($query);
+header('Content-type: text/json');
+$data = json_decode(file_get_contents('php://input'), true);
+function calculateDistance($originLat, $originLng, $destLat, $destLng, $apiKey) {
+    $unit = "K";
+    $theta = (float)$originLng - (float)$destLng;
+    $dist = sin(deg2rad((float)$originLat)) * sin(deg2rad((float)$destLat)) + cos(deg2rad((float)$originLat)) * cos(deg2rad((float)$destLat)) * cos(deg2rad((float)$theta));
+    $dist = acos($dist);
+    $dist = rad2deg($dist);
+    $miles = $dist * 60 * 1.1515;
+    $unit = strtoupper($unit);
+
+    if ($unit == "K") {
+        $distanceInKilometers = $miles * 1.609344;
+        return round($distanceInKilometers, 2); // Rounded to 2 decimal places
+    } else if ($unit == "N") {
+        $distanceInNauticalMiles = $miles * 0.8684;
+        return round($distanceInNauticalMiles, 2); // Rounded to 2 decimal places
+    } else {
+        return round($miles, 2); // Rounded to 2 decimal places
+    }
+}
+if($data['uid'] == '')
+{
+    $returnArr = array("ResponseCode"=>"401","Result"=>"false","ResponseMsg"=>"Something Went Wrong!");
+}
+else
+{
+	$uid = $data['uid'];
+	$lats = $data['lats'];
+$longs = $data['longs'];
+	if($uid == 0)
+	{
+		$is_block = "0" ;
+	}
+	else 
+	{
+	$check_user_verify = $h->queryfire("select * from tbl_user where id=".$data['uid']."")->fetch_assoc();
+	$is_block = empty($check_user_verify["status"]) ? "1" : ($check_user_verify["status"] == 1 ? "0" : "1");
+	}
+	$pol = array();
+$c = array();
+$sel = $h->queryfire("select * from tbl_category where status=1");
+while($row = $sel->fetch_assoc())
+{
+   
+		$pol['id'] = $row['id'];
+		$pol['title'] = $row['title'];
+		
+		$c[] = $pol;
+	
+	
+}
+
+$sel = $h->queryfire("select * from tbl_fund where   is_approve=1 and fund_status='Pending' order by id desc limit 5");
+$polp = array();
+$cps = array();
+$timestamp = date("Y-m-d");
+while($rows = $sel->fetch_assoc())
+{
+   if(empty($rows['exp_date']))
+   {
+		$polp['id'] = $rows['id'];
+		$polp['title'] = $rows['title'];
+		$fund_photo = explode('$;',$rows['fund_photos']);
+		$polp['fund_photos'] = $fund_photo[0];
+		$getd = $h->queryfire("SELECT COALESCE(SUM(`amt`), 0) AS total_deposite FROM tbl_deposit WHERE fund_id=".$rows["id"])->fetch_assoc();
+        $total_deposite = $getd['total_deposite'];
+		$polp['total_investment'] = $total_deposite;
+		$polp['remain_amt'] = $rows['fund_amt'] - $total_deposite;
+		$cps[] = $polp;
+   }
+   else 
+   {
+	   if($timestamp > $rows['exp_date'])
+	   {}
+   else 
+   {
+	    $polp['id'] = $rows['id'];
+		$polp['title'] = $rows['title'];
+		$fund_photo = explode('$;',$rows['fund_photos']);
+		$polp['fund_photos'] = $fund_photo[0];
+		$getd = $h->queryfire("SELECT COALESCE(SUM(`amt`), 0) AS total_deposite FROM tbl_deposit WHERE fund_id=".$rows["id"])->fetch_assoc();
+        $total_deposite = $getd['total_deposite'];
+		$polp['total_investment'] = $total_deposite;
+		$polp['remain_amt'] = $rows['fund_amt'] - $total_deposite;
+		$cps[] = $polp;
+   }
+   }
+		
+	
+	
+}
+
+$sel = $h->queryfire("select * from tbl_fund where  is_approve=1 and fund_status='Pending'");
+$pols = array();
+$cp = array();
+$timestamp = date("Y-m-d");
+while($rows = $sel->fetch_assoc())
+{
+	
+   if(empty($rows['exp_date']))
+   {
+		$pols['id'] = $rows['id'];
+		$pols['cat_id'] = $rows['cat_id'];
+		$pols['title'] = $rows['title'];
+		$pols['fund_for'] = $rows['fund_for'];
+		$pols['fund_photos'] = explode('$;',$rows['fund_photos']);
+		$pols['exp_date'] = empty($rows['exp_date'])?"":$rows['exp_date'];
+		$pols['fund_amt'] = $rows['fund_amt'];
+		$pols['full_address'] = $rows['full_address'];
+		$pols['lats'] = $rows['lats'];
+		$pols['longs'] = $rows['longs'];
+		$pols['fund_story'] = $rows['fund_story'];
+		$pols['fund_date'] = $rows['fund_date'];
+		$pols['patient_photo'] = explode('$;',$rows['patient_photo']);
+		$pols['patient_title'] = $rows['patient_title'];
+		$pols['patient_diagnosis'] = $rows['patient_diagnosis'];
+		$pols['fund_plan'] = $rows['fund_plan'];
+		$pols['medical_certificate'] = explode('$;',$rows['medical_certificate']);
+		$pols['reject_comment'] = empty($rows['reject_comment']) ? "" :$rows['reject_comment'];
+		$pols['fund_status'] = $rows['fund_status'];
+		$getd = $h->queryfire("SELECT COALESCE(SUM(`amt`), 0) AS total_deposite FROM tbl_deposit WHERE fund_id=".$rows["id"])->fetch_assoc();
+        $total_deposite = $getd['total_deposite'];
+		$pols['total_investment'] = $total_deposite;
+		$pols['remain_amt'] = $rows['fund_amt'] - $total_deposite;
+		if($pols['remain_amt'] <= 0)
+		{
+		}
+		else 
+		{
+		$funded = $h->queryfire("select * from tbl_deposit where fund_id=".$rows['id']."");
+		$pols['total_donaters'] = $funded->num_rows;
+		if($funded->num_rows != 0)
+		{
+$don = array();
+$lp = array();
+while($p = $funded->fetch_assoc())
+{
+	$getuser = $h->queryfire("select profile_pic,name from tbl_user where id=".$p['uid']."")->fetch_assoc();
+	$don['name'] = $getuser['name'];
+	$don['profile_pic'] = empty($getuser['profile_pic']) ? "images/default.png" : $getuser['profile_pic'];
+	$don['amt'] = $p['amt'];
+	$depositeDate = new DateTime($p['deposite_date']);
+$currentDate = new DateTime();
+$interval = $currentDate->diff($depositeDate);
+
+if ($interval->y > 0) {
+    $don['deposite_date'] = $interval->format('%y year(s) ago');
+} elseif ($interval->m > 0) {
+    $don['deposite_date'] = $interval->format('%m month(s) ago');
+} elseif ($interval->d > 0) {
+    $don['deposite_date'] = $interval->format('%d day(s) ago');
+} elseif ($interval->h > 0) {
+    $don['deposite_date'] = $interval->format('%h hour(s) ago');
+} elseif ($interval->i > 0) {
+    $don['deposite_date'] = $interval->format('%i minute(s) ago');
+} else {
+    $don['deposite_date'] = 'Just now';
+}
+	$lp[] = $don;
+}
+$pols['donaterlist'] = $lp;
+}
+		else 
+		{
+			$pols['donaterlist'] = [];
+		}
+		$cp[] = $pols;
+   }
+   }
+   else 
+   {
+	   if($timestamp > $rows['exp_date'])
+	   {
+		   
+	   }
+   else 
+   {
+	    $pols['id'] = $rows['id'];
+		$pols['cat_id'] = $rows['cat_id'];
+		$pols['title'] = $rows['title'];
+		$pols['fund_for'] = $rows['fund_for'];
+		$pols['fund_photos'] = explode('$;',$rows['fund_photos']);
+		$pols['exp_date'] = empty($rows['exp_date'])?"":$rows['exp_date'];
+		$pols['fund_amt'] = $rows['fund_amt'];
+		$pols['full_address'] = $rows['full_address'];
+		$pols['lats'] = $rows['lats'];
+		$pols['longs'] = $rows['longs'];
+		$pols['fund_story'] = $rows['fund_story'];
+		$pols['fund_date'] = $rows['fund_date'];
+		$pols['patient_photo'] = explode('$;',$rows['patient_photo']);
+		$pols['patient_title'] = $rows['patient_title'];
+		$pols['patient_diagnosis'] = $rows['patient_diagnosis'];
+		$pols['fund_plan'] = $rows['fund_plan'];
+		$pols['medical_certificate'] = explode('$;',$rows['medical_certificate']);
+		$pols['reject_comment'] = empty($rows['reject_comment']) ? "" :$rows['reject_comment'];
+		$pols['fund_status'] = $rows['fund_status'];
+		$getd = $h->queryfire("SELECT COALESCE(SUM(`amt`), 0) AS total_deposite FROM tbl_deposit WHERE fund_id=".$rows["id"])->fetch_assoc();
+        $total_deposite = $getd['total_deposite'];
+		$pols['total_investment'] = $total_deposite;
+		$pols['remain_amt'] = $rows['fund_amt'] - $total_deposite;
+		$funded = $h->queryfire("select * from tbl_deposit where fund_id=".$rows['id']."");
+		$pols['total_donaters'] = $funded->num_rows;
+		if($funded->num_rows != 0)
+		{
+			
+$don = array();
+$lp = array();
+while($pp = $funded->fetch_assoc())
+{
+
+	$getuser = $h->queryfire("select profile_pic,name from tbl_user where id=".$pp['uid']."")->fetch_assoc();
+	$don['name'] = $getuser['name'];
+	$don['profile_pic'] = empty($getuser['profile_pic']) ? "images/default.png" : $getuser['profile_pic'];
+	$don['amt'] = $pp['amt'];
+	$depositeDate = new DateTime($pp['deposite_date']);
+$currentDate = new DateTime();
+$interval = $currentDate->diff($depositeDate);
+
+if ($interval->y > 0) {
+    $don['deposite_date'] = $interval->format('%y year(s) ago');
+} elseif ($interval->m > 0) {
+    $don['deposite_date'] = $interval->format('%m month(s) ago');
+} elseif ($interval->d > 0) {
+    $don['deposite_date'] = $interval->format('%d day(s) ago');
+} elseif ($interval->h > 0) {
+    $don['deposite_date'] = $interval->format('%h hour(s) ago');
+} elseif ($interval->i > 0) {
+    $don['deposite_date'] = $interval->format('%i minute(s) ago');
+} else {
+    $don['deposite_date'] = 'Just now';
+}
+	$lp[] = $don;
+}
+$pols['donaterlist'] = $lp;
+		}
+		else 
+		{
+			$pols['donaterlist'] = [];
+		}
+		$cp[] = $pols;
+   }
+   }
+		
+	
+	
+}
+
+$timestamp = date("Y-m-d");
+$selpop = $h->queryfire("SELECT SUM(de.`amt`) AS total_deposite, de.fund_id , tf.cat_id , tf.title , tf.fund_for , tf.fund_photos , tf.exp_date , tf.fund_amt,tf.fund_story,tf.full_address,tf.lats,tf.longs,
+tf.fund_date,tf.patient_photo,tf.patient_title,tf.patient_diagnosis,tf.fund_plan,tf.medical_certificate,tf.reject_comment,tf.fund_status
+FROM `tbl_deposit` AS de
+JOIN tbl_fund AS tf ON de.fund_id = tf.id
+WHERE tf.fund_status = 'Pending'
+AND (tf.exp_date IS NULL OR  $timestamp < tf.exp_date)
+GROUP BY de.fund_id 
+ORDER BY total_deposite DESC 
+LIMIT 5");
+$popular = array();
+$listpopular = array();
+while($pop = $selpop->fetch_assoc())
+{
+	$popular['id'] = $pop['fund_id'];
+		$popular['cat_id'] = $pop['cat_id'];
+		$popular['title'] = $pop['title'];
+		$popular['fund_for'] = $pop['fund_for'];
+		$popular['fund_photos'] = explode('$;',$pop['fund_photos']);
+		$popular['exp_date'] = empty($pop['exp_date'])?"":$pop['exp_date'];
+		$popular['fund_amt'] = $pop['fund_amt'];
+		$popular['full_address'] = $pop['full_address'];
+		$popular['lats'] = $pop['lats'];
+		$popular['longs'] = $pop['longs'];
+		$popular['fund_story'] = $pop['fund_story'];
+		$popular['fund_date'] = $pop['fund_date'];
+		$popular['patient_photo'] = explode('$;',$pop['patient_photo']);
+		$popular['patient_title'] = $pop['patient_title'];
+		$popular['patient_diagnosis'] = $pop['patient_diagnosis'];
+		$popular['fund_plan'] = $pop['fund_plan'];
+		$popular['medical_certificate'] = explode('$;',$pop['medical_certificate']);
+		$popular['reject_comment'] = empty($pop['reject_comment']) ? "" :$pop['reject_comment'];
+		$popular['fund_status'] = $pop['fund_status'];
+		
+        $total_deposite = $pop['total_deposite'];
+		$popular['total_investment'] = $total_deposite;
+		$popular['remain_amt'] = $pop['fund_amt'] - $total_deposite;
+		$funded = $h->queryfire("select * from tbl_deposit where fund_id=".$pop['fund_id']."");
+		$popular['total_donaters'] = $funded->num_rows;
+		if($funded->num_rows != 0)
+		{
+			
+$don = array();
+$lp = array();
+while($pp = $funded->fetch_assoc())
+{
+
+	$getuser = $h->queryfire("select profile_pic,name from tbl_user where id=".$pp['uid']."")->fetch_assoc();
+	$don['name'] = $getuser['name'];
+	$don['profile_pic'] = empty($getuser['profile_pic']) ? "images/default.png" : $getuser['profile_pic'];
+	$don['amt'] = $pp['amt'];
+	$depositeDate = new DateTime($pp['deposite_date']);
+$currentDate = new DateTime();
+$interval = $currentDate->diff($depositeDate);
+
+if ($interval->y > 0) {
+    $don['deposite_date'] = $interval->format('%y year(s) ago');
+} elseif ($interval->m > 0) {
+    $don['deposite_date'] = $interval->format('%m month(s) ago');
+} elseif ($interval->d > 0) {
+    $don['deposite_date'] = $interval->format('%d day(s) ago');
+} elseif ($interval->h > 0) {
+    $don['deposite_date'] = $interval->format('%h hour(s) ago');
+} elseif ($interval->i > 0) {
+    $don['deposite_date'] = $interval->format('%i minute(s) ago');
+} else {
+    $don['deposite_date'] = 'Just now';
+}
+	$lp[] = $don;
+}
+$popular['donaterlist'] = $lp;
+		}
+		else 
+		{
+			$popular['donaterlist'] = [];
+		}
+		$listpopular[] = $popular;
+}
+
+
+$selpop = $h->queryfire("SELECT (((acos(sin((".$lats."*pi()/180)) * sin((`lats`*pi()/180))+cos((".$lats."*pi()/180)) * cos((`lats`*pi()/180)) * cos(((".$longs."-`longs`)*pi()/180))))*180/pi())*60*1.1515*1.609344) as distance, id , cat_id , title , fund_for , fund_photos , exp_date , fund_amt,fund_story,full_address,lats,longs,
+fund_date,patient_photo,patient_title,patient_diagnosis,fund_plan,medical_certificate,reject_comment,fund_status
+FROM `tbl_fund`
+WHERE fund_status = 'Pending'
+AND (exp_date IS NULL OR  $timestamp < exp_date)
+order by distance
+LIMIT 5");
+$populars = array();
+$listnearby = array();
+while($pop = $selpop->fetch_assoc())
+{
+	$populars['id'] = $pop['id'];
+		$populars['cat_id'] = $pop['cat_id'];
+		$populars['title'] = $pop['title'];
+		$populars['fund_for'] = $pop['fund_for'];
+		$populars['fund_photos'] = explode('$;',$pop['fund_photos']);
+		$populars['exp_date'] = empty($pop['exp_date'])?"":$pop['exp_date'];
+		$populars['fund_amt'] = $pop['fund_amt'];
+		$populars['full_address'] = $pop['full_address'];
+		$populars['lats'] = $pop['lats'];
+		$populars['longs'] = $pop['longs'];
+		$populars['fund_story'] = $pop['fund_story'];
+		$populars['fund_date'] = $pop['fund_date'];
+		$populars['patient_photo'] = explode('$;',$pop['patient_photo']);
+		$populars['patient_title'] = $pop['patient_title'];
+		$populars['patient_diagnosis'] = $pop['patient_diagnosis'];
+		$populars['fund_plan'] = $pop['fund_plan'];
+		$populars['medical_certificate'] = explode('$;',$pop['medical_certificate']);
+		$populars['reject_comment'] = empty($pop['reject_comment']) ? "" :$pop['reject_comment'];
+		$populars['fund_status'] = $pop['fund_status'];
+		$distance = calculateDistance($lats, $longs,$pop['lats'], $pop['longs'], $apiKey);
+	$populars['fund_distance'] = $distance.' KM';
+	$getd = $h->queryfire("SELECT COALESCE(SUM(`amt`), 0) AS total_deposite FROM tbl_deposit WHERE fund_id=".$pop["id"])->fetch_assoc();
+        $total_deposite = $getd['total_deposite'];
+        
+		$populars['total_investment'] = $total_deposite;
+		$populars['remain_amt'] = $pop['fund_amt'] - $total_deposite;
+		$funded = $h->queryfire("select * from tbl_deposit where fund_id=".$pop['id']."");
+		$populars['total_donaters'] = $funded->num_rows;
+		if($funded->num_rows != 0)
+		{
+			
+$don = array();
+$lp = array();
+while($pp = $funded->fetch_assoc())
+{
+
+	$getuser = $h->queryfire("select profile_pic,name from tbl_user where id=".$pp['uid']."")->fetch_assoc();
+	$don['name'] = $getuser['name'];
+	$don['profile_pic'] = empty($getuser['profile_pic']) ? "images/default.png" : $getuser['profile_pic'];
+	$don['amt'] = $pp['amt'];
+	$depositeDate = new DateTime($pp['deposite_date']);
+$currentDate = new DateTime();
+$interval = $currentDate->diff($depositeDate);
+
+if ($interval->y > 0) {
+    $don['deposite_date'] = $interval->format('%y year(s) ago');
+} elseif ($interval->m > 0) {
+    $don['deposite_date'] = $interval->format('%m month(s) ago');
+} elseif ($interval->d > 0) {
+    $don['deposite_date'] = $interval->format('%d day(s) ago');
+} elseif ($interval->h > 0) {
+    $don['deposite_date'] = $interval->format('%h hour(s) ago');
+} elseif ($interval->i > 0) {
+    $don['deposite_date'] = $interval->format('%i minute(s) ago');
+} else {
+    $don['deposite_date'] = 'Just now';
+}
+	$lp[] = $don;
+}
+$populars['donaterlist'] = $lp;
+		}
+		else 
+		{
+			$populars['donaterlist'] = [];
+		}
+		$listnearby[] = $populars;
+}
+
+if($uid == 0)
+{
+	$wallet = "0";
+}
+else 
+{
+	$wallet = empty($check_user_verify['wallet']) ? "0" : $check_user_verify['wallet'];
+}
+$returnArr = array("ResponseCode"=>"200","Result"=>"true","ResponseMsg"=>"Home Data Get Successfully!!!","category"=>$c,'is_block'=>$is_block,"currency"=>$set['currency'],"featurefund"=>$cp,"Banner"=>$cps,"PopularFund"=>$listpopular,'Wallet'=>$wallet,'listnearby'=>$listnearby,'plaform_free'=>$set["plaform_free"]);	
+}
+echo json_encode($returnArr);
+?>

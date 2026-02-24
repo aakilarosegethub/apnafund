@@ -147,11 +147,25 @@ class PaymentController extends Controller
 
         $dirName = $deposit->gateway->alias;
         $new     = __NAMESPACE__ . '\\' . $dirName . '\\ProcessController';
+
+        \Log::channel('payments')->info('Payment process started', [
+            'gateway'      => $dirName,
+            'method_code'  => $deposit->method_code,
+            'trx'          => $deposit->trx,
+            'amount'       => $deposit->final_amount,
+            'currency'     => $deposit->method_currency,
+        ]);
+
         $data    = $new::process($deposit);
         $data    = json_decode($data);
         
 
         if (isset($data->error)) {
+            \Log::channel('payments')->error('Payment process returned error to user', [
+                'gateway' => $dirName,
+                'trx'     => $deposit->trx,
+                'message' => $data->message ?? 'unknown',
+            ]);
             $toast[] = ['error', $data->message];
 
             return to_route(gatewayRedirectUrl())->withToasts($toast);
@@ -175,6 +189,33 @@ class PaymentController extends Controller
         if ($deposit->status == ManageStatus::PAYMENT_INITIATE || $deposit->status == ManageStatus::PAYMENT_PENDING) {
             $deposit->status = ManageStatus::PAYMENT_SUCCESS;
             $deposit->save();
+
+            $depositType = $deposit->deposit_type ?? 'donation';
+
+            if ($depositType === 'registration_fee') {
+                // Registration fee: platform keeps it, no campaign/creator credit
+                if (!$isManual) {
+                    $adminNotification = new AdminNotification();
+                    $adminNotification->user_id = $deposit->user_id;
+                    $adminNotification->title = 'Registration fee paid via ' . $deposit->gatewayCurrency()->name . ' for campaign: ' . ($deposit->campaign->name ?? '');
+                    $adminNotification->click_url = urlPath('admin.donations.done');
+                    $adminNotification->save();
+                }
+                $user = $deposit->user;
+                if ($user) {
+                    notify($user, 'DONATION_COMPLETE', [
+                        'method_name'     => $deposit->gatewayCurrency()->name,
+                        'method_currency' => $deposit->method_currency,
+                        'method_amount'   => showAmount($deposit->final_amount),
+                        'amount'          => showAmount($deposit->amount),
+                        'charge'          => showAmount($deposit->charge),
+                        'rate'            => showAmount($deposit->rate),
+                        'trx'             => $deposit->trx,
+                        'campaign_name'   => $deposit->campaign->name ?? '',
+                    ]);
+                }
+                return;
+            }
 
             $user = User::find($deposit->user_id);
 
@@ -350,11 +391,18 @@ class PaymentController extends Controller
         if (!$deposit) return to_route(gatewayRedirectUrl());
 
         $toast[] = ['success', 'Payment completed successfully'];
+
+        // Registration fee: redirect to campaign edit
+        if (($deposit->deposit_type ?? '') === 'registration_fee' && $deposit->campaign_id) {
+            $slug = session()->pull('registration_fee_campaign_slug') ?? $deposit->campaign->slug ?? null;
+            if ($slug && auth()->check()) {
+                return redirect()->route('user.campaign.edit.basics', $slug)->withToasts($toast);
+            }
+        }
         
         if (auth()->check()) {
             return to_route('user.donation.history')->withToasts($toast);
         } else {
-            // For guest users, redirect to campaign with success message
             return to_route('campaign')->withToasts($toast);
         }
     }

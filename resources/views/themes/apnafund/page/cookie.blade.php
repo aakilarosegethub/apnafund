@@ -11,7 +11,7 @@
                 <div class="col-lg-10">
                     <div class="card custom--card" data-aos="fade-up" data-aos-duration="1500">
                         <div class="card-body cookie--details">
-                            @php echo $cookie->data_info->details @endphp
+                            {!! $cookie && isset($cookie->data_info['details']) ? $cookie->data_info['details'] : '' !!}
                         </div>
                     </div>
                 </div>

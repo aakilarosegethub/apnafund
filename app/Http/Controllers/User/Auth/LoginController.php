@@ -21,8 +21,9 @@ class LoginController extends Controller
     function loginForm() {
         $pageTitle = 'Login';
         $loginContent = getSiteData('login.content', true);
+        $redirectUrl = request()->query('redirect'); // e.g. inbox with start params for "Contact Creator"
 
-        return view($this->activeTheme . 'user.auth.login', compact('pageTitle', 'loginContent'));
+        return view($this->activeTheme . 'user.auth.login', compact('pageTitle', 'loginContent', 'redirectUrl'));
     }
 
     function login() {
@@ -89,6 +90,25 @@ class LoginController extends Controller
         $user->tc = $user->ts == ManageStatus::VERIFIED ? ManageStatus::UNVERIFIED : ManageStatus::VERIFIED;
         $user->save();
 
+        $redirect = $request->query('redirect') ?: $request->input('redirect');
+        if ($redirect && $this->isSafeRedirectUrl($redirect)) {
+            return redirect($redirect);
+        }
         return to_route('user.dashboard');
+    }
+
+    /** Allow redirect only to same host / relative path (inbox, dashboard, etc.) */
+    protected function isSafeRedirectUrl(?string $url): bool
+    {
+        if (!$url || !is_string($url)) {
+            return false;
+        }
+        $url = trim($url);
+        if (str_starts_with($url, '/')) {
+            return !str_contains($url, '//');
+        }
+        $parsed = parse_url($url);
+        $appUrl = parse_url(config('app.url'), PHP_URL_HOST);
+        return isset($parsed['host']) && $parsed['host'] === $appUrl;
     }
 }

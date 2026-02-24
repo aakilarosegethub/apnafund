@@ -13,16 +13,21 @@ class FundUpdateController extends BaseApiController
      */
     public function fundUpdate(Request $request): JsonResponse
     {
-        if (empty($request->input('fund_id')) || empty($request->input('description'))) {
+        
+        // Web: campaign_id, title, content, image | Old: fund_id, description, main_img
+        $fundIdRaw = $request->input('campaign_id') ?: $request->input('fund_id');
+        $content = trim((string) ($request->input('content') ?? $request->input('description') ?? ''));
+        if ($fundIdRaw === null || $fundIdRaw === '' || $content === '') {
             return response()->json([
                 "ResponseCode" => "401",
                 "Result" => "false",
-                "ResponseMsg" => "Something Went Wrong!"
+                "ResponseMsg" => "campaign_id (or fund_id) and content (or description) required."
             ], 401);
         }
 
-        $fund_id = strip_tags($this->h->real_string($request->input('fund_id')));
-        $description = strip_tags($this->h->real_string($request->input('description')));
+        $fund_id = (int) trim((string) $fundIdRaw, " \t\n\r\0\x0B\"'");
+        $title = strip_tags($this->h->real_string($request->input('title') ?: \Illuminate\Support\Str::limit($content, 80)));
+        $description = strip_tags($this->h->real_string($content));
         
         // Get user ID from authenticated user
         $uid = $this->getUserId($request);
@@ -34,23 +39,76 @@ class FundUpdateController extends BaseApiController
                 "ResponseMsg" => "Unauthorized! Please login first."
             ], 401);
         }
-        $size = (int) $request->input('size', 0);
         $timestamp = date("Y-m-d H:i:s");
 
-        if ($size > 0) {
-            $uploadedFiles = $this->processFileUploads('fundupdate', $size, '/images/fund_update/');
-            $multifile = implode('$;', $uploadedFiles);
-
-            $table = "fund_update";
-            $field_values = ["fund_id", "uid", "photo", "update_desc", "update_date"];
-            $data_values = [$fund_id, $uid, $multifile, $description, $timestamp];
-        } else {
-            $table = "fund_update";
-            $field_values = ["fund_id", "uid", "update_desc", "update_date"];
-            $data_values = [$fund_id, $uid, $description, $timestamp];
+        // Image: web uses 'image', old API uses 'main_img'
+        $multifile = null;
+        $imageFile = $request->file('image') ?: $request->file('main_img');
+        if ($imageFile && $imageFile->isValid()) {
+            $multifile = $this->uploadSingleImage($imageFile, '/images/fund_update/');
+        }
+        if ($multifile === null && $imageFile) {
+            $multifile = $this->uploadSingleImageFromPath($imageFile, '/images/fund_update/');
+        }
+        // Fallback: $_FILES when Laravel Request file() doesn't populate (e.g. some curl/Postman)
+        foreach (['image', 'main_img'] as $fileKey) {
+            if ($multifile !== null) {
+                break;
+            }
+            if (!isset($_FILES[$fileKey])) {
+                continue;
+            }
+            $fu = $_FILES[$fileKey];
+            $err = is_array($fu['error'] ?? null) ? ($fu['error'][0] ?? UPLOAD_ERR_NO_FILE) : ($fu['error'] ?? UPLOAD_ERR_NO_FILE);
+            if ($err === UPLOAD_ERR_OK) {
+                $multifile = $this->uploadFromPhpFiles($fileKey, '/images/fund_update/');
+            } elseif ($err !== UPLOAD_ERR_NO_FILE) {
+                return response()->json([
+                    "ResponseCode" => "400",
+                    "Result" => "false",
+                    "ResponseMsg" => $this->uploadErrorMessage($err)
+                ], 400);
+            }
         }
 
-        $check = $this->h->insertData_Api($field_values, $data_values, $table);
+        // Store update in campaigns.updates (JSON) – no campaign_updates table
+        if (empty($title)) {
+            $title = \Illuminate\Support\Str::limit($description, 80) ?: 'Update';
+        }
+
+        $campaign = DB::table('campaigns')->where('id', $fund_id)->where('user_id', $uid)->first();
+        if (!$campaign) {
+            return response()->json([
+                "ResponseCode" => "401",
+                "Result" => "false",
+                "ResponseMsg" => "Campaign not found or unauthorized."
+            ], 401);
+        }
+
+        $updates = [];
+        if (!empty($campaign->updates)) {
+            $updates = is_string($campaign->updates) ? json_decode($campaign->updates, true) : (array) $campaign->updates;
+        }
+        $updateData = [
+            'id' => $fund_id,
+            'name' => $title,
+            'description' => $description,
+            'image' => $multifile ?: '',
+            'updated_at' => date('Y-m-d H:i:s'),
+        ];
+
+        try {
+            DB::table('campaigns')
+                ->where('id', $fund_id)
+                ->where('user_id', $uid)
+                ->update($updateData);
+        } catch (\Exception $e) {
+            return response()->json([
+                "ResponseCode" => "500",
+                "Result" => "false",
+                "ResponseMsg" => "Database error: " . $e->getMessage()
+            ], 500);
+        }
 
         return response()->json([
             "ResponseCode" => "200",
@@ -174,6 +232,52 @@ class FundUpdateController extends BaseApiController
             "ResponseCode" => "200",
             "Result" => "true",
             "ResponseMsg" => "Fund Completed Successfully!!"
+        ]);
+    }
+
+    /**
+     * Delete Fund (user can delete own campaign only)
+     */
+    public function deleteFund(Request $request): JsonResponse
+    {
+        $data = $this->getRequestData($request);
+
+        if (empty($data['fund_id'])) {
+            return response()->json([
+                "ResponseCode" => "401",
+                "Result" => "false",
+                "ResponseMsg" => "Something Went Wrong!"
+            ], 401);
+        }
+
+        $fund_id = (int) $data['fund_id'];
+        $uid = $this->getUserId($request);
+
+        if (empty($uid)) {
+            return response()->json([
+                "ResponseCode" => "401",
+                "Result" => "false",
+                "ResponseMsg" => "Unauthorized! Please login first."
+            ], 401);
+        }
+
+        $campaign = DB::table('campaigns')->where('id', $fund_id)->where('user_id', $uid)->first();
+
+        if (!$campaign) {
+            return response()->json([
+                "ResponseCode" => "401",
+                "Result" => "false",
+                "ResponseMsg" => "Campaign not found or unauthorized!"
+            ], 401);
+        }
+
+        // Delete campaign (updates in campaigns.updates go with it)
+        DB::table('campaigns')->where('id', $fund_id)->where('user_id', $uid)->delete();
+
+        return response()->json([
+            "ResponseCode" => "200",
+            "Result" => "true",
+            "ResponseMsg" => "Fund Deleted Successfully!!"
         ]);
     }
 
@@ -343,6 +447,101 @@ class FundUpdateController extends BaseApiController
             "Result" => "true",
             "ResponseMsg" => "Fund Update Successfully Wait For Approval!!!!!"
         ]);
+    }
+
+    /**
+     * Upload from PHP $_FILES (fallback when Laravel Request file bag is not populated).
+     * Handles both single file (main_img) and array form (main_img[]).
+     */
+    private function uploadFromPhpFiles(string $key, string $url): ?string
+    {
+        if (!isset($_FILES[$key])) {
+            return null;
+        }
+        $fu = $_FILES[$key];
+        $err = is_array($fu['error'] ?? null) ? ($fu['error'][0] ?? UPLOAD_ERR_NO_FILE) : ($fu['error'] ?? UPLOAD_ERR_NO_FILE);
+        if ($err !== UPLOAD_ERR_OK) {
+            return null;
+        }
+        $name = is_array($fu['name'] ?? null) ? ($fu['name'][0] ?? '') : ($fu['name'] ?? '');
+        $tmpName = is_array($fu['tmp_name'] ?? null) ? ($fu['tmp_name'][0] ?? '') : ($fu['tmp_name'] ?? '');
+        if (!is_uploaded_file($tmpName)) {
+            return null;
+        }
+        $basePath = base_path('public');
+        $targetPath = $basePath . $url;
+        if (!is_dir($targetPath)) {
+            mkdir($targetPath, 0755, true);
+        }
+        $ext = pathinfo($name, PATHINFO_EXTENSION) ?: 'jpg';
+        $ext = preg_replace('/[^a-zA-Z0-9]/', '', $ext) ?: 'jpg';
+        $newName = uniqid() . date('YmdHis') . mt_rand() . '.' . $ext;
+        if (!move_uploaded_file($tmpName, $targetPath . $newName)) {
+            return null;
+        }
+        return ltrim($url, '/') . $newName;
+    }
+
+    private function uploadErrorMessage(int $code): string
+    {
+        $messages = [
+            UPLOAD_ERR_INI_SIZE => 'Image is too large (server limit).',
+            UPLOAD_ERR_FORM_SIZE => 'Image is too large.',
+            UPLOAD_ERR_PARTIAL => 'Image was only partially uploaded.',
+            UPLOAD_ERR_NO_TMP_DIR => 'Server upload error (no temp directory).',
+            UPLOAD_ERR_CANT_WRITE => 'Server could not save the image.',
+            UPLOAD_ERR_EXTENSION => 'Upload blocked by server extension.',
+        ];
+        return $messages[$code] ?? 'Image upload failed.';
+    }
+
+    /**
+     * Upload a single image (e.g. main_img) and return stored path relative to public.
+     */
+    private function uploadSingleImage($file, $url)
+    {
+        if (!$file || !$file->isValid()) {
+            return null;
+        }
+        $basePath = base_path('public');
+        $targetPath = $basePath . $url;
+        if (!is_dir($targetPath)) {
+            mkdir($targetPath, 0755, true);
+        }
+        $ext = $file->getClientOriginalExtension() ?: 'jpg';
+        $newName = uniqid() . date('YmdHis') . mt_rand() . '.' . $ext;
+        $file->move($targetPath, $newName);
+        return ltrim($url, '/') . $newName;
+    }
+
+    /**
+     * Upload from UploadedFile using getRealPath() (when isValid() is false but tmp file exists, e.g. Postman/curl).
+     */
+    private function uploadSingleImageFromPath($file, string $url): ?string
+    {
+        $path = $file ? $file->getRealPath() : null;
+        if (!$path || !file_exists($path) || !is_readable($path)) {
+            return null;
+        }
+        $realPath = realpath($path);
+        $tempDir = realpath(sys_get_temp_dir()) ?: sys_get_temp_dir();
+        if (!is_uploaded_file($path) && (!$realPath || strpos($realPath, $tempDir) !== 0)) {
+            return null;
+        }
+        $basePath = base_path('public');
+        $targetPath = $basePath . $url;
+        if (!is_dir($targetPath)) {
+            mkdir($targetPath, 0755, true);
+        }
+        $ext = $file->getClientOriginalExtension() ?: 'jpg';
+        $newName = uniqid() . date('YmdHis') . mt_rand() . '.' . $ext;
+        if (!@rename($file->getRealPath(), $targetPath . $newName)) {
+            if (!@copy($file->getRealPath(), $targetPath . $newName)) {
+                return null;
+            }
+            @unlink($file->getRealPath());
+        }
+        return ltrim($url, '/') . $newName;
     }
 
     /**

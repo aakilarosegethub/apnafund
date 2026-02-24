@@ -52,6 +52,36 @@ class ProcessController extends Controller
         } catch (HttpException $ex) {
             $send['error']   = true;
             $send['message'] = 'Failed to process with api';
+
+            $responseBody = $ex->getMessage();
+            $statusCode   = $ex->statusCode ?? 0;
+
+            // Parse PayPal error JSON for readable message
+            $paypalError = null;
+            if ($responseBody) {
+                $decoded = @json_decode($responseBody, true);
+                if (isset($decoded['details'][0])) {
+                    $d = $decoded['details'][0];
+                    $paypalError = ($d['issue'] ?? '') . ' – ' . ($d['description'] ?? '');
+                } elseif (isset($decoded['message'])) {
+                    $paypalError = $decoded['message'];
+                } elseif (isset($decoded['error_description'])) {
+                    $paypalError = $decoded['error_description'];
+                }
+            }
+
+            $logContext = [
+                'api_hit'        => 'PayPal Orders API – Create Order (v2/checkout/orders)',
+                'http_status'    => $statusCode,
+                'trx'            => $deposit->trx ?? null,
+                'amount'         => $deposit->final_amount ?? null,
+                'currency'       => $deposit->method_currency ?? null,
+                'paypal_message' => $paypalError,
+                'raw_response'   => $responseBody,
+            ];
+
+            \Log::channel('paypal')->error('PayPal API failed', $logContext);
+            \Log::warning('PayPal API error on process', $logContext);
         }
 
         return json_encode($send);

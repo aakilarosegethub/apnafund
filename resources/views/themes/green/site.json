@@ -465,5 +465,17 @@
             "schema_json": "textarea",
             "modal": false
         }
+    },
+    "inbox": {
+        "builder": true,
+        "no_selection": true,
+        "name": "Inbox / Chat",
+        "content": {
+            "page_title": "text",
+            "empty_state_message": "textarea",
+            "browse_button_text": "text",
+            "message_placeholder": "text",
+            "send_button_text": "text"
+        }
     }
 }

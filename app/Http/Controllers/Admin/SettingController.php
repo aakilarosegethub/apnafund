@@ -9,6 +9,7 @@ use App\Models\Form;
 use App\Models\Plugin;
 use App\Models\SiteData;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rules\File;
 use Image;
 
@@ -83,6 +84,14 @@ class SettingController extends Controller
         $setting->date_format    = request('date_format');
         $setting->first_color    = str_replace('#', '', request('first_color'));
         $setting->second_color   = str_replace('#', '', request('second_color'));
+
+        // Campaign Registration Fee
+        if (Schema::hasColumn('settings', 'registration_fee_enabled')) {
+            $setting->registration_fee_enabled = request('registration_fee_enabled') ? 1 : 0;
+            $setting->registration_fee_min     = max(0, (float) (request('registration_fee_amount') ?? 0));
+            $setting->registration_fee_max     = $setting->registration_fee_min;
+        }
+
         $result = $setting->save();
 
         $timeRegionFile = config_path('timeRegion.php');
@@ -344,8 +353,7 @@ class SettingController extends Controller
     function coverUpdate() {
         $this->validate(request(), [
             'cover_image' => ['nullable', 'image', File::types(['png', 'jpg', 'jpeg'])],
-            'heading' => 'required|string|max:2 local ptr ho rha live server pr ni mje kuch debuging checks lga k do 
-            55',
+            'heading' => 'required|string|max:255',
             'subheading' => 'required|string|max:255',
             'description' => 'required|string',
             'first_button_text' => 'required|string|max:100',

@@ -19,7 +19,8 @@ class AuthorizationStatus
         if (auth()->check()) {
             $user = auth()->user();
 
-            if ($user->status && $user->ec && $user->sc && $user->tc) {
+            // Email verification only (mobile/SMS and 2FA skipped)
+            if ($user->status && $user->ec) {
                 return $next($request);
             } else {
                 return to_route('user.authorization');

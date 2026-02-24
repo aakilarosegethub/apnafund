@@ -1,0 +1,113 @@
+Step 8: Authentication and Admin Architecture Only
+
+This file explains only authentication and admin architecture.
+
+1) User authentication (login)
+File path: app/Http/Controllers/User/Auth/LoginController.php
+Class name: LoginController
+Method name: loginForm, login, logout
+What this part does: Shows login page, authenticates the user, logs out the user.
+Why this separation exists: Users use the normal web guard and user login screens.
+CRITICAL: User login must use the default web guard, not the admin guard.
+
+2) User authentication (register)
+File path: app/Http/Controllers/User/Auth/RegisterController.php
+Class name: RegisterController
+Method name: registerBusinessForm, register, create
+What this part does: Shows register pages and creates a new user account.
+Why this separation exists: User registration is separate from admin accounts.
+CRITICAL: Admin accounts must never be created by user registration.
+
+3) User password reset
+File path: app/Http/Controllers/User/Auth/ForgotPasswordController.php
+Class name: ForgotPasswordController
+Method name: requestForm, sendResetCode, verificationForm, verificationCode
+What this part does: Sends a reset code and verifies it for users.
+Why this separation exists: Users reset only their own accounts.
+CRITICAL: User reset must use the user password reset table/broker.
+
+File path: app/Http/Controllers/User/Auth/ResetPasswordController.php
+Class name: ResetPasswordController
+Method name: resetForm, resetPassword
+What this part does: Resets the user password after code verification.
+Why this separation exists: Keeps user reset flow isolated from admin flow.
+CRITICAL: Do not allow admin reset in this controller.
+
+4) Admin authentication (separate guard)
+File path: app/Http/Controllers/Admin/Auth/LoginController.php
+Class name: LoginController
+Method name: loginForm, login, logout, guard
+What this part does: Authenticates admin users using guard('admin').
+Why this separation exists: Admin accounts must be isolated from user sessions.
+CRITICAL: Admin login must always use guard('admin').
+
+5) Admin password reset
+File path: app/Http/Controllers/Admin/Auth/ForgotPasswordController.php
+Class name: ForgotPasswordController
+Method name: requestForm, sendResetCode, verificationForm, verificationCode
+What this part does: Sends and verifies reset codes for admins only.
+Why this separation exists: Admin reset uses a different table and model.
+CRITICAL: Admin reset must not use user reset records.
+
+File path: app/Http/Controllers/Admin/Auth/ResetPasswordController.php
+Class name: ResetPasswordController
+Method name: resetForm, resetPassword
+What this part does: Resets the admin password after code verification.
+Why this separation exists: Admin credentials are separate from users.
+CRITICAL: Admin reset must only target Admin model accounts.
+
+6) Guards and password brokers
+File path: config/auth.php
+Class name: (config)
+Method name: (config)
+What this part does: Defines web guard for users and admin guard for admins,
+and separate password brokers for users/admins.
+Why this separation exists: Prevents session and reset token mixing.
+CRITICAL: Do not merge user and admin guards or password brokers.
+
+7) Middleware and guards used
+File path: bootstrap/app.php
+Class name: (middleware config)
+Method name: (alias)
+What this part does: Registers middleware aliases:
+admin -> RedirectIfNotAdmin, admin.guest -> RedirectIfAdmin, auth -> Authenticate.
+Why this separation exists: Admin routes enforce admin guard only.
+CRITICAL: Admin routes must keep the admin middleware alias.
+
+File path: app/Http/Middleware/RedirectIfNotAdmin.php
+Class name: RedirectIfNotAdmin
+Method name: handle
+What this part does: Blocks requests when admin guard is not logged in.
+Why this separation exists: Protects admin pages from non-admins.
+CRITICAL: Must always check guard('admin').
+
+File path: app/Http/Middleware/RedirectIfAdmin.php
+Class name: RedirectIfAdmin
+Method name: handle
+What this part does: Redirects logged-in admins away from admin guest pages.
+Why this separation exists: Prevents admins from seeing login pages again.
+CRITICAL: Must always check guard('admin').
+
+8) Route separation (user vs admin)
+File path: bootstrap/app.php
+Class name: (routing config)
+Method name: (routing setup)
+What this part does: Loads admin routes under /admin and user routes under /user.
+Why this separation exists: Keeps admin URLs and user URLs isolated.
+CRITICAL: Admin routes must remain under the /admin prefix.
+
+File path: routes/admin.php
+Class name: (routes)
+Method name: (route groups)
+What this part does: Admin auth routes use admin.guest,
+admin pages use admin middleware.
+Why this separation exists: Admin access is protected at the route level.
+CRITICAL: Admin route group must keep admin middleware protection.
+
+File path: routes/user.php
+Class name: (routes)
+Method name: (route groups)
+What this part does: User auth uses guest/auth middleware,
+and user pages require auth.
+Why this separation exists: Users and admins are separated by routes and guards.
+CRITICAL: User routes must not use admin middleware.

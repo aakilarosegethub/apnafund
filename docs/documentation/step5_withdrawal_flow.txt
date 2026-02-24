@@ -1,0 +1,54 @@
+Step 5: Withdrawal Flow Only
+
+This file explains only the withdrawal flow, from the user opening the page
+to the admin approving or rejecting the request.
+
+1) User opens the withdrawal page
+File path: app/Http/Controllers/User/WithdrawController.php
+Class name: WithdrawController
+Method name: methods
+What this method does: Loads active withdrawal methods and shows the page.
+Why this step exists: The user must choose a withdrawal method before submitting.
+Status changes: None.
+
+2) User submits amount and method
+File path: app/Http/Controllers/User/WithdrawController.php
+Class name: WithdrawController
+Method name: store
+What this method does: Validates amount, creates a Withdrawal record, saves trx in session.
+Why this step exists: The system needs a withdrawal record before preview.
+Status changes: None in this method (the record uses its default status).
+
+3) User opens the preview page
+File path: app/Http/Controllers/User/WithdrawController.php
+Class name: WithdrawController
+Method name: preview
+What this method does: Loads the withdrawal by session trx and shows preview.
+Why this step exists: The user reviews details before final submit.
+Status changes: None.
+
+4) User confirms and submits withdrawal
+File path: app/Http/Controllers/User/WithdrawController.php
+Class name: WithdrawController
+Method name: submit
+What this method does: Validates the form, checks 2FA (if enabled), saves withdraw info,
+sets the withdrawal to pending, deducts user balance, creates a transaction, and notifies admin.
+Why this step exists: This is the final user action that creates a pending request.
+Status changes: Withdrawal status changes to PAYMENT_PENDING.
+
+5) Admin approves the withdrawal
+File path: app/Http/Controllers/Admin/WithdrawController.php
+Class name: WithdrawController
+Method name: approve
+What this method does: Marks the pending withdrawal as approved and notifies the user.
+Why this step exists: Admin must confirm payouts before they are considered done.
+Status changes: Withdrawal status changes to PAYMENT_SUCCESS.
+
+6) Admin rejects the withdrawal
+File path: app/Http/Controllers/Admin/WithdrawController.php
+Class name: WithdrawController
+Method name: cancel
+What this method does: Marks the pending withdrawal as cancelled, refunds balance,
+creates a refund transaction, and notifies the user.
+Why this step exists: Admin can reject invalid or failed withdrawals safely.
+Status changes: Withdrawal status changes to PAYMENT_CANCEL.

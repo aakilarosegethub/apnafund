@@ -305,6 +305,7 @@ Route::prefix('api')->group(function () {
     Route::match(['get', 'post'], '/faq.php', [FaqController::class, 'faqList']);
     Route::match(['get', 'post'], '/pagelist.php', [PageController::class, 'pageList']);
     Route::match(['get', 'post'], '/paymentgateway.php', [PaymentController::class, 'paymentGatewayList']);
+    Route::get('/gateways', [PaymentController::class, 'gateways']);
 
     // Auth APIs (Public - No token required for login/register)
     Route::match(['get', 'post'], '/reg_user.php', [AuthController::class, 'register']);
@@ -335,6 +336,7 @@ Route::prefix('api')->group(function () {
         Route::match(['get', 'post'], '/fund_update.php', [FundUpdateController::class, 'fundUpdate']);
         Route::match(['get', 'post'], '/fund_cancle.php', [FundUpdateController::class, 'cancelFund']);
         Route::match(['get', 'post'], '/fund_complete.php', [FundUpdateController::class, 'completeFund']);
+        Route::match(['get', 'post'], '/fund_delete.php', [FundUpdateController::class, 'deleteFund']);
         Route::match(['get', 'post'], '/edit_fund.php', [FundUpdateController::class, 'editFund']);
 
         // User APIs

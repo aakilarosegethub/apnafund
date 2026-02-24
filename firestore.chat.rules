@@ -1,0 +1,25 @@
+// Firestore Security Rules for Chat (apnafund)
+// 0. Create a composite index: collection {prefix}_conversations, field "participants" (array-contains),
+//    field "last_message_at" (descending). Firebase Console will show a link when you first run the query.
+// 1. Set FIREBASE_COLLECTION_PREFIX in .env (e.g. apnafund). Collection name = {prefix}_conversations.
+// 2. In Firebase Console > Firestore > Rules, add a match for your collection, e.g.:
+//    match /apnafund_conversations/{convId} { ... }
+//    (Replace apnafund with your FIREBASE_COLLECTION_PREFIX value.)
+// 3. request.auth.uid = Laravel user id (string), set via custom token.
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Example: collection apnafund_conversations. Change to match your FIREBASE_COLLECTION_PREFIX.
+    match /apnafund_conversations/{convId} {
+      allow read, write: if request.auth != null
+        && request.auth.uid in resource.data.participants;
+      allow create: if request.auth != null
+        && request.auth.uid in request.resource.data.participants;
+      match /messages/{msgId} {
+        allow read, write: if request.auth != null
+          && request.auth.uid in get(/databases/$(database)/documents/apnafund_conversations/$(convId)).data.participants;
+      }
+    }
+  }
+}

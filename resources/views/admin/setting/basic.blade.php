@@ -49,6 +49,26 @@
                         <label class="form--label required">@lang('Fractional Digit Show')</label>
                         <input type="text" class="form--control" name="fraction_digit" value="{{ $setting->fraction_digit }}" placeholder="2" required>
                     </div>
+                    @if(\Illuminate\Support\Facades\Schema::hasColumn('settings', 'registration_fee_enabled'))
+                    <!-- Campaign Registration Fee -->
+                    <div class="col-12 mt-3">
+                        <hr>
+                        <h5 class="mb-3">@lang('Campaign Registration Fee')</h5>
+                        <p class="text-muted small">@lang('Charge creators when they create a campaign. Uses existing payment gateways.')</p>
+                    </div>
+                    <div class="col-lg-4 col-sm-6">
+                        <label class="form--label">@lang('Enable Registration Fee')</label>
+                        <div class="form-check form--switch">
+                            <input class="form-check-input" type="checkbox" name="registration_fee_enabled" value="1" {{ ($setting->registration_fee_enabled ?? false) ? 'checked' : '' }}>
+                            <label class="form-check-label">@lang('Charge creator on campaign creation')</label>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-sm-6">
+                        <label class="form--label">@lang('Fee Amount Per Campaign')</label>
+                        <input type="number" class="form--control" name="registration_fee_amount" value="{{ $setting->registration_fee_min ?? 0 }}" placeholder="0" min="0" step="0.01">
+                        <small class="form-text text-muted">@lang('Amount in') {{ $setting->site_cur ?? 'USD' }} @lang('(platform currency)')</small>
+                    </div>
+                    @endif
                     <div class="col-lg-4 col-sm-6">
                         <label class="form--label required">@lang('Primary Color')</label>
                         <div class="input--group colorpicker">

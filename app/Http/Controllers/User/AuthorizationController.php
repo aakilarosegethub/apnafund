@@ -14,18 +14,12 @@ class AuthorizationController extends Controller
         if (!$user->status) {
             $pageTitle = 'Banned';
             $type = 'ban';
-        }elseif(!$user->ec) {
+        } elseif (!$user->ec) {
             $type = 'email';
             $pageTitle = 'Confirm Email';
             $toastTemplate = 'EVER_CODE';
-        }elseif (!$user->sc) {
-            $type = 'sms';
-            $pageTitle = 'Confirm Mobile Number';
-            $toastTemplate = 'SVER_CODE';
-        }elseif (!$user->tc) {
-            $pageTitle = '2FA Confirmation';
-            $type = '2fa';
-        }else{
+        } else {
+            // Email verified - allow access (mobile/SMS and 2FA skipped)
             return to_route('user.home');
         }
 

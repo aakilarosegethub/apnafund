@@ -8,6 +8,8 @@ use App\Models\Contact;
 use App\Models\Deposit;
 use App\Models\Campaign;
 use App\Models\Category;
+use App\Models\Admins\HeaderCategory;
+use App\Models\Admins\FooterCategory;
 use App\Models\Language;
 use App\Models\SiteData;
 use App\Constants\ManageStatus;
@@ -182,22 +184,39 @@ class WebsiteController extends Controller
 
     /**
      * Pretty URL for campaigns by category, e.g. /campaigns/category/health
-     *
-     * Same listing page as /campaigns, but pre-filtered by category slug.
-     * No redirect – URL stays /campaigns/category/{slug}.
+     * Resolves: 1) Header category (multi) 2) Footer category (multi) 3) Single Category
      */
     function campaignCategory($slug) {
-        // Try to resolve category; if not found, behave like all campaigns (no 404)
-        $category = Category::where('slug', $slug)->active()->first();
+        $category = null;
+        $categoryIds = [];
+        $pageTitle = 'Campaigns';
 
-        $pageTitle  = $category
-            ? 'Campaigns in ' . $category->name
-            : 'Campaigns';
+        // 1) Header category (multi categories)
+        $headerCategory = HeaderCategory::where('slug', $slug)->where('status', 'active')->first();
+        if ($headerCategory) {
+            $categoryIds = $headerCategory->getCategoryIdsForFilter();
+            $pageTitle = 'Campaigns – ' . $headerCategory->label;
+        }
 
-        // Fetch SEO data - first try category's own SEO fields, then category-specific SiteData, then general campaign category SEO
+        // 2) Footer category (multi categories)
+        if (empty($categoryIds)) {
+            $footerCategory = FooterCategory::where('slug', $slug)->where('status', 'active')->first();
+            if ($footerCategory) {
+                $categoryIds = $footerCategory->getCategoryIdsForFilter();
+                $pageTitle = 'Campaigns – ' . $footerCategory->label;
+            }
+        }
+
+        // 3) Single campaign category
+        if (empty($categoryIds)) {
+            $category = Category::where('slug', $slug)->active()->first();
+            if ($category) {
+                $pageTitle = 'Campaigns in ' . $category->name;
+            }
+        }
+
         $pageSEO = null;
         if ($category) {
-            // First priority: Use category's own SEO fields from database
             if (!empty($category->meta_title) || !empty($category->meta_description) || !empty($category->meta_keywords)) {
                 $pageSEO = [
                     'meta_title' => $category->meta_title ?? '',
@@ -205,7 +224,6 @@ class WebsiteController extends Controller
                     'meta_keywords' => $category->meta_keywords ?? '',
                 ];
             } else {
-                // Second priority: Try category-specific SEO from SiteData: campaign_category.{slug}.seo
                 $categorySeoData = SiteData::where('data_key', 'campaign_category.' . $slug . '.seo')->first();
                 if ($categorySeoData && $categorySeoData->data_info) {
                     $pageSEO = [
@@ -216,13 +234,10 @@ class WebsiteController extends Controller
                 }
             }
         }
-        
-        // Third priority: If no category-specific SEO, try general campaign category SEO
         if (!$pageSEO || (empty($pageSEO['meta_title']) && empty($pageSEO['meta_description']))) {
             $pageSEO = getPageSEO('campaign_category');
         }
 
-        // Categories list with counts (same as campaigns())
         $categories = Category::active()
             ->select('name', 'slug')
             ->withCount(['campaigns' => function($query) {
@@ -230,8 +245,9 @@ class WebsiteController extends Controller
             }])
             ->get();
 
-        // Base query
-        $campaigns = Campaign::when($category, function ($query) use ($category) {
+        $campaigns = Campaign::when(!empty($categoryIds), function ($query) use ($categoryIds) {
+                                $query->whereIn('category_id', $categoryIds);
+                            })->when($category && empty($categoryIds), function ($query) use ($category) {
                                 $query->where('category_id', $category->id);
                             })->when(request()->filled('name'), function ($query) {
                                 $query->where('name', 'like', '%' . request('name') . '%');
@@ -239,14 +255,12 @@ class WebsiteController extends Controller
                                 $dateArray = explode(' - ', request('date_range'));
                                 $startDate = Carbon::parse($dateArray[0])->format('Y-m-d');
                                 $endDate   = Carbon::parse($dateArray[1])->format('Y-m-d');
-
                                 $query->where('start_date', '>=', $startDate)->where('end_date', '<=', $endDate);
                             })->commonQuery()
                             ->approve()
                             ->latest()
                             ->paginate(getPaginate(10));
 
-        // For the filter dropdown to show the selected category
         if ($category) {
             request()->merge(['category' => $category->slug]);
         }
@@ -782,6 +796,7 @@ class WebsiteController extends Controller
             'project_category_id' => $request->category_id,
             'project_subcategory_id' => $request->subcategory_id
         ]);
+        session()->save();
 
         return response()->json([
             'success' => true,
@@ -812,43 +827,44 @@ class WebsiteController extends Controller
     }
 
     private function getAllowedCountries() {
-        // Get countries list from admin settings
+        // Get countries from Admin → Basic Settings → "Allowed Countries for Project Location"
         $siteData = \App\Models\SiteData::where('data_key', 'general.allowed_countries')->first();
         
         if ($siteData && $siteData->data_info) {
-            // SiteData model casts data_info as array, so it should already be an array
             $dataInfo = $siteData->data_info;
-            
-            // Ensure it's an array
             if (!is_array($dataInfo)) {
                 $dataInfo = is_object($dataInfo) ? (array)$dataInfo : json_decode($dataInfo, true);
             }
             
             $selectedCountries = $dataInfo['selected_countries'] ?? [];
-            
-            // Handle boolean conversion - check for true, '1', 1, etc.
             $useSelectedOnly = false;
             if (isset($dataInfo['use_selected_only'])) {
                 $value = $dataInfo['use_selected_only'];
                 $useSelectedOnly = ($value === true || $value === '1' || $value === 1 || $value === 'true');
             }
             
-            // If use_selected_only is true, return only selected countries
+            // When "Use Only Selected Countries" is checked: show only selected
             if ($useSelectedOnly) {
                 if (!empty($selectedCountries) && is_array($selectedCountries)) {
-                    // Filter out empty values and sort alphabetically
                     $selectedCountries = array_filter($selectedCountries);
                     if (!empty($selectedCountries)) {
                         sort($selectedCountries);
                         return array_values($selectedCountries);
                     }
                 }
-                // If use_selected_only is true but no countries selected, return empty array
                 return [];
+            }
+            
+            // When unchecked but admin has selected countries: still use only those (dropdown = admin selection)
+            if (!empty($selectedCountries) && is_array($selectedCountries)) {
+                $selectedCountries = array_filter($selectedCountries);
+                if (!empty($selectedCountries)) {
+                    sort($selectedCountries);
+                    return array_values($selectedCountries);
+                }
             }
         }
         
-        // Return all countries if use_selected_only is false or not set
         return $this->getAllCountriesList();
     }
 
@@ -893,6 +909,7 @@ class WebsiteController extends Controller
 
         // Save country in session
         session(['project_country' => $request->country]);
+        session()->save();
 
         return response()->json([
             'success' => true,
@@ -915,8 +932,13 @@ class WebsiteController extends Controller
             return redirect()->route('start.project')->with('error', 'Please complete all steps first.');
         }
 
-        // Force green theme for this page
-        return view('themes.green.page.projectTerms', compact('pageTitle'));
+        // Force green theme for this page - pass session data for fallback in create-campaign
+        $projectData = [
+            'project_category_id' => session('project_category_id'),
+            'project_subcategory_id' => session('project_subcategory_id'),
+            'project_country' => session('project_country'),
+        ];
+        return view('themes.green.page.projectTerms', compact('pageTitle', 'projectData'));
     }
 
     function createCampaignFromSession(\Illuminate\Http\Request $request) {
@@ -928,23 +950,37 @@ class WebsiteController extends Controller
             ], 401);
         }
 
-        // Validate that all required session data exists
-        if (!session('project_category_id') || !session('project_subcategory_id') || !session('project_country')) {
+        // Get data from session or request body (fallback when session lost)
+        $categoryId = session('project_category_id') ?? $request->input('category_id');
+        $subcategoryId = session('project_subcategory_id') ?? $request->input('subcategory_id');
+        $country = session('project_country') ?? $request->input('country');
+
+        if (!$categoryId || !$subcategoryId || !$country) {
             return response()->json([
                 'success' => false,
                 'message' => 'Missing required information. Please complete all steps.'
             ], 400);
         }
 
+        // Validate category/subcategory exist
+        $categoryExists = \App\Models\Category::where('id', $categoryId)->exists();
+        $subcategoryExists = \App\Models\Admins\SubCategory::where('id', $subcategoryId)->exists();
+        if (!$categoryExists || !$subcategoryExists) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid category. Please complete all steps again.'
+            ], 400);
+        }
+
         try {
-            // Create a basic campaign with session data
+            // Create a basic campaign with session/request data
             $campaign = new Campaign();
             $campaign->user_id = auth()->id();
-            $campaign->category_id = session('project_category_id');
+            $campaign->category_id = $categoryId;
             $campaign->name = 'My New Campaign ' . time(); // Temporary name, user will edit
             $campaign->slug = slug($campaign->name);
             $campaign->description = ''; // User will add description in edit page
-            $campaign->location = session('project_country');
+            $campaign->location = $country;
             $campaign->goal_amount = 1000; // Default goal amount
             $campaign->raised_amount = 0;
             $campaign->start_date = Carbon::today();
@@ -995,10 +1031,23 @@ class WebsiteController extends Controller
                 \Log::error('Failed to send admin email notification: ' . $e->getMessage());
             }
 
+            // If registration fee is enabled, redirect directly to payment page
+            $setting = bs();
+            $redirectUrl = route('user.campaign.edit', $campaign->slug);
+            if (!empty($setting->registration_fee_enabled) && ($setting->registration_fee_min ?? 0) > 0) {
+                $hasPaid = Deposit::where('campaign_id', $campaign->id)
+                    ->where('deposit_type', 'registration_fee')
+                    ->where('status', ManageStatus::PAYMENT_SUCCESS)
+                    ->exists();
+                if (!$hasPaid) {
+                    $redirectUrl = route('user.campaign.pay.registration.fee', $campaign->slug);
+                }
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Campaign created successfully',
-                'redirect_url' => route('user.campaign.edit', $campaign->slug)
+                'redirect_url' => $redirectUrl
             ]);
 
         } catch (\Exception $e) {

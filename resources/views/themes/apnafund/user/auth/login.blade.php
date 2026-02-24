@@ -265,6 +265,9 @@ body{
 
         <form action="{{ route('user.login') }}" method="POST">
             @csrf
+            @if(!empty($redirectUrl))
+                <input type="hidden" name="redirect" value="{{ $redirectUrl }}">
+            @endif
 
             <div class="form-group">
                 <label class="form-label">Username or Email</label>

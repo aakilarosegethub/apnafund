@@ -19,16 +19,20 @@ class Deposit extends Model
         'amount',
         'charge',
         'rate',
-        'final_amo',
+        'final_amount',
         'btc_amo',
         'btc_wallet',
         'trx',
         'status',
         'campaign_id',
         'reward_id',
+        'deposit_type',
         'email',
         'phone',
-        'name'
+        'name',
+        'full_name',
+        'country',
+        'receiver_id',
     ];
 
     protected $casts = [

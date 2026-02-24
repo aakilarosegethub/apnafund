@@ -1,371 +1,245 @@
 @php
     $footerContent = getSiteData('footer.content', true);
     $footerElements = getSiteData('footer.element', false, null, true);
-    $categories = \App\Models\Category::active()->get();
+    $footerCategories = \App\Models\Admins\FooterCategory::with('category')->where('status', 'active')->orderBy('sort_order')->orderBy('id')->take(8)->get();
 @endphp
 
-<!-- Tabler Icons CDN -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-<section class="cta">
-  <h2>Ready to Start Something Big?</h2>
-  <p class="mt-2">Launch your campaign and reach thousands of backers.</p>
-  @auth
-      <a href="{{ route('start.project') }}" class="btn btn-light px-4 mt-3">Start a Campaign</a>
-  @else
-      <a href="{{ route('user.login') }}" class="btn btn-light px-4 mt-3">Start a Campaign</a>
-  @endauth
-</section>
-<!-- FOOTER -->
-<footer class="fundgreen-footer bg-light">
-  <div class="container py-5">
-    <div class="row gy-4">
 
-      <!-- Brand -->
-      <div class="col-lg-3 col-md-6">
-        @php
-          // Check if footer logo exists in database
-          $footerLogo = @$footerContent->data_info['footer_logo'] ?? null;
-          
-          if ($footerLogo) {
-            // Use footer logo from database
-            if (filter_var($footerLogo, FILTER_VALIDATE_URL)) {
-              // External URL
-              $logoUrl = $footerLogo;
-            } else {
-              // Local file
-              $logoUrl = getImage('assets/images/site/footer/' . $footerLogo, '180x40');
-            }
-          } else {
-            // Fallback to default logo
-            $logoPath = getFilePath('logoFavicon') . '/logo_light.png';
-            $logoFile = public_path($logoPath);
-            clearstatcache(true, $logoFile);
-            $logoLightVersion = file_exists($logoFile) ? filemtime($logoFile) : time();
-            $logoUrl = getImage($logoPath, getFileSize('logoFavicon')) . '?v=' . $logoLightVersion . '&t=' . time();
-          }
-        @endphp
-        <a href="{{ route('home') }}" class="d-inline-block mb-3">
-          <img
-            src="{{ $logoUrl }}"
-            alt="{{ bs('site_name') ?? 'Apna Crowdfunding' }} Logo"
-            style="height: 40px; max-width: 180px; object-fit: contain;"
-            onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';"
-          >
-          <span style="display: none; font-size: 1.5rem; font-weight: bold; color: #198754;">{{ bs('site_name') ?? 'FundGreen' }}</span>
-        </a>
-        @if(!empty(@$footerContent->data_info['footer_text']))
-        <p class="text-muted small lh-lg">
-          {{ @$footerContent->data_info['footer_text'] }}
-        </p>
-        @endif
-      </div>
+<footer class="ks-footer-dark">
+    <div class="container py-5">
+        <div class="row gy-4">
+            <div class="col-lg-3">
+                <div class="brand-section">
+                    @php
+                        $footerLogo = @$footerContent->data_info['footer_logo'] ?? null;
+                        if ($footerLogo) {
+                            $logoUrl = filter_var($footerLogo, FILTER_VALIDATE_URL) ? $footerLogo : getImage('assets/images/site/footer/' . $footerLogo, '180x40');
+                        } else {
+                            $logoPath = getFilePath('logoFavicon') . '/logo_light.png';
+                            $logoUrl = getImage($logoPath, getFileSize('logoFavicon'));
+                        }
+                    @endphp
+                    
+                    <a href="{{ route('home') }}" class="footer-logo mb-4 d-block">
+                        <img src="{{ $logoUrl }}" alt="Logo" style="height: 40px; filter: brightness(0) invert(1);">
+                    </a>
 
-      @php
-        // Get footer menu items from database
-        $footerMenuItems = \App\Models\SiteData::where('data_key', 'footer_menu.element')
-            ->orderBy('id', 'asc')
-            ->get();
+                    <div class="ks-selector mb-2">
+                        <span>English</span>
+                        <i class="ti ti-chevron-down"></i>
+                    </div>
+                    <div class="ks-selector">
+                        <span>$ US Dollar (USD)</span>
+                        <i class="ti ti-chevron-down"></i>
+                    </div>
+                </div>
+            </div>
 
-        // Group menu items by section_type and filter by status
-        $aboutItems = [];
-        $supportItems = [];
-        $moreItems = [];
-        $downItems = [];
+            <div class="col-lg-9">
+                <div class="row">
+                    @php
+                        $footerMenuItems = \App\Models\SiteData::where('data_key', 'footer_menu.element')->orderBy('id', 'asc')->get();
+                        $sections = ['about' => [], 'support' => [], 'more_from_apnacrowdfunding' => [], 'down_section' => []];
+                        
+                        foreach ($footerMenuItems as $item) {
+                            $itemData = (array) $item->data_info;
+                            if (($itemData['status'] ?? '1') == '0') continue;
+                            $sections[$itemData['section_type'] ?? ''][] = $item;
+                        }
+                    @endphp
 
-        foreach ($footerMenuItems as $item) {
-            $itemData = is_array($item->data_info) ? $item->data_info : (array) $item->data_info;
+                    <div class="col-md-3 col-6">
+                        <h6 class="footer-title">Discover</h6>
+                        <ul class="footer-list">
+                            @foreach($footerCategories as $cat)
+                                @php
+                                    $hasCategories = count($cat->getCategoryIdsForFilter()) > 0;
+                                    if ($hasCategories) {
+                                        $catUrl = route('campaign.category', $cat->slug);
+                                    } else {
+                                        $catUrl = (str_starts_with($cat->slug ?? '', 'http') || str_starts_with($cat->slug ?? '', '/')) ? $cat->slug : url($cat->slug ?? '#');
+                                    }
+                                @endphp
+                                <li><a href="{{ $catUrl }}">{{ __($cat->label) }}</a></li>
+                            @endforeach
+                        </ul>
+                    </div>
 
-            // Check if status is active (1 or '1')
-            // If status field doesn't exist, consider it active by default (for backward compatibility)
-            $status = isset($itemData['status']) ? $itemData['status'] : '1';
+                    <div class="col-md-3 col-6">
+                        <h6 class="footer-title">About</h6>
+                        <ul class="footer-list">
+                            @foreach($sections['about'] as $item)
+                                @php $slug = trim($item->data_info['slug'] ?? '#'); $url = (str_starts_with($slug, 'http') || str_starts_with($slug, '/')) ? $slug : url($slug); @endphp
+                                <li><a href="{{ $url }}">{{ __($item->data_info['menu_label'] ?? '') }}</a></li>
+                            @endforeach
+                        </ul>
+                    </div>
 
-            // Only skip if status is explicitly set to '0' or 0
-            if (isset($itemData['status']) && ($status == '0' || $status == 0)) {
-                continue; // Skip inactive items
-            }
+                    <div class="col-md-3 col-6">
+                        <h6 class="footer-title">Support</h6>
+                        <ul class="footer-list">
+                            @foreach($sections['support'] as $item)
+                                @php $slug = trim($item->data_info['slug'] ?? '#'); $url = (str_starts_with($slug, 'http') || str_starts_with($slug, '/')) ? $slug : url($slug); @endphp
+                                <li><a href="{{ $url }}">{{ __($item->data_info['menu_label'] ?? '') }}</a></li>
+                            @endforeach
+                        </ul>
+                    </div>
 
-            $sectionType = isset($itemData['section_type']) ? $itemData['section_type'] : '';
-
-            if ($sectionType == 'about') {
-                $aboutItems[] = $item;
-            } elseif ($sectionType == 'support') {
-                $supportItems[] = $item;
-            } elseif ($sectionType == 'more_from_apnacrowdfunding') {
-                $moreItems[] = $item;
-            } elseif ($sectionType == 'down_section') {
-                $downItems[] = $item;
-            }
-        }
-
-        // Sort each section by sort_order (lower numbers first)
-        usort($aboutItems, function($a, $b) {
-            $sortA = isset($a->data_info['sort_order']) ? (int)$a->data_info['sort_order'] : 999999;
-            $sortB = isset($b->data_info['sort_order']) ? (int)$b->data_info['sort_order'] : 999999;
-            if ($sortA == $sortB) {
-                return $a->id - $b->id; // If sort_order is same, sort by ID
-            }
-            return $sortA - $sortB;
-        });
-
-        usort($supportItems, function($a, $b) {
-            $sortA = isset($a->data_info['sort_order']) ? (int)$a->data_info['sort_order'] : 999999;
-            $sortB = isset($b->data_info['sort_order']) ? (int)$b->data_info['sort_order'] : 999999;
-            if ($sortA == $sortB) {
-                return $a->id - $b->id;
-            }
-            return $sortA - $sortB;
-        });
-
-        usort($moreItems, function($a, $b) {
-            $sortA = isset($a->data_info['sort_order']) ? (int)$a->data_info['sort_order'] : 999999;
-            $sortB = isset($b->data_info['sort_order']) ? (int)$b->data_info['sort_order'] : 999999;
-            if ($sortA == $sortB) {
-                return $a->id - $b->id;
-            }
-            return $sortA - $sortB;
-        });
-
-        usort($downItems, function($a, $b) {
-            $sortA = isset($a->data_info['sort_order']) ? (int)$a->data_info['sort_order'] : 999999;
-            $sortB = isset($b->data_info['sort_order']) ? (int)$b->data_info['sort_order'] : 999999;
-            if ($sortA == $sortB) {
-                return $a->id - $b->id;
-            }
-            return $sortA - $sortB;
-        });
-      @endphp
-      <!-- Support Section -->
-      @if(count($supportItems) > 0)
-        <div class="col-lg-3 col-md-6">
-          <h6 class="fw-semibold mb-3">Support</h6>
-          <ul class="list-unstyled footer-links">
-            @foreach($supportItems as $item)
-              @php
-                $itemData = is_array($item->data_info) ? $item->data_info : (array) $item->data_info;
-                $menuLabel = $itemData['menu_label'] ?? '';
-                $slug = trim($itemData['slug'] ?? '#');
-
-                // If slug is a full URL (http/https/www) OR already an absolute path (/xyz), use as is.
-                if (preg_match('/^https?:\/\//i', $slug) || preg_match('/^www\./i', $slug) || str_starts_with($slug, '/')) {
-                    $url = $slug;
-                } else {
-                    // Treat everything else as relative path under current domain
-                    $url = url($slug);
-                }
-              @endphp
-              <li><a href="{{ $url }}">{{ __($menuLabel) }}</a></li>
-            @endforeach
-          </ul>
+                    <div class="col-md-3 col-6">
+                        <h6 class="footer-title">More</h6>
+                        <ul class="footer-list">
+                            @foreach($sections['more_from_apnacrowdfunding'] as $item)
+                                @php $slug = trim($item->data_info['slug'] ?? '#'); $url = (str_starts_with($slug, 'http') || str_starts_with($slug, '/')) ? $slug : url($slug); @endphp
+                                <li><a href="{{ $url }}">{{ __($item->data_info['menu_label'] ?? '') }}</a></li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
-      @endif
 
-      <!-- About Section -->
-      @if(count($aboutItems) > 0)
-        <div class="col-lg-3 col-md-6">
-          <h6 class="fw-semibold mb-3">About</h6>
-          <ul class="list-unstyled footer-links">
-            @foreach($aboutItems as $item)
-              @php
-                $itemData = is_array($item->data_info) ? $item->data_info : (array) $item->data_info;
-                $menuLabel = $itemData['menu_label'] ?? '';
-                $slug = trim($itemData['slug'] ?? '#');
-
-                if (preg_match('/^https?:\/\//i', $slug) || preg_match('/^www\./i', $slug) || str_starts_with($slug, '/')) {
-                    $url = $slug;
-                } else {
-                    $url = url($slug);
-                }
-              @endphp
-              <li><a href="{{ $url }}">{{ __($menuLabel) }}</a></li>
-            @endforeach
-          </ul>
+        <div class="ks-huge-branding">
+            <img src="{{ $logoUrl }}" alt="Large Logo">
         </div>
-      @endif
 
-      <!-- More from Apnacrowdfunding Section -->
-      @if(count($moreItems) > 0)
-        <div class="col-lg-3 col-md-6">
-          <h6 class="fw-semibold mb-3">Additional Information</h6>
-          <ul class="list-unstyled footer-links">
-            @foreach($moreItems as $item)
-              @php
-                $itemData = is_array($item->data_info) ? $item->data_info : (array) $item->data_info;
-                $menuLabel = $itemData['menu_label'] ?? '';
-                $slug = trim($itemData['slug'] ?? '#');
-
-                if (preg_match('/^https?:\/\//i', $slug) || preg_match('/^www\./i', $slug) || str_starts_with($slug, '/')) {
-                    $url = $slug;
-                } else {
-                    $url = url($slug);
-                }
-              @endphp
-              <li><a href="{{ $url }}">{{ __($menuLabel) }}</a></li>
-            @endforeach
-          </ul>
-        </div>
-      @endif
-
-    </div>
-  </div>
-
-  <!-- Bottom -->
-  <div class="footer-bottom py-4">
-    <div class="container">
-      <div class="row align-items-center">
-        <!-- Social Media Links -->
-        @if($footerElements && count($footerElements) > 0)
-          <div class="col-12 text-center mb-3 mb-md-0">
-            <div class="social-media-links d-flex justify-content-center gap-3">
-              @foreach ($footerElements as $socialInfo)
-                @php
-                  $socialDataInfo = is_array($socialInfo->data_info) ? $socialInfo->data_info : (array) $socialInfo->data_info;
-                  $socialIcon = @$socialDataInfo['social_icon'] ?? '';
-                  $socialUrl = @$socialDataInfo['url'] ?? '#';
-                @endphp
-                @if($socialIcon && $socialUrl)
-                  <a href="{{ $socialUrl }}" class="social-link" target="_blank" rel="noopener noreferrer">
-                    {!! $socialIcon !!}
-                  </a>
+        <div class="footer-bottom-flex">
+            <div class="social-links">
+                @if($footerElements)
+                    @foreach ($footerElements as $socialInfo)
+                        <a href="{{ $socialInfo->data_info['url'] ?? '#' }}" target="_blank">
+                            {!! $socialInfo->data_info['social_icon'] !!}
+                        </a>
+                    @endforeach
                 @endif
-              @endforeach
             </div>
-          </div>
-        @endif
 
-        <!-- Copyright -->
-        <div class="col-12 text-center">
-          <small class="text-muted">
-            © {{ date('Y') }} ApnaCrowdfunding a subsidiary of Aakilarose, Inc. a California Company
-          </small>
+            <div class="app-badges">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="App Store">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Play Store">
+            </div>
         </div>
-        <!-- Down Section - Horizontal List -->
-        @if(count($downItems) > 0)
-          <div class="col-12 text-center mb-3">
-            <div class="footer-down-menu d-flex justify-content-center align-items-center flex-wrap gap-3">
-              @foreach($downItems as $item)
-                @php
-                  $itemData = is_array($item->data_info) ? $item->data_info : (array) $item->data_info;
-                  $menuLabel = $itemData['menu_label'] ?? '';
-                  $slug = trim($itemData['slug'] ?? '#');
 
-                  if (preg_match('/^https?:\/\//i', $slug) || preg_match('/^www\./i', $slug) || str_starts_with($slug, '/')) {
-                      $url = $slug;
-                  } else {
-                      $url = url($slug);
-                  }
-                @endphp
-                <a href="{{ $url }}" class="footer-down-link">{{ __($menuLabel) }}</a>
-              @endforeach
-            </div>
-          </div>
-        @endif
-      </div>
+        <div class="footer-legal-bar">
+            <span class="me-3">{{ bs('site_name') }} © {{ date('Y') }}</span>
+            
+            @foreach($sections['down_section'] as $item)
+                @php $slug = trim($item->data_info['slug'] ?? '#'); @endphp
+                <a href="{{ url($slug) }}">{{ __($item->data_info['menu_label'] ?? '') }}</a>
+            @endforeach
+
+ 
+            
+        </div>
     </div>
-  </div>
 </footer>
 
-<!-- FOOTER STYLES -->
 <style>
-.fundgreen-footer {
-  border-top: 1px solid #e9ecef;
+.ks-footer-dark {
+    background-color: #000000;
+    color: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    border-top: 1px solid #333;
 }
 
-.footer-links li {
-  margin-bottom: 10px;
+.footer-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: #fff;
 }
 
-.footer-links a {
-  text-decoration: none;
-  color: #6c757d;
-  font-size: 14px;
-  transition: all 0.3s ease;
+.footer-list {
+    list-style: none;
+    padding: 0;
 }
 
-.footer-links a:hover {
-  color: #198754;
-  padding-left: 6px;
+.footer-list li {
+    margin-bottom: 12px;
 }
 
-.footer-bottom {
-  background: #f8f9fa;
-  border-top: 1px solid #e9ecef;
+.footer-list a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 14px;
 }
 
-.social-media-links {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 15px;
-  flex-wrap: wrap;
+.footer-list a:hover {
+    text-decoration: underline;
 }
 
-.social-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #198754;
-  color: #fff !important;
-  text-decoration: none;
-  font-size: 18px;
-  transition: all 0.3s ease;
+.ks-selector {
+    border: 1px solid #333;
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    max-width: 200px;
+    cursor: pointer;
 }
 
-.social-link:hover {
-  background: #157347;
-  color: #fff !important;
-  transform: translateY(-3px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+.ks-huge-branding {
+    padding: 60px 0;
+    text-align: center;
 }
 
-.social-link i {
-  display: inline-block;
-  color: #fff !important;
+.ks-huge-branding img {
+    width: 100%;
+    max-width: 1116px;
+    height: auto;
+    filter: brightness(0) invert(1);
+    opacity: 0.9;
 }
 
-.social-link:hover i {
-  color: #fff !important;
+.footer-bottom-flex {
+    border-top: 1px solid #222;
+    padding-top: 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
 }
 
-.social-link * {
-  color: #fff !important;
+.social-links a {
+    color: #fff;
+    font-size: 20px;
+    margin-right: 20px;
+    text-decoration: none;
 }
 
-.social-link:hover * {
-  color: #fff !important;
+.app-badges img {
+    height: 35px;
+    margin-left: 10px;
 }
 
-.footer-down-menu {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 15px;
-  padding: 15px 0;
+.footer-legal-bar {
+    margin-top: 30px;
+    font-size: 13px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
 }
 
-.footer-down-link {
-  color: #6c757d;
-  text-decoration: none;
-  font-size: 14px;
-  padding: 5px 10px;
-  transition: all 0.3s ease;
-  position: relative;
+.footer-legal-bar a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: 500;
 }
 
-.footer-down-link:hover {
-  color: #198754;
-  text-decoration: none;
+.footer-legal-bar a:hover {
+    text-decoration: underline;
 }
 
-.footer-down-link:not(:last-child)::after {
-  content: '|';
-  position: absolute;
-  right: -12px;
-  color: #dee2e6;
-  font-weight: 300;
-  font-size: 12px;
+.footer-logo img {
+    filter: brightness(0) invert(1);
+}
+
+@media (max-width: 768px) {
+    .ks-huge-branding img {
+        max-width: 100%;
+    }
 }
 </style>

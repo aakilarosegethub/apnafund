@@ -1,0 +1,51 @@
+Step 4: Transaction and Balance Logic Only
+
+This file lists ONLY balance changes. It does not explain any flows.
+
+1) Contribution success (receiver balance)
+File path: app/Http/Controllers/Gateway/PaymentController.php
+Class name: PaymentController
+Method name: campaignDataUpdate
+What balance changes: The campaign owner (receiver) balance increases by the deposit amount.
+Why this change exists: The receiver must get the money after a successful contribution.
+CRITICAL: This update must happen only once per successful deposit and only after the status is marked as success.
+
+2) Wallet usage (wallet debit)
+File path: app/Http/Controllers/Api/DonateController.php
+Class name: DonateController
+Method name: donateNow
+What balance changes: The user wallet balance (users.balance) decreases by wall_amt when wallet is used.
+Why this change exists: Part of the contribution is paid from the user wallet.
+CRITICAL: Do not subtract more than the current wallet balance, and always create the wallet_report debit record.
+
+3) Wallet refund (wallet credit)
+File path: app/Http/Controllers/Api/DonateController.php
+Class name: DonateController
+Method name: donateNow
+What balance changes: The user wallet balance (users.balance) increases by amt when a refund is needed.
+Why this change exists: The contribution amount is above the remaining campaign need, so it is refunded.
+CRITICAL: The refund must write a wallet_report credit record with the same amount.
+
+4) Withdrawal submit (balance deduction)
+File path: app/Http/Controllers/User/WithdrawController.php
+Class name: WithdrawController
+Method name: submit
+What balance changes: The user balance decreases by the withdrawal amount.
+Why this change exists: Funds are reserved for the withdrawal request.
+CRITICAL: Never allow a withdrawal if the amount is greater than the current balance.
+
+5) Withdrawal cancel (balance refund)
+File path: app/Http/Controllers/Admin/WithdrawController.php
+Class name: WithdrawController
+Method name: cancel
+What balance changes: The user balance increases by the withdrawal amount.
+Why this change exists: The withdrawal is rejected, so the money is returned.
+CRITICAL: The refund must create a transaction record with trx_type "+" and remark "withdraw_reject".
+
+6) Admin manual balance update
+File path: app/Http/Controllers/Admin/UserController.php
+Class name: UserController
+Method name: balanceUpdate
+What balance changes: Admin can add to or subtract from a user balance by the given amount.
+Why this change exists: Admin needs a controlled way to correct balances.
+CRITICAL: Subtraction must be blocked if the amount is greater than the user balance.

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\SiteData;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -111,18 +112,62 @@ class OTPController extends BaseApiController
     }
 
     /**
-     * Get SMS Type
+     * Get SMS/OTP Type - returns provider: firebase, twilio, msg91, or legacy sms_type
      */
     public function smsType(Request $request): JsonResponse
     {
-        $set = $this->h->fetchData("SELECT * FROM `tbl_setting`");
+        $otpProvider = $this->getOTPProvider();
+        $smsType = $this->mapProviderToSmsType($otpProvider);
 
         return response()->json([
             "ResponseCode" => "200",
             "Result" => "true",
             "ResponseMsg" => "type Get Successfully!!",
-            "SMS_TYPE" => $set['sms_type'] ?? ''
+            "SMS_TYPE" => $smsType,
+            "OTP_PROVIDER" => $otpProvider,
         ]);
+    }
+
+    /**
+     * Get OTP provider from admin Firebase OTP settings or legacy settings
+     */
+    protected function getOTPProvider(): string
+    {
+        $firebaseData = SiteData::where('data_key', 'otp_firebase.data')->first();
+        if ($firebaseData && !empty($firebaseData->data_info)) {
+            $info = is_array($firebaseData->data_info) ? $firebaseData->data_info : (array) $firebaseData->data_info;
+            $provider = $info['otp_provider'] ?? '';
+            if (in_array($provider, ['firebase', 'twilio', 'msg91'])) {
+                return $provider;
+            }
+        }
+
+        $set = $this->h->fetchData("SELECT * FROM `settings` LIMIT 1");
+        if ($set && isset($set['sms_type'])) {
+            return $this->mapSmsTypeToProvider($set['sms_type']);
+        }
+
+        return 'twilio';
+    }
+
+    protected function mapProviderToSmsType(string $provider): string
+    {
+        return match ($provider) {
+            'firebase' => 'firebase',
+            'msg91' => '1',
+            'twilio' => '2',
+            default => '2',
+        };
+    }
+
+    protected function mapSmsTypeToProvider(?string $smsType): string
+    {
+        return match ($smsType) {
+            '1' => 'msg91',
+            '2' => 'twilio',
+            'firebase' => 'firebase',
+            default => 'twilio',
+        };
     }
 }
 

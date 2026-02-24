@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Services\FirebaseService;
+use App\Services\FirebaseServiceFallback;
 use App\Models\Contact;
 use App\Models\Deposit;
 use App\Models\Campaign;
@@ -24,7 +26,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Firebase: use fallback when Firestore/gRPC unavailable (e.g. missing ext-grpc)
+        $this->app->singleton(FirebaseService::class, function () {
+            try {
+                return new FirebaseService();
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Firebase init failed, using fallback: ' . $e->getMessage());
+                return new FirebaseServiceFallback();
+            }
+        });
     }
 
     /**
@@ -77,9 +87,29 @@ class AppServiceProvider extends ServiceProvider
                 ]);
             });
 
-            view()->composer($activeTheme . 'layouts.frontend', function ($view) {
+            view()->composer(['themes.green.layouts.green-home', $activeTheme . 'layouts.frontend'], function ($view) {
+                $user = auth()->user();
+                $inboxFirebaseConfig = null;
+                $inboxTokenUrl = null;
+                $inboxUserId = null;
+                if ($user && config('firebase.client.api_key') && config('firebase.client.project_id')) {
+                    $inboxFirebaseConfig = [
+                        'apiKey' => config('firebase.client.api_key'),
+                        'authDomain' => config('firebase.client.auth_domain'),
+                        'projectId' => config('firebase.client.project_id'),
+                        'storageBucket' => config('firebase.client.storage_bucket'),
+                        'messagingSenderId' => config('firebase.client.messaging_sender_id'),
+                        'appId' => config('firebase.client.app_id'),
+                        'chatCollectionPrefix' => config('firebase.firestore.collection_prefix', 'apnacrowdfunding'),
+                    ];
+                    $inboxTokenUrl = route('user.inbox.firebase.token');
+                    $inboxUserId = (string) $user->id;
+                }
                 $view->with([
                     'campCategories' => Category::active()->latest()->limit(3)->get(),
+                    'inboxFirebaseConfig' => $inboxFirebaseConfig,
+                    'inboxTokenUrl' => $inboxTokenUrl,
+                    'inboxUserId' => $inboxUserId,
                 ]);
             });
 
@@ -92,18 +122,34 @@ class AppServiceProvider extends ServiceProvider
 
             // Dashboard layout composer
             view()->composer($activeTheme . 'layouts.dashboard', function ($view) {
+                $user = auth()->user();
+                $firebaseConfig = null;
+                if ($user && config('firebase.client.api_key') && config('firebase.client.project_id')) {
+                    $firebaseConfig = [
+                        'apiKey' => config('firebase.client.api_key'),
+                        'authDomain' => config('firebase.client.auth_domain'),
+                        'projectId' => config('firebase.client.project_id'),
+                        'storageBucket' => config('firebase.client.storage_bucket'),
+                        'messagingSenderId' => config('firebase.client.messaging_sender_id'),
+                        'appId' => config('firebase.client.app_id'),
+                        'chatCollectionPrefix' => config('firebase.firestore.collection_prefix', 'apnacrowdfunding'),
+                    ];
+                }
                 $view->with([
                     'dashboardParams' => [
                         'isHomePage' => request()->routeIs('home') || request()->path() === '/',
                         'userType' => 'dashboard',
                         'pageTitle' => 'Dashboard',
                         'customData' => 'Your custom data here',
-                        'userInfo' => auth()->user() ? [
-                            'name' => auth()->user()->name,
-                            'email' => auth()->user()->email,
-                            'id' => auth()->user()->id
+                        'userInfo' => $user ? [
+                            'name' => $user->name,
+                            'email' => $user->email,
+                            'id' => $user->id
                         ] : null
-                    ]
+                    ],
+                    'inboxFirebaseConfig' => $firebaseConfig,
+                    'inboxTokenUrl' => $user ? route('user.inbox.firebase.token') : null,
+                    'inboxUserId' => $user ? (string) $user->id : null,
                 ]);
             });
 

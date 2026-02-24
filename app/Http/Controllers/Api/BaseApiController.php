@@ -408,6 +408,9 @@ class BaseApiController extends Controller
         // fund_for can be overridden in options
         $fund_for = $options['fund_for'] ?? ($rows['fund_for'] ?? '');
 
+        // main_img = main/first image (same as first fund_photo for app use)
+        $main_img = !empty($fund_photos) ? (is_array($fund_photos) ? $fund_photos[0] : $fund_photos) : ($rows['image'] ?? '');
+
         // Build the formatted array
         $fundData = [
             'id' => $rows['id'],
@@ -415,6 +418,7 @@ class BaseApiController extends Controller
             'title' => $rows['name'] ?? '',
             'fund_for' => $fund_for,
             'fund_photos' => $fund_photos,
+            'main_img' => $main_img,
             'exp_date' => $rows['end_date'] ?? '',
             'fund_amt' => $goal_amount,
             'fund_story' => $rows['description'] ?? '',

@@ -1,0 +1,65 @@
+Step 6: Creator Campaign Payout Flow Only
+
+This file explains only the creator campaign payout flow.
+It starts when the admin opens the payout page and ends when
+the payout is fully or partially completed.
+
+1) Admin opens creator payout page (eligible campaign detection)
+File path: app/Http/Controllers/Admin/CreatorPayoutController.php
+Class name: CreatorPayoutController
+Method name: index
+What this method does: Loads campaigns and filters to only successful ones
+(approved + ended OR met goal), then shows the payout list page.
+Why this step exists: Admin should only see campaigns that are eligible for payout.
+Status or amount changes: None.
+CRITICAL: The eligibility rules in this method must not be changed.
+
+2) Payout record creation
+File path: app/Services/CreatorCampaignPayoutService.php
+Class name: CreatorCampaignPayoutService
+Method name: ensurePayoutRecord
+What this method does: Creates a CreatorCampaignPayout record if the campaign is
+successful and no payout record exists.
+Why this step exists: Payout tracking needs a single record per campaign.
+Status or amount changes: Creates a record with total_raised and payout amounts.
+CRITICAL: Do not create a payout record for a campaign that is not successful.
+
+3) Fee calculation
+File path: app/Services/CreatorCampaignPayoutService.php
+Class name: CreatorCampaignPayoutService
+Method name: calculateAmounts
+What this method does: Calculates platform fee, marketing fee, chargeback hold,
+fulfillment hold, total withheld, and net payable amount.
+Why this step exists: The payout amount must account for platform and risk holds.
+Status or amount changes: Sets calculated amounts used in the payout record.
+CRITICAL: Net payable must never be negative.
+
+4) Fulfillment hold and release
+File path: app/Http/Controllers/Admin/CreatorPayoutController.php
+Class name: CreatorPayoutController
+Method name: markFulfillmentComplete
+What this method does: Marks fulfillment as completed and releases the
+fulfillment withholding amount.
+Why this step exists: Held funds are released only after fulfillment is done.
+Status or amount changes: fulfillment_status -> completed, released_withheld_amount set,
+fulfillment_released_at set.
+CRITICAL: Do not release the fulfillment hold unless fulfillment is completed.
+
+5) Partial payout
+File path: app/Http/Controllers/Admin/CreatorPayoutController.php
+Class name: CreatorPayoutController
+Method name: partialPayout
+What this method does: Adds a partial amount to total_paid_amount and sets payout
+status to partial or paid based on remaining payable.
+Why this step exists: Admin can pay in multiple parts.
+Status or amount changes: total_paid_amount increases, payout_status -> partial/paid.
+CRITICAL: Partial payout amount must not exceed available amount.
+
+6) Full payout
+File path: app/Http/Controllers/Admin/CreatorPayoutController.php
+Class name: CreatorPayoutController
+Method name: fullPayout
+What this method does: Pays the remaining available amount and marks payout as paid.
+Why this step exists: Admin can complete payout in one action.
+Status or amount changes: total_paid_amount set to full payable, payout_status -> paid.
+CRITICAL: Full payout must be blocked if available amount is zero or less.

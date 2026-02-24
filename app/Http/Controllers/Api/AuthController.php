@@ -211,7 +211,7 @@ class AuthController extends BaseApiController
     {
         $data = $this->getRequestData($request);
 
-        if (empty($data['mobile']) || empty($data['password']) || empty($data['ccode'])) {
+        if (empty($data['mobile']) || empty($data['password'])) {
             return response()->json([
                 "ResponseCode" => "401",
                 "Result" => "false",
@@ -221,10 +221,19 @@ class AuthController extends BaseApiController
 
         $mobile = strip_tags($this->h->real_string($data['mobile']));
         $password = strip_tags($this->h->real_string($data['password']));
-        $ccode = strip_tags($this->h->real_string($data['ccode']));
+        $ccode = isset($data['ccode']) ? strip_tags($this->h->real_string($data['ccode'])) : '';
 
         // Check if input is email or mobile
         $isEmail = filter_var($mobile, FILTER_VALIDATE_EMAIL);
+
+        // ccode required only for mobile login
+        if (!$isEmail && empty($ccode)) {
+            return response()->json([
+                "ResponseCode" => "401",
+                "Result" => "false",
+                "ResponseMsg" => "Country code is required for mobile number!"
+            ], 401);
+        }
 
         // Find user by mobile or email
         $userQuery = User::where(function($query) use ($mobile) {

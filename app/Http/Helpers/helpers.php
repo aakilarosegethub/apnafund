@@ -894,6 +894,12 @@ function getDashboardNavigation(): array {
             'route' => 'user.campaign.index'
         ],
         [
+            'id' => 'inbox',
+            'title' => __('Inbox'),
+            'icon' => 'fas fa-inbox',
+            'route' => 'user.inbox.index'
+        ],
+        [
             'id' => 'analytics',
             'title' => __('Analytics'),
             'icon' => 'fas fa-chart-pie',
@@ -931,6 +937,11 @@ function getUserMenuItems(): array {
             'route' => 'user.dashboard',
             'icon' => 'fas fa-tachometer-alt',
             'title' => __('Dashboard')
+        ],
+        [
+            'route' => 'user.inbox.index',
+            'icon' => 'fas fa-inbox',
+            'title' => __('Inbox')
         ],
         [
             'route' => 'user.profile',

@@ -346,6 +346,13 @@
                     <strong>{{ $campaignData->user->fullname }}</strong>
                     <span><i class="fa-solid fa-location-dot"></i> {{ $campaignData->location ?? 'Location not specified' }}</span>
                 </div>
+                @if(auth()->id() != $campaignData->user_id)
+                    @guest
+                        <a href="{{ route('user.login.form', ['redirect' => route('user.inbox.index', ['start' => $campaignData->user_id, 'campaign_id' => $campaignData->id, 'campaign_slug' => $campaignData->slug, 'campaign_title' => $campaignData->title, 'creator_name' => $campaignData->user->fullname ?? $campaignData->user->username ?? $campaignData->user->name ?? ''])]) }}" class="btn btn-success btn-sm ms-2">Contact Creator</a>
+                    @else
+                        <a href="{{ route('user.inbox.index', ['start' => $campaignData->user_id, 'campaign_id' => $campaignData->id, 'campaign_slug' => $campaignData->slug, 'campaign_title' => $campaignData->title, 'creator_name' => $campaignData->user->fullname ?? $campaignData->user->username ?? $campaignData->user->name ?? '']) }}" class="btn btn-success btn-sm ms-2">Contact Creator</a>
+                    @endguest
+                @endif
             </div>
 
             <!-- TABS -->

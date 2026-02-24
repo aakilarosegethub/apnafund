@@ -79,6 +79,14 @@ Route::middleware(['admin'])->group(function () {
         Route::post('delete/{id}', 'delete')->name('delete');
     });
 
+    // Footer Category Management
+    Route::controller('FooterCategoryController')->prefix('footer-categories')->name('footer-categories.')->group(function () {
+        Route::get('index', 'index')->name('index');
+        Route::post('store/{id?}', 'store')->name('store');
+        Route::post('status/{id}', 'status')->name('status');
+        Route::post('delete/{id}', 'delete')->name('delete');
+    });
+
     // Payout Bank Management
     Route::controller('PayoutBankController')->prefix('payout-banks')->name('payout-banks.')->group(function () {
         Route::get('index', 'index')->name('index');
@@ -175,6 +183,19 @@ Route::middleware(['admin'])->group(function () {
             Route::get('edit/{id}', 'edit')->name('edit');
             Route::post('status/{id}', 'status')->name('status');
         });
+    });
+
+    // Creator Payout Management (Creator Campaign Fee)
+    Route::controller('CreatorPayoutSettingController')->prefix('creator-payout-settings')->name('creator-payout.settings.')->group(function () {
+        Route::get('/', 'edit')->name('edit');
+        Route::post('/', 'update')->name('update');
+    });
+    Route::controller('CreatorPayoutController')->prefix('creator-payouts')->name('creator-payouts.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/{payout}', 'show')->name('show');
+        Route::post('/{payout}/partial', 'partialPayout')->name('partial');
+        Route::post('/{payout}/full', 'fullPayout')->name('full');
+        Route::post('/{payout}/fulfillment-complete', 'markFulfillmentComplete')->name('fulfillment.complete');
     });
 
     // Campaign donations
@@ -375,5 +396,11 @@ Route::controller('SocialLoginSettingController')->prefix('social-login')->name(
     Route::get('/', 'index')->name('index');
     Route::post('/update', 'update')->name('update');
     Route::post('/test', 'testConfiguration')->name('test');
+});
+
+// Firebase OTP Settings
+Route::controller('FirebaseOTPSettingController')->prefix('firebase-otp')->name('firebase.otp.')->group(function() {
+    Route::get('/', 'index')->name('index');
+    Route::post('/update', 'update')->name('update');
 });
 });

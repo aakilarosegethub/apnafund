@@ -5,6 +5,7 @@
 @extends($activeTheme . 'layouts.blank')
 
 @section('custom-css')
+<link rel="stylesheet" href="{{ asset('assets/universal/css/iziToast.min.css') }}">
 <style>
     body {
         font-family: Arial, sans-serif;
@@ -267,7 +268,7 @@
         </div>
     </div>
 
-    <form id="termsForm">
+    <form id="termsForm" data-category-id="{{ $projectData['project_category_id'] ?? '' }}" data-subcategory-id="{{ $projectData['project_subcategory_id'] ?? '' }}" data-country="{{ $projectData['project_country'] ?? '' }}">
         <div class="checkbox-wrapper">
             <label>
                 <input type="checkbox" id="acceptTerms" name="acceptTerms" required>
@@ -287,7 +288,16 @@
 @endsection
 
 @section('script')
+<script src="{{ asset('assets/universal/js/iziToast.min.js') }}"></script>
 <script>
+    function showToast(type, message) {
+        if (typeof iziToast !== 'undefined') {
+            iziToast[type]({ message: message, position: 'topRight' });
+        } else {
+            alert(message);
+        }
+    }
+
     function hideRules() {
         $('#ruleBox').hide();
         $('#projectBox').show();
@@ -317,7 +327,13 @@
             confirmBtn.disabled = true;
             confirmBtn.textContent = 'Creating Campaign...';
             
-            // Create campaign from session data
+            // Create campaign - pass data in body as fallback when session lost
+            var formEl = document.getElementById('termsForm');
+            var bodyData = {
+                category_id: formEl.dataset.categoryId || null,
+                subcategory_id: formEl.dataset.subcategoryId || null,
+                country: formEl.dataset.country || null
+            };
             fetch('{{ route("start.project.create.campaign") }}', {
                 method: 'POST',
                 headers: {
@@ -325,22 +341,22 @@
                     'X-Requested-With': 'XMLHttpRequest',
                     'Accept': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                }
+                },
+                body: JSON.stringify(bodyData)
             })
-            .then(response => response.json())
+            .then(response => response.json().catch(() => ({})))
             .then(data => {
                 if (data.success) {
-                    // Redirect to edit campaign page
                     window.location.href = data.redirect_url;
                 } else {
-                    alert('Error: ' + (data.message || 'Failed to create campaign'));
+                    showToast('error', data.message || 'Failed to create campaign');
                     confirmBtn.disabled = false;
                     confirmBtn.textContent = 'Confirm & Create Campaign';
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred. Please try again.');
+                showToast('error', 'An error occurred. Please try again.');
                 confirmBtn.disabled = false;
                 confirmBtn.textContent = 'Confirm & Create Campaign';
             });

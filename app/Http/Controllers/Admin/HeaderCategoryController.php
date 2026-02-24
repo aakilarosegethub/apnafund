@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Admins\HeaderCategory;
+use App\Models\Category;
 use Illuminate\Validation\Rule;
 
 class HeaderCategoryController extends Controller
@@ -13,7 +14,6 @@ class HeaderCategoryController extends Controller
 
         $headerCategoriesQuery = HeaderCategory::searchable(['label']);
 
-        // Sorting: by id or sort_order
         $sortField = request('sort_by', 'sort_order');
         $sortDir   = request('sort_dir', 'asc');
 
@@ -33,7 +33,9 @@ class HeaderCategoryController extends Controller
             ->paginate(getPaginate())
             ->appends(request()->all());
 
-        return view('admin.page.header-categories', compact('pageTitle', 'headerCategories'));
+        $categories = Category::active()->orderBy('name')->get();
+
+        return view('admin.page.header-categories', compact('pageTitle', 'headerCategories', 'categories'));
     }
 
     function store($id = 0) {
@@ -50,6 +52,8 @@ class HeaderCategoryController extends Controller
                 'max:190',
                 Rule::unique('header_categories', 'slug')->ignore($id)
             ],
+            'category_ids' => ['nullable', 'array'],
+            'category_ids.*' => ['exists:categories,id'],
         ], [
             'label.required' => 'Label is required',
             'label.unique' => 'A header category with this label already exists.',
@@ -67,6 +71,9 @@ class HeaderCategoryController extends Controller
 
         $headerCategory->label = request('label');
         $headerCategory->slug = slug(request('slug'));
+        $categoryIds = request('category_ids', []);
+        $headerCategory->category_ids = is_array($categoryIds) ? array_values(array_map('intval', $categoryIds)) : [];
+        $headerCategory->category_id = !empty($headerCategory->category_ids) ? $headerCategory->category_ids[0] : null;
         $headerCategory->sort_order = request('sort_order', 0);
         $headerCategory->status = request('status', 'active');
         $headerCategory->save();

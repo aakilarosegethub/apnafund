@@ -1,0 +1,72 @@
+/* Override ugly shortcode/content keys table (Label | Name) */
+.shortcode-keys-table-wrapper,
+table.min-w-full[class*="border-gray"] {
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(0,0,0,.08) !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06) !important;
+}
+
+/* Header - clean green gradient */
+table.min-w-full thead tr,
+.shortcode-keys-table-wrapper thead tr {
+    background: linear-gradient(135deg, #05ce78 0%, #04b367 100%) !important;
+    color: #fff !important;
+}
+
+table.min-w-full thead th,
+.shortcode-keys-table-wrapper thead th {
+    padding: 14px 20px !important;
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.5px !important;
+    border: none !important;
+}
+
+/* Body rows */
+table.min-w-full tbody tr,
+.shortcode-keys-table-wrapper tbody tr {
+    transition: background .15s;
+}
+
+table.min-w-full tbody tr:nth-child(even),
+.shortcode-keys-table-wrapper tbody tr:nth-child(even) {
+    background: #f8fafb !important;
+}
+
+table.min-w-full tbody tr:hover,
+.shortcode-keys-table-wrapper tbody tr:hover {
+    background: rgba(5, 206, 120, 0.06) !important;
+}
+
+table.min-w-full tbody td,
+.shortcode-keys-table-wrapper tbody td {
+    padding: 14px 20px !important;
+    vertical-align: middle !important;
+}
+
+/* Code/name cell */
+table.min-w-full tbody td code,
+.shortcode-keys-table-wrapper .shortcode-key-name {
+    padding: 8px 14px !important;
+    font-size: 0.9rem !important;
+    background: #f1f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    color: #334155 !important;
+}
+
+/* Copy button */
+table.min-w-full tbody td button[title="Copy name"],
+.shortcode-keys-table-wrapper .shortcode-copy-btn {
+    padding: 8px 10px !important;
+    border-radius: 8px !important;
+    transition: all .2s !important;
+}
+
+table.min-w-full tbody td button:hover,
+.shortcode-keys-table-wrapper .shortcode-copy-btn:hover {
+    background: rgba(5, 206, 120, 0.1) !important;
+    border-color: #05ce78 !important;
+    color: #05ce78 !important;
+}

@@ -30,6 +30,12 @@
             </a>
         </li>
         <li class="sidebar-item">
+            <a href="{{ route('admin.footer-categories.index') }}" class="sidebar-link {{ navigationActive('admin.footer-categories.index', 2) }}">
+                <span class="nav-icon"><i class="ti ti-layout-bottombar"></i></span>
+                <span class="sidebar-txt">@lang('Footer Categories')</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
             <a href="{{ route('admin.banners.index') }}" class="sidebar-link {{ navigationActive('admin.banners*', 2) }}">
                 <span class="nav-icon"><i class="ti ti-photo"></i></span>
                 <span class="sidebar-txt">@lang('Banners')</span>
@@ -39,6 +45,12 @@
             <a href="{{ route('admin.payout-banks.index') }}" class="sidebar-link {{ navigationActive('admin.payout-banks*', 2) }}">
                 <span class="nav-icon"><i class="ti ti-building-bank"></i></span>
                 <span class="sidebar-txt">@lang('Payout Banks')</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
+            <a href="{{ route('admin.creator-payouts.index') }}" class="sidebar-link {{ navigationActive('admin.creator-payouts*', 2) }}">
+                <span class="nav-icon"><i class="ti ti-cash"></i></span>
+                <span class="sidebar-txt">@lang('Creator Payouts')</span>
             </a>
         </li>
         <li class="sidebar-item">
@@ -330,6 +342,11 @@
                 <li class="sidebar-dropdown-item">
                     <a href="{{ route('admin.social.login.index') }}" class="sidebar-link {{ navigationActive('admin.social.login*', 1) }}">
                         @lang('Social Login')
+                    </a>
+                </li>
+                <li class="sidebar-dropdown-item">
+                    <a href="{{ route('admin.firebase.otp.index') }}" class="sidebar-link {{ navigationActive('admin.firebase.otp*', 1) }}">
+                        @lang('Firebase OTP')
                     </a>
                 </li>
             </ul>

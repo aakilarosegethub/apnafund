@@ -224,13 +224,17 @@
                 </label>
                 <select class="form-select" id="country" name="country" required>
                     <option value="">Select a country</option>
-                    <option value="Spain">Spain</option>
-                    <option value="United States">United States</option>
-                    <option value="United Kingdom">United Kingdom</option>
-                    <option value="Canada">Canada</option>
-                    <option value="Pakistan">Pakistan</option>
-                    <option value="India">India</option>
-                    <!-- Add more countries as needed -->
+                    @if(isset($allowedCountries) && !empty($allowedCountries))
+                        @foreach($allowedCountries as $country)
+                            <option value="{{ $country }}">{{ $country }}</option>
+                        @endforeach
+                    @else
+                        <option value="Pakistan">Pakistan</option>
+                        <option value="India">India</option>
+                        <option value="United States">United States</option>
+                        <option value="United Kingdom">United Kingdom</option>
+                        <option value="Canada">Canada</option>
+                    @endif
                 </select>
             </div>
 

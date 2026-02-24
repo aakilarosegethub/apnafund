@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class FundController extends BaseApiController
@@ -175,23 +176,30 @@ class FundController extends BaseApiController
             $pol['medical_certificate'] = [];
             $pol['reject_comment'] = '';
             $pol['remain_amt'] = sprintf("%.2f", $pol['remain_amt']);
+            unset($pol['fund_photos']);
             
             $c[] = $pol;
         }
 
-        // Get fund updates (check if fund_update table exists with campaign_id)
-        $up = $this->h->queryfire("SELECT * FROM fund_update WHERE fund_id=" . (int)$fund_id . " OR campaign_id=" . (int)$fund_id . " ORDER BY update_date DESC");
+        // Get fund updates from campaigns.updates (JSON) – no campaign_updates table
         $lop = [];
-        if ($up) {
-            while ($updateRow = $up->fetch_assoc()) {
-                if (!$updateRow) break;
-            $ko = [
-                    "id" => $updateRow["id"],
-                    "photo" => empty($updateRow["photo"]) ? [] : (is_string($updateRow["photo"]) ? explode('$;', $updateRow["photo"]) : (is_array($updateRow["photo"]) ? $updateRow["photo"] : [])),
-                    "update_desc" => $updateRow["update_desc"] ?? '',
-                    "update_date" => $updateRow["update_date"] ?? ''
-            ];
-            $lop[] = $ko;
+        $campaignRow = $c[0] ?? null;
+        if ($campaignRow && isset($campaignRow['id'])) {
+            $camp = DB::table('campaigns')->where('id', $fund_id)->first();
+            if ($camp && !empty($camp->updates)) {
+                $updatesData = is_string($camp->updates) ? json_decode($camp->updates, true) : (array) $camp->updates;
+                if (is_array($updatesData)) {
+                    $lop = array_map(function ($u) {
+                        $photoArr = $u['photo'] ?? (isset($u['main_img']) ? [$u['main_img']] : []);
+                        return [
+                            'id' => $u['id'] ?? 0,
+                            'photo' => is_array($photoArr) ? $photoArr : [$photoArr],
+                            'main_img' => $u['main_img'] ?? (is_array($photoArr) ? ($photoArr[0] ?? '') : $photoArr),
+                            'update_desc' => $u['update_desc'] ?? $u['content'] ?? '',
+                            'update_date' => $u['update_date'] ?? '',
+                        ];
+                    }, array_reverse($updatesData));
+                }
             }
         }
 
@@ -205,32 +213,35 @@ class FundController extends BaseApiController
     }
 
     /**
-     * Create Fund Raise
+     * Create Fund Raise (Campaign) – accepts web params: name, category_id, description, goal_amount, etc.
+     * Also supports old params: cat_id, title, fund_for, fund_amt, fund_story.
      */
     public function fundRaise(Request $request): JsonResponse
     {
-        if (empty($request->input('cat_id')) || empty($request->input('title')) || empty($request->input('fund_for')) || empty($request->input('fund_amt'))) {
+        // Web params: category_id, name, description, goal_amount | Old: cat_id, title, fund_for, fund_amt, fund_story
+        $cat_id = $request->input('category_id') ?: $request->input('cat_id');
+        $name = $request->input('name') ?: $request->input('title');
+        $goal_amount = $request->input('goal_amount') ?: $request->input('fund_amt');
+
+        if (empty($cat_id) || empty($name) || empty($goal_amount)) {
             return response()->json([
                 "ResponseCode" => "401",
                 "Result" => "false",
-                "ResponseMsg" => "Something Went Wrong!"
+                "ResponseMsg" => "category_id (or cat_id), name (or title), goal_amount (or fund_amt) required."
             ], 401);
         }
 
-        $cat_id = strip_tags($this->h->real_string($request->input('cat_id')));
-        $title = strip_tags($this->h->real_string($request->input('title')));
-        $fund_for = strip_tags($this->h->real_string($request->input('fund_for')));
-        $fund_amt = strip_tags($this->h->real_string($request->input('fund_amt')));
-        $full_address = strip_tags($this->h->real_string($request->input('full_address', '')));
+        $cat_id = strip_tags($this->h->real_string($cat_id));
+        $name = strip_tags($this->h->real_string($name));
+        $description = strip_tags($this->h->real_string($request->input('description') ?: $request->input('fund_story', '')));
+        $short_description = strip_tags($this->h->real_string($request->input('short_description', '')));
+        $location = strip_tags($this->h->real_string($request->input('location') ?: $request->input('full_address', '')));
+        $goal_amount = strip_tags($this->h->real_string($goal_amount));
+        $start_date = $request->input('start_date') ?: date('Y-m-d');
+        $end_date = $request->input('end_date') ?: date('Y-m-d', strtotime('+30 days'));
         $lats = strip_tags($this->h->real_string($request->input('lats', '')));
         $longs = strip_tags($this->h->real_string($request->input('longs', '')));
-        $fund_story = strip_tags($this->h->real_string($request->input('fund_story', '')));
-        $exp_date = strip_tags($this->h->real_string($request->input('exp_date', '')));
-        $patient_title = strip_tags($this->h->real_string($request->input('patient_title', '')));
-        $patient_diagnosis = strip_tags($this->h->real_string($request->input('patient_diagnosis', '')));
-        $fund_plan = strip_tags($this->h->real_string($request->input('fund_plan', '')));
         $status = $request->input('status', 'Pending');
-        $charity_id = $request->input('charity_id', '');
         
         // Get user ID from authenticated user (token only)
         $uid = null;
@@ -246,66 +257,24 @@ class FundController extends BaseApiController
             ], 401);
         }
 
-        $fundsize = (int) $request->input('fundsize', 0);
-        $petientsize = (int) $request->input('petientsize', 0);
-        $certicatesize = (int) $request->input('certicatesize', 0);
-        $fund_date = date("Y-m-d");
-
-        $multifile = '';
-        $multifiles = '';
-        $multifiless = '';
-
-        // Process fund photos
-        if ($fundsize > 0) {
-            $uploadedFiles = $this->processFileUploads('fundpic', $fundsize, '/images/fund_photo/');
-            $multifile = implode('$;', $uploadedFiles);
-        }
-
-        // Process patient photos
-        if ($petientsize > 0) {
-            $uploadedFiless = $this->processFileUploads('petpic', $petientsize, '/images/pet_photo/');
-            $multifiles = implode('$;', $uploadedFiless);
-        }
-
-        // Process certificate photos
-        if ($certicatesize > 0) {
-            $uploadedFilesss = $this->processFileUploads('certpic', $certicatesize, '/images/fund_certificate/');
-            $multifiless = implode('$;', $uploadedFilesss);
-        }
-
-        // Use campaigns table instead of tbl_fund
-        // Map fields from old tbl_fund to campaigns table
-        // campaigns table structure:
-        // - category_id (from cat_id)
-        // - name (from title)
-        // - description (from fund_story)
-        // - image (first photo from fund_photos)
-        // - gallery (JSON array of all photos)
-        // - goal_amount (from fund_amt)
-        // - start_date (from fund_date)
-        // - end_date (from exp_date or null)
-        // - user_id (from uid)
-        // - status: 2=pending, 1=approved, 0=rejected
-        // - location (from full_address)
-        // - slug (generated from name)
-
-        // Build gallery array from all uploaded photos
+        // Main image: web uses 'image', old API uses 'main_img'
+        $mainImage = null;
         $gallery = [];
-        if (!empty($multifile)) {
-            $fundPhotos = explode('$;', $multifile);
-            $gallery = array_merge($gallery, $fundPhotos);
+        $imageFile = $request->file('image') ?: $request->file('main_img');
+        if ($imageFile) {
+            $mainImage = $this->uploadSingleImage($imageFile, '/images/fund_photo/');
+            if ($mainImage) {
+                $gallery = [$mainImage];
+            }
         }
-        if (!empty($multifiles)) {
-            $patientPhotos = explode('$;', $multifiles);
-            $gallery = array_merge($gallery, $patientPhotos);
+
+        if (empty($mainImage)) {
+            return response()->json([
+                "ResponseCode" => "401",
+                "Result" => "false",
+                "ResponseMsg" => "Image required. Upload 'image' or 'main_img'."
+            ], 401);
         }
-        if (!empty($multifiless)) {
-            $certPhotos = explode('$;', $multifiless);
-            $gallery = array_merge($gallery, $certPhotos);
-        }
-        
-        // First photo is the main image
-        $mainImage = !empty($gallery) ? $gallery[0] : null;
         
         // Map status: 'Pending' -> 2, 'Approved' -> 1, 'Cancelled' -> 0
         $campaignStatus = 2; // default to pending
@@ -315,8 +284,8 @@ class FundController extends BaseApiController
             $campaignStatus = 0;
         }
 
-        // Generate slug from title
-        $slug = \Illuminate\Support\Str::slug($title);
+        // Generate slug from name
+        $slug = \Illuminate\Support\Str::slug($name);
         // Ensure slug is unique
         $originalSlug = $slug;
         $counter = 1;
@@ -325,21 +294,20 @@ class FundController extends BaseApiController
             $counter++;
         }
 
-        // Prepare data for campaigns table
         $campaignData = [
             'user_id' => $uid,
             'category_id' => $cat_id,
-            'name' => $title,
+            'name' => $name,
             'slug' => $slug,
-            'description' => $fund_story,
+            'description' => $description ?: 'Campaign description',
+            'short_description' => $short_description ?: \Illuminate\Support\Str::limit($description, 150),
             'image' => $mainImage,
             'gallery' => !empty($gallery) ? json_encode($gallery) : null,
-            'goal_amount' => $fund_amt,
-            'target_amount' => $fund_amt, // Some migrations use target_amount
-            'start_date' => $fund_date,
-            'end_date' => !empty($exp_date) ? $exp_date : null,
+            'goal_amount' => $goal_amount,
+            'start_date' => $start_date,
+            'end_date' => $end_date,
             'status' => $campaignStatus,
-            'location' => $full_address,
+            'location' => $location,
             'raised_amount' => 0,
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s')
@@ -370,6 +338,25 @@ class FundController extends BaseApiController
                 "ResponseMsg" => "Fund creation failed! Error: " . $e->getMessage()
             ]);
         }
+    }
+
+    /**
+     * Upload a single image (e.g. main_img) and return stored path relative to public.
+     */
+    private function uploadSingleImage($file, $url)
+    {
+        if (!$file || !$file->isValid()) {
+            return null;
+        }
+        $basePath = base_path('public');
+        $targetPath = $basePath . $url;
+        if (!is_dir($targetPath)) {
+            mkdir($targetPath, 0755, true);
+        }
+        $ext = $file->getClientOriginalExtension() ?: 'jpg';
+        $newName = uniqid() . date('YmdHis') . mt_rand() . '.' . $ext;
+        $file->move($targetPath, $newName);
+        return ltrim($url, '/') . $newName;
     }
 
     /**

@@ -6,6 +6,7 @@
             <thead>
                 <tr>
                     <th>@lang('Label')</th>
+                    <th>@lang('Categories')</th>
                     <th>@lang('Slug')</th>
                     <th>@lang('Sort')</th>
                     <th>@lang('Status')</th>
@@ -17,6 +18,13 @@
                     <tr>
                         <td>
                             <span class="fw-bold">{{ __($headerCategory->label) }}</span>
+                        </td>
+                        <td>
+                            @php
+                                $ids = $headerCategory->getCategoryIdsForFilter();
+                                $catNames = $ids ? \App\Models\Category::whereIn('id', $ids)->pluck('name')->map(fn($n) => __($n))->join(', ') : '—';
+                            @endphp
+                            <span class="text-muted small">{{ $catNames }}</span>
                         </td>
                         <td>
                             <code>{{ $headerCategory->slug }}</code>
@@ -88,9 +96,22 @@
                             </div>
 
                             <div class="col-12">
+                                <label class="form--label">@lang('Campaign Categories')</label>
+                                <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                                    @foreach($categories as $cat)
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="category_ids[]" value="{{ $cat->id }}" id="addHcat{{ $cat->id }}">
+                                            <label class="form-check-label" for="addHcat{{ $cat->id }}">{{ __($cat->name) }}</label>
+                                        </div>
+                                    @endforeach
+                                </div>
+                                <small class="form-text text-muted">@lang('Select one or more. Link will show campaigns from these categories.')</small>
+                            </div>
+
+                            <div class="col-12">
                                 <label class="form--label required">@lang('Slug')</label>
                                 <input type="text" class="form--control" name="slug" required placeholder="@lang('e.g. art-crafts')">
-                                <small class="form-text text-muted">@lang('URL-friendly version of label')</small>
+                                <small class="form-text text-muted">@lang('URL path for this link')</small>
                             </div>
 
                             <div class="col-12">
@@ -136,9 +157,20 @@
                             </div>
 
                             <div class="col-12">
+                                <label class="form--label">@lang('Campaign Categories')</label>
+                                <div class="border rounded p-3 edit-header-category-ids" style="max-height: 200px; overflow-y: auto;">
+                                    @foreach($categories as $cat)
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="category_ids[]" value="{{ $cat->id }}" id="editHcat{{ $cat->id }}">
+                                            <label class="form-check-label" for="editHcat{{ $cat->id }}">{{ __($cat->name) }}</label>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            <div class="col-12">
                                 <label class="form--label required">@lang('Slug')</label>
                                 <input type="text" class="form--control" name="slug" id="editSlug" required placeholder="@lang('e.g. art-crafts')">
-                                <small class="form-text text-muted">@lang('URL-friendly version of label')</small>
                             </div>
 
                             <div class="col-12">
@@ -208,6 +240,12 @@
                 editModal.find('#editSlug').val(resource.slug)
                 editModal.find('#editSortOrder').val(resource.sort_order ?? 0)
                 editModal.find('#editStatus').val(resource.status)
+                editModal.find('.edit-header-category-ids input[type="checkbox"]').prop('checked', false)
+                let ids = resource.category_ids || []
+                if (ids.length === 0 && resource.category_id) ids = [resource.category_id]
+                ids.forEach(function(id) {
+                    editModal.find('.edit-header-category-ids input[value="' + id + '"]').prop('checked', true)
+                })
                 editModal.find('form').attr('action', formAction)
                 editModal.modal('show')
             })
