@@ -160,8 +160,12 @@ class UserController extends Controller
 
         $user->firstname = request('firstname');
         $user->lastname  = request('lastname');
-        $user->mobile    = request('mobile');
-        $user->whatsapp  = request('whatsapp');
+        if (request()->has('mobile')) {
+            $user->mobile = request('mobile');
+        }
+        if (request()->has('whatsapp')) {
+            $user->whatsapp = request('whatsapp');
+        }
 
         $user->address = [
             'state'   => request('state'),

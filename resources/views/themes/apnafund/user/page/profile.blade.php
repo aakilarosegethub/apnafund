@@ -47,6 +47,7 @@
                                     <input type="email" class="form-control" id="businessEmail" value="{{ $user->email }}" readonly>
                                     <small class="text-muted">Used for Contact Creator. From your account.</small>
                                 </div>
+                                {{-- Commented: Phone & WhatsApp - using Chat only
                                 <div class="form-group mb-3">
                                     <label for="businessPhone" class="form-label">Phone / Call</label>
                                     <input type="tel" class="form-control" id="businessPhone" name="mobile" value="{{ $user->mobile }}" placeholder="e.g. 923001234567">
@@ -57,6 +58,7 @@
                                     <input type="tel" class="form-control" id="businessWhatsapp" name="whatsapp" value="{{ $user->whatsapp }}" placeholder="e.g. 923001234567">
                                     <small class="text-muted">Shown on your campaign if set. Include country code without +.</small>
                                 </div>
+                                --}}
                                 <div class="form-group mb-3">
                                     <label for="state" class="form-label">State</label>
                                     <input type="text" class="form-control" id="state" name="state" value="{{ @$user->address->state }}">

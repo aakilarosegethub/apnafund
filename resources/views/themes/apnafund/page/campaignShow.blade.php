@@ -2499,6 +2499,13 @@
                 @if(auth()->id() != $campaignData->user_id)
                     @php
                         $creator = $campaignData->user;
+                        $chatUrl = auth()->check()
+                            ? route('user.inbox.index', ['start' => $creator->id, 'campaign_id' => $campaignData->id, 'campaign_slug' => $campaignData->slug, 'campaign_title' => $campaignData->name ?? ''])
+                            : route('user.login') . '?redirect=' . urlencode(route('user.inbox.index', ['start' => $creator->id, 'campaign_id' => $campaignData->id, 'campaign_slug' => $campaignData->slug, 'campaign_title' => $campaignData->name ?? '']));
+                    @endphp
+                    <a href="{{ $chatUrl }}" class="btn-donate" style="padding: 8px 12px; background: linear-gradient(135deg, #05ce78, #04b367);" title="Chat"><i class="fas fa-comments"></i> Chat</a>
+                    {{-- Commented out: Call, Email, WhatsApp - using Chat only
+                    @php
                         $hasCall = !empty($creator->mobile);
                         $hasEmail = !empty($creator->email);
                         $hasWhatsapp = !empty($creator->whatsapp);
@@ -2519,6 +2526,7 @@
                             @endif
                         </div>
                     @endif
+                    --}}
                 @endif
             </div>
             @endif
@@ -2855,26 +2863,12 @@
                     @if(auth()->id() != $campaignData->user_id)
                         @php
                             $creator2 = $campaignData->user;
-                            $hasCall2 = !empty($creator2->mobile);
-                            $hasEmail2 = !empty($creator2->email);
-                            $hasWhatsapp2 = !empty($creator2->whatsapp);
-                            $hasAnyContact2 = $hasCall2 || $hasEmail2 || $hasWhatsapp2;
-                            $waMsg2 = str_replace('[campaign_name]', $campaignData->name ?? '', $whatsappContactMessage ?? '');
-                            $waMsgEnc2 = rawurlencode($waMsg2);
+                            $chatUrl2 = auth()->check()
+                                ? route('user.inbox.index', ['start' => $creator2->id, 'campaign_id' => $campaignData->id, 'campaign_slug' => $campaignData->slug, 'campaign_title' => $campaignData->name ?? ''])
+                                : route('user.login') . '?redirect=' . urlencode(route('user.inbox.index', ['start' => $creator2->id, 'campaign_id' => $campaignData->id, 'campaign_slug' => $campaignData->slug, 'campaign_title' => $campaignData->name ?? '']));
                         @endphp
-                        @if($hasAnyContact2)
-                            <div class="d-flex gap-2">
-                                @if($hasCall2)
-                                    <a href="tel:{{ preg_replace('/[^0-9+]/', '', $creator2->mobile) }}" class="btn-share-card" style="background: #0d6efd; padding: 8px 12px;" title="Call"><i class="fas fa-phone"></i></a>
-                                @endif
-                                @if($hasEmail2)
-                                    <a href="mailto:{{ $creator2->email }}" class="btn-share-card" style="background: #0d6efd; padding: 8px 12px;" title="Email"><i class="fas fa-envelope"></i></a>
-                                @endif
-                                @if($hasWhatsapp2)
-                                    <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $creator2->whatsapp) }}{{ $waMsg2 ? '?text=' . $waMsgEnc2 : '' }}" target="_blank" class="btn-share-card" style="background: #25d366; padding: 8px 12px;" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-                                @endif
-                            </div>
-                        @endif
+                        <a href="{{ $chatUrl2 }}" class="btn-share-card" style="background: linear-gradient(135deg, #05ce78, #04b367); padding: 8px 16px;" title="Chat"><i class="fas fa-comments"></i> Chat</a>
+                        {{-- Commented: Call, Email, WhatsApp - using Chat only --}}
                     @endif
                 </div>
 

@@ -7,15 +7,7 @@
 @section('frontend')
     <!-- Overview Tab -->
     <div class="tab-pane fade show active" id="overview" role="tabpanel">
-                    @if($showContactWarning ?? false)
-                    <div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
-                        <i class="fas fa-exclamation-triangle me-3" style="font-size: 1.5rem;"></i>
-                        <div>
-                            <strong>Add contact details to your campaigns</strong><br>
-                            Add your Phone and/or WhatsApp in <a href="{{ route('user.profile') }}" class="alert-link">Profile Settings</a> so backers can contact you. Contact Creator icons will appear on your campaigns.
-                        </div>
-                    </div>
-                    @endif
+                    {{-- Commented: phone/whatsapp contact warning - using Chat only --}}
                     <div class="row">
                         <div class="col-12">
                             <h2 class="mb-4">Dashboard Overview</h2>

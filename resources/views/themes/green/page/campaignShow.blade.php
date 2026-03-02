@@ -349,26 +349,12 @@
                 @if(auth()->id() != $campaignData->user_id)
                     @php
                         $creator = $campaignData->user;
-                        $hasCall = !empty($creator->mobile);
-                        $hasEmail = !empty($creator->email);
-                        $hasWhatsapp = !empty($creator->whatsapp);
-                        $hasAnyContact = $hasCall || $hasEmail || $hasWhatsapp;
-                        $waMsg = str_replace('[campaign_name]', $campaignData->name ?? '', $whatsappContactMessage ?? '');
-                        $waMsgEnc = rawurlencode($waMsg);
+                        $chatUrl = auth()->check()
+                            ? route('user.inbox.index', ['start' => $creator->id, 'campaign_id' => $campaignData->id, 'campaign_slug' => $campaignData->slug, 'campaign_title' => $campaignData->name ?? ''])
+                            : route('user.login') . '?redirect=' . urlencode(route('user.inbox.index', ['start' => $creator->id, 'campaign_id' => $campaignData->id, 'campaign_slug' => $campaignData->slug, 'campaign_title' => $campaignData->name ?? '']));
                     @endphp
-                    @if($hasAnyContact)
-                        <div class="d-flex align-items-center gap-2 ms-2">
-                            @if($hasCall)
-                                <a href="tel:{{ preg_replace('/[^0-9+]/', '', $creator->mobile) }}" class="btn btn-outline-success btn-sm" title="Call"><i class="fas fa-phone"></i></a>
-                            @endif
-                            @if($hasEmail)
-                                <a href="mailto:{{ $creator->email }}" class="btn btn-outline-success btn-sm" title="Email"><i class="fas fa-envelope"></i></a>
-                            @endif
-                            @if($hasWhatsapp)
-                                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $creator->whatsapp) }}{{ $waMsg ? '?text=' . $waMsgEnc : '' }}" target="_blank" class="btn btn-outline-success btn-sm" title="WhatsApp"><i class="fab fa-whatsapp" style="color:#25d366"></i></a>
-                            @endif
-                        </div>
-                    @endif
+                    <a href="{{ $chatUrl }}" class="btn btn-outline-success btn-sm ms-2" title="Chat"><i class="fas fa-comments"></i> Chat</a>
+                    {{-- Commented: Call, Email, WhatsApp - using Chat only --}}
                 @endif
             </div>
 
