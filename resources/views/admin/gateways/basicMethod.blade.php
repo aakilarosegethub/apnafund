@@ -35,9 +35,18 @@
                                             <label class="col-form--label required">@lang('Rate')</label>
                                         </div>
                                         <div class="col-xxl-9">
-                                            <div class="input--group">
+                                                <div class="input--group">
                                                 <span class="input-group-text">1 {{ __($setting->site_cur ) }} =</span>
                                                 <input type="number" step="any" min="0" class="form--control" name="rate" value="{{ $method ? getAmount(@$methodRelation->rate) : old('rate') }}" required>
+                                                <span class="input-group-text currencySymbol">{{ @$methodRelation->currency }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="col-form--label">@lang('Input Currency Conversion')</label>
+                                            <p class="text-muted small mb-1">@lang('When contributor pays in PKR, convert to gateway currency: 1 PKR = X')</p>
+                                            <div class="input--group">
+                                                <span class="input-group-text">1 PKR =</span>
+                                                <input type="number" step="any" min="0" class="form--control" name="input_currency_rates[PKR]" value="{{ $method ? getAmount(@$methodRelation->input_currency_rates['PKR'] ?? '') : old('input_currency_rates.PKR') }}" placeholder="0.0035">
                                                 <span class="input-group-text currencySymbol">{{ @$methodRelation->currency }}</span>
                                             </div>
                                         </div>

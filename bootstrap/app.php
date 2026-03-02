@@ -76,6 +76,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
             'admin'            => \App\Http\Middleware\RedirectIfNotAdmin::class,
             'admin.guest'      => \App\Http\Middleware\RedirectIfAdmin::class,
+            'admin.api'        => \App\Http\Middleware\EnsureAdminApi::class,
 
             'demo'             => \App\Http\Middleware\Demo::class,
             'kyc.status'       => \App\Http\Middleware\KycCheck::class,
@@ -86,7 +87,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->validateCsrfTokens(
-            except: ['user/deposit', 'ipn*', 'jazzcash/ipn']
+            except: ['user/deposit', 'ipn*', 'jazzcash/ipn', 'api/payment/*', 'api/admin/*']
         );
     })
     ->withExceptions(function (Exceptions $exceptions) {

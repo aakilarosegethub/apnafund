@@ -56,6 +56,13 @@ Route::middleware(['admin'])->group(function () {
     // Banner Management
     Route::resource('banners', 'BannerController');
 
+    // Blog / DSA Posts Management
+    Route::resource('blog', 'DsaPostController')->except(['show']);
+
+    // Sub Admin Management
+    Route::resource('admin-users', 'AdminUserController')->except(['show']);
+    Route::post('admin-users/status/{id}', [\App\Http\Controllers\Admin\AdminUserController::class, 'status'])->name('admin-users.status');
+
     // Campaign category
     Route::controller('CategoryController')->prefix('categories')->name('categories.')->group(function () {
         Route::get('index', 'index')->name('index');
@@ -288,6 +295,14 @@ Route::middleware(['admin'])->group(function () {
 
         // Cache Clear
         Route::get('cache-clear', 'cacheClear')->name('cache.clear');
+    });
+
+    // Gemini AI Settings
+    Route::controller('GeminiSettingController')->prefix('setting/gemini')->name('gemini.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('/', 'update')->name('update');
+        Route::post('test', 'test')->name('test');
+        Route::post('reset', 'reset')->name('reset');
     });
 
     // Email & SMS Setting

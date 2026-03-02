@@ -140,8 +140,14 @@ class PaymentController extends Controller
     }
 
     function depositConfirm() {
-        $track   = session()->get('Track');
+        $track = session()->get('Track') ?? request()->query('trx');
+        if (!$track) {
+            abort(404, 'Invalid or missing payment session');
+        }
         $deposit = Deposit::with('gateway')->where('trx', $track)->initiate()->firstOrFail();
+
+        // Set session for webview/mobile flow (trx from query param)
+        session()->put('Track', $deposit->trx);
 
         if ($deposit->method_code >= 1000) return to_route('user.deposit.manual.confirm');
 

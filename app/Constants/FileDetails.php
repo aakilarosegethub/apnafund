@@ -81,6 +81,12 @@ class FileDetails
             'thumb' => '415x230',
         ];
 
+        $data['blog'] = [
+            'path' => 'assets/universal/images/blog',
+            'size' => '855x475',
+            'thumb' => '415x230',
+        ];
+
         return $data;
     }
 }

@@ -3,16 +3,21 @@
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
 
 class Admin extends Authenticatable
 {
-    /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array
-     */
+    use HasApiTokens;
+
+    protected $fillable = [
+        'name', 'username', 'email', 'password', 'status',
+    ];
 
     protected $hidden = [
         'password', 'remember_token',
+    ];
+
+    protected $casts = [
+        'status' => 'integer',
     ];
 }

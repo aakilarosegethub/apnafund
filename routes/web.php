@@ -306,6 +306,7 @@ Route::prefix('api')->group(function () {
     Route::match(['get', 'post'], '/pagelist.php', [PageController::class, 'pageList']);
     Route::match(['get', 'post'], '/paymentgateway.php', [PaymentController::class, 'paymentGatewayList']);
     Route::get('/gateways', [PaymentController::class, 'gateways']);
+    Route::post('/payment/webview-url', [PaymentController::class, 'webviewUrl']);
 
     // Auth APIs (Public - No token required for login/register)
     Route::match(['get', 'post'], '/reg_user.php', [AuthController::class, 'register']);
@@ -364,6 +365,15 @@ Route::prefix('api')->group(function () {
 
         // Account APIs
         Route::match(['get', 'post'], '/acc_delete.php', [AccountController::class, 'deleteAccount']);
+    });
+
+    // Admin API (Bearer token auth)
+    Route::post('/admin/login', [\App\Http\Controllers\Api\Admin\AdminAuthController::class, 'login']);
+    Route::middleware(['auth:sanctum', 'admin.api'])->prefix('admin/settings')->group(function () {
+        Route::get('/gemini', [\App\Http\Controllers\Api\Admin\GeminiSettingsController::class, 'index']);
+        Route::put('/gemini', [\App\Http\Controllers\Api\Admin\GeminiSettingsController::class, 'update']);
+        Route::post('/gemini/test', [\App\Http\Controllers\Api\Admin\GeminiSettingsController::class, 'test']);
+        Route::post('/gemini/reset', [\App\Http\Controllers\Api\Admin\GeminiSettingsController::class, 'reset']);
     });
 });
 

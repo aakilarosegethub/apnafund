@@ -90,6 +90,8 @@ class AutomatedGatewayController extends Controller
                 $gatewayCurrency->symbol            = $currency['symbol'];
                 $gatewayCurrency->method_code       = $code;
                 $gatewayCurrency->gateway_parameter = json_encode($param);
+                $inputRates = $currency['input_currency_rates'] ?? [];
+                $gatewayCurrency->input_currency_rates = !empty($inputRates) ? array_filter($inputRates) : null;
                 $gatewayCurrency->save();
             }
         }

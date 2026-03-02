@@ -192,6 +192,15 @@
                                                             <span class="input-group-text currency_symbol">{{ __($gatewayCurrency->baseSymbol()) }}</span>
                                                         </div>
                                                     </div>
+                                                    <div class="col-12">
+                                                        <label class="form--label">@lang('Input Currency Conversion')</label>
+                                                        <p class="text-muted small mb-2">@lang('When contributor pays in PKR but gateway needs') {{ __($gatewayCurrency->currency) }}, @lang('convert using rate: 1 PKR = X') {{ __($gatewayCurrency->currency) }}</p>
+                                                        <div class="input--group">
+                                                            <span class="input-group-text">1 PKR =</span>
+                                                            <input type="number" step="any" min="0" class="form--control" name="currency[{{ $currencyIndex }}][input_currency_rates][PKR]" value="{{ getAmount($gatewayCurrency->input_currency_rates['PKR'] ?? '') }}" placeholder="0.0035">
+                                                            <span class="input-group-text">{{ __($gatewayCurrency->currency) }}</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -309,6 +318,14 @@
                                                     <span class="input-group-text">1 {{ __($setting->site_cur ) }} =</span>
                                                     <input type="number" step="any" min="0" class="form--control" name="currency[{{ $currencyIndex }}][rate]" disabled required>
                                                     <span class="input-group-text currency_symbol">{{ __($gatewayCurrency && method_exists($gatewayCurrency, 'baseSymbol') ? $gatewayCurrency->baseSymbol() : '$') }}</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="form--label">@lang('Input Currency Conversion')</label>
+                                                <div class="input--group">
+                                                    <span class="input-group-text">1 PKR =</span>
+                                                    <input type="number" step="any" min="0" class="form--control" name="currency[{{ $currencyIndex }}][input_currency_rates][PKR]" disabled placeholder="0.0035">
+                                                    <span class="input-group-text currency_symbol">USD</span>
                                                 </div>
                                             </div>
                                         </div>

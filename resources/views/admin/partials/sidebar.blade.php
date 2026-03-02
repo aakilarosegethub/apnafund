@@ -42,6 +42,18 @@
             </a>
         </li>
         <li class="sidebar-item">
+            <a href="{{ route('admin.blog.index') }}" class="sidebar-link {{ navigationActive('admin.blog*', 2) }}">
+                <span class="nav-icon"><i class="ti ti-article"></i></span>
+                <span class="sidebar-txt">@lang('DSA Blog')</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
+            <a href="{{ route('admin.admin-users.index') }}" class="sidebar-link {{ navigationActive('admin.admin-users*', 2) }}">
+                <span class="nav-icon"><i class="ti ti-users"></i></span>
+                <span class="sidebar-txt">@lang('Sub Admins')</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
             <a href="{{ route('admin.payout-banks.index') }}" class="sidebar-link {{ navigationActive('admin.payout-banks*', 2) }}">
                 <span class="nav-icon"><i class="ti ti-building-bank"></i></span>
                 <span class="sidebar-txt">@lang('Payout Banks')</span>
@@ -347,6 +359,11 @@
                 <li class="sidebar-dropdown-item">
                     <a href="{{ route('admin.firebase.otp.index') }}" class="sidebar-link {{ navigationActive('admin.firebase.otp*', 1) }}">
                         @lang('Firebase OTP')
+                    </a>
+                </li>
+                <li class="sidebar-dropdown-item">
+                    <a href="{{ route('admin.gemini.index') }}" class="sidebar-link {{ navigationActive('admin.gemini*', 1) }}">
+                        @lang('Gemini AI')
                     </a>
                 </li>
             </ul>

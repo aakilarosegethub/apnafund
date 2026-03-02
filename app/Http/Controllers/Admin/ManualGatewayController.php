@@ -82,6 +82,8 @@ class ManualGatewayController extends Controller
         $gatewayCurrency->fixed_charge   = request('fixed_charge');
         $gatewayCurrency->percent_charge = request('percent_charge');
         $gatewayCurrency->rate           = request('rate');
+        $inputRates = request('input_currency_rates', []);
+        $gatewayCurrency->input_currency_rates = !empty($inputRates) ? array_filter($inputRates) : null;
         $gatewayCurrency->save();
 
         $toast[] = ['success', $method->name . $message];
