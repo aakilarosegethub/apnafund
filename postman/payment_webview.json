@@ -1,0 +1,61 @@
+{
+  "info": {
+    "_postman_id": "apnafund-payment-webview-001",
+    "name": "Payment Webview API (ApnaFund)",
+    "description": "Payment webview URL API - No authentication required. Use campaign_id, gateway, amount, etc.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "noauth"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8002"
+    }
+  ],
+  "item": [
+    {
+      "name": "Get Gateways",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/api/gateways?country=Pakistan",
+        "description": "Get available payment gateways for country. Use id or code in webview-url."
+      }
+    },
+    {
+      "name": "Get Payment Webview URL",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"gateway\": \"1001\",\n    \"amount\": 500,\n    \"campaign_id\": 69,\n    \"full_name\": \"Donor Name\",\n    \"email\": \"donor@example.com\",\n    \"country\": \"Pakistan\",\n    \"currency\": \"PKR\",\n    \"phone\": \"03001234567\"\n}"
+        },
+        "url": "{{base_url}}/api/payment/webview-url",
+        "description": "Automated gateway: returns payment_url for webview. Manual gateway: returns payment_guide (guideline, form_fields) - no payment_url. Check gateway_type in response."
+      }
+    }
+  ]
+}

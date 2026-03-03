@@ -10,7 +10,7 @@ class Admin extends Authenticatable
     use HasApiTokens;
 
     protected $fillable = [
-        'name', 'username', 'email', 'password', 'status',
+        'name', 'username', 'email', 'password', 'status', 'permissions',
     ];
 
     protected $hidden = [
@@ -18,6 +18,21 @@ class Admin extends Authenticatable
     ];
 
     protected $casts = [
-        'status' => 'integer',
+        'status'      => 'integer',
+        'permissions' => 'array',
     ];
+
+    public function isSuperAdmin(): bool
+    {
+        $p = $this->permissions;
+        return $p === null || (is_array($p) && in_array('*', $p));
+    }
+
+    public function hasPermission(string $key): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+        return is_array($this->permissions) && in_array($key, $this->permissions);
+    }
 }

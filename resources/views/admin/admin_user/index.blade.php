@@ -12,6 +12,7 @@
                     <th>@lang('Name')</th>
                     <th>@lang('Username')</th>
                     <th>@lang('Email')</th>
+                    <th>@lang('Permissions')</th>
                     <th>@lang('Status')</th>
                     <th>@lang('Action')</th>
                 </tr>
@@ -27,6 +28,18 @@
                         </td>
                         <td>
                             <span>{{ $admin->email }}</span>
+                        </td>
+                        <td>
+                            @if($admin->isSuperAdmin())
+                                <span class="badge bg--info">@lang('Full Access')</span>
+                            @else
+                                @php $perms = $admin->permissions ?? []; @endphp
+                                @if(empty($perms))
+                                    <span class="text-muted">@lang('None')</span>
+                                @else
+                                    <span>{{ implode(', ', array_map(fn($p) => ucfirst(str_replace('_', ' ', $p)), $perms)) }}</span>
+                                @endif
+                            @endif
                         </td>
                         <td>
                             @if($admin->id === auth()->guard('admin')->id())

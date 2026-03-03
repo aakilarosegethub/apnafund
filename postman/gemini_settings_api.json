@@ -1,0 +1,82 @@
+{
+  "info": {
+    "name": "Gemini Settings API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Admin Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"your_password\"\n}"
+        },
+        "url": "{{base_url}}/api/admin/login"
+      }
+    },
+    {
+      "name": "Get Gemini Settings",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{admin_token}}"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "url": "{{base_url}}/api/admin/settings/gemini"
+      }
+    },
+    {
+      "name": "Save Gemini Settings",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{admin_token}}"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"apiKey\": \"AIzaSy...\",\n  \"systemInstructions\": \"Tu Lahore Property Guide ka AI assistant ho.\",\n  \"conversationInstructions\": \"Ek ek question poocho. Roman Urdu use karo.\",\n  \"model\": \"gemini-1.5-flash\"\n}"
+        },
+        "url": "{{base_url}}/api/admin/settings/gemini"
+      }
+    },
+    {
+      "name": "Test Gemini Connection",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{admin_token}}"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"apiKey\": \"AIzaSy...\"\n}"
+        },
+        "url": "{{base_url}}/api/admin/settings/gemini/test"
+      }
+    },
+    {
+      "name": "Reset Instructions",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{admin_token}}"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "url": "{{base_url}}/api/admin/settings/gemini/reset"
+      }
+    }
+  ],
+  "variable": [
+    {"key": "base_url", "value": "http://127.0.0.1:8000"},
+    {"key": "admin_token", "value": ""}
+  ]
+}

@@ -29,6 +29,28 @@ function verificationCode($length): int {
     return random_int($min, $max);
 }
 
+function admin_can(string|array $permission): bool
+{
+    $admin = auth()->guard('admin')->user();
+    if (!$admin) {
+        return false;
+    }
+    $p = $admin->permissions;
+    if ($p === null || (is_array($p) && in_array('*', $p))) {
+        return true;
+    }
+    if (!is_array($p)) {
+        return false;
+    }
+    $keys = is_array($permission) ? $permission : [$permission];
+    foreach ($keys as $key) {
+        if (in_array($key, $p)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 function navigationActive($routeName, $type = null, $param = null) {
     if ($type == 1) $class = 'active';
     else $class = 'active show';

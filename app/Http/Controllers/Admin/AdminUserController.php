@@ -41,12 +41,18 @@ class AdminUserController extends Controller
             'email.unique'    => 'This email is already registered.',
         ]);
 
+        $permissions = $request->input('permissions', []);
+        if (in_array('*', $permissions)) {
+            $permissions = ['*'];
+        }
+
         Admin::create([
-            'name'     => $request->name,
-            'username' => $request->username,
-            'email'    => $request->email,
-            'password' => Hash::make($request->password),
-            'status'   => 1,
+            'name'        => $request->name,
+            'username'    => $request->username,
+            'email'       => $request->email,
+            'password'    => Hash::make($request->password),
+            'status'      => 1,
+            'permissions' => $permissions,
         ]);
 
         $toast[] = ['success', 'Sub admin created successfully.'];
@@ -79,6 +85,8 @@ class AdminUserController extends Controller
         if ($request->filled('password')) {
             $admin_user->password = Hash::make($request->password);
         }
+        $permissions = $request->input('permissions', []);
+        $admin_user->permissions = in_array('*', $permissions) ? ['*'] : $permissions;
         $admin_user->save();
 
         $toast[] = ['success', 'Sub admin updated successfully.'];

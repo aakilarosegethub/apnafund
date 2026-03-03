@@ -11,6 +11,7 @@
                 <span class="sidebar-txt">@lang('Dashboard')</span>
             </a>
         </li>
+        @if(admin_can('categories'))
         <li class="sidebar-item">
             <a href="{{ route('admin.categories.index') }}" class="sidebar-link {{ navigationActive('admin.categories.index', 2) }}">
                 <span class="nav-icon"><i class="ti ti-category"></i></span>
@@ -35,36 +36,48 @@
                 <span class="sidebar-txt">@lang('Footer Categories')</span>
             </a>
         </li>
+        @endif
+        @if(admin_can('banners'))
         <li class="sidebar-item">
             <a href="{{ route('admin.banners.index') }}" class="sidebar-link {{ navigationActive('admin.banners*', 2) }}">
                 <span class="nav-icon"><i class="ti ti-photo"></i></span>
                 <span class="sidebar-txt">@lang('Banners')</span>
             </a>
         </li>
+        @endif
+        @if(admin_can('blog'))
         <li class="sidebar-item">
             <a href="{{ route('admin.blog.index') }}" class="sidebar-link {{ navigationActive('admin.blog*', 2) }}">
                 <span class="nav-icon"><i class="ti ti-article"></i></span>
                 <span class="sidebar-txt">@lang('DSA Blog')</span>
             </a>
         </li>
+        @endif
+        @if(admin_can('*'))
         <li class="sidebar-item">
             <a href="{{ route('admin.admin-users.index') }}" class="sidebar-link {{ navigationActive('admin.admin-users*', 2) }}">
                 <span class="nav-icon"><i class="ti ti-users"></i></span>
                 <span class="sidebar-txt">@lang('Sub Admins')</span>
             </a>
         </li>
+        @endif
+        @if(admin_can('payout_banks'))
         <li class="sidebar-item">
             <a href="{{ route('admin.payout-banks.index') }}" class="sidebar-link {{ navigationActive('admin.payout-banks*', 2) }}">
                 <span class="nav-icon"><i class="ti ti-building-bank"></i></span>
                 <span class="sidebar-txt">@lang('Payout Banks')</span>
             </a>
         </li>
+        @endif
+        @if(admin_can('creator_payouts'))
         <li class="sidebar-item">
             <a href="{{ route('admin.creator-payouts.index') }}" class="sidebar-link {{ navigationActive('admin.creator-payouts*', 2) }}">
                 <span class="nav-icon"><i class="ti ti-cash"></i></span>
                 <span class="sidebar-txt">@lang('Creator Payouts')</span>
             </a>
         </li>
+        @endif
+        @if(admin_can('campaigns'))
         <li class="sidebar-item">
             <a role="button" class="sidebar-link has-sub {{ navigationActive('admin.campaigns*', 2) }}">
                 <span class="nav-icon">
@@ -116,6 +129,8 @@
                 </li>
             </ul>
         </li>
+        @endif
+        @if(admin_can('campaigns'))
         <li class="sidebar-item">
             <a href="{{ route('admin.comments.index') }}" class="sidebar-link {{ navigationActive('admin.comments.index', 2) }}">
                 <span class="nav-icon">
@@ -127,6 +142,8 @@
                 <span class="sidebar-txt">@lang('Comments')</span>
             </a>
         </li>
+        @endif
+        @if(admin_can('gateways'))
         <li class="sidebar-item">
             <a role="button" class="sidebar-link has-sub {{ navigationActive('admin.gateway*', 2) }}">
                 <span class="nav-icon"><i class="ti ti-credit-card"></i></span>
@@ -145,6 +162,8 @@
                 </li>
             </ul>
         </li>
+        @endif
+        @if(admin_can('users'))
         <li class="sidebar-item">
             <a role="button" class="sidebar-link has-sub {{ navigationActive('admin.user*', 2) }}">
                 <span class="nav-icon">
@@ -214,6 +233,8 @@
                 </li>
             </ul>
         </li>
+        @endif
+        @if(admin_can('donations'))
         <li class="sidebar-item">
             <a role="button" class="sidebar-link has-sub {{ navigationActive('admin.donations*', 2) }}">
                 <span class="nav-icon">
@@ -255,6 +276,8 @@
                 </li>
             </ul>
         </li>
+        @endif
+        @if(admin_can('withdrawals'))
         <li class="sidebar-item">
             <a role="button" class="sidebar-link has-sub {{ navigationActive('admin.withdraw*', 2) }}">
                 <span class="nav-icon">
@@ -296,6 +319,8 @@
                 </li>
             </ul>
         </li>
+        @endif
+        @if(admin_can('transactions'))
         <li class="sidebar-item">
             <a href="{{ route('admin.transaction.index') }}"
                class="sidebar-link {{ navigationActive('admin.transaction*', 2) }}">
@@ -303,6 +328,8 @@
                 <span class="sidebar-txt">@lang('Transactions')</span>
             </a>
         </li>
+        @endif
+        @if(admin_can('store'))
         <li class="sidebar-item">
             <a role="button" class="sidebar-link has-sub {{ navigationActive('admin.store*', 2) }}">
                 <span class="nav-icon"><i class="ti ti-shopping-cart"></i></span>
@@ -316,6 +343,8 @@
                 </li>
             </ul>
         </li>
+        @endif
+        @if(admin_can('contacts'))
         <li class="sidebar-item">
             <a href="{{ route('admin.contact.index') }}"
                class="sidebar-link {{ navigationActive('admin.contact*', 2) }}">
@@ -328,6 +357,8 @@
                 <span class="sidebar-txt">@lang('Contacts')</span>
             </a>
         </li>
+        @endif
+        @if(admin_can('subscribers'))
         <li class="sidebar-item">
             <a href="{{ route('admin.subscriber.index') }}"
                class="sidebar-link {{ navigationActive('admin.subscriber*', 2) }}">
@@ -335,6 +366,8 @@
                 <span class="sidebar-txt">@lang('Subscribers')</span>
             </a>
         </li>
+        @endif
+        @if(admin_can('basic_settings'))
         <li class="sidebar-item">
             <a role="button" class="sidebar-link has-sub {{ navigationActive('admin.basic*', 2) }}">
                 <span class="nav-icon"><i class="ti ti-settings"></i></span>
@@ -368,6 +401,8 @@
                 </li>
             </ul>
         </li>
+        @endif
+        @if(admin_can('notifications'))
         <li class="sidebar-item">
             <a role="button" class="sidebar-link has-sub {{ navigationActive('admin.notification*', 2) }}">
                 <span class="nav-icon"><i class="ti ti-mail"></i></span>
@@ -400,6 +435,8 @@
                 </li>
             </ul>
         </li>
+        @endif
+        @if(admin_can('notifications'))
         <li class="sidebar-item">
             <a href="{{ route('admin.email-logs.index') }}"
                class="sidebar-link {{ navigationActive('admin.email-logs*', 2) }}">
@@ -407,6 +444,8 @@
                 <span class="sidebar-txt">@lang('Email Logs')</span>
             </a>
         </li>
+        @endif
+        @if(admin_can('plugins'))
         <li class="sidebar-item">
             <a href="{{ route('admin.plugin.setting') }}"
                class="sidebar-link {{ navigationActive('admin.plugin*', 2) }}">
@@ -414,6 +453,8 @@
                 <span class="sidebar-txt">@lang('Plugins')</span>
             </a>
         </li>
+        @endif
+        @if(admin_can('language'))
         <li class="sidebar-item">
             <a href="{{ route('admin.language.index') }}"
                class="sidebar-link {{ navigationActive('admin.language*', 2) }}">
@@ -421,18 +462,24 @@
                 <span class="sidebar-txt">@lang('Language')</span>
             </a>
         </li>
+        @endif
+        @if(admin_can('seo'))
         <li class="sidebar-item">
             <a href="{{ route('admin.seo.setting') }}" class="sidebar-link {{ navigationActive('admin.seo*', 2) }}">
                 <span class="nav-icon"><i class="ti ti-seo"></i></span>
                 <span class="sidebar-txt">@lang('SEO')</span>
             </a>
         </li>
+        @endif
+        @if(admin_can('kyc'))
         <li class="sidebar-item">
             <a href="{{ route('admin.kyc.setting') }}" class="sidebar-link {{ navigationActive('admin.kyc*', 2) }}">
                 <span class="nav-icon"><i class="ti ti-user-check"></i></span>
                 <span class="sidebar-txt">@lang('KYC')</span>
             </a>
         </li>
+        @endif
+        @if(admin_can('themes'))
         <li class="sidebar-item">
             <a href="{{ route('admin.site.themes') }}"
                class="sidebar-link {{ navigationActive('admin.site.themes*', 2) }}">
@@ -440,6 +487,8 @@
                 <span class="sidebar-txt">@lang('Themes')</span>
             </a>
         </li>
+        @endif
+        @if(admin_can('site_settings'))
         <li class="sidebar-item">
             <a role="button" class="sidebar-link has-sub {{ navigationActive('admin.site.sections*', 2) }}">
                 <span class="nav-icon"><i class="ti ti-layout-grid-add"></i></span>
@@ -474,6 +523,8 @@
                 @endforeach
             </ul>
         </li>
+        @endif
+        @if(admin_can('cookie'))
         <li class="sidebar-item">
             <a href="{{ route('admin.cookie.setting') }}"
                class="sidebar-link {{ navigationActive('admin.cookie*', 2) }}">
@@ -481,6 +532,8 @@
                 <span class="sidebar-txt">@lang('GDPR Cookie')</span>
             </a>
         </li>
+        @endif
+        @if(admin_can('maintenance'))
         <li class="sidebar-item">
             <a href="{{ route('admin.maintenance.setting') }}"
                class="sidebar-link {{ navigationActive('admin.maintenance*', 2) }}">
@@ -488,6 +541,7 @@
                 <span class="sidebar-txt">@lang('Maintenance')</span>
             </a>
         </li>
+        @endif
         <li class="sidebar-item">
             <a href="#cacheClearModal" class="sidebar-link" data-bs-toggle="modal">
                 <span class="nav-icon"><i class="ti ti-eraser"></i></span>

@@ -1,0 +1,87 @@
+{
+  "info": {
+    "_postman_id": "cbe1a1ee-9b96-498d-a82d-d40656cdddf2",
+    "name": "Payment Webview API (ApnaFund)",
+    "description": "Payment webview URL API - No authentication required. Use campaign_id, gateway, amount, etc.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "1136625",
+    "_collection_link": "https://go.postman.co/collection/1136625-cbe1a1ee-9b96-498d-a82d-d40656cdddf2?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Get Gateways",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/gateways?country=Pakistan",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "gateways"
+          ],
+          "query": [
+            {
+              "key": "country",
+              "value": "Pakistan"
+            }
+          ]
+        },
+        "description": "Get available payment gateways for country. Use id or code in webview-url."
+      },
+      "response": []
+    },
+    {
+      "name": "Get Payment Webview URL",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"gateway\": \"1001\",\n    \"amount\": 500,\n    \"campaign_id\": 69,\n    \"full_name\": \"Donor Name\",\n    \"email\": \"donor@example.com\",\n    \"country\": \"Pakistan\",\n    \"currency\": \"PKR\",\n    \"phone\": \"03001234567\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/payment/webview-url",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "payment",
+            "webview-url"
+          ]
+        },
+        "description": "Get payment URL for mobile webview. No auth required. Returns payment_url and trx."
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8002"
+    }
+  ]
+}

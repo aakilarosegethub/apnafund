@@ -26,7 +26,7 @@ Route::middleware('admin.guest')->namespace('Auth')->group(function () {
 });
 
 // Operations for Admin
-Route::middleware(['admin'])->group(function () {
+Route::middleware(['admin', 'admin.permission'])->group(function () {
     Route::controller('AdminController')->group(function() {
         Route::get('dashboard', 'dashboard')->name('dashboard');
         Route::get('profile', 'profile')->name('profile');
