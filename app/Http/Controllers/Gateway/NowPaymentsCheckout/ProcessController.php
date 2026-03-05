@@ -18,8 +18,8 @@ class ProcessController extends Controller
             'price_amount'     => $deposit->final_amount,
             'price_currency'   => bs('site_cur'),
             'ipn_callback_url' => route('ipn.NowPaymentsCheckout'),
-            'success_url'      => route(gatewayRedirectUrl(true)),
-            'cancel_url'       => route(gatewayRedirectUrl()),
+            'success_url'      => gatewayRedirectUrlFull(true),
+            'cancel_url'       => gatewayRedirectUrlFull(false),
             'order_id'         => $deposit->trx,
         ]), [
             "x-api-key: $nowPaymentsAcc->api_key",

@@ -142,6 +142,8 @@
     const convColl = prefix + '_conversations';
 
     let selectedConvId = null;
+    let selectedOtherId = null;
+    let selectedCampaignId = null;
     let selectedOtherImageUrl = null;
     let selectedOtherName = null;
     let unsubMsg = null;
@@ -180,7 +182,8 @@
         var otherId = item.dataset.otherId;
         var otherName = item.dataset.otherName || '';
         var otherImageUrl = item.dataset.otherImageUrl || null;
-        if (convId) selectConversation(convId, otherId, otherName, true, otherImageUrl);
+        var campaignId = item.dataset.campaignId || null;
+        if (convId) selectConversation(convId, otherId, otherName, true, otherImageUrl, campaignId);
     });
 
     document.getElementById('chatMessages')?.addEventListener('click', function(e) {
@@ -299,6 +302,7 @@
                     el.dataset.otherId = otherId || '';
                     el.dataset.otherName = otherName || '';
                     el.dataset.otherImageUrl = otherImageUrl || '';
+                    el.dataset.campaignId = d.campaign_id || '';
                     el.innerHTML = '<div class="inbox-conv-avatar">' + avatarHtml + '</div><div class="inbox-conv-body"><div class="inbox-conv-name"></div><div class="inbox-conv-preview"></div></div><div class="inbox-conv-time"></div>' + (unread ? '<span class="inbox-conv-unread">New</span>' : '') + '<button type="button" class="inbox-conv-delete" title="Delete conversation"><i class="fas fa-trash-alt"></i></button>';
                     el.querySelector('.inbox-conv-name').textContent = otherName;
                     el.querySelector('.inbox-conv-preview').textContent = last;
@@ -308,6 +312,7 @@
                     el.dataset.otherId = otherId || '';
                     el.dataset.otherName = otherName || '';
                     el.dataset.otherImageUrl = otherImageUrl || '';
+                    el.dataset.campaignId = d.campaign_id || '';
                     var av = el.querySelector('.inbox-conv-avatar');
                     if (av) av.innerHTML = avatarHtml;
                     el.querySelector('.inbox-conv-name').textContent = otherName;
@@ -369,6 +374,8 @@
                 var participantNames = {}; participantNames[currentUser.id] = currentUser.fullname; participantNames[otherId] = otherName || startParams.campaignTitle || '';
                 ref.set({
                     participants: [currentUser.id, otherId],
+                    sender_id: String(currentUser.id),
+                    receiver_id: String(otherId),
                     campaign_id: startParams.campaignId || null,
                     campaign_slug: startParams.campaignSlug || null,
                     campaign_title: startParams.campaignTitle || null,
@@ -378,7 +385,7 @@
                     last_message_at: firebase.firestore.FieldValue.serverTimestamp(),
                     last_sender_id: null,
                     created_at: firebase.firestore.FieldValue.serverTimestamp(),
-                }).then(function() { selectConversation(cid, otherId, otherName, true, creatorImg); });
+                }).then(function() { selectConversation(cid, otherId, otherName, true, creatorImg, startParams.campaignId); });
             } else {
                 var d = doc.data();
                 var storedName = (d.participant_names && d.participant_names[otherId]) || '';
@@ -387,14 +394,16 @@
                 if (otherName && (!storedName || storedName === 'Creator')) {
                     ref.update({ ['participant_names.' + otherId]: otherName }).catch(function() {});
                 }
-                selectConversation(cid, otherId, displayName, true, otherImg);
+                selectConversation(cid, otherId, displayName, true, otherImg, d.campaign_id || null);
             }
         });
     }
 
-    function selectConversation(convId, otherId, otherName, focusInput, otherImageUrl) {
+    function selectConversation(convId, otherId, otherName, focusInput, otherImageUrl, campaignId) {
         if (unsubMsg) unsubMsg();
         selectedConvId = convId;
+        selectedOtherId = otherId || null;
+        selectedCampaignId = campaignId || null;
         selectedOtherImageUrl = otherImageUrl || null;
         selectedOtherName = otherName || null;
         document.querySelectorAll('.inbox-conv-item').forEach(function(n) { n.classList.toggle('active', n.dataset.convId === convId); });
@@ -467,6 +476,8 @@
             sender_image: String(currentUser.imageUrl || ''),
             text: String(text),
             created_at: firebase.firestore.Timestamp.now(),
+            campaign_id: selectedCampaignId || null,
+            receiver_id: selectedOtherId || null,
         };
         ref.collection('messages').add(msgData).then(function() {
             input.value = '';

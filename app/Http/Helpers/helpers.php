@@ -29,22 +29,32 @@ function verificationCode($length): int {
     return random_int($min, $max);
 }
 
+function admin_has_widget(string $widgetKey): bool
+{
+    $admin = auth()->guard('admin')->user();
+    if (!$admin) {
+        return false;
+    }
+    if ($admin->isSuperAdmin()) {
+        return true;
+    }
+    if ($admin->role_id && $admin->rbacRole) {
+        $widgets = $admin->rbacRole->dashboard_widgets ?? [];
+        return is_array($widgets) && in_array($widgetKey, $widgets);
+    }
+    return false;
+}
+
 function admin_can(string|array $permission): bool
 {
     $admin = auth()->guard('admin')->user();
     if (!$admin) {
         return false;
     }
-    $p = $admin->permissions;
-    if ($p === null || (is_array($p) && in_array('*', $p))) {
-        return true;
-    }
-    if (!is_array($p)) {
-        return false;
-    }
+    $helper = app(\App\Support\PermissionHelper::class);
     $keys = is_array($permission) ? $permission : [$permission];
     foreach ($keys as $key) {
-        if (in_array($key, $p)) {
+        if ($helper->hasPermission($admin, $key)) {
             return true;
         }
     }
@@ -691,6 +701,15 @@ function gatewayRedirectUrl($type = false): string {
     if (auth()->check() && $type) return 'user.deposit.success';
 
     return 'campaign';
+}
+
+/**
+ * Full redirect URL with payment_status param for Flutter webview detection.
+ * Flutter app can detect ?payment_status=success or ?payment_status=error to hide webview and show popup.
+ */
+function gatewayRedirectUrlFull(bool $success = false): string {
+    $routeName = gatewayRedirectUrl($success);
+    return route($routeName, ['payment_status' => $success ? 'success' : 'error']);
 }
 
 function showAmount($amount, $decimal = 0, $separate = true, $exceptZeros = false): string {

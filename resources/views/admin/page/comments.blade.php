@@ -79,7 +79,7 @@
                                         <i class="ti ti-dots-vertical"></i>
                                     </button>
                                     <ul class="dropdown-menu">
-                                        @if($comment->status == ManageStatus::CAMPAIGN_COMMENT_PENDING)
+                                        @if($comment->status == ManageStatus::CAMPAIGN_COMMENT_PENDING && admin_can('campaigns.comments_approve'))
                                             <li>
                                                 <button type="button" class="dropdown-item decisionBtn" data-question="@lang('Do you want to approve this comment?')" data-action="{{ route('admin.comments.approve', $comment->id) }}">
                                                     <span class="dropdown-icon"><i class="ti ti-circle-check text--success"></i></span> @lang('Approve')
@@ -87,11 +87,13 @@
                                             </li>
                                         @endif
 
+                                        @if(admin_can('campaigns.comments_approve'))
                                         <li>
                                             <button type="button" class="dropdown-item decisionBtn" data-question="@lang('Do you want to delete this comment?')" data-action="{{ route('admin.comments.delete', $comment->id) }}">
                                                 <span class="dropdown-icon"><i class="ti ti-trash text--danger"></i></span> @lang('Delete')
                                             </button>
                                         </li>
+                                        @endif
                                     </ul>
                                 </div>
                             </div>

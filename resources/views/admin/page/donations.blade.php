@@ -186,7 +186,7 @@
                                     <i class="ti ti-eye"></i>
                                 </a>
 
-                                @if ($deposit->status == ManageStatus::PAYMENT_PENDING)
+                                @if ($deposit->status == ManageStatus::PAYMENT_PENDING && admin_can('donations.approve'))
                                     <div class="custom--dropdown">
                                         <button type="button" class="btn btn--icon btn--sm btn--base" data-bs-toggle="dropdown" aria-expanded="false">
                                             <i class="ti ti-dots-vertical"></i>

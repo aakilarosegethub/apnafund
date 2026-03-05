@@ -134,7 +134,7 @@
                                     <i class="ti ti-info-square-rounded"></i> @lang('Details')
                                 </a>
 
-                                @if ($withdraw->status == ManageStatus::PAYMENT_PENDING)
+                                @if ($withdraw->status == ManageStatus::PAYMENT_PENDING && admin_can('withdrawals.approve'))
                                     <div class="custom--dropdown">
                                         <button class="btn btn--icon btn--sm btn--base" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="ti ti-dots-vertical"></i></button>
 

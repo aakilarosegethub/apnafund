@@ -197,6 +197,51 @@ class BaseApiController extends Controller
     }
 
     /**
+     * Get author/creator details for a campaign (user who created the campaign)
+     *
+     * @param int $userId User ID (campaign creator)
+     * @return array Author object with id, name, email, mobile, whatsapp, avatar, etc.
+     */
+    protected function getAuthorData($userId)
+    {
+        if (empty($userId)) {
+            return null;
+        }
+        try {
+            $user = DB::table('users')
+                ->select('id', 'firstname', 'lastname', 'username', 'email', 'mobile', 'whatsapp', 'country_code', 'country_name', 'address', 'avatar', 'image')
+                ->where('id', (int)$userId)
+                ->first();
+            if (!$user) {
+                return null;
+            }
+            $user = (array) $user;
+            $fullName = trim(($user['firstname'] ?? '') . ' ' . ($user['lastname'] ?? ''));
+            if (empty($fullName)) {
+                $fullName = $user['username'] ?? '';
+            }
+            $profilePic = $user['image'] ?? $user['avatar'] ?? null;
+            $profilePic = !empty($profilePic) ? $profilePic : 'images/default.png';
+            return [
+                'id' => (int)$user['id'],
+                'name' => $fullName,
+                'username' => $user['username'] ?? '',
+                'email' => $user['email'] ?? '',
+                'mobile' => $user['mobile'] ?? '',
+                'whatsapp' => $user['whatsapp'] ?? ($user['mobile'] ?? ''),
+                'country_code' => $user['country_code'] ?? '',
+                'country_name' => $user['country_name'] ?? '',
+                'address' => $user['address'] ?? '',
+                'avatar' => $profilePic,
+                'profile_pic' => $profilePic,
+            ];
+        } catch (\Exception $e) {
+            error_log("Get Author Data Error: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Get donater list for a fund
      */
     protected function getDonaterList($campaignId, $includeAnonymous = true)

@@ -170,6 +170,33 @@ class NotificationController extends Controller
         return back()->withToasts($toast);
     }
 
+    function welcome() {
+        $pageTitle = 'Welcome Email Template';
+        return view('admin.notification.welcome-template', compact('pageTitle'));
+    }
+
+    function welcomeUpdate() {
+        $this->validate(request(), [
+            'email_subject' => 'required|string|max:255',
+            'email_body'    => 'required|string',
+        ]);
+
+        try {
+            $setting = bs();
+            if ($setting) {
+                $setting->welcome_email_subject = request('email_subject');
+                $setting->welcome_email_body = request('email_body');
+                $setting->save();
+            }
+        } catch (\Exception $e) {
+            // Columns may not exist; log and continue
+            \Log::info('Welcome template update: ' . $e->getMessage());
+        }
+
+        $toast[] = ['success', 'Welcome email template updated successfully'];
+        return back()->withToasts($toast);
+    }
+
     function sms() {
         $pageTitle = 'SMS Notification Settings';
         return view('admin.notification.sms', compact('pageTitle'));

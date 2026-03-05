@@ -37,7 +37,7 @@ class ProcessController extends Controller
                 ],
             ],
             "application_context" => [
-                "cancel_url" => route(gatewayRedirectUrl()),
+                "cancel_url" => gatewayRedirectUrlFull(false),
                 "return_url" => route('ipn.' . $deposit->gateway->alias),
             ],
         ];
@@ -108,14 +108,14 @@ class ProcessController extends Controller
                 PaymentController::campaignDataUpdate($deposit);
                 $toast[] = ['success', 'Payment completed successfully'];
 
-                return to_route(gatewayRedirectUrl(true))->withToasts($toast);
+                return redirect()->to(gatewayRedirectUrlFull(true))->withToasts($toast);
             } else {
                 $toast[] = ['error', 'Payment captured failed'];
 
-                return to_route(gatewayRedirectUrl())->withToasts($toast);
+                return redirect()->to(gatewayRedirectUrlFull(false))->withToasts($toast);
             }
         } catch (HttpException $ex) {
-            return to_route(gatewayRedirectUrl());
+            return redirect()->to(gatewayRedirectUrlFull(false));
         }
     }
 }

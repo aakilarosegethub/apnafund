@@ -85,7 +85,7 @@
                                             <i class="ti ti-dots-vertical"></i>
                                         </button>
 
-                                        @if($campaign->status == ManageStatus::CAMPAIGN_PENDING)
+                                        @if($campaign->status == ManageStatus::CAMPAIGN_PENDING && admin_can('campaigns.approve'))
                                             <ul class="dropdown-menu">
                                                 <li>
                                                     <button type="button" class="dropdown-item decisionBtn" data-question="@lang('Do you want to approve this campaign?')" data-action="{{ route('admin.campaigns.status.update', [$campaign->id, 'approve']) }}">

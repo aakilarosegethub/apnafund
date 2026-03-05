@@ -257,6 +257,10 @@ class UserController extends Controller
     }
 
     function kycApprove($id) {
+        if (!admin_can('users.kyc_approve')) {
+            $toast[] = ['error', 'You do not have permission to approve KYC.'];
+            return back()->withToasts($toast);
+        }
         $user     = User::findOrFail($id);
         $user->kc = ManageStatus::VERIFIED;
         $user->save();
@@ -269,6 +273,10 @@ class UserController extends Controller
     }
 
     function kycCancel($id) {
+        if (!admin_can('users.kyc_approve')) {
+            $toast[] = ['error', 'You do not have permission to reject KYC.'];
+            return back()->withToasts($toast);
+        }
         $user = User::findOrFail($id);
 
         foreach ($user->kyc_data as $kycData) {

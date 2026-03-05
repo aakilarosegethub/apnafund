@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\ActivityLogger;
+use App\Support\PermissionHelper;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -23,7 +25,8 @@ class AdminPermission
             return redirect()->route('admin.login.form');
         }
 
-        if ($this->isSuperAdmin($admin)) {
+        $helper = app(PermissionHelper::class);
+        if ($helper->isSuperAdmin($admin)) {
             return $next($request);
         }
 
@@ -37,21 +40,21 @@ class AdminPermission
         }
 
         if (str_starts_with($routeName, 'admin.admin-users')) {
+            app(ActivityLogger::class)->logUnauthorized($routeName, 'Sub-admin management restricted to super admin');
             return redirect()->route('admin.dashboard')->withToasts([['error', 'Only super admin can manage sub admins.']]);
         }
+        if (str_starts_with($routeName, 'admin.roles')) {
+            app(ActivityLogger::class)->logUnauthorized($routeName, 'Role management restricted to super admin');
+            return redirect()->route('admin.dashboard')->withToasts([['error', 'Only super admin can manage roles.']]);
+        }
 
-        if (!$this->adminCanAccessRoute($admin, $routeName)) {
+        if (!$this->adminCanAccessRoute($admin, $routeName, $helper)) {
+            app(ActivityLogger::class)->logUnauthorized($routeName, 'Permission denied for route');
             $toast[] = ['error', 'You do not have permission to access this page.'];
             return redirect()->route('admin.dashboard')->withToasts($toast);
         }
 
         return $next($request);
-    }
-
-    protected function isSuperAdmin($admin): bool
-    {
-        $p = $admin->permissions;
-        return $p === null || (is_array($p) && (empty($p) === false && in_array('*', $p)));
     }
 
     protected function isAllowedForAll(string $routeName): bool
@@ -69,13 +72,27 @@ class AdminPermission
         return false;
     }
 
-    protected function adminCanAccessRoute($admin, string $routeName): bool
+    protected function adminCanAccessRoute($admin, string $routeName, PermissionHelper $helper): bool
     {
+        $routeConfig = config('admin_route_permissions', []);
+        // Match most specific prefix first (longer = more specific)
+        $sorted = collect($routeConfig)->sortByDesc(fn ($_, $prefix) => strlen($prefix));
+        foreach ($sorted as $prefix => $permissionKey) {
+            if (str_starts_with($routeName, $prefix)) {
+                $keys = is_array($permissionKey) ? $permissionKey : [$permissionKey];
+                foreach ($keys as $key) {
+                    if ($helper->hasPermission($admin, $key)) {
+                        return true;
+                    }
+                }
+                return false; // Matched prefix but no permission
+            }
+        }
+
         $permissions = $admin->permissions;
         if (!is_array($permissions)) {
             return false;
         }
-
         $config = config('admin_permissions', []);
         foreach ($permissions as $key) {
             $patterns = $config[$key] ?? [];

@@ -91,6 +91,10 @@ class DepositController extends Controller
     }
 
     function approve($id) {
+        if (!admin_can('donations.approve')) {
+            $toast[] = ['error', 'You do not have permission to approve donations.'];
+            return back()->withToasts($toast);
+        }
         $deposit = Deposit::where('id', $id)->pending()->firstOrFail();
         PaymentController::campaignDataUpdate($deposit, true);
 
@@ -100,6 +104,10 @@ class DepositController extends Controller
     }
 
     function reject($id) {
+        if (!admin_can('donations.approve')) {
+            $toast[] = ['error', 'You do not have permission to reject donations.'];
+            return back()->withToasts($toast);
+        }
         $this->validate(request(), [
             'admin_feedback' => 'required|max:255',
         ]);

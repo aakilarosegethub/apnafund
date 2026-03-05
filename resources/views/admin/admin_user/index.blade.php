@@ -32,6 +32,9 @@
                         <td>
                             @if($admin->isSuperAdmin())
                                 <span class="badge bg--info">@lang('Full Access')</span>
+                            @elseif($admin->rbacRole)
+                                <span class="badge bg--primary">{{ $admin->rbacRole->name }}</span>
+                                <small class="text-muted d-block">@lang('Role-based permissions')</small>
                             @else
                                 @php $perms = $admin->permissions ?? []; @endphp
                                 @if(empty($perms))

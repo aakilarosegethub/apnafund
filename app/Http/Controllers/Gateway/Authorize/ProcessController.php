@@ -37,7 +37,7 @@ class ProcessController extends Controller
         if ($deposit->status == ManageStatus::PAYMENT_SUCCESS) {
             $toast[] = ['error', 'Invalid request.'];
 
-            return to_route(gatewayRedirectUrl())->withToasts($toast);
+            return redirect()->to(gatewayRedirectUrlFull(false))->withToasts($toast);
         }
 
         $this->validate($request, [
@@ -82,11 +82,11 @@ class ProcessController extends Controller
             PaymentController::campaignDataUpdate($deposit);
             $toast[] = ['success', 'Payment completed successfully'];
 
-            return to_route(gatewayRedirectUrl(true))->withToasts($toast);
+            return redirect()->to(gatewayRedirectUrlFull(true))->withToasts($toast);
         }
 
         $toast[] = ['error', 'Something went wrong'];
 
-        return to_route(gatewayRedirectUrl())->withToasts($toast);
+        return redirect()->to(gatewayRedirectUrlFull(false))->withToasts($toast);
     }
 }

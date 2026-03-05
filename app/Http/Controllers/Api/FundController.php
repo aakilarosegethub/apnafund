@@ -177,6 +177,9 @@ class FundController extends BaseApiController
             $pol['reject_comment'] = '';
             $pol['remain_amt'] = sprintf("%.2f", $pol['remain_amt']);
             unset($pol['fund_photos']);
+
+            // Add author/creator details (id, name, whatsapp, email, mobile, avatar, etc.)
+            $pol['author'] = $this->getAuthorData($row['user_id'] ?? null);
             
             $c[] = $pol;
         }

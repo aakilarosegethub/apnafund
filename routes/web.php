@@ -128,6 +128,9 @@ Route::controller('WebsiteController')->group(function () {
     // Public User/Creator Profile
     Route::get('creator/{username}', 'creatorProfile')->name('creator.profile');
 
+    // Order/Donation Thank You
+    Route::get('order-success/{id}', 'orderSuccess')->name('order.success');
+
     // Policy Details
     Route::get('policy/{slug}/{id}', 'policyPages')->name('policy.pages');
     
@@ -300,6 +303,7 @@ Route::prefix('api')->group(function () {
     Route::match(['get', 'post'], '/home.php', [HomeController::class, 'index']);
     Route::match(['get', 'post'], '/catwisefund.php', [FundController::class, 'categoryWiseFund']);
     Route::match(['get', 'post'], '/search_fund.php', [FundController::class, 'searchFund']);
+    Route::match(['get', 'post'], '/fundidwise.php', [FundController::class, 'fundById']);
     Route::match(['get', 'post'], '/catlist.php', [CategoryController::class, 'categoryList']);
     Route::match(['get', 'post'], '/charitylist.php', [CategoryController::class, 'charityList']);
     Route::match(['get', 'post'], '/faq.php', [FaqController::class, 'faqList']);
@@ -330,7 +334,6 @@ Route::prefix('api')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         // Fund APIs
         Route::match(['get', 'post'], '/fundlist.php', [FundController::class, 'fundList']);
-        Route::match(['get', 'post'], '/fundidwise.php', [FundController::class, 'fundById']);
         Route::match(['get', 'post'], '/fundraise.php', [FundController::class, 'fundRaise']);
 
         // Fund Update APIs

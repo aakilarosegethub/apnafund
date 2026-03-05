@@ -1,6 +1,7 @@
 @extends('admin.layouts.master')
 
 @section('master')
+    @if(admin_has_widget('users'))
     <div class="col-12">
         <div class="row g-lg-4 g-3">
             <div class="col-xl-3 col-sm-6">
@@ -49,7 +50,9 @@
             </div>
         </div>
     </div>
+    @endif
 
+    @if(admin_has_widget('donations'))
     <div class="col-12">
         <div class="dashboard-widget-row">
             <a href="{{ route('admin.donations.done') }}" class="dashboard-widget-2 dashboard-widget-2__success">
@@ -94,7 +97,9 @@
             </a>
         </div>
     </div>
+    @endif
 
+    @if(admin_has_widget('campaigns'))
     <div class="col-12">
         <div class="row g-lg-4 g-3">
             <div class="col-xl-3 col-sm-6">
@@ -155,7 +160,9 @@
             </div>
         </div>
     </div>
+    @endif
 
+    @if(admin_has_widget('withdrawals'))
     <div class="col-12">
         <div class="row g-lg-4 g-3">
             <div class="col-xl-3 col-sm-6">
@@ -204,8 +211,10 @@
             </div>
         </div>
     </div>
+    @endif
 
-    <div class="col-xl-6">
+    @if(admin_has_widget('chart'))
+    <div class="{{ admin_has_widget('latest_users') ? 'col-xl-6' : 'col-12' }}">
         <div class="custom--card h-auto">
             <div class="card-header">
                 <h3 class="title">@lang('Contribution') & @lang('Withdraw')</h3>
@@ -216,7 +225,9 @@
             </div>
         </div>
     </div>
-    <div class="col-xl-6">
+    @endif
+    @if(admin_has_widget('latest_users'))
+    <div class="{{ admin_has_widget('chart') ? 'col-xl-6' : 'col-12' }}">
         <div class="custom--card border-0 h-auto table-responsive">
             <table class="table table-borderless table--striped table--responsive--md">
                 <thead>
@@ -266,6 +277,7 @@
             </table>
         </div>
    </div>
+    @endif
 
     <div class="col-12">
         <div class="change-password-modal">
@@ -302,6 +314,7 @@
             })(jQuery);
         @endif
 
+        @if(admin_has_widget('chart'))
         let options = {
             series: [{
                 name: 'Total Contribution',
@@ -377,5 +390,6 @@
 
         let chart = new ApexCharts(document.querySelector("#chart"), options);
         chart.render();
+        @endif
     </script>
 @endpush

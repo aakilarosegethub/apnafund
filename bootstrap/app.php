@@ -78,6 +78,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.guest'      => \App\Http\Middleware\RedirectIfAdmin::class,
             'admin.api'        => \App\Http\Middleware\EnsureAdminApi::class,
             'admin.permission' => \App\Http\Middleware\AdminPermission::class,
+            'permission'       => \App\Http\Middleware\CheckPermission::class,
 
             'demo'             => \App\Http\Middleware\Demo::class,
             'kyc.status'       => \App\Http\Middleware\KycCheck::class,

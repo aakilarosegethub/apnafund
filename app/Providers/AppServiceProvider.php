@@ -2,22 +2,28 @@
 
 namespace App\Providers;
 
-use App\Models\User;
-use App\Services\FirebaseService;
-use App\Services\FirebaseServiceFallback;
-use App\Models\Contact;
-use App\Models\Deposit;
+use App\Models\Admin;
 use App\Models\Campaign;
 use App\Models\Category;
+use App\Models\Contact;
+use App\Models\Deposit;
 use App\Models\SiteData;
+use App\Models\User;
 use App\Models\Withdrawal;
 use App\Constants\ManageStatus;
 use App\Models\AdminNotification;
 use App\Models\Comment;
-use Illuminate\Support\Facades\URL;
+use App\Observers\AdminObserver;
+use App\Observers\CampaignObserver;
+use App\Observers\UserObserver;
+use App\Services\ActivityLogger;
+use App\Services\FirebaseService;
+use App\Services\FirebaseServiceFallback;
+use App\Support\PermissionHelper;
 use Illuminate\Pagination\Paginator;
-use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,6 +32,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->singleton(PermissionHelper::class);
+
         // Firebase: use fallback when Firestore/gRPC unavailable (e.g. missing ext-grpc)
         $this->app->singleton(FirebaseService::class, function () {
             try {
@@ -43,6 +51,10 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        User::observe(UserObserver::class);
+        Admin::observe(AdminObserver::class);
+        Campaign::observe(CampaignObserver::class);
+
         try {
             $setting                        = bs();
         } catch (\Exception $e) {

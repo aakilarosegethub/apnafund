@@ -59,6 +59,7 @@
                                                     <span class="dropdown-icon"><i class="ti ti-info-hexagon text--info"></i></span> @lang('KYC Details')
                                                 </a>
                                             </li>
+                                            @if(admin_can('users.kyc_approve'))
                                             <li>
                                                 <button type="button" class="dropdown-item decisionBtn" data-question="@lang('Do you confirm the approval of these documents')?" data-action="{{ route('admin.user.kyc.approve', $user->id) }}">
                                                     <span class="dropdown-icon"><i class="ti ti-circle-check text--success"></i></span> @lang('Approve')
@@ -69,6 +70,7 @@
                                                     <span class="dropdown-icon"><i class="ti ti-circle-x text--danger"></i></span> @lang('Cancel')
                                                 </button>
                                             </li>
+                                            @endif
                                         </ul>
                                     </div>
                                 @endif

@@ -104,6 +104,10 @@ class CampaignController extends Controller
     }
 
     function updateStatus($id, $type) {
+        if (!admin_can('campaigns.approve')) {
+            $toast[] = ['error', 'You do not have permission to approve or reject campaigns.'];
+            return back()->withToasts($toast);
+        }
         $campaign         = Campaign::findOrFail($id);
         $campaign->status = ($type == 'approve') ? ManageStatus::CAMPAIGN_APPROVED : ManageStatus::CAMPAIGN_REJECTED;
         $campaign->save();

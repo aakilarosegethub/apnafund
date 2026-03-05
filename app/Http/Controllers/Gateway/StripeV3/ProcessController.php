@@ -48,8 +48,8 @@ class ProcessController extends Controller
                         'quantity'   => 1,
                     ]
                 ],
-                'cancel_url'           => route(gatewayRedirectUrl()),
-                'success_url'          => route(gatewayRedirectUrl(true)),
+                'cancel_url'           => gatewayRedirectUrlFull(false),
+                'success_url'          => gatewayRedirectUrlFull(true),
             ]);
         } catch (Exception $e) {
             $send['error']   = true;

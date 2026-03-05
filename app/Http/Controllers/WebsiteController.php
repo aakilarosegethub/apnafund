@@ -1682,4 +1682,31 @@ class WebsiteController extends Controller
         
         return back()->with('success', 'Comment submitted successfully. It will be visible after approval.');
     }
+
+    /**
+     * Order/Donation success thank you page.
+     * Supports: Deposit (donation) by id, or Order (ecommerce) by id.
+     */
+    public function orderSuccess($id)
+    {
+        $deposit = Deposit::with(['campaign', 'reward'])
+            ->where('id', $id)
+            ->where('status', ManageStatus::PAYMENT_SUCCESS)
+            ->first();
+
+        if ($deposit) {
+            $pageTitle = __('Thank You');
+            $type = 'donation';
+            return view($this->activeTheme . 'page.order-success', compact('deposit', 'pageTitle', 'type'));
+        }
+
+        $order = \App\Models\Order::where('id', $id)->first();
+        if ($order) {
+            $pageTitle = __('Thank You');
+            $type = 'order';
+            return view($this->activeTheme . 'page.order-success', compact('order', 'pageTitle', 'type'));
+        }
+
+        return redirect()->route('home')->with('error', __('Order or contribution not found.'));
+    }
 }

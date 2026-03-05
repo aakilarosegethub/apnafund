@@ -36,27 +36,14 @@
                         <input type="password" class="form--control" name="password_confirmation" placeholder="Leave blank to keep current">
                     </div>
                     <div class="col-12">
-                        <label class="form--label">@lang('Permissions')</label>
-                        <p class="text-muted small mb-2">@lang('Select which sections this sub admin can access.')</p>
-                        <div class="row g-2 mb-3">
-                            <div class="col-12">
-                                <div class="form-check">
-                                    @php $currentPerms = old('permissions', $admin_user->permissions ?? []); @endphp
-                                    <input type="checkbox" class="form-check-input" name="permissions[]" value="*" id="perm_super" {{ in_array('*', (array)$currentPerms) ? 'checked' : '' }}>
-                                    <label class="form-check-label fw-bold" for="perm_super">@lang('Super Admin (Full Access)')</label>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row g-2">
-                            @foreach(config('admin_permissions', []) as $key => $routes)
-                                <div class="col-md-4 col-lg-3">
-                                    <div class="form-check">
-                                        <input type="checkbox" class="form-check-input" name="permissions[]" value="{{ $key }}" id="perm_{{ $key }}" {{ in_array($key, $currentPerms) || in_array('*', (array)$currentPerms) ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="perm_{{ $key }}">{{ __(ucfirst(str_replace('_', ' ', $key))) }}</label>
-                                    </div>
-                                </div>
+                        <label class="form--label required">@lang('Assign Role')</label>
+                        <p class="text-muted small mb-2">@lang('Select a role. The role\'s permissions will be assigned to this sub admin.')</p>
+                        <select name="role_id" class="form--control" required>
+                            <option value="">@lang('-- Select Role --')</option>
+                            @foreach($roles as $role)
+                                <option value="{{ $role->id }}" {{ old('role_id', $admin_user->role_id) == $role->id ? 'selected' : '' }}>{{ $role->name }}</option>
                             @endforeach
-                        </div>
+                        </select>
                     </div>
                     <div class="col-12">
                         <button type="submit" class="btn btn--base">@lang('Update Sub Admin')</button>

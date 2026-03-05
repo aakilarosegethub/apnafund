@@ -33,9 +33,9 @@ class ProcessController extends Controller
                 'email' => $userEmail,
             ],
             'back_urls'        => [
-                'success' => route(gatewayRedirectUrl(true)),
+                'success' => gatewayRedirectUrlFull(true),
                 'pending' => '',
-                'failure' => route(gatewayRedirectUrl()),
+                'failure' => gatewayRedirectUrlFull(false),
             ],
             'notification_url' => route('ipn.' . $alias),
             'auto_return'      => 'approved',
@@ -95,11 +95,11 @@ class ProcessController extends Controller
             PaymentController::campaignDataUpdate($deposit);
             $toast[] = ['success', 'Payment completed successfully'];
 
-            return to_route(gatewayRedirectUrl(true))->withToasts($toast);
+            return redirect()->to(gatewayRedirectUrlFull(true))->withToasts($toast);
         }
 
         $toast[] = ['error', 'Unable to process'];
 
-        return to_route(gatewayRedirectUrl())->withToasts($toast);
+        return redirect()->to(gatewayRedirectUrlFull(false))->withToasts($toast);
     }
 }

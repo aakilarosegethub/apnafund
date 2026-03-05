@@ -101,7 +101,7 @@
                                     <td><strong>@lang('User ID:')</strong></td>
                                     <td>
                                         @if($emailLog->user)
-                                            <a href="{{ route('admin.user.detail', $emailLog->user->id) }}" class="text-primary">
+                                            <a href="{{ route('admin.user.details', $emailLog->user->id) }}" class="text-primary">
                                                 {{ $emailLog->user->username }} ({{ $emailLog->user->email }})
                                             </a>
                                         @else

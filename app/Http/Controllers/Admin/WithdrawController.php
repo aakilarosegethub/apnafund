@@ -44,6 +44,10 @@ class WithdrawController extends Controller
     }
 
     function approve() {
+        if (!admin_can('withdrawals.approve')) {
+            $toast[] = ['error', 'You do not have permission to approve withdrawals.'];
+            return back()->withToasts($toast);
+        }
         $this->validate(request(), [
             'id' => 'required|int|gt:0'
         ]);
@@ -70,6 +74,10 @@ class WithdrawController extends Controller
     }
 
     function cancel() {
+        if (!admin_can('withdrawals.approve')) {
+            $toast[] = ['error', 'You do not have permission to reject/cancel withdrawals.'];
+            return back()->withToasts($toast);
+        }
         $this->validate(request(), [
             'id'             => 'required|int|gt:0',
             'admin_feedback' => 'required|max:255',

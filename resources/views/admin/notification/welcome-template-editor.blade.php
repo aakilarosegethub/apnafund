@@ -9,7 +9,7 @@
                 <p class="text-muted">@lang('Customize your welcome email template with emojis and rich content')</p>
             </div>
             <div class="card-body">
-                <form action="{{ route('admin.notification.welcome.template.update') }}" method="POST">
+                <form action="{{ route('admin.user.welcome.template.update') }}" method="POST">
                     @csrf
                     
                     <div class="row g-4">

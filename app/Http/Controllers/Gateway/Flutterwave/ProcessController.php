@@ -36,13 +36,13 @@ class ProcessController extends Controller
             $message = 'Transaction failed, Ref: ' . $track;
             $toast[] = ['error', $message];
 
-            return to_route(gatewayRedirectUrl())->withToasts($toast);
+            return redirect()->to(gatewayRedirectUrlFull(false))->withToasts($toast);
         }
 
         if (!isset($track)) {
             $toast[] = ['error', 'Unable to process'];
 
-            return to_route(gatewayRedirectUrl())->withToasts($toast);
+            return redirect()->to(gatewayRedirectUrlFull(false))->withToasts($toast);
         }
 
         $flutterAcc = json_decode($deposit->gatewayCurrency()->gateway_parameter);
@@ -81,7 +81,7 @@ class ProcessController extends Controller
                 ]);
             }
 
-            return to_route(gatewayRedirectUrl())->withToasts($toast);
+            return redirect()->to(gatewayRedirectUrlFull(false))->withToasts($toast);
         }
 
         if ($response->data->status == "successful" && $response->data->chargecode == "00" && $deposit->final_amount == $response->data->amount && $deposit->method_currency == $response->data->currency && $deposit->status == ManageStatus::PAYMENT_INITIATE) {
@@ -91,7 +91,7 @@ class ProcessController extends Controller
             $toast[]     = ['success', 'Payment completed successfully'];
             $notifyApi[] = $message;
 
-            return to_route(gatewayRedirectUrl(true))->withToasts($toast);
+            return redirect()->to(gatewayRedirectUrlFull(true))->withToasts($toast);
         }
 
         $message     = 'Unable to process';
@@ -108,6 +108,6 @@ class ProcessController extends Controller
             ]);
         }
 
-        return to_route(gatewayRedirectUrl())->withToasts($toast);
+        return redirect()->to(gatewayRedirectUrlFull(false))->withToasts($toast);
     }
 }

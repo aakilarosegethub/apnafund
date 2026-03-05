@@ -174,7 +174,7 @@ class PaymentController extends Controller
             ]);
             $toast[] = ['error', $data->message];
 
-            return to_route(gatewayRedirectUrl())->withToasts($toast);
+            return redirect()->to(gatewayRedirectUrlFull(false))->withToasts($toast);
         }
         
 
@@ -302,7 +302,7 @@ class PaymentController extends Controller
         $track   = session()->get('Track');
         $deposit = Deposit::with('gateway')->where('trx', $track)->initiate()->first();
 
-        if (!$deposit) return to_route(gatewayRedirectUrl());
+        if (!$deposit) return redirect()->to(gatewayRedirectUrlFull(false));
 
         if ($deposit->method_code > 999) {
             $pageTitle       = 'Donation Confirmation';
@@ -312,7 +312,7 @@ class PaymentController extends Controller
             // Check if gateway and form exist
             if (!$gateway || !$gateway->form) {
                 $toast[] = ['error', 'Invalid gateway configuration'];
-                return to_route(gatewayRedirectUrl())->withToasts($toast);
+                return redirect()->to(gatewayRedirectUrlFull(false))->withToasts($toast);
             }
 
             return view($this->activeTheme . 'user.payment.manual', compact('deposit', 'pageTitle', 'gateway'));
@@ -325,7 +325,7 @@ class PaymentController extends Controller
         $track   = session()->get('Track');
         $deposit = Deposit::with('gateway')->where('trx', $track)->initiate()->first();
 
-        if (!$deposit) return to_route(gatewayRedirectUrl());
+        if (!$deposit) return redirect()->to(gatewayRedirectUrlFull(false));
 
         $gatewayCurrency = $deposit->gatewayCurrency();
         $gateway         = $gatewayCurrency->method;
@@ -333,7 +333,7 @@ class PaymentController extends Controller
         // Check if gateway and form exist
         if (!$gateway || !$gateway->form) {
             $toast[] = ['error', 'Invalid gateway configuration'];
-            return to_route(gatewayRedirectUrl())->withToasts($toast);
+            return redirect()->to(gatewayRedirectUrlFull(false))->withToasts($toast);
         }
         
         $formData = $gateway->form->form_data;
@@ -394,7 +394,7 @@ class PaymentController extends Controller
         $track   = session()->get('Track');
         $deposit = Deposit::with('gateway')->where('trx', $track)->done()->first();
 
-        if (!$deposit) return to_route(gatewayRedirectUrl());
+        if (!$deposit) return redirect()->to(gatewayRedirectUrlFull(false));
 
         $toast[] = ['success', 'Payment completed successfully'];
 
@@ -405,11 +405,8 @@ class PaymentController extends Controller
                 return redirect()->route('user.campaign.edit.basics', $slug)->withToasts($toast);
             }
         }
-        
-        if (auth()->check()) {
-            return to_route('user.donation.history')->withToasts($toast);
-        } else {
-            return to_route('campaign')->withToasts($toast);
-        }
+
+        // Redirect to thank you page with order details
+        return redirect()->route('order.success', ['id' => $deposit->id, 'payment_status' => 'success'])->withToasts($toast);
     }
 }

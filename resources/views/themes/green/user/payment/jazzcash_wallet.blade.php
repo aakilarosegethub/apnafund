@@ -158,7 +158,7 @@ function initJazzCashWallet() {
                     showResult('success', response.message);
                     // Redirect to success page after 3 seconds
                     setTimeout(function() {
-                        window.location.href = '{{ route("user.deposit.success") }}';
+                        window.location.href = '{{ route("user.deposit.success", ["payment_status" => "success"]) }}';
                     }, 3000);
                 } else {
                     showResult('error', response.message);

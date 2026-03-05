@@ -4,9 +4,9 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Session;
+use Illuminate\Support\Facades\Session;
 
-class adminnotlogedin
+class AdminNotLogedIn
 {
     /**
      * Handle an incoming request.

@@ -59,6 +59,13 @@ Route::middleware(['admin', 'admin.permission'])->group(function () {
     // Blog / DSA Posts Management
     Route::resource('blog', 'DsaPostController')->except(['show']);
 
+    // Role Management (RBAC)
+    Route::resource('roles', 'RoleController');
+
+    // Activity Logs (read-only)
+    Route::get('activity-logs', [\App\Http\Controllers\Admin\ActivityLogController::class, 'index'])->name('activity-logs.index');
+    Route::get('activity-logs/{activity_log}', [\App\Http\Controllers\Admin\ActivityLogController::class, 'show'])->name('activity-logs.show');
+
     // Sub Admin Management
     Route::resource('admin-users', 'AdminUserController')->except(['show']);
     Route::post('admin-users/status/{id}', [\App\Http\Controllers\Admin\AdminUserController::class, 'status'])->name('admin-users.status');
@@ -118,6 +125,23 @@ Route::middleware(['admin', 'admin.permission'])->group(function () {
         Route::post('fix-images', 'fixAllImages')->name('fix-images');
         Route::post('status-update/{id}/{type}', 'updateStatus')->name('status.update');
         Route::post('featured-update/{id}', 'updateFeatured')->name('featured.update');
+    });
+
+    // Registration Steps Management
+    Route::controller('RegistrationStepController')->prefix('registration/steps')->name('registration.steps.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('create', 'create')->name('create');
+        Route::post('store', 'store')->name('store');
+        Route::get('edit/{id}', 'edit')->name('edit');
+        Route::post('update/{id}', 'update')->name('update');
+        Route::delete('destroy/{id}', 'destroy')->name('destroy');
+        Route::post('toggle-status/{id}', 'toggleStatus')->name('toggle-status');
+        Route::post('reorder', 'reorderSteps')->name('reorder');
+        Route::post('step/{stepId}/question', 'addQuestion')->name('add-question');
+        Route::post('step/{stepId}/question/{questionId}', 'updateQuestion')->name('update-question');
+        Route::delete('step/{stepId}/question/{questionId}', 'deleteQuestion')->name('delete-question');
+        Route::post('step/{stepId}/question/{questionId}/toggle', 'toggleQuestionStatus')->name('toggle-question-status');
+        Route::post('step/{stepId}/reorder-questions', 'reorderQuestions')->name('reorder-questions');
     });
 
     // Campaign comments
@@ -307,6 +331,10 @@ Route::middleware(['admin', 'admin.permission'])->group(function () {
 
     // Email & SMS Setting
     Route::controller('NotificationController')->prefix('notification')->name('notification.')->group(function() {
+        // Welcome Template
+        Route::get('welcome', 'welcome')->name('welcome');
+        Route::post('welcome', 'welcomeUpdate')->name('welcome.update');
+
         // Template Setting
         Route::get('universal', 'universal')->name('universal');
         Route::post('universal', 'universalUpdate');
@@ -384,26 +412,26 @@ Route::controller('StoreManagementController')->prefix('store')->name('store.')-
     Route::get('/sync-status', 'getSyncStatus')->name('sync.status');
 });
 
-// Email Logs Management
+// Email Logs Management (stats before {emailLog} to avoid route conflict)
 Route::controller('EmailLogController')->prefix('email-logs')->name('email-logs.')->group(function() {
     Route::get('/', 'index')->name('index');
+    Route::get('/stats/data', 'stats')->name('stats');
     Route::get('/{emailLog}', 'show')->name('show');
     Route::get('/{emailLog}/preview', 'preview')->name('preview');
     Route::post('/{emailLog}/resend', 'resend')->name('resend');
     Route::delete('/{emailLog}', 'destroy')->name('destroy');
-    Route::get('/stats/data', 'stats')->name('stats');
 });
 
-// Webhook Logs Management
+// Webhook Logs Management (specific routes before {id} to avoid conflicts)
 Route::controller('WebhookLogController')->prefix('webhook-logs')->name('webhook.logs.')->group(function() {
     Route::get('/', 'index')->name('index');
-    Route::get('/{id}', 'show')->name('show');
     Route::get('/statistics', 'statistics')->name('statistics');
-    Route::post('/{id}/retry', 'retry')->name('retry');
-    Route::post('/cleanup', 'cleanup')->name('cleanup');
     Route::get('/export', 'export')->name('export');
     Route::get('/gateway/{gateway}', 'byGateway')->name('by.gateway');
     Route::get('/status/{status}', 'byStatus')->name('by.status');
+    Route::post('/cleanup', 'cleanup')->name('cleanup');
+    Route::get('/{id}', 'show')->name('show');
+    Route::post('/{id}/retry', 'retry')->name('retry');
 });
 
 // Social Login Settings

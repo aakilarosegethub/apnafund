@@ -42,7 +42,7 @@ class ProcessController extends Controller
         if ($deposit->status == ManageStatus::PAYMENT_SUCCESS) {
             $toast[] = ['error', 'Invalid request.'];
 
-            return to_route(gatewayRedirectUrl())->withToasts($toast);
+            return redirect()->to(gatewayRedirectUrlFull(false))->withToasts($toast);
         }
 
         $stripeJSAcc = json_decode($deposit->gatewayCurrency()->gateway_parameter);
@@ -58,7 +58,7 @@ class ProcessController extends Controller
         } catch (Exception $e) {
             $toast[] = ['error', $e->getMessage()];
 
-            return to_route(gatewayRedirectUrl())->withToasts($toast);
+            return redirect()->to(gatewayRedirectUrlFull(false))->withToasts($toast);
         }
 
         try {
@@ -71,7 +71,7 @@ class ProcessController extends Controller
         } catch (Exception $e) {
             $toast[] = ['error', $e->getMessage()];
 
-            return to_route(gatewayRedirectUrl())->withToasts($toast);
+            return redirect()->to(gatewayRedirectUrlFull(false))->withToasts($toast);
         }
 
         if ($charge['status'] == 'succeeded') {
@@ -163,11 +163,11 @@ class ProcessController extends Controller
             
             $toast[] = ['success', 'Payment completed successfully'];
 
-            return to_route(gatewayRedirectUrl(true))->withToasts($toast);
+            return redirect()->to(gatewayRedirectUrlFull(true))->withToasts($toast);
         } else {
             $toast[] = ['error', 'Failed to process'];
 
-            return to_route(gatewayRedirectUrl())->withToasts($toast);
+            return redirect()->to(gatewayRedirectUrlFull(false))->withToasts($toast);
         }
     }
 }

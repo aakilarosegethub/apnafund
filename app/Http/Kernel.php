@@ -54,8 +54,12 @@ class Kernel extends HttpKernel
      * @var array<string, class-string|string>
      */
     protected $routeMiddleware = [
-        'adminlogedin' => \App\Http\Middleware\adminlogedin::class,
-        'adminnotlogedin' => \App\Http\Middleware\adminnotlogedin::class,
+        'admin' => \App\Http\Middleware\RedirectIfNotAdmin::class,
+        'admin.guest' => \App\Http\Middleware\RedirectIfAdmin::class,
+        'admin.permission' => \App\Http\Middleware\AdminPermission::class,
+        'permission' => \App\Http\Middleware\CheckPermission::class,
+        'adminlogedin' => \App\Http\Middleware\AdminLogedIn::class,
+        'adminnotlogedin' => \App\Http\Middleware\AdminNotLogedIn::class,
         'auth' => \App\Http\Middleware\Authenticate::class,
         'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
         'cache.headers' => \Illuminate\Http\Middleware\SetCacheHeaders::class,

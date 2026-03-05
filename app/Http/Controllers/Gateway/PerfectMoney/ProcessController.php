@@ -20,9 +20,9 @@ class ProcessController extends Controller
         $val['PAYMENT_AMOUNT']       = round($deposit->final_amount, 2);
         $val['PAYMENT_UNITS']        = "$deposit->method_currency";
         $val['STATUS_URL']           = route('ipn.' . $deposit->gateway->alias);
-        $val['PAYMENT_URL']          = route(gatewayRedirectUrl(true));
+        $val['PAYMENT_URL']          = gatewayRedirectUrlFull(true);
         $val['PAYMENT_URL_METHOD']   = 'POST';
-        $val['NOPAYMENT_URL']        = route(gatewayRedirectUrl());
+        $val['NOPAYMENT_URL']        = gatewayRedirectUrlFull(false);
         $val['NOPAYMENT_URL_METHOD'] = 'POST';
         $val['SUGGESTED_MEMO']       = $deposit->user_id ? $deposit->user->email : $deposit->email;
         $val['BAGGAGE_FIELDS']       = 'IDENT';

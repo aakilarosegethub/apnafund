@@ -60,6 +60,20 @@
                 <span class="sidebar-txt">@lang('Sub Admins')</span>
             </a>
         </li>
+        <li class="sidebar-item">
+            <a href="{{ route('admin.roles.index') }}" class="sidebar-link {{ navigationActive('admin.roles*', 2) }}">
+                <span class="nav-icon"><i class="ti ti-shield"></i></span>
+                <span class="sidebar-txt">@lang('Roles')</span>
+            </a>
+        </li>
+        @endif
+        @if(admin_can('*') || admin_can('activity_logs.view'))
+        <li class="sidebar-item">
+            <a href="{{ route('admin.activity-logs.index') }}" class="sidebar-link {{ navigationActive('admin.activity-logs*', 2) }}">
+                <span class="nav-icon"><i class="ti ti-history"></i></span>
+                <span class="sidebar-txt">@lang('Activity Logs')</span>
+            </a>
+        </li>
         @endif
         @if(admin_can('payout_banks'))
         <li class="sidebar-item">
@@ -367,38 +381,48 @@
             </a>
         </li>
         @endif
-        @if(admin_can('basic_settings'))
+        @if(admin_can('settings.basic') || admin_can('settings.home') || admin_can('settings.social_login') || admin_can('settings.firebase_otp') || admin_can('settings.gemini') || admin_can('basic_settings'))
         <li class="sidebar-item">
             <a role="button" class="sidebar-link has-sub {{ navigationActive('admin.basic*', 2) }}">
                 <span class="nav-icon"><i class="ti ti-settings"></i></span>
                 <span class="sidebar-txt">@lang('Site Settings')</span>
             </a>
             <ul class="sidebar-dropdown-menu">
+                @if(admin_can('settings.basic') || admin_can('basic_settings'))
                 <li class="sidebar-dropdown-item">
                     <a href="{{ route('admin.basic.setting') }}" class="sidebar-link {{ navigationActive('admin.basic.setting', 1) }}">
                         @lang('Basic Settings')
                     </a>
                 </li>
+                @endif
+                @if(admin_can('settings.home'))
                 <li class="sidebar-dropdown-item">
                     <a href="{{ route('admin.home.setting') }}" class="sidebar-link {{ navigationActive('admin.home.setting', 1) }}">
                         @lang('Home Settings')
                     </a>
                 </li>
+                @endif
+                @if(admin_can('settings.social_login'))
                 <li class="sidebar-dropdown-item">
                     <a href="{{ route('admin.social.login.index') }}" class="sidebar-link {{ navigationActive('admin.social.login*', 1) }}">
                         @lang('Social Login')
                     </a>
                 </li>
+                @endif
+                @if(admin_can('settings.firebase_otp'))
                 <li class="sidebar-dropdown-item">
                     <a href="{{ route('admin.firebase.otp.index') }}" class="sidebar-link {{ navigationActive('admin.firebase.otp*', 1) }}">
                         @lang('Firebase OTP')
                     </a>
                 </li>
+                @endif
+                @if(admin_can('settings.gemini'))
                 <li class="sidebar-dropdown-item">
                     <a href="{{ route('admin.gemini.index') }}" class="sidebar-link {{ navigationActive('admin.gemini*', 1) }}">
                         @lang('Gemini AI')
                     </a>
                 </li>
+                @endif
             </ul>
         </li>
         @endif
@@ -445,7 +469,7 @@
             </a>
         </li>
         @endif
-        @if(admin_can('plugins'))
+        @if(admin_can('settings.plugins') || admin_can('plugins'))
         <li class="sidebar-item">
             <a href="{{ route('admin.plugin.setting') }}"
                class="sidebar-link {{ navigationActive('admin.plugin*', 2) }}">
@@ -454,7 +478,7 @@
             </a>
         </li>
         @endif
-        @if(admin_can('language'))
+        @if(admin_can('settings.language') || admin_can('language'))
         <li class="sidebar-item">
             <a href="{{ route('admin.language.index') }}"
                class="sidebar-link {{ navigationActive('admin.language*', 2) }}">
@@ -463,7 +487,7 @@
             </a>
         </li>
         @endif
-        @if(admin_can('seo'))
+        @if(admin_can('settings.seo') || admin_can('seo'))
         <li class="sidebar-item">
             <a href="{{ route('admin.seo.setting') }}" class="sidebar-link {{ navigationActive('admin.seo*', 2) }}">
                 <span class="nav-icon"><i class="ti ti-seo"></i></span>
@@ -471,7 +495,7 @@
             </a>
         </li>
         @endif
-        @if(admin_can('kyc'))
+        @if(admin_can('settings.kyc') || admin_can('kyc'))
         <li class="sidebar-item">
             <a href="{{ route('admin.kyc.setting') }}" class="sidebar-link {{ navigationActive('admin.kyc*', 2) }}">
                 <span class="nav-icon"><i class="ti ti-user-check"></i></span>
@@ -479,7 +503,7 @@
             </a>
         </li>
         @endif
-        @if(admin_can('themes'))
+        @if(admin_can('settings.themes') || admin_can('themes'))
         <li class="sidebar-item">
             <a href="{{ route('admin.site.themes') }}"
                class="sidebar-link {{ navigationActive('admin.site.themes*', 2) }}">
@@ -488,43 +512,51 @@
             </a>
         </li>
         @endif
-        @if(admin_can('site_settings'))
+        @if(admin_can('settings.site_content') || admin_can('site_settings'))
         <li class="sidebar-item">
             <a role="button" class="sidebar-link has-sub {{ navigationActive('admin.site.sections*', 2) }}">
                 <span class="nav-icon"><i class="ti ti-layout-grid-add"></i></span>
                 <span class="sidebar-txt">@lang('Site Content')</span>
             </a>
             <ul class="sidebar-dropdown-menu">
-                                        <li class="sidebar-dropdown-item">
+                                        @if(admin_can('settings.site_content') || admin_can('site_settings'))
+                        <li class="sidebar-dropdown-item">
                             <a href="{{ route('admin.homepage.index') }}"
                                class="sidebar-link {{ navigationActive('admin.homepage*', 1) }}">
                                 <i class="ti ti-home me-2"></i>@lang('Home Page Management')
                             </a>
                         </li>
+                        @endif
+                        @if(admin_can('settings.customcode') || admin_can('settings.site_content') || admin_can('site_settings'))
                         <li class="sidebar-dropdown-item">
                             <a href="{{ route('admin.customcode.index') }}"
                                class="sidebar-link {{ navigationActive('admin.customcode*', 1) }}">
                                 <i class="ti ti-code me-2"></i>@lang('Custom Code')
                             </a>
                         </li>
+                        @endif
+                        @if(admin_can('settings.report') || admin_can('settings.site_content') || admin_can('site_settings'))
                         <li class="sidebar-dropdown-item">
                             <a href="{{ route('admin.report.fundraiser') }}"
                                class="sidebar-link {{ navigationActive('admin.report*', 1) }}">
                                 <i class="ti ti-flag me-2"></i>@lang('Report Fundraiser')
                             </a>
                         </li>
+                        @endif
                 @php $lastSegment =  collect(request()->segments())->last(); @endphp
 
+                @if(admin_can('settings.site_content') || admin_can('site_settings'))
                 @foreach(getPageSections(true) as $key => $section)
                     <li class="sidebar-dropdown-item">
                         <a href="{{ route('admin.site.sections', $key) }}"
                            class="sidebar-link @if($lastSegment == $key) active @endif">{{ __($section['name']) }}</a>
                     </li>
                 @endforeach
+                @endif
             </ul>
         </li>
         @endif
-        @if(admin_can('cookie'))
+        @if(admin_can('settings.cookie') || admin_can('cookie'))
         <li class="sidebar-item">
             <a href="{{ route('admin.cookie.setting') }}"
                class="sidebar-link {{ navigationActive('admin.cookie*', 2) }}">
@@ -533,7 +565,7 @@
             </a>
         </li>
         @endif
-        @if(admin_can('maintenance'))
+        @if(admin_can('settings.maintenance') || admin_can('maintenance'))
         <li class="sidebar-item">
             <a href="{{ route('admin.maintenance.setting') }}"
                class="sidebar-link {{ navigationActive('admin.maintenance*', 2) }}">
@@ -542,6 +574,7 @@
             </a>
         </li>
         @endif
+        @if(admin_can('settings.cache') || admin_can('basic_settings') || admin_can('*'))
         <li class="sidebar-item">
             <a href="#cacheClearModal" class="sidebar-link" data-bs-toggle="modal">
                 <span class="nav-icon"><i class="ti ti-eraser"></i></span>
@@ -554,6 +587,7 @@
                 <span class="sidebar-txt">@lang('System Info')</span>
             </a>
         </li>
+        @endif
     </ul>
 </div>
 

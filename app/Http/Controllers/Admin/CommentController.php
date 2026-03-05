@@ -16,6 +16,10 @@ class CommentController extends Controller
     }
 
     function approve($id) {
+        if (!admin_can('campaigns.comments_approve')) {
+            $toast[] = ['error', 'You do not have permission to approve comments.'];
+            return back()->withToasts($toast);
+        }
         $comment         = Comment::findOrFail($id);
         $comment->status = ManageStatus::CAMPAIGN_COMMENT_APPROVED;
         $comment->save();
@@ -28,6 +32,10 @@ class CommentController extends Controller
     }
 
     function destroy($id) {
+        if (!admin_can('campaigns.comments_approve')) {
+            $toast[] = ['error', 'You do not have permission to reject/delete comments.'];
+            return back()->withToasts($toast);
+        }
         $comment = Comment::where('id', $id)->first();
         $temp    = $comment;
         $comment->delete();
