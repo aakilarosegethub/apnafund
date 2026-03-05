@@ -384,66 +384,66 @@ Route::middleware(['admin', 'admin.permission'])->group(function () {
     Route::post('info-banner/update', 'updateInfoBanner')->name('info-banner.update');
     Route::post('featured-projects/update', 'updateFeaturedProjects')->name('featured-projects.update');
     Route::post('trending-campaign/update', 'updateTrendingCampaign')->name('trending-campaign.update');
-});
+    });
 
-Route::controller('CustomCodeController')->prefix('customcode')->name('customcode.')->group(function() {
-    Route::get('/', 'index')->name('index');
-    Route::post('update', 'update')->name('update');
-});
+    Route::controller('CustomCodeController')->prefix('customcode')->name('customcode.')->group(function() {
+        Route::get('/', 'index')->name('index');
+        Route::post('update', 'update')->name('update');
+    });
 
-// YouTube Integration Management
-Route::controller('YouTubeController')->prefix('youtube')->name('youtube.')->group(function() {
-    Route::get('/', 'index')->name('index');
-    Route::get('/auth', 'auth')->name('auth');
-    Route::get('/callback', 'callback')->name('callback');
-    Route::get('/test', 'testUpload')->name('test');
-});
+    // YouTube Integration Management
+    Route::controller('YouTubeController')->prefix('youtube')->name('youtube.')->group(function() {
+        Route::get('/', 'index')->name('index');
+        Route::get('/auth', 'auth')->name('auth');
+        Route::get('/callback', 'callback')->name('callback');
+        Route::get('/test', 'testUpload')->name('test');
+    });
 
-// Report Fundraiser Management
-Route::controller('ReportFundraiserController')->prefix('report')->name('report.')->group(function() {
-    Route::get('/fundraiser', 'index')->name('fundraiser');
-    Route::post('/fundraiser', 'update');
-});
+    // Report Fundraiser Management
+    Route::controller('ReportFundraiserController')->prefix('report')->name('report.')->group(function() {
+        Route::get('/fundraiser', 'index')->name('fundraiser');
+        Route::post('/fundraiser', 'update');
+    });
 
-// Store Management
-Route::controller('StoreManagementController')->prefix('store')->name('store.')->group(function() {
-    Route::get('/', 'index')->name('dashboard');
-    Route::post('/run-cron', 'runCron')->name('run.cron');
-    Route::get('/sync-status', 'getSyncStatus')->name('sync.status');
-});
+    // Store Management
+    Route::controller('StoreManagementController')->prefix('store')->name('store.')->group(function() {
+        Route::get('/', 'index')->name('dashboard');
+        Route::post('/run-cron', 'runCron')->name('run.cron');
+        Route::get('/sync-status', 'getSyncStatus')->name('sync.status');
+    });
 
-// Email Logs Management (stats before {emailLog} to avoid route conflict)
-Route::controller('EmailLogController')->prefix('email-logs')->name('email-logs.')->group(function() {
-    Route::get('/', 'index')->name('index');
-    Route::get('/stats/data', 'stats')->name('stats');
-    Route::get('/{emailLog}', 'show')->name('show');
-    Route::get('/{emailLog}/preview', 'preview')->name('preview');
-    Route::post('/{emailLog}/resend', 'resend')->name('resend');
-    Route::delete('/{emailLog}', 'destroy')->name('destroy');
-});
+    // Email Logs Management (stats before {emailLog} to avoid route conflict)
+    Route::controller('EmailLogController')->prefix('email-logs')->name('email-logs.')->group(function() {
+        Route::get('/', 'index')->name('index');
+        Route::get('/stats/data', 'stats')->name('stats');
+        Route::get('/{emailLog}', 'show')->name('show');
+        Route::get('/{emailLog}/preview', 'preview')->name('preview');
+        Route::post('/{emailLog}/resend', 'resend')->name('resend');
+        Route::delete('/{emailLog}', 'destroy')->name('destroy');
+    });
 
-// Webhook Logs Management (specific routes before {id} to avoid conflicts)
-Route::controller('WebhookLogController')->prefix('webhook-logs')->name('webhook.logs.')->group(function() {
-    Route::get('/', 'index')->name('index');
-    Route::get('/statistics', 'statistics')->name('statistics');
-    Route::get('/export', 'export')->name('export');
-    Route::get('/gateway/{gateway}', 'byGateway')->name('by.gateway');
-    Route::get('/status/{status}', 'byStatus')->name('by.status');
-    Route::post('/cleanup', 'cleanup')->name('cleanup');
-    Route::get('/{id}', 'show')->name('show');
-    Route::post('/{id}/retry', 'retry')->name('retry');
-});
+    // Webhook Logs Management (specific routes before {id} to avoid conflicts)
+    Route::controller('WebhookLogController')->prefix('webhook-logs')->name('webhook.logs.')->group(function() {
+        Route::get('/', 'index')->name('index');
+        Route::get('/statistics', 'statistics')->name('statistics');
+        Route::get('/export', 'export')->name('export');
+        Route::get('/gateway/{gateway}', 'byGateway')->name('by.gateway');
+        Route::get('/status/{status}', 'byStatus')->name('by.status');
+        Route::post('/cleanup', 'cleanup')->name('cleanup');
+        Route::get('/{id}', 'show')->name('show');
+        Route::post('/{id}/retry', 'retry')->name('retry');
+    });
 
-// Social Login Settings
-Route::controller('SocialLoginSettingController')->prefix('social-login')->name('social.login.')->group(function() {
-    Route::get('/', 'index')->name('index');
-    Route::post('/update', 'update')->name('update');
-    Route::post('/test', 'testConfiguration')->name('test');
-});
+    // Social Login Settings
+    Route::controller('SocialLoginSettingController')->prefix('social-login')->name('social.login.')->group(function() {
+        Route::get('/', 'index')->name('index');
+        Route::post('/update', 'update')->name('update');
+        Route::post('/test', 'testConfiguration')->name('test');
+    });
 
-// Firebase OTP Settings
-Route::controller('FirebaseOTPSettingController')->prefix('firebase-otp')->name('firebase.otp.')->group(function() {
-    Route::get('/', 'index')->name('index');
-    Route::post('/update', 'update')->name('update');
-});
+    // Firebase OTP Settings
+    Route::controller('FirebaseOTPSettingController')->prefix('firebase-otp')->name('firebase.otp.')->group(function() {
+        Route::get('/', 'index')->name('index');
+        Route::post('/update', 'update')->name('update');
+    });
 });

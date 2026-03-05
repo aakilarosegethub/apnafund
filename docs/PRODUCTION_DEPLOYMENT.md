@@ -45,9 +45,38 @@ php artisan view:cache
 php artisan up
 ```
 
+## Server Validation Commands (Run After Deploy)
+
+Run these commands on the server to validate the setup:
+
+```bash
+# 1. Verify application boots
+php artisan about
+
+# 2. Verify middleware is registered (should list admin.permission)
+php artisan route:list --path=admin 2>&1 | head -5
+
+# 3. Build route cache (must succeed)
+php artisan route:clear && php artisan route:cache && echo "Route cache OK"
+
+# 4. Build config cache
+php artisan config:cache && echo "Config cache OK"
+
+# 5. Verify storage permissions
+ls -la storage/framework/cache 2>/dev/null && echo "Storage writable"
+
+# 6. Run migrations (dry-check)
+php artisan migrate:status
+```
+
+Quick one-liner for full validation:
+```bash
+php artisan about && php artisan route:cache && php artisan config:cache && echo "✓ Production setup OK"
+```
+
 ## Route Caching
 
-This project is **safe for route caching**. Always use route names in Blade templates rather than hardcoded URLs.
+This project is **safe for route caching**. Admin routes use controller references; all admin routes are protected by `admin` and `admin.permission` middleware.
 
 ```bash
 php artisan route:cache
@@ -57,6 +86,14 @@ To clear route cache during development:
 ```bash
 php artisan route:clear
 ```
+
+**Note:** If `route:cache` fails with "Unable to prepare route for serialization", run `php artisan route:clear` and avoid route caching until closure-based routes are converted to controllers.
+
+## Middleware & RBAC
+
+- **AdminPermission** (`App\Http\Middleware\AdminPermission::class`): Registered as `admin.permission` in `bootstrap/app.php` (Laravel 11) and `app/Http/Kernel.php`
+- **Admin routes**: All `/admin/*` routes (except login, logout, forgot password) use `['admin', 'admin.permission']` middleware
+- **Admin login routes**: Use `admin.guest` middleware
 
 ## Case Sensitivity (Mac vs Linux)
 
@@ -82,9 +119,10 @@ php artisan route:clear
 - Run `php artisan route:clear` then `php artisan route:cache`
 - Verify route names in Blade: use `route('admin.user.index')` not hardcoded paths
 
-### Middleware not found
-- Check `app/Http/Kernel.php` and `bootstrap/app.php` for alias registration
-- AdminPermission is at `App\Http\Middleware\AdminPermission::class`
+### Middleware not found (admin.permission)
+- **Laravel 11**: Check `bootstrap/app.php` → `$middleware->alias(['admin.permission' => ...])`
+- **Legacy**: Check `app/Http/Kernel.php` → `$routeMiddleware`
+- AdminPermission class: `App\Http\Middleware\AdminPermission`
 
 ### Maintenance mode stuck
 - Delete `storage/framework/down` file manually if `php artisan up` fails
