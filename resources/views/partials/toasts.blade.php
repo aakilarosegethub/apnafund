@@ -1,8 +1,5 @@
 <link rel="stylesheet" href="{{ asset('assets/universal/css/iziToast.min.css') }}">
 <script src="{{ asset('assets/universal/js/iziToast.min.js') }}"></script>
-<script src="">
-alert('toast');
-</script>
 
 @if(session()->has('toasts'))
     @foreach(session('toasts') as $msg)
@@ -11,6 +8,14 @@ alert('toast');
             iziToast.{{ $msg[0] }}({message:"{{ __($msg[1]) }}", position: "topRight"});
         </script>
     @endforeach
+@elseif(request('payment_status') === 'error')
+    {{-- Fallback: show payment error when redirected from failed payment (e.g. deposit/confirm) --}}
+    <script>
+        "use strict";
+        if (typeof iziToast !== 'undefined') {
+            iziToast.error({message: "{{ __('Payment could not be completed. Please try again.') }}", position: "topRight"});
+        }
+    </script>
 @endif
 
 

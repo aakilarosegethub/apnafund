@@ -91,7 +91,8 @@ class FundController extends BaseApiController
 
 
     /**
-     * Get Fund by ID
+     * Get Fund by ID or Slug
+     * Accepts fund_id (int) or slug (string) to fetch campaign detail
      */
     public function fundById(Request $request): JsonResponse
     {
@@ -102,16 +103,18 @@ class FundController extends BaseApiController
         if (auth()->check()) {
             $uid = auth()->user()->id;
         }
-        
-        if (empty($data['fund_id'])) {
+
+        $fund_id = $data['fund_id'] ?? null;
+        $slug = $data['slug'] ?? null;
+
+        if (empty($fund_id) && empty($slug)) {
             return response()->json([
                 "ResponseCode" => "401",
                 "Result" => "false",
-                "ResponseMsg" => "Something Went Wrong!"
+                "ResponseMsg" => "Something Went Wrong! Provide fund_id or slug."
             ], 401);
         }
 
-        $fund_id = $data['fund_id'];
         $status = $data['status'] ?? 'Home';
 
         // If status is not 'Home', require authentication
@@ -123,11 +126,21 @@ class FundController extends BaseApiController
             ], 401);
         }
 
-        // Use campaigns table instead of tbl_fund
-        if ($status == 'Home') {
-            $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE id=" . (int)$fund_id . "");
+        // Build WHERE clause: by slug or by id
+        if (!empty($slug)) {
+            $slugEscaped = $this->h->real_string($slug);
+            if ($status == 'Home') {
+                $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE slug='" . $slugEscaped . "'");
+            } else {
+                $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE user_id=" . (int)$uid . " AND slug='" . $slugEscaped . "'");
+            }
         } else {
-            $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE user_id=" . (int)$uid . " AND id=" . (int)$fund_id . "");
+            $fund_id = (int) round((float) $fund_id);
+            if ($status == 'Home') {
+                $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE id=" . $fund_id . "");
+            } else {
+                $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE user_id=" . (int)$uid . " AND id=" . $fund_id . "");
+            }
         }
 
         // Check if query was successful
@@ -180,15 +193,19 @@ class FundController extends BaseApiController
 
             // Add author/creator details (id, name, whatsapp, email, mobile, avatar, etc.)
             $pol['author'] = $this->getAuthorData($row['user_id'] ?? null);
-            
+
+            // Add slug to campaign detail response
+            $pol['slug'] = $row['slug'] ?? '';
+
             $c[] = $pol;
         }
 
         // Get fund updates from campaigns.updates (JSON) – no campaign_updates table
         $lop = [];
         $campaignRow = $c[0] ?? null;
+        $campaignId = $campaignRow['id'] ?? $fund_id ?? null;
         if ($campaignRow && isset($campaignRow['id'])) {
-            $camp = DB::table('campaigns')->where('id', $fund_id)->first();
+            $camp = DB::table('campaigns')->where('id', $campaignId)->first();
             if ($camp && !empty($camp->updates)) {
                 $updatesData = is_string($camp->updates) ? json_decode($camp->updates, true) : (array) $camp->updates;
                 if (is_array($updatesData)) {
@@ -234,7 +251,7 @@ class FundController extends BaseApiController
             ], 401);
         }
 
-        $cat_id = strip_tags($this->h->real_string($cat_id));
+        $cat_id = (int) round((float) (strip_tags($this->h->real_string($cat_id))));
         $name = strip_tags($this->h->real_string($name));
         $description = strip_tags($this->h->real_string($request->input('description') ?: $request->input('fund_story', '')));
         $short_description = strip_tags($this->h->real_string($request->input('short_description', '')));
@@ -299,7 +316,7 @@ class FundController extends BaseApiController
 
         $campaignData = [
             'user_id' => $uid,
-            'category_id' => $cat_id,
+            'category_id' => (int) round((float) $cat_id),
             'name' => $name,
             'slug' => $slug,
             'description' => $description ?: 'Campaign description',
@@ -404,7 +421,7 @@ class FundController extends BaseApiController
             ], 401);
         }
 
-        $cat_id = (int)$data['cat_id'];
+        $cat_id = (int) round((float) $data['cat_id']);
         $timestamp = date("Y-m-d");
 
         // Use campaigns table instead of tbl_fund

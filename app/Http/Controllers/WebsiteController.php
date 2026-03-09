@@ -174,10 +174,15 @@ class WebsiteController extends Controller
                                     $endDate   = Carbon::parse($dateArray[1])->format('Y-m-d');
 
                                     $query->where('start_date', '>=', $startDate)->where('end_date', '<=', $endDate);
-                                })->commonQuery()
+                                })                                ->commonQuery()
                                 ->approve()
                                 ->latest()
                                 ->paginate(getPaginate(10));
+
+        // Payment error redirect: ensure error toast shows when payment_status=error
+        if (request('payment_status') === 'error' && !session()->has('toasts')) {
+            session()->flash('toasts', [['error', __('Payment could not be completed. Please try again.')]]);
+        }
 
         return view($this->activeTheme . 'page.campaign', compact('pageTitle', 'categories', 'campaigns'));
     }

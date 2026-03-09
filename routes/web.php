@@ -310,7 +310,7 @@ Route::prefix('api')->group(function () {
     Route::match(['get', 'post'], '/pagelist.php', [PageController::class, 'pageList']);
     Route::match(['get', 'post'], '/paymentgateway.php', [PaymentController::class, 'paymentGatewayList']);
     Route::get('/gateways', [PaymentController::class, 'gateways']);
-    Route::post('/payment/webview-url', [PaymentController::class, 'webviewUrl']);
+    Route::match(['get', 'post'], '/payment/webview-url', [PaymentController::class, 'webviewUrl']);
 
     // Auth APIs (Public - No token required for login/register)
     Route::match(['get', 'post'], '/reg_user.php', [AuthController::class, 'register']);

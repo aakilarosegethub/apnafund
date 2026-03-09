@@ -50,6 +50,11 @@ class CampaignController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        // Round category_id if decimal (e.g. 298.8) to avoid "Invalid integer" validation error
+        if ($request->has('category_id') && is_numeric($request->input('category_id'))) {
+            $request->merge(['category_id' => (int) round((float) $request->input('category_id'))]);
+        }
+
         $validator = Validator::make($request->all(), [
             'category_id' => ['required', 'integer', Rule::exists('categories', 'id')],
             'name' => ['required', 'string', 'max:190', Rule::unique('campaigns', 'name')],
@@ -155,7 +160,11 @@ class CampaignController extends Controller
 
     public function update(Request $request, Campaign $campaign): JsonResponse
     {
-        
+        // Round category_id if decimal to avoid "Invalid integer" validation error
+        if ($request->has('category_id') && is_numeric($request->input('category_id'))) {
+            $request->merge(['category_id' => (int) round((float) $request->input('category_id'))]);
+        }
+
         if (!$campaign->canBeEditedBy($request->user()->id)) {
             return response()->json([
                 'success' => false,

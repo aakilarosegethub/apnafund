@@ -1,7 +1,4 @@
 @extends($activeTheme . 'layouts.frontend')
-@php
-    die('OKK');
-@endphp
 
 @section('frontend')
     <div class="donation pt-120 pb-60">

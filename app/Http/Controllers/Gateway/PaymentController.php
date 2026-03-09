@@ -153,7 +153,7 @@ class PaymentController extends Controller
 
         $dirName = $deposit->gateway->alias;
         $new     = __NAMESPACE__ . '\\' . $dirName . '\\ProcessController';
-
+        $deposit->final_amount =(int) round($deposit->final_amount, 2);
         \Log::channel('payments')->info('Payment process started', [
             'gateway'      => $dirName,
             'method_code'  => $deposit->method_code,
@@ -408,5 +408,23 @@ class PaymentController extends Controller
 
         // Redirect to thank you page with order details
         return redirect()->route('order.success', ['id' => $deposit->id, 'payment_status' => 'success'])->withToasts($toast);
+    }
+
+    /**
+     * Payment error page – mobile/webview friendly.
+     * Shown when payment fails or is cancelled. Flutter app detects payment_status=error in URL.
+     */
+    function paymentError() {
+        $message = request('message');
+        if (!$message && session()->has('toasts')) {
+            $toasts = session('toasts');
+            $message = $toasts[0][1] ?? null;
+        }
+        $message = $message ?: __('Payment could not be completed. Please try again.');
+
+        return view($this->activeTheme . 'user.payment.error', [
+            'message' => $message,
+            'pageTitle' => __('Payment Failed'),
+        ]);
     }
 }

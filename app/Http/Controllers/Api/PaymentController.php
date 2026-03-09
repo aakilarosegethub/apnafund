@@ -99,9 +99,20 @@ class PaymentController extends BaseApiController
     {
         $data = $this->getRequestData($request);
 
+        // Normalize: campaign_id can be string "118", int, or decimal (298.8) – round to int
+        if (isset($data['campaign_id'])) {
+            $data['campaign_id'] = (int) round((float) $data['campaign_id']);
+        }
+
         $gatewayCode = null;
-        if (!empty($data['gateway_id'])) {
-            $gateway = Gateway::active()->find($data['gateway_id']);
+        $gatewayId = $data['gateway_id'] ?? $data['gateway'] ?? null;
+        // Support: gateway_id (int), gateway as id (numeric), or gateway as code (string)
+        if (!empty($gatewayId) && is_numeric($gatewayId)) {
+            $gateway = Gateway::active()->find((int) $gatewayId);
+            if (!$gateway) {
+                // Try by code (e.g. "114" is Stripe's code, not id)
+                $gateway = Gateway::active()->where('code', (string) $gatewayId)->first();
+            }
             if (!$gateway) {
                 return response()->json([
                     'Result' => 'false',

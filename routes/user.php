@@ -207,6 +207,7 @@ Route::prefix('deposit')->name('user.deposit.')->controller('Gateway\PaymentCont
     Route::post('insert/{slug}', 'depositInserts')->name('insert');
     Route::get('confirm', 'depositConfirm')->name('confirm');
     Route::get('success', 'success')->name('success');
+    Route::get('error', 'paymentError')->name('error');
     Route::prefix('manual')->name('manual.')->group(function () {
         Route::get('', 'manualDepositConfirm')->name('confirm');
         Route::post('', 'manualDepositUpdate')->name('update');

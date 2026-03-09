@@ -699,6 +699,7 @@ function getTrx($length = 12): string {
 
 function gatewayRedirectUrl($type = false): string {
     if (auth()->check() && $type) return 'user.deposit.success';
+    if (!$type) return 'user.deposit.error'; // Dedicated error page for mobile webview
 
     return 'campaign';
 }
@@ -706,10 +707,17 @@ function gatewayRedirectUrl($type = false): string {
 /**
  * Full redirect URL with payment_status param for Flutter webview detection.
  * Flutter app can detect ?payment_status=success or ?payment_status=error to hide webview and show popup.
+ * Error case: dedicated user.deposit.error page (mobile-friendly).
+ * Uses url() to avoid "Route [user.deposit.error] not defined" when route cache is stale.
  */
 function gatewayRedirectUrlFull(bool $success = false): string {
-    $routeName = gatewayRedirectUrl($success);
-    return route($routeName, ['payment_status' => $success ? 'success' : 'error']);
+    $params = $success ? ['payment_status' => 'success'] : ['payment_status' => 'error'];
+    $path = match (gatewayRedirectUrl($success)) {
+        'user.deposit.error'   => '/user/deposit/error',
+        'user.deposit.success' => '/user/deposit/success',
+        default               => '/campaigns',
+    };
+    return url($path . '?' . http_build_query($params));
 }
 
 function showAmount($amount, $decimal = 0, $separate = true, $exceptZeros = false): string {

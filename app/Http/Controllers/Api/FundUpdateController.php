@@ -25,7 +25,7 @@ class FundUpdateController extends BaseApiController
             ], 401);
         }
 
-        $fund_id = (int) trim((string) $fundIdRaw, " \t\n\r\0\x0B\"'");
+        $fund_id = (int) round((float) trim((string) $fundIdRaw, " \t\n\r\0\x0B\"'"));
         $title = strip_tags($this->h->real_string($request->input('title') ?: \Illuminate\Support\Str::limit($content, 80)));
         $description = strip_tags($this->h->real_string($content));
         
@@ -132,7 +132,7 @@ class FundUpdateController extends BaseApiController
             ], 401);
         }
 
-        $fund_id = $data['fund_id'];
+        $fund_id = (int) round((float) $data['fund_id']);
         
         // Get user ID from authenticated user
         $uid = $this->getUserId($request);
@@ -192,7 +192,7 @@ class FundUpdateController extends BaseApiController
             ], 401);
         }
 
-        $fund_id = $data['fund_id'];
+        $fund_id = (int) round((float) $data['fund_id']);
         
         // Get user ID from authenticated user
         $uid = $this->getUserId($request);
@@ -250,7 +250,7 @@ class FundUpdateController extends BaseApiController
             ], 401);
         }
 
-        $fund_id = (int) $data['fund_id'];
+        $fund_id = (int) round((float) $data['fund_id']);
         $uid = $this->getUserId($request);
 
         if (empty($uid)) {

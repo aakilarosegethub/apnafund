@@ -26,7 +26,8 @@ class ProcessController extends Controller
         Stripe::setApiVersion("2020-03-02");
 
         // Hard code to 5 USD
-        $unitAmount = $deposit->amount * 100; // 5 USD in cents
+        $amount = $deposit->amount;
+        $unitAmount = (int) round($amount * 100); // 298
         $currency = 'USD';
         
 

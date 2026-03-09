@@ -459,6 +459,7 @@ class BaseApiController extends Controller
         // Build the formatted array
         $fundData = [
             'id' => $rows['id'],
+            'slug' => $rows['slug'] ?? '',
             'cat_id' => $rows['category_id'] ?? 0,
             'title' => $rows['name'] ?? '',
             'fund_for' => $fund_for,
