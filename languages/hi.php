@@ -76,6 +76,7 @@ $lang = [
 	'Select_Decision'=>'निर्णय का चयन करें',
 	'select_a_Decision'=>'एक निर्णय चुनें',
 	'Approve'=>'मंज़ूरी देना',
+	'Unapprove'=>'अनुमति रद्द करें',
 	'Disapprove'=>'अस्वीकृत',
 	'Comment'=>'टिप्पणी',
 	'Decision_Done'=>'निर्णय हो गया',

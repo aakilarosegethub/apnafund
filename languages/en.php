@@ -76,6 +76,7 @@ $lang = [
 	'Select_Decision'=>'Select Decision',
 	'select_a_Decision'=>'select a Decision',
 	'Approve'=>'Approve',
+	'Unapprove'=>'Unapprove',
 	'Disapprove'=>'Disapprove',
 	'Comment'=>'Comment',
 	'Decision_Done'=>'Decision Done',

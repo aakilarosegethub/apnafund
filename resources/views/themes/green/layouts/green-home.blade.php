@@ -510,7 +510,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Matches ALL variations of ApnaCrowdfunding
     const regex = /apnacrowdfunding/gi;
-    const replacementText = "ApnaCrowdFunding";
+    const replacementText = "ApnaCrowdfunding";
 
     const blockedTags = ["A", "SCRIPT", "STYLE", "NOSCRIPT"];
 

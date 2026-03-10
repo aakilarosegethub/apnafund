@@ -108,17 +108,29 @@ class CampaignController extends Controller
             $toast[] = ['error', 'You do not have permission to approve or reject campaigns.'];
             return back()->withToasts($toast);
         }
-        $campaign         = Campaign::findOrFail($id);
-        $campaign->status = ($type == 'approve') ? ManageStatus::CAMPAIGN_APPROVED : ManageStatus::CAMPAIGN_REJECTED;
+        $campaign = Campaign::findOrFail($id);
+
+        if ($type == 'approve') {
+            $campaign->status = ManageStatus::CAMPAIGN_APPROVED;
+            $template = 'CAMPAIGN_APPROVE';
+            $toastMsg = 'Campaign approval success';
+        } elseif ($type == 'unapprove') {
+            $campaign->status = ManageStatus::CAMPAIGN_PENDING;
+            $template = null;
+            $toastMsg = 'Campaign unapproved successfully. Status changed to pending.';
+        } else {
+            $campaign->status = ManageStatus::CAMPAIGN_REJECTED;
+            $template = 'CAMPAIGN_REJECT';
+            $toastMsg = 'Campaign rejection success';
+        }
+
         $campaign->save();
 
-        $template = ($type == 'approve') ? 'CAMPAIGN_APPROVE' : 'CAMPAIGN_REJECT';
-
-        notify($campaign->user, $template, [
-            'campaign_name' => $campaign->name,
-        ]);
-
-        $toastMsg = ($type == 'approve') ? 'Campaign approval success' : 'Campaign rejection success';
+        if ($template) {
+            notify($campaign->user, $template, [
+                'campaign_name' => $campaign->name,
+            ]);
+        }
 
         $toast[] = ['success', $toastMsg];
 

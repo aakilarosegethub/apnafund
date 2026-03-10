@@ -159,6 +159,7 @@ class ChatController extends Controller
     protected function getFirebaseClientConfig(): array
     {
         $prefix = config('firebase.firestore.collection_prefix', 'apnacrowdfunding');
+        $chat = config('firebase.firestore.chat', []);
         return [
             'apiKey' => config('firebase.client.api_key'),
             'authDomain' => config('firebase.client.auth_domain'),
@@ -167,6 +168,16 @@ class ChatController extends Controller
             'messagingSenderId' => config('firebase.client.messaging_sender_id'),
             'appId' => config('firebase.client.app_id'),
             'chatCollectionPrefix' => $prefix,
+            'chatFields' => [
+                'messagesSubcollection' => $chat['messages_subcollection'] ?? 'messages',
+                'participantsField' => $chat['participants_field'] ?? 'participants',
+                'lastMessageField' => $chat['last_message_field'] ?? 'last_message',
+                'lastMessageAtField' => $chat['last_message_at_field'] ?? 'last_message_at',
+                'lastSenderIdField' => $chat['last_sender_id_field'] ?? 'last_sender_id',
+                'messageTextField' => $chat['message_text_field'] ?? 'text',
+                'messageSenderIdField' => $chat['message_sender_id_field'] ?? 'sender_id',
+                'messageCreatedAtField' => $chat['message_created_at_field'] ?? 'created_at',
+            ],
         ];
     }
 }

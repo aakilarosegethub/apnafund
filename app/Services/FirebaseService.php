@@ -249,8 +249,12 @@ class FirebaseService
         }
         try {
             $prefix = config('firebase.firestore.collection_prefix', 'apnacrowdfunding');
+            $chat = config('firebase.firestore.chat', []);
+            $fParticipants = $chat['participants_field'] ?? 'participants';
+            $fLastSenderId = $chat['last_sender_id_field'] ?? 'last_sender_id';
+
             $coll = $this->firestore->database()->collection($prefix . '_conversations');
-            $query = $coll->where('participants', 'array-contains', $userId);
+            $query = $coll->where($fParticipants, 'array-contains', $userId);
             $docs = $query->documents();
             $count = 0;
             foreach ($docs as $doc) {
@@ -258,7 +262,7 @@ class FirebaseService
                     continue;
                 }
                 $d = $doc->data();
-                $lastSender = $d['last_sender_id'] ?? null;
+                $lastSender = $d[$fLastSenderId] ?? $d['last_sender_id'] ?? null;
                 $readBy = $d['read_by'] ?? [];
                 if ($lastSender && $lastSender !== $userId && empty($readBy[$userId])) {
                     $count++;

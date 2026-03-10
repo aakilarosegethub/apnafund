@@ -100,6 +100,13 @@
                                             </ul>
                                         @elseif($campaign->status == ManageStatus::CAMPAIGN_APPROVED)
                                             <ul class="dropdown-menu">
+                                                @if(admin_can('campaigns.approve'))
+                                                <li>
+                                                    <button type="button" class="dropdown-item decisionBtn" data-question="@lang('Do you want to unapprove this campaign? It will move to pending status.')" data-action="{{ route('admin.campaigns.status.update', [$campaign->id, 'unapprove']) }}">
+                                                        <span class="dropdown-icon"><i class="ti ti-arrow-back text--warning"></i></span> @lang('Unapprove')
+                                                    </button>
+                                                </li>
+                                                @endif
                                                 <li>
                                                     @if($campaign->featured)
                                                         <button type="button" class="dropdown-item decisionBtn" data-question="@lang('Do you want to unfeatured this campaign?')" data-action="{{ route('admin.campaigns.featured.update', $campaign->id) }}">

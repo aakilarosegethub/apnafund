@@ -53,6 +53,23 @@ return [
     'firestore' => [
         'database_id' => env('FIREBASE_DATABASE_ID', '(default)'),
         'collection_prefix' => env('FIREBASE_COLLECTION_PREFIX', 'apnacrowdfunding'),
+
+        /*
+         * Chat field mappings - for app/web sync.
+         * If mobile app uses different field names, override here.
+         * Conversation doc: participants, participant_names, participant_images, last_message, last_message_at, last_sender_id, read_by, campaign_id, campaign_title
+         * Message doc: sender_id, sender_name, sender_image, text, created_at
+         */
+        'chat' => [
+            'messages_subcollection' => env('FIREBASE_CHAT_MESSAGES_COLLECTION', 'messages'), // app may use 'chats' or 'messages'
+            'participants_field' => env('FIREBASE_CHAT_PARTICIPANTS_FIELD', 'participants'), // app may use 'members' or 'userIds'
+            'last_message_field' => env('FIREBASE_CHAT_LAST_MESSAGE_FIELD', 'last_message'),
+            'last_message_at_field' => env('FIREBASE_CHAT_LAST_MESSAGE_AT_FIELD', 'last_message_at'),
+            'last_sender_id_field' => env('FIREBASE_CHAT_LAST_SENDER_ID_FIELD', 'last_sender_id'),
+            'message_text_field' => env('FIREBASE_CHAT_MESSAGE_TEXT_FIELD', 'text'), // app may use 'message', 'content', 'body'
+            'message_sender_id_field' => env('FIREBASE_CHAT_MESSAGE_SENDER_ID_FIELD', 'sender_id'), // app may use 'userId'
+            'message_created_at_field' => env('FIREBASE_CHAT_MESSAGE_CREATED_AT_FIELD', 'created_at'), // app may use 'timestamp'
+        ],
     ],
 
     /*

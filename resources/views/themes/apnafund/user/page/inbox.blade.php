@@ -140,6 +140,15 @@
     const db = firebase.firestore(app);
     const prefix = firebaseConfig.chatCollectionPrefix || 'apnacrowdfunding';
     const convColl = prefix + '_conversations';
+    const chatFields = firebaseConfig.chatFields || {};
+    const msgColl = chatFields.messagesSubcollection || 'messages';
+    const fParticipants = chatFields.participantsField || 'participants';
+    const fLastMsg = chatFields.lastMessageField || 'last_message';
+    const fLastMsgAt = chatFields.lastMessageAtField || 'last_message_at';
+    const fLastSenderId = chatFields.lastSenderIdField || 'last_sender_id';
+    const fMsgText = chatFields.messageTextField || 'text';
+    const fMsgSenderId = chatFields.messageSenderIdField || 'sender_id';
+    const fMsgCreatedAt = chatFields.messageCreatedAtField || 'created_at';
 
     let selectedConvId = null;
     let selectedOtherId = null;
@@ -196,17 +205,15 @@
         if (!msgId || !selectedConvId) return;
         if (!confirm('Delete this message?')) return;
         const ref = db.collection(convColl).doc(selectedConvId);
-        ref.collection('messages').doc(msgId).delete().then(() => {
-            ref.collection('messages').orderBy('created_at', 'desc').limit(1).get().then(snap => {
+        ref.collection(msgColl).doc(msgId).delete().then(() => {
+            ref.collection(msgColl).orderBy(fMsgCreatedAt, 'desc').limit(1).get().then(snap => {
                 if (snap.empty) {
-                    ref.update({ last_message: '', last_message_at: firebase.firestore.FieldValue.serverTimestamp(), last_sender_id: null }).catch(() => {});
+                    const up = {}; up[fLastMsg] = ''; up[fLastMsgAt] = firebase.firestore.FieldValue.serverTimestamp(); up[fLastSenderId] = null;
+                    ref.update(up).catch(() => {});
                 } else {
                     const last = snap.docs[0].data();
-                    ref.update({
-                        last_message: last.text || '',
-                        last_message_at: last.created_at,
-                        last_sender_id: last.sender_id || null,
-                    }).catch(() => {});
+                    const up = {}; up[fLastMsg] = (last[fMsgText] || last.text || ''); up[fLastMsgAt] = (last[fMsgCreatedAt] || last.created_at); up[fLastSenderId] = (last[fMsgSenderId] || last.sender_id) || null;
+                    ref.update(up).catch(() => {});
                 }
             });
             showInboxMsg('Message deleted.', false);
@@ -244,8 +251,8 @@
         const listEl = document.getElementById('convLoading');
         listEl.textContent = 'No conversations yet.';
         const q = firebase.firestore().collection(convColl)
-            .where('participants', 'array-contains', currentUser.id)
-            .orderBy('last_message_at', 'desc');
+            .where(fParticipants, 'array-contains', currentUser.id)
+            .orderBy(fLastMsgAt, 'desc');
         q.onSnapshot(snap => {
             if (snap.empty) {
                 listEl.textContent = 'No conversations yet.';
@@ -263,20 +270,21 @@
             changes.forEach(change => {
                 const doc = change.doc;
                 const d = doc.data();
-                const lastAt = d.last_message_at ? (d.last_message_at.toDate ? d.last_message_at.toDate().getTime() : 0) : 0;
+                const lastAt = (d[fLastMsgAt] || d.last_message_at) ? ((d[fLastMsgAt] || d.last_message_at).toDate ? (d[fLastMsgAt] || d.last_message_at).toDate().getTime() : 0) : 0;
                 lastKnownMessageAt[doc.id] = lastAt;
             });
             if (changes.length === 0) {
                 snap.docs.forEach(doc => {
                     const d = doc.data();
-                    const lastAt = d.last_message_at ? (d.last_message_at.toDate ? d.last_message_at.toDate().getTime() : 0) : 0;
+                    const lastAt = (d[fLastMsgAt] || d.last_message_at) ? ((d[fLastMsgAt] || d.last_message_at).toDate ? (d[fLastMsgAt] || d.last_message_at).toDate().getTime() : 0) : 0;
                     lastKnownMessageAt[doc.id] = lastAt;
                 });
             }
             snap.docs.forEach(doc => {
                 const d = doc.data();
                 let el = container.querySelector('[data-conv-id="' + doc.id + '"]');
-                const otherId = (d.participants || []).find(p => p !== currentUser.id);
+                const participants = d[fParticipants] || d.participants || [];
+                const otherId = (Array.isArray(participants) ? participants : []).find(p => p !== currentUser.id);
                 const names = d.participant_names || {};
                 const images = d.participant_images || {};
                 const otherImageUrl = images[otherId] || null;
@@ -284,10 +292,12 @@
                 if ((!otherName || otherName === 'Creator') && otherId && String(otherId) === String(startParams.creatorId) && startParams.creatorFullname) {
                     otherName = startParams.creatorFullname;
                 }
-                const last = d.last_message || '';
-                const time = d.last_message_at ? (d.last_message_at.toDate ? d.last_message_at.toDate() : new Date(d.last_message_at)) : null;
+                const last = d[fLastMsg] || d.last_message || '';
+                const lastAtVal = d[fLastMsgAt] || d.last_message_at;
+                const time = lastAtVal ? (lastAtVal.toDate ? lastAtVal.toDate() : new Date(lastAtVal)) : null;
                 const timeStr = time ? (time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || '') : '';
-                const unread = (d.last_sender_id && d.last_sender_id !== currentUser.id && !(d.read_by && d.read_by[currentUser.id]));
+                const lastSender = d[fLastSenderId] || d.last_sender_id;
+                const unread = (lastSender && lastSender !== currentUser.id && !(d.read_by && d.read_by[currentUser.id]));
                 const avatarHtml = otherImageUrl ? '<img src="' + escapeHtml(otherImageUrl) + '" alt="">' : getInitials(otherName);
                 if (!el) {
                     el = document.createElement('div');
@@ -364,8 +374,8 @@
         ref.get().then(doc => {
             if (!doc.exists) {
                 const participantImages = { [currentUser.id]: currentUser.imageUrl || '', [otherId]: creatorImg || '' };
-                ref.set({
-                    participants: [currentUser.id, otherId],
+                const convData = {
+                    [fParticipants]: [currentUser.id, otherId],
                     sender_id: String(currentUser.id),
                     receiver_id: String(otherId),
                     campaign_id: startParams.campaignId || null,
@@ -373,11 +383,12 @@
                     campaign_title: startParams.campaignTitle || null,
                     participant_names: { [currentUser.id]: currentUser.fullname, [otherId]: otherName || startParams.campaignTitle || '' },
                     participant_images: participantImages,
-                    last_message: '',
-                    last_message_at: firebase.firestore.FieldValue.serverTimestamp(),
-                    last_sender_id: null,
+                    [fLastMsg]: '',
+                    [fLastMsgAt]: firebase.firestore.FieldValue.serverTimestamp(),
+                    [fLastSenderId]: null,
                     created_at: firebase.firestore.FieldValue.serverTimestamp(),
-                }).then(() => selectConversation(cid, otherId, otherName, true, creatorImg, startParams.campaignId));
+                };
+                ref.set(convData).then(() => selectConversation(cid, otherId, otherName, true, creatorImg, startParams.campaignId));
             } else {
                 const d = doc.data();
                 const storedName = (d.participant_names || {})[otherId] || '';
@@ -422,19 +433,22 @@
             ['read_by.' + currentUser.id]: true,
         }).catch(() => {});
 
-        unsubMsg = db.collection(convColl).doc(convId).collection('messages')
-            .orderBy('created_at', 'asc')
+        unsubMsg = db.collection(convColl).doc(convId).collection(msgColl)
+            .orderBy(fMsgCreatedAt, 'asc')
             .onSnapshot(snap => {
                 messagesEl.innerHTML = '';
                 const docs = snap.docs;
                 docs.forEach((doc, idx) => {
                     const m = doc.data();
-                    const isSent = m.sender_id === currentUser.id;
-                    const t = m.created_at?.toDate ? m.created_at.toDate() : new Date();
+                    const senderId = m[fMsgSenderId] || m.sender_id;
+                    const isSent = senderId === currentUser.id;
+                    const createdAt = m[fMsgCreatedAt] || m.created_at;
+                    const t = createdAt?.toDate ? createdAt.toDate() : new Date(createdAt || 0);
                     const timeStr = t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                     const senderImg = isSent ? (m.sender_image || currentUser.imageUrl) : (m.sender_image || selectedOtherImageUrl);
                     const senderName = m.sender_name || (isSent ? currentUser.fullname : selectedOtherName);
                     const avatarHtml = senderImg ? '<img src="' + escapeHtml(senderImg) + '" alt="">' : getInitials(senderName);
+                    const txt = m[fMsgText] || m.text || '';
                     const row = document.createElement('div');
                     row.className = 'inbox-msg-row ' + (isSent ? 'sent' : 'received');
                     row.dataset.msgId = doc.id;
@@ -442,7 +456,7 @@
                     row.innerHTML = '<div class="inbox-msg-avatar">' + avatarHtml + '</div>' +
                         '<div class="inbox-msg-wrap">' +
                         '<div class="inbox-msg ' + (isSent ? 'sent' : 'received') + '">' +
-                        '<div>' + escapeHtml(m.text || '') + '</div><div class="inbox-msg-time">' + timeStr + '</div></div>' +
+                        '<div>' + escapeHtml(txt) + '</div><div class="inbox-msg-time">' + timeStr + '</div></div>' +
                         deleteSpan + '</div>';
                     messagesEl.appendChild(row);
                 });
@@ -474,20 +488,20 @@
         }
         const ref = db.collection(convColl).doc(selectedConvId);
         const msgData = {
-            sender_id: String(currentUser.id),
+            [fMsgSenderId]: String(currentUser.id),
             sender_name: String(currentUser.fullname || ''),
             sender_image: String(currentUser.imageUrl || ''),
-            text: String(text),
-            created_at: firebase.firestore.Timestamp.now(),
+            [fMsgText]: String(text),
+            [fMsgCreatedAt]: firebase.firestore.Timestamp.now(),
             campaign_id: selectedCampaignId || null,
             receiver_id: selectedOtherId || null,
         };
-        ref.collection('messages').add(msgData).then(() => {
+        ref.collection(msgColl).add(msgData).then(() => {
             input.value = '';
             ref.update({
-                last_message: text,
-                last_message_at: firebase.firestore.Timestamp.now(),
-                last_sender_id: currentUser.id,
+                [fLastMsg]: text,
+                [fLastMsgAt]: firebase.firestore.Timestamp.now(),
+                [fLastSenderId]: currentUser.id,
                 ['read_by.' + currentUser.id]: true,
             }).catch(() => {});
         }).catch(err => {
