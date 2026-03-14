@@ -257,6 +257,9 @@
         <!-- LEFT COLUMN -->
         <div class="col-lg-8">
             <span class="badge badge-category mb-3">{{ @$campaignData->category->name ?? 'Campaign' }}</span>
+            @if($campaignData->isExpired())
+                <span class="badge bg-danger ms-2 px-3 py-2" style="font-size: 0.85rem;">@lang('Ended') / @lang('Expired')</span>
+            @endif
 
             <h1 class="campaign-title">{{ __(@$campaignData->name) }}</h1>
 
@@ -322,7 +325,7 @@
                         style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;"
                         controls
                         poster="{{ getImage(getFilePath('campaign') . '/' . @$campaignData->image, getFileSize('campaign')) }}">
-                        <source src="{{ asset('assets/uploads/campaign/' . $campaignData->video) }}" type="video/mp4">
+                        <source src="{{ asset(getFilePath('campaign') . '/' . $campaignData->video) }}" type="video/mp4">
                         Your browser does not support the video tag.
                     </video>
                 </div>

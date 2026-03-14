@@ -53,7 +53,7 @@
                 style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;"
                 controls
                 poster="{{ getImage(getFilePath('campaign') . '/' . @$campaignData->image, getFileSize('campaign')) }}">
-                <source src="{{ asset('assets/uploads/campaign/' . $campaignData->video) }}" type="video/mp4">
+                <source src="{{ asset(getFilePath('campaign') . '/' . $campaignData->video) }}" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
         </div>
@@ -86,7 +86,11 @@
 <div class="tab-content mb-4" id="nav-tabContent">
     <div class="tab-pane fade show active" id="nav-desc" role="tabpanel" aria-labelledby="nav-desc-tab" tabindex="0">
         <div class="donation-details__txt">
-            <h2 class="donation-details__title" data-aos="fade-up" data-aos-duration="1500">{{ __(@$campaignData->name) }}</h2>
+            <h2 class="donation-details__title" data-aos="fade-up" data-aos-duration="1500">{{ __(@$campaignData->name) }}
+                @if($campaignData->isExpired())
+                    <span class="badge bg-danger ms-2">@lang('Ended') / @lang('Expired')</span>
+                @endif
+            </h2>
             
             <!-- Donate Now Button -->
             <div class="text-center mb-4" data-aos="fade-up" data-aos-duration="1500">
