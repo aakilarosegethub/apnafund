@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Constants\ManageStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Deposit;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -110,22 +111,22 @@ class CampaignController extends Controller
         }
         $campaign = Campaign::findOrFail($id);
 
+        $newStatus = null;
         if ($type == 'approve') {
-            $campaign->status = ManageStatus::CAMPAIGN_APPROVED;
+            $newStatus = ManageStatus::CAMPAIGN_APPROVED;
             $template = 'CAMPAIGN_APPROVE';
             $toastMsg = 'Campaign approval success';
         } elseif ($type == 'unapprove') {
-            $campaign->status = ManageStatus::CAMPAIGN_PENDING;
+            $newStatus = ManageStatus::CAMPAIGN_PENDING;
             $template = null;
             $toastMsg = 'Campaign unapproved successfully. Status changed to pending.';
         } else {
-            $campaign->status = ManageStatus::CAMPAIGN_REJECTED;
+            $newStatus = ManageStatus::CAMPAIGN_REJECTED;
             $template = 'CAMPAIGN_REJECT';
             $toastMsg = 'Campaign rejection success';
         }
-
-        $campaign->save();
-
+        // Update only status column via raw DB - bypass Eloquent entirely so nothing touches start_date/end_date
+        \DB::table('campaigns')->where('id', $id)->update(['status' => $newStatus, 'start_date' => $campaign->start_date]);
         if ($template) {
             notify($campaign->user, $template, [
                 'campaign_name' => $campaign->name,
@@ -155,9 +156,9 @@ class CampaignController extends Controller
     function uploadCampaignImage() {
         try {
             $validator = \Validator::make(request()->all(), [
-                'image' => 'required|image|mimes:jpeg,jpg,png,gif,webp|max:51200', // 50MB max
+                'image' => 'required|image|mimes:jpeg,jpg,png,gif,webp|max:5120', // 5MB max
             ], [
-                'image.max' => 'Campaign image must be under 50 MB.',
+                'image.max' => 'Campaign image must be under 5 MB.',
             ]);
 
             if ($validator->fails()) {
@@ -232,7 +233,7 @@ class CampaignController extends Controller
             'end_date'      => 'required|date_format:Y-m-d|after:start_date',
             'location'      => 'nullable|string|max:255',
             'youtube_url'   => 'nullable|url',
-            'image'         => ['nullable', File::types(['png', 'jpg', 'jpeg', 'webp'])],
+            'image'         => ['nullable', File::types(['png', 'jpg', 'jpeg', 'webp'])->max(5120)],
             'video'         => ['nullable', File::types(['mp4', 'avi', 'mov', 'wmv', 'flv', '3gp']), 'max:512000'],
         ], [
             'category_id.required' => 'The category field is required.',
@@ -267,14 +268,14 @@ class CampaignController extends Controller
                 return back()->withToasts($toast);
             }
 
-            // Update basic fields
+            // Update basic fields (explicit Carbon parse for dates to avoid locale/format issues)
             $campaign->category_id = $request->category_id;
             $campaign->name = $request->name;
             $campaign->slug = Str::slug($request->name);
             $campaign->description = $request->description;
             $campaign->goal_amount = $request->goal_amount;
-            $campaign->start_date = $request->start_date;
-            $campaign->end_date = $request->end_date;
+            $campaign->start_date = \Carbon\Carbon::parse($request->start_date)->format('Y-m-d');
+            $campaign->end_date = \Carbon\Carbon::parse($request->end_date)->format('Y-m-d');
             $campaign->location = $request->location;
             $campaign->youtube_url = $request->youtube_url;
 

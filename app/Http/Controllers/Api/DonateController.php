@@ -318,11 +318,12 @@ class DonateController extends BaseApiController
             $dona = $donaQuery ? $donaQuery->fetch_assoc() : null;
             $total_donate = $dona ? ($dona['total_amount'] ?? 0) : 0;
 
-            // Use helper function to format campaign data
+            // Use helper function to format campaign data (exclude_story for list - detail in fundById)
             $pol = $this->formatCampaignData($sel, [
                 'patient_photo' => ['images/default.png'],
                 'fund_for' => '',
-                'total_donate' => $total_donate
+                'total_donate' => $total_donate,
+                'exclude_story' => true,
             ]);
 
             // Override specific fields for myDonateFundList

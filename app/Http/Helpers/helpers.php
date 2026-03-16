@@ -414,7 +414,9 @@ function getThumbSize($key) {
 }
 
 function custom_asset($path) {
-    $assetsUrl = env('ASSETS_URL', url('/'));
+    // When running on localhost, always use current URL so local files load correctly
+    $isLocal = in_array(request()->getHost(), ['localhost', '127.0.0.1', '0.0.0.0']);
+    $assetsUrl = $isLocal ? url('/') : (env('ASSETS_URL') ?: url('/'));
     
     // Remove leading slash from path if present
     $path = ltrim($path, '/');
@@ -532,7 +534,11 @@ function getPageSections($arr = false) {
 }
 
 function getAmount($amount, $length = 2): float|int {
-    return round($amount ?? 0, $length);
+    $num = $amount ?? 0;
+    if ($num === '' || !is_numeric($num)) {
+        $num = 0;
+    }
+    return round((float) $num, (int) $length);
 }
 
 function removeElement($array, $value): array {
@@ -631,6 +637,20 @@ function urlPath($routeName, $routeParam = null): array|string {
     return str_replace($basePath, '', $url);
 }
 
+/**
+ * Get campaign days limit from admin general settings.
+ * Max allowed days between start_date and end_date.
+ * Default 30 if not set.
+ */
+function getCampaignDaysLimit(): int
+{
+    $data = SiteData::where('data_key', 'general.campaign_days_limit')->first();
+    if (!$data || !isset($data->data_info['campaign_days_limit'])) {
+        return 30;
+    }
+    return max(1, min(365, (int) $data->data_info['campaign_days_limit']));
+}
+
 function getSiteData($dataKeys, $singleQuery = false, $limit = null, $orderById = false) {
     if ($singleQuery) {
         $siteData = SiteData::where('data_key', $dataKeys)->first();
@@ -697,9 +717,28 @@ function getTrx($length = 12): string {
     return $randomString;
 }
 
+/**
+ * Detect if request is from Flutter mobile app webview.
+ * Mobile app → redirect to /user/deposit/error (Flutter detects URL).
+ * Desktop → redirect to /campaigns with toast notification.
+ *
+ * Use X-Flutter-Webview: 1 header in Flutter WebView for reliable detection.
+ * UA fallback: Android "; wv)" or iOS "iPhone" + in-app patterns.
+ */
+function isFlutterWebview(): bool {
+    if (request()->header('X-Flutter-Webview') === '1') return true;
+    $ua = request()->userAgent() ?? '';
+    // Android WebView (specific "; wv)" pattern, not generic "wv")
+    if (str_contains($ua, '; wv)')) return true;
+    // Flutter WebView or in-app browser
+    if (str_contains($ua, 'Flutter') || preg_match('/WebView\/[\d.]+/', $ua)) return true;
+    return false;
+}
+
 function gatewayRedirectUrl($type = false): string {
     if (auth()->check() && $type) return 'user.deposit.success';
-    if (!$type) return 'user.deposit.error'; // Dedicated error page for mobile webview
+    // Error case: mobile app → dedicated page for Flutter to detect; desktop → campaigns + toast
+    if (!$type) return isFlutterWebview() ? 'user.deposit.error' : 'campaign';
 
     return 'campaign';
 }

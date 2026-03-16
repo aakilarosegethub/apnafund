@@ -75,7 +75,7 @@
                         </div>
                         <div class="dashboard-card__txt">
                             <span class="dashboard-card__number">{{ $setting->cur_sym . showAmount(@$widgetData['receivedDonation']) }}</span>
-                            <span class="dashboard-card__title">@lang('Received Donation')</span>
+                            <span class="dashboard-card__title">@lang('Received Contribution')</span>
                         </div>
                     </div>
                 </div>
@@ -86,7 +86,7 @@
                         </div>
                         <div class="dashboard-card__txt">
                             <span class="dashboard-card__number">{{ $setting->cur_sym . showAmount(@$widgetData['sendDonation']) }}</span>
-                            <span class="dashboard-card__title">@lang('My Donation')</span>
+                            <span class="dashboard-card__title">@lang('My Contribution')</span>
                         </div>
                     </div>
                 </div>
@@ -117,7 +117,7 @@
                 <div class="col-lg-6">
                     <div class="custom--card">
                         <div class="card-header">
-                            <h3 class="title">@lang('Monthly Donation Report')</h3>
+                            <h3 class="title">@lang('Monthly Contribution Report')</h3>
                         </div>
                         <div id="donationReport"></div>
                     </div>
@@ -148,7 +148,7 @@
                 var baseColorForChart = $('html').css('--success')
                 var donationReportOptions = {
                     series: [{
-                        name: 'Donation',
+                        name: 'Contribution',
                         color: "hsl(" + baseColorForChart + " / .5)",
                         data: JSON.parse('<?php echo json_encode($donations); ?>')
                     }],

@@ -8,6 +8,7 @@
     <title>{{ $pageTitle ?? __('Payment Failed') }} - {{ bs('site_name') }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/css/iziToast.min.css">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -98,7 +99,29 @@
             <a href="{{ route('campaign') }}" class="btn-try-again">{{ __('Browse Campaigns') }}</a>
         </div>
     </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/js/iziToast.min.js"></script>
     <script>
+        (function() {
+            var toastMsg = {!! json_encode($message ?? __('Payment could not be completed. Please try again.')) !!};
+            var attempts = 0;
+            function showToast() {
+                if (typeof iziToast !== 'undefined') {
+                    iziToast.error({ message: toastMsg, position: "topRight", timeout: 6000 });
+                    return;
+                }
+                attempts++;
+                if (attempts < 100) {
+                    setTimeout(showToast, 50);
+                } else {
+                    alert(toastMsg);
+                }
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', showToast);
+            } else {
+                showToast();
+            }
+        })();
         document.getElementById('btnClose').addEventListener('click', function() {
             if (window.opener) {
                 window.close();

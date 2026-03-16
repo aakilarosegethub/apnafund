@@ -277,7 +277,7 @@ class UserController extends Controller
     }
 
     function donationHistory() {
-        $pageTitle = 'My Donations';
+        $pageTitle = 'My Contributions';
         $deposits  = auth()->user()->deposits()
                     ->with(['gateway', 'campaign', 'reward'])
                     ->index()

@@ -456,7 +456,7 @@ class BaseApiController extends Controller
         // main_img = main/first image (same as first fund_photo for app use)
         $main_img = !empty($fund_photos) ? (is_array($fund_photos) ? $fund_photos[0] : $fund_photos) : ($rows['image'] ?? '');
 
-        // Build the formatted array
+        // Build the formatted array (fund_story excluded from list APIs - only in fundById detail)
         $fundData = [
             'id' => $rows['id'],
             'slug' => $rows['slug'] ?? '',
@@ -467,7 +467,6 @@ class BaseApiController extends Controller
             'main_img' => $main_img,
             'exp_date' => $rows['end_date'] ?? '',
             'fund_amt' => $goal_amount,
-            'fund_story' => $rows['description'] ?? '',
             'full_address' => $rows['location'] ?? '',
             'lats' => $rows['latitude'] ?? '',
             'longs' => $rows['longitude'] ?? '',
@@ -508,6 +507,9 @@ class BaseApiController extends Controller
         if (isset($options['fund_distance'])) {
             $fundData['fund_distance'] = $options['fund_distance'];
         }
+        // Add is_expired for Kickstarter-style "Ended" label on campaign detail page
+        $endDate = $rows['end_date'] ?? null;
+        $fundData['is_expired'] = $endDate && strtotime($endDate) < time();
 
         return $fundData;
     }

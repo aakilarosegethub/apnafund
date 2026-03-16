@@ -43,7 +43,14 @@ class SettingController extends Controller
         // Get all countries list
         $allCountries = $this->getAllCountriesList();
 
-        return view('admin.setting.basic', compact('pageTitle', 'timeRegions', 'selectedCountries', 'useSelectedOnly', 'allCountries', 'whatsappContactMessage', 'whatsappChatbotNumber'));
+        // Campaign days limit (max days between start_date and end_date)
+        $campaignDaysLimit = 30;
+        $campaignDaysLimitData = SiteData::where('data_key', 'general.campaign_days_limit')->first();
+        if ($campaignDaysLimitData && isset($campaignDaysLimitData->data_info['campaign_days_limit'])) {
+            $campaignDaysLimit = (int) $campaignDaysLimitData->data_info['campaign_days_limit'];
+        }
+
+        return view('admin.setting.basic', compact('pageTitle', 'timeRegions', 'selectedCountries', 'useSelectedOnly', 'allCountries', 'whatsappContactMessage', 'whatsappChatbotNumber', 'campaignDaysLimit'));
     }
     
     private function getAllCountriesList() {
@@ -136,6 +143,16 @@ class SettingController extends Controller
             'chatbot_number' => request('whatsapp_chatbot_number', ''),
         ];
         $whatsappData->save();
+
+        // Save campaign days limit (max days between start_date and end_date)
+        $campaignDaysLimit = max(1, min(365, (int) (request('campaign_days_limit') ?? 30)));
+        $campaignDaysLimitData = SiteData::where('data_key', 'general.campaign_days_limit')->first();
+        if (!$campaignDaysLimitData) {
+            $campaignDaysLimitData = new SiteData();
+            $campaignDaysLimitData->data_key = 'general.campaign_days_limit';
+        }
+        $campaignDaysLimitData->data_info = ['campaign_days_limit' => $campaignDaysLimit];
+        $campaignDaysLimitData->save();
 
         $toast[] = ['success', 'Basic setting update success'];
         return back()->withToasts($toast);

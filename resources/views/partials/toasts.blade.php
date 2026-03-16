@@ -5,16 +5,20 @@
     @foreach(session('toasts') as $msg)
         <script>
             "use strict";
-            iziToast.{{ $msg[0] }}({message:"{{ __($msg[1]) }}", position: "topRight"});
+            (function(){ if(typeof iziToast!=='undefined') iziToast.{{ $msg[0] }}({message: {!! json_encode(__($msg[1])) !!}, position: "topRight"}); else setTimeout(arguments.callee, 50); })();
         </script>
     @endforeach
 @elseif(request('payment_status') === 'error')
-    {{-- Fallback: show payment error when redirected from failed payment (e.g. deposit/confirm) --}}
+    {{-- Fallback: show payment error when redirected from failed payment (desktop / campaigns page) --}}
     <script>
         "use strict";
-        if (typeof iziToast !== 'undefined') {
-            iziToast.error({message: "{{ __('Payment could not be completed. Please try again.') }}", position: "topRight"});
-        }
+        (function showPaymentErrorToast() {
+            if (typeof iziToast !== 'undefined') {
+                iziToast.error({message: {!! json_encode(__('Payment could not be completed. Please try again.')) !!}, position: "topRight", timeout: 5000});
+            } else {
+                setTimeout(showPaymentErrorToast, 50);
+            }
+        })();
     </script>
 @endif
 

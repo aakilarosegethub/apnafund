@@ -53,7 +53,7 @@
     },
     "scripts": {
         "serve": [
-            "@php -d post_max_size=500M -d upload_max_filesize=500M artisan serve"
+            "@php -d post_max_size=500M -d upload_max_filesize=500M artisan serve --host=0.0.0.0"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",

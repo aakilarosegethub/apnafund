@@ -4,7 +4,7 @@
     <div class="dashboard-content">
         <div class="container">
             <div class="content-card">
-                <h2 class="mb-4">@lang('My Donations')</h2>
+                <h2 class="mb-4">@lang('My Contributions')</h2>
                                     <div class="d-flex justify-content-end mb-4">
                     <form action="" method="GET" class="d-flex">
                         <input type="text" class="form-control me-2" name="search" value="{{ request('search') }}" placeholder="@lang('Search by transaction')">

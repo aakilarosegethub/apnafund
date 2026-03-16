@@ -33,10 +33,10 @@
                 <div class="col-12 text-center">
                     <div class="text-dark">
                         <h1 class="display-4 hero-heading theme-color-text fw-bold">Funding <span
-                                class="font-italic">By</span> The People,
+                                class="theme-color-text">By</span> The People,
                         </h1>
                         <h1 class="display-4 hero-heading text-white fw-bold">Funding <span
-                                class="font-italic">For</span> The People</h1>
+                                class="theme-color-text">For</span> The People</h1>
 
                     </div>
                     <div class="button-container">

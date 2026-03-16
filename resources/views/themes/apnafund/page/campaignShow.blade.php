@@ -2419,13 +2419,16 @@
                 </div>
                 <div class="donation-protected">
                     <i class="fas fa-shield-alt"></i>
-                    Donation protected
+                    Contribution protected
                 </div>
             </div>
 
             <!-- Title Section -->
             <div class="title-section">
                 <h1 class="banner-title">{{ __(@$campaignData->name) }}</h1>
+                @if($campaignData->isExpired())
+                    <span class="badge bg-danger ms-2 px-3 py-2" style="font-size: 0.9rem;">@lang('Ended') / @lang('Expired')</span>
+                @endif
             </div>
 
             <!-- Navigation Tabs -->
@@ -2874,7 +2877,7 @@
 
                 <div class="donation-stats">
                     <i class="fas fa-chart-line"></i>
-                    <span>{{ $donations->count() }} people just donated</span>
+                    <span>{{ $donations->count() }} people just contributed</span>
                 </div>
 
                 <div class="recent-donations">
@@ -2889,9 +2892,9 @@
                             </div>
                             <span class="donation-type">
                                 @if($loop->first)
-                                    Recent donation
+                                    Recent contribution
                                 @elseif($donation->amount == $donations->max('amount'))
-                                    Top donation
+                                    Top contribution
                                 @else
                                     {{ diffForHumans($donation->created_at) }}
                                 @endif
@@ -2902,11 +2905,11 @@
                             <div class="donation-info">
                                 <i class="fas fa-heart" style="color: #666; font-size: 0.9rem;"></i>
                                 <div class="donation-details">
-                                    <span class="donation-name">No donations yet</span>
+                                    <span class="donation-name">No contributions yet</span>
                                     <span class="donation-amount">Be the first!</span>
                                 </div>
                             </div>
-                            <span class="donation-type">Start donating</span>
+                            <span class="donation-type">Start contributing</span>
                         </div>
                     @endforelse
                     
@@ -2937,7 +2940,7 @@
     <div class="donations-modal" id="donationsModal">
         <div class="donations-modal-content">
             <div class="donations-modal-header">
-                <h3 id="donationsModalTitle">All Donations</h3>
+                <h3 id="donationsModalTitle">All Contributions</h3>
                 <button class="donations-modal-close" id="closeDonationsModal">
                     <i class="fas fa-times"></i>
                 </button>
@@ -3798,13 +3801,13 @@
             
             // Show all donations
             $('#showAllDonations').on('click', function() {
-                showDonationsModal('All Donations', donationsData);
+                showDonationsModal('All Contributions', donationsData);
             });
             
             // Show top donations
             $('#showTopDonations').on('click', function() {
                 var topDonations = [...donationsData].sort((a, b) => parseFloat(b.amount) - parseFloat(a.amount));
-                showDonationsModal('Top Donations', topDonations);
+                showDonationsModal('Top Contributions', topDonations);
             });
             
             // Close modal
@@ -3854,7 +3857,7 @@
                     html = `
                         <div class="modal-donation-item">
                             <div style="text-align: center; width: 100%; color: #666; font-style: italic; padding: 20px;">
-                                No donations found
+                                No contributions found
                             </div>
                         </div>
                     `;

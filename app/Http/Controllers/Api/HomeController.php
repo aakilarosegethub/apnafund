@@ -119,9 +119,10 @@ class HomeController extends BaseApiController
             $cps = [];
         }
 
-        // Get all feature funds from campaigns table
+        // Get all feature funds from campaigns table (exclude expired - Kickstarter style)
         $cp = [];
-        $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE status = 1 ORDER BY id DESC");
+        $timestamp = date("Y-m-d");
+        $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE status = 1 AND (end_date IS NULL OR end_date >= '" . $timestamp . "') ORDER BY id DESC");
         
         if ($sel) {
             while ($rows = $sel->fetch_assoc()) {
@@ -137,12 +138,12 @@ class HomeController extends BaseApiController
                     $donatersResult = $funded ? $funded->fetch_assoc() : null;
                     $total_donaters = $donatersResult ? ($donatersResult['total_donaters'] ?? 0) : 0;
                     
-                    // Use helper function to format campaign data
+                    // Use helper function to format campaign data (exclude_story for list - heavy fields only in fundById)
                     $pols = $this->formatCampaignData($rows, [
                         'fund_for' => '',
                         'patient_photo' => [],
                         'total_donaters' => $total_donaters,
-                        'donaterlist' => $this->getDonaterList($rows['id'])
+                        'exclude_story' => true,
                     ]);
                     
                     // Override specific fields for feature funds
@@ -161,12 +162,12 @@ class HomeController extends BaseApiController
             }
         }
 
-        // Get popular funds (top 5 by donations) from campaigns table
+        // Get popular funds (top 5 by donations) from campaigns table (exclude expired)
         $listpopular = [];
         $selpop = $this->h->queryfire("SELECT SUM(d.amount) AS total_deposite, d.campaign_id, c.*
             FROM deposits AS d
             JOIN campaigns AS c ON d.campaign_id = c.id
-            WHERE d.status = 1 AND c.status = 1
+            WHERE d.status = 1 AND c.status = 1 AND (c.end_date IS NULL OR c.end_date >= '" . $timestamp . "')
             GROUP BY d.campaign_id 
             ORDER BY total_deposite DESC 
             LIMIT 5");
@@ -178,12 +179,12 @@ class HomeController extends BaseApiController
                 $donatersResult = $funded ? $funded->fetch_assoc() : null;
                 $total_donaters = $donatersResult ? ($donatersResult['total_donaters'] ?? 0) : 0;
                 
-                // Use helper function to format campaign data
+                // Use helper function to format campaign data (exclude_story for list - heavy fields only in fundById)
                 $popular = $this->formatCampaignData($pop, [
                     'fund_for' => '',
                     'patient_photo' => [],
                     'total_donaters' => $total_donaters,
-                    'donaterlist' => $this->getDonaterList($campaignId)
+                    'exclude_story' => true,
                 ]);
                 
                 // Override specific fields for popular funds
@@ -203,11 +204,11 @@ class HomeController extends BaseApiController
             }
         }
 
-        // Get nearby funds (5 nearest) - Since campaigns table doesn't have lats/longs, return recent campaigns
+        // Get nearby funds (5 nearest) - Since campaigns table doesn't have lats/longs, return recent campaigns (exclude expired)
         $listnearby = [];
         if ($lats != 0 && $longs != 0) {
             // Get recent active campaigns since we don't have location coordinates
-            $selpop = $this->h->queryfire("SELECT * FROM campaigns WHERE status = 1 ORDER BY created_at DESC LIMIT 20");
+            $selpop = $this->h->queryfire("SELECT * FROM campaigns WHERE status = 1 AND (end_date IS NULL OR end_date >= '" . $timestamp . "') ORDER BY created_at DESC LIMIT 20");
             
             $fundsWithDistance = [];
             if ($selpop) {
@@ -232,12 +233,12 @@ class HomeController extends BaseApiController
                 
                 $distance = $pop['distance'] ?? 0;
                 
-                // Use helper function to format campaign data
+                // Use helper function to format campaign data (exclude_story for list - heavy fields only in fundById)
                 $populars = $this->formatCampaignData($pop, [
                     'fund_for' => '',
                     'patient_photo' => [],
                     'total_donaters' => $total_donaters,
-                    'donaterlist' => $this->getDonaterList($pop['id']),
+                    'exclude_story' => true,
                     'fund_distance' => $distance > 0 ? $distance . ' KM' : ''
                 ]);
                 

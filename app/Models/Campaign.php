@@ -55,8 +55,8 @@ class Campaign extends Model
         'preferred_amounts' => 'array',
         'goal_amount'       => 'decimal:2',
         'raised_amount'     => 'decimal:2',
-        'start_date'        => 'datetime:Y-m-d',
-        'end_date'          => 'datetime:Y-m-d',
+        'start_date'        => 'date',
+        'end_date'          => 'date',
     ];
 
     /**
@@ -187,6 +187,15 @@ class Campaign extends Model
     public function scopeExpired($query): void
     {
         $query->where('end_date', '<', now());
+    }
+
+    /**
+     * Scope: running OR upcoming (excludes expired).
+     * Used for homepage featured so upcoming campaigns can show before they start.
+     */
+    public function scopeRunningOrUpcoming($query): void
+    {
+        $query->where('end_date', '>=', now());
     }
 
     /**

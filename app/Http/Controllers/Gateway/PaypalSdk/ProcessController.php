@@ -8,6 +8,7 @@ use App\Http\Controllers\Gateway\PaymentController;
 use App\Http\Controllers\Gateway\PaypalSdk\Core\PayPalHttpClient;
 use App\Http\Controllers\Gateway\PaypalSdk\PayPalHttp\HttpException;
 use App\Http\Controllers\Gateway\PaypalSdk\Core\ProductionEnvironment;
+use App\Http\Controllers\Gateway\PaypalSdk\Core\SandboxEnvironment;
 use App\Http\Controllers\Gateway\PaypalSdk\Orders\OrdersCreateRequest;
 use App\Http\Controllers\Gateway\PaypalSdk\Orders\OrdersCaptureRequest;
 
@@ -15,12 +16,23 @@ class ProcessController extends Controller
 {
     public static function process($deposit)
     {
+        $amount = round($deposit->final_amount, 2);
+        if ($amount <= 0) {
+            return json_encode([
+                'error'   => true,
+                'message' => __('Invalid amount. Payment amount must be greater than zero.'),
+            ]);
+        }
+
         $paypalAcc = json_decode($deposit->gatewayCurrency()->gateway_parameter);
 
-        // Creating an environment
+        // Creating an environment (Sandbox for testing, Production for live)
         $clientId     = $paypalAcc->clientId;
         $clientSecret = $paypalAcc->clientSecret;
-        $environment  = new ProductionEnvironment($clientId, $clientSecret);
+        $useSandbox   = !empty($paypalAcc->sandbox);
+        $environment  = $useSandbox
+            ? new SandboxEnvironment($clientId, $clientSecret)
+            : new ProductionEnvironment($clientId, $clientSecret);
         $client       = new PayPalHttpClient($environment);
         $request      = new OrdersCreateRequest();
         $request->prefer('return=representation');
@@ -51,10 +63,9 @@ class ProcessController extends Controller
             $send['redirect_url'] = $response->result->links[1]->href;
         } catch (HttpException $ex) {
             $send['error']   = true;
-            $send['message'] = 'Failed to process with api';
 
             $responseBody = $ex->getMessage();
-            $statusCode   = $ex->statusCode ?? 0;
+            $statusCode    = $ex->statusCode ?? 0;
 
             // Parse PayPal error JSON for readable message
             $paypalError = null;
@@ -69,6 +80,7 @@ class ProcessController extends Controller
                     $paypalError = $decoded['error_description'];
                 }
             }
+            $send['message'] = $paypalError ?? 'Payment failed';
 
             $logContext = [
                 'api_hit'        => 'PayPal Orders API – Create Order (v2/checkout/orders)',
@@ -97,7 +109,10 @@ class ProcessController extends Controller
             $paypalAcc    = json_decode($deposit->gatewayCurrency()->gateway_parameter);
             $clientId     = $paypalAcc->clientId;
             $clientSecret = $paypalAcc->clientSecret;
-            $environment  = new ProductionEnvironment($clientId, $clientSecret);
+            $useSandbox   = !empty($paypalAcc->sandbox);
+            $environment  = $useSandbox
+                ? new SandboxEnvironment($clientId, $clientSecret)
+                : new ProductionEnvironment($clientId, $clientSecret);
             $client       = new PayPalHttpClient($environment);
             $response     = $client->execute($request);
 
@@ -115,7 +130,8 @@ class ProcessController extends Controller
                 return redirect()->to(gatewayRedirectUrlFull(false))->withToasts($toast);
             }
         } catch (HttpException $ex) {
-            return redirect()->to(gatewayRedirectUrlFull(false));
+            $toast[] = ['error', __('Payment failed or was cancelled. Please try again.')];
+            return redirect()->to(gatewayRedirectUrlFull(false))->withToasts($toast);
         }
     }
 }

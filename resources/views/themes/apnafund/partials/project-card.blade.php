@@ -181,9 +181,12 @@
     .project-description {
         color: #6c757d;
         font-size: 14px;
-        line-height: 1.6;
-        margin-bottom: 20px;
-        min-height: 44px;
+        line-height: 1.5;
+        margin-bottom: 12px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
 
     .project-stats {

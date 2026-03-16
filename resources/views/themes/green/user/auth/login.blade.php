@@ -187,6 +187,11 @@
         color: #fff;
     }
 
+    .ks-linkedin {
+        background: #0a66c2;
+        color: #fff;
+    }
+
     .ks-social-info {
         font-size: 13px;
         color: #666;
@@ -277,9 +282,12 @@
             $googleEnabled = !empty(config('services.google.client_id')) && 
                              !empty(config('services.google.client_secret')) && 
                              config('services.google.client_id') !== 'disabled';
+            $linkedinEnabled = !empty(config('services.linkedin.client_id')) && 
+                               !empty(config('services.linkedin.client_secret')) && 
+                               config('services.linkedin.client_id') !== 'disabled';
         @endphp
 
-        @if($facebookEnabled || $googleEnabled)
+        @if($facebookEnabled || $googleEnabled || $linkedinEnabled)
             <div class="ks-divider">
                 <span>or</span>
             </div>
@@ -294,6 +302,12 @@
                 @if($googleEnabled)
                     <a href="{{ route('user.social.google') }}" class="ks-social-btn ks-google">
                         <i class="fab fa-google"></i> Continue with Google
+                    </a>
+                @endif
+
+                @if($linkedinEnabled)
+                    <a href="{{ route('user.social.linkedin') }}" class="ks-social-btn ks-linkedin">
+                        <i class="fab fa-linkedin-in"></i> Continue with LinkedIn
                     </a>
                 @endif
             </div>

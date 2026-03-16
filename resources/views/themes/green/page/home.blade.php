@@ -5,6 +5,11 @@
 @extends($activeTheme . 'layouts.green-home')
 
 @section('content')
+@php
+    $showRateDebug = request()->has('test');
+    $setting = bs();
+    $siteCur = strtoupper($setting->site_cur ?? 'USD');
+@endphp
 <style>
     .campaign-card {
         transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -222,6 +227,10 @@
     text-decoration:underline;
 }
 
+/* Rate debug icon (?test=1) */
+.rate-debug-icon { cursor: pointer; color: #198754; font-size: 11px; margin-left: 4px; opacity: 0.85; }
+.rate-debug-icon:hover { opacity: 1; }
+
 </style>
 <!-- HERO -->
 @php
@@ -294,7 +303,7 @@
     }
     
     if ($showTrending == 1 && $trendingCampaignId) {
-        $trendingCampaign = \App\Models\Campaign::where('id', $trendingCampaignId)->approve()->first();
+        $trendingCampaign = \App\Models\Campaign::where('id', $trendingCampaignId)->approve()->running()->first();
   }
 @endphp
 
@@ -311,9 +320,9 @@
 @endphp
 
 
+    @if($showTrending == 1 && $trendingCampaign)
     <section class="projects-section">
     <div class="container">
-        @if($showTrending == 1 && $trendingCampaign)
             @php
                 // Get raised amount - use raised_amount field
                 $raised = $trendingCampaign->raised_amount ?? 0;
@@ -363,6 +372,10 @@
                         <div class="featured-stats-modern">
                             <div>
                                 <strong>{{ $setting->cur_sym ?? '$' }}{{ number_format($raised, 0) }}</strong>
+                                @if($showRateDebug)
+                                @php $tc = $trendingCampaign; $sc = strtoupper($setting->site_cur ?? 'USD'); $cc = strtoupper($tc->original_currency ?? $sc); $er = (float)($tc->exchange_rate_used ?? 1); @endphp
+                                <span onclick="event.preventDefault();event.stopPropagation();"><i class="fas fa-calculator rate-debug-icon" role="button" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="click" data-bs-html="true" data-bs-content="<div class='rate-debug-popover'><strong>Currency &amp; Rate</strong><br>Site: {{ $sc }}<br>Campaign: {{ $cc }}<br>Rate: 1 {{ $sc }} = {{ number_format($er, 4) }} {{ $cc }}</div>" title="Rate Info"></i></span>
+                                @endif
                                 <span>Raised</span>
                             </div>
                             <div>
@@ -379,7 +392,7 @@
                             <div class="progress-modern-fill" style="width:{{ $percentage }}%"></div>
                         </div>
 
-                        <a href="{{ route('campaign.show', $trendingCampaign->slug) }}" class="featured-btn">View Campaign →</a>
+                        <a href="{{ route('campaign.show', $trendingCampaign->slug) }}{{ $showRateDebug ? '?test=1' : '' }}" class="featured-btn">View Campaign →</a>
                     </div>
                 </div>
 
@@ -389,52 +402,9 @@
                     </div>
                 </div>
             </div>
-        @else
-            <h2 class="section-title-sm mb-4">Featured Project</h2>
-
-            <div class="row align-items-stretch">
-                <!-- LEFT CONTENT -->
-                <div class="col-lg-5 d-flex">
-                    <div class="featured-box-modern w-100">
-                        <h3>Smart Home Automation System</h3>
-
-                        <p>
-                            Transform your home into a smart, energy-efficient living space
-                            using next-gen IoT automation.
-                        </p>
-
-                        <div class="featured-stats-modern">
-                            <div>
-                                <strong>{{ $setting->cur_sym ?? '$' }}45,000</strong>
-                                <span>Raised</span>
-                            </div>
-                            <div>
-                                <strong>75%</strong>
-                                <span>Funded</span>
-                            </div>
-                            <div>
-                                <strong>15</strong>
-                                <span>Days Left</span>
-                            </div>
-                        </div>
-
-                        <div class="progress-modern">
-                            <div class="progress-modern-fill" style="width:75%"></div>
-                        </div>
-
-                        <a href="#" class="featured-btn">View Campaign →</a>
-                    </div>
-                </div>
-
-                <!-- RIGHT IMAGE -->
-                <div class="col-lg-7 d-flex">
-                    <div class="featured-image-modern project-image-1 w-100">
-                    </div>
-                </div>
-            </div>
-        @endif
     </div>
 </section>
+    @endif
 
 <style>
 .trending-badge {
@@ -502,7 +472,7 @@
                 <div class="row g-4" id="featuredSliderContent">
                     @foreach($featuredCampaigns as $campaign)
                         <div class="col-md-6 featured-slide">
-                            <a href="{{ route('campaign.show', $campaign->slug) }}" class="project-card-link">
+                            <a href="{{ route('campaign.show', $campaign->slug) }}{{ $showRateDebug ? '?test=1' : '' }}" class="project-card-link">
                                 <div class="project-card">
                                     <div class="project-image" style="background-image: url('{{ getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')) }}');"></div>
                                     <div class="project-content">
@@ -542,7 +512,12 @@
                                                 <div class="progress-bar bg-success" style="width:{{ $percentage }}%"></div>
                                             </div>
                                             <div class="d-flex justify-content-between mt-2 small">
-                                                <span><strong>{{ $setting->cur_sym ?? '$' }}{{ number_format($raised, 0) }}</strong> raised</span>
+                                                <span><strong>{{ $setting->cur_sym ?? '$' }}{{ number_format($raised, 0) }}</strong>
+                                                @if($showRateDebug)
+                                                @php $sc = strtoupper($setting->site_cur ?? 'USD'); $cc = strtoupper($campaign->original_currency ?? $sc); $er = (float)($campaign->exchange_rate_used ?? 1); @endphp
+                                                <span onclick="event.preventDefault();event.stopPropagation();"><i class="fas fa-calculator rate-debug-icon" role="button" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="click" data-bs-html="true" data-bs-content="<div class='rate-debug-popover'><strong>Currency &amp; Rate</strong><br>Site: {{ $sc }}<br>Campaign: {{ $cc }}<br>Rate: 1 {{ $sc }} = {{ number_format($er, 4) }} {{ $cc }}</div>" title="Rate Info"></i></span>
+                                                @endif
+                                                raised</span>
                                                 <span>{{ number_format($percentage, 0) }}%</span>
                                             </div>
                                             <div class="mt-2 small text-muted">
@@ -663,6 +638,15 @@
     updateButtons();
     goToPage(0);
 })();
+
+// Rate debug popovers (?test=1)
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof bootstrap !== 'undefined') {
+        document.querySelectorAll('.rate-debug-icon[data-bs-toggle="popover"]').forEach(function(el) {
+            new bootstrap.Popover(el, { sanitize: false });
+        });
+    }
+});
 </script>
 
 <style>

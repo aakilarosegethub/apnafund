@@ -153,7 +153,7 @@ class PaymentController extends Controller
 
         $dirName = $deposit->gateway->alias;
         $new     = __NAMESPACE__ . '\\' . $dirName . '\\ProcessController';
-        $deposit->final_amount =(int) round($deposit->final_amount, 2);
+        $deposit->final_amount = round((float) $deposit->final_amount, 2);
         \Log::channel('payments')->info('Payment process started', [
             'gateway'      => $dirName,
             'method_code'  => $deposit->method_code,
@@ -167,12 +167,13 @@ class PaymentController extends Controller
         
 
         if (isset($data->error)) {
+            $errorMsg = isset($data->message) ? $data->message : 'Payment failed';
             \Log::channel('payments')->error('Payment process returned error to user', [
                 'gateway' => $dirName,
                 'trx'     => $deposit->trx,
-                'message' => $data->message ?? 'unknown',
+                'message' => $errorMsg,
             ]);
-            $toast[] = ['error', $data->message];
+            $toast[] = ['error', $errorMsg];
 
             return redirect()->to(gatewayRedirectUrlFull(false))->withToasts($toast);
         }

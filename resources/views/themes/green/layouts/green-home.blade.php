@@ -1,7 +1,4 @@
-@php
-if(isset($_GET['test'])){   die('home');
-}
-@endphp
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -463,7 +460,6 @@ body{
   font-weight: 800;
   line-height: 1.2;
   color: #ffffff;
-  text-shadow: 0 6px 18px rgba(0,0,0,0.45);
 }
 
 /* First word highlight (Crowd / By / For) */
@@ -476,7 +472,6 @@ body{
   font-size: 1.05rem;
   max-width: 580px;
   color: #f1f1f1;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 
 /* Button fix */
@@ -505,35 +500,6 @@ body{
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-
-    // Matches ALL variations of ApnaCrowdfunding
-    const regex = /apnacrowdfunding/gi;
-    const replacementText = "ApnaCrowdfunding";
-
-    const blockedTags = ["A", "SCRIPT", "STYLE", "NOSCRIPT"];
-
-    function processElement(el) {
-        if (blockedTags.includes(el.tagName)) return;
-
-        if (el.children.length === 0) {
-            const html = el.innerHTML;
-            if (regex.test(html)) {
-                el.innerHTML = html.replace(
-                    regex,
-                    "<i>" + replacementText + "</i>"
-                );
-            }
-            return;
-        }
-
-        Array.from(el.children).forEach(processElement);
-    }
-
-    processElement(document.body);
-});
-</script>
 
 @stack('scripts')
 @stack('page-script')

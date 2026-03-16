@@ -1597,20 +1597,45 @@
                 }
                 
                 try {
+                    const uploadUrl = "{{ route('user.campaign.story.media', $campaign->slug) }}";
+
+                    function uploadStoryFile(file) {
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        formData.append('_token', '{{ csrf_token() }}');
+                        return fetch(uploadUrl, {
+                            method: 'POST',
+                            body: formData,
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                        }).then(response => response.json());
+                    }
+
                     jQuery('#summernote').summernote({
                         toolbar: [
-                            // [groupName, [list of button]]
                             ['style', ['bold', 'italic', 'underline', 'clear']],
                             ['font', ['strikethrough', 'superscript', 'subscript']],
                             ['fontsize', ['fontsize']],
                             ['color', ['color']],
                             ['para', ['ul', 'ol', 'paragraph']],
+                            ['insert', ['picture', 'link']],
                             ['height', ['height']]
                         ],
                         height: 500,
                         callbacks: {
+                            onImageUpload: function(files) {
+                                Array.from(files).forEach(function(file) {
+                                    uploadStoryFile(file)
+                                        .then(data => {
+                                            if (data && data.type === 'image' && data.location) {
+                                                jQuery('#summernote').summernote('insertImage', data.location);
+                                            } else {
+                                                alert(data?.message || 'Image upload failed');
+                                            }
+                                        })
+                                        .catch(() => alert('Image upload failed'));
+                                });
+                            },
                             onChange: function(contents, $editable) {
-                                // Show action buttons when content changes
                                 if (typeof window.showActionButtons === 'function') {
                                     window.showActionButtons();
                                 }

@@ -713,6 +713,10 @@
 @endsection
 
 @section('frontend')
+@php
+    $showRateDebug = request()->has('test');
+    $siteCur = strtoupper($setting->site_cur ?? 'USD');
+@endphp
 <!--New design-->
 <!-- Main Content -->
 <div class="payment-container">
@@ -983,7 +987,16 @@
                                                 </div>
                 <div class="summary-item summary-total">
                     <span class="summary-label">@lang('Total due today')</span>
-                    <span class="summary-value" id="totalAmount">{{ $setting->cur_sym }}0.00</span>
+                    <span class="summary-value d-inline-flex align-items-center">
+                        <span id="totalAmount">{{ $setting->cur_sym }}0.00</span>
+                        @if($showRateDebug)
+                        <i class="fas fa-calculator rate-debug-icon ms-1" id="rateDebugIcon" role="button" tabindex="0" title="Click for rate info" style="cursor:pointer;color:#05ce78;font-size:12px;"></i>
+                        <div id="rateDebugPopover" class="rate-debug-popover-box" style="display:none;position:absolute;background:#fff;border:1px solid #ddd;border-radius:8px;padding:12px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:9999;max-width:280px;font-size:13px;">
+                            <strong>Currency &amp; Rate</strong><hr class="my-2">
+                            <div id="rateDebugContent">Select amount and payment method to see conversion</div>
+                        </div>
+                        @endif
+                    </span>
                                         </div>
                                     </div>
 
@@ -2010,7 +2023,39 @@
                 }
             }
 
-
+            // Rate debug icon click (when ?test=1)
+            $('#rateDebugIcon').on('click', function(e) {
+                e.stopPropagation();
+                const popover = $('#rateDebugPopover');
+                const tipAmt = (selectedAmount * tipPercentage) / 100;
+                const totalSite = selectedAmount + tipAmt;
+                let html = '<strong>Site currency:</strong> {{ $siteCur }}<br>Total: ' + totalSite.toFixed(2) + ' {{ $siteCur }}<br>';
+                const opt = $('.payment-option.selected');
+                if (opt.length) {
+                    const gw = opt.data('gateway');
+                    if (gw && gw.rate) {
+                        const rate = parseFloat(gw.rate) || 1;
+                        const curr = (gw.currency || 'USD').toUpperCase();
+                        const fixedCharge = parseFloat(gw.fixed_charge) || 0;
+                        const pctCharge = parseFloat(gw.percent_charge) || 0;
+                        const charge = fixedCharge + (totalSite * pctCharge / 100);
+                        const finalInGateway = (totalSite + charge) * rate;
+                        html += '<strong>Gateway:</strong> ' + curr + '<br>Rate: 1 {{ $siteCur }} = ' + rate.toFixed(4) + ' ' + curr + '<br>Charge: ' + charge.toFixed(2) + ' {{ $siteCur }}<br><strong>You pay:</strong> ' + finalInGateway.toFixed(2) + ' ' + curr;
+                    } else {
+                        html += 'Same currency – no conversion';
+                    }
+                } else {
+                    html += 'Select a payment method for conversion details';
+                }
+                $('#rateDebugContent').html(html);
+                popover.toggle();
+                if (popover.is(':visible')) {
+                    const icon = $('#rateDebugIcon');
+                    popover.css({ position: 'absolute', top: (icon.offset().top - popover.outerHeight() - 8) + 'px', left: icon.offset().left + 'px' });
+                }
+            });
+            $(document).on('click', function() { $('#rateDebugPopover').hide(); });
+            $('#rateDebugIcon, #rateDebugPopover').on('click', function(e) { e.stopPropagation(); });
 
             // Initialize form state
             updateSummary();

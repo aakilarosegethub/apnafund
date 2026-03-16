@@ -16,6 +16,36 @@ class Setting extends Model
         return $this->site_name . $pageTitle;
     }
 
+    /**
+     * Site currency - TCUR > IP-detected > DB. When TCUR not set, uses session(user_detected_currency) from IP.
+     */
+    public function getSiteCurAttribute($value)
+    {
+        return config('app.currency') ?: (session('user_detected_currency') ?: ($value ?? 'USD'));
+    }
+
+    /**
+     * Currency symbol - TCUR > IP-detected > DB. When TCUR not set, uses IP-detected currency symbol.
+     */
+    public function getCurSymAttribute($value)
+    {
+        $tcur = config('app.currency') ?: session('user_detected_currency');
+        if ($tcur) {
+            $map = [
+                'USD' => '$', 'PKR' => 'Rs', 'EUR' => '€', 'GBP' => '£',
+                'INR' => '₹', 'SAR' => '﷼', 'AED' => 'د.إ', 'TRY' => '₺',
+                'CAD' => 'C$', 'AUD' => 'A$', 'NZD' => 'NZ$', 'SEK' => 'kr',
+                'NOK' => 'kr', 'DKK' => 'kr', 'CHF' => 'CHF', 'JPY' => '¥',
+                'CNY' => '¥', 'HKD' => 'HK$', 'SGD' => 'S$', 'MYR' => 'RM',
+                'BDT' => '৳', 'IDR' => 'Rp', 'THB' => '฿', 'PHP' => '₱',
+                'ZAR' => 'R', 'NGN' => '₦', 'KES' => 'KSh', 'EGP' => 'E£',
+                'BRL' => 'R$', 'MXN' => '$', 'RUB' => '₽',
+            ];
+            return $map[strtoupper(trim($tcur))] ?? $value ?? '$';
+        }
+        return $value ?? '$';
+    }
+
     protected static function boot()
     {
         parent::boot();

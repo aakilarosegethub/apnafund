@@ -20,9 +20,9 @@
                             <div class="text-dark">
                                 <h1 class="display-4 hero-heading fw-bold"><span class="theme-color-text">{{ @$heroContent->data_info->hero_heading_1 ?? 'Crowd' }}</span>{{ @$heroContent->data_info->hero_heading_1 ? '' : 'Funding' }}</h1>
                                 <h1 class="display-4 hero-heading text-white fw-bold"><span
-                                        class="theme-color-text font-italic">{{ @$heroContent->data_info->hero_heading_2 ?? 'By' }}</span> {{ @$heroContent->data_info->hero_heading_2 ? '' : 'The People,' }}</h1>
+                                        class="theme-color-text">{{ @$heroContent->data_info->hero_heading_2 ?? 'By' }}</span> {{ @$heroContent->data_info->hero_heading_2 ? '' : 'The People,' }}</h1>
                                 <h1 class="display-4 hero-heading text-white fw-bold"><span
-                                        class="theme-color-text font-italic">{{ @$heroContent->data_info->hero_heading_3 ?? 'For' }}</span> {{ @$heroContent->data_info->hero_heading_3 ? '' : 'The People,' }}</h1>
+                                        class="theme-color-text">{{ @$heroContent->data_info->hero_heading_3 ?? 'For' }}</span> {{ @$heroContent->data_info->hero_heading_3 ? '' : 'The People,' }}</h1>
                             </div>
                             <div class="mt-2">
                                 <p class="text-white font-bold mb-0 me-4"><span class="quotes">{{ @$heroContent->data_info->hero_description ?? 'Together, we empower small businesses— From young dreamers, bold visionaries and those who want to improve their societies.' }}</span></p>

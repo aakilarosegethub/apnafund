@@ -138,6 +138,19 @@ class UserController extends Controller
             $user->campaign_duration = request('campaign_duration');
         }
 
+        if (request()->hasFile('cnic_front_image')) {
+            if ($user->cnic_front_image && file_exists(public_path(getFilePath('cnic') . '/' . $user->cnic_front_image))) {
+                @unlink(public_path(getFilePath('cnic') . '/' . $user->cnic_front_image));
+            }
+            $user->cnic_front_image = fileUploader(request('cnic_front_image'), getFilePath('cnic'));
+        }
+        if (request()->hasFile('cnic_back_image')) {
+            if ($user->cnic_back_image && file_exists(public_path(getFilePath('cnic') . '/' . $user->cnic_back_image))) {
+                @unlink(public_path(getFilePath('cnic') . '/' . $user->cnic_back_image));
+            }
+            $user->cnic_back_image = fileUploader(request('cnic_back_image'), getFilePath('cnic'));
+        }
+
         if (!request('kc')) {
             $user->kc = ManageStatus::UNVERIFIED;
 
@@ -385,7 +398,6 @@ class UserController extends Controller
     function deleteSelectedUsers() {
         $this->validate(request(), [
             'user_ids' => 'required|array|min:1',
-            'confirmation_text' => 'required|in:DELETE SELECTED USERS',
         ]);
 
         try {

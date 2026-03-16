@@ -95,7 +95,9 @@ class RegisterController extends Controller
             'mobile_code'  => 'required|in:'.$mobileCodes,
             'country_code' => 'required|in:'.$countryCodes,
             'country'      => 'required|in:'.$countries,
-            'agree'        => $agree
+            'agree'        => $agree,
+            'cnic_front_image' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
+            'cnic_back_image'  => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
         ]);
 
         return $validate;
@@ -203,6 +205,14 @@ class RegisterController extends Controller
         $user->sc           = $setting->sc ? ManageStatus::UNVERIFIED : ManageStatus::VERIFIED;
         $user->ts           = ManageStatus::NO;
         $user->tc           = ManageStatus::YES;
+
+        if (request()->hasFile('cnic_front_image')) {
+            $user->cnic_front_image = fileUploader(request('cnic_front_image'), getFilePath('cnic'));
+        }
+        if (request()->hasFile('cnic_back_image')) {
+            $user->cnic_back_image = fileUploader(request('cnic_back_image'), getFilePath('cnic'));
+        }
+
         $user->save();
 
 

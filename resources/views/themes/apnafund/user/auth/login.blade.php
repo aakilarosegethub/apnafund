@@ -217,6 +217,7 @@ body{
 }
 .facebook-btn:hover{background:#1877f2;color:#fff;}
 .google-btn:hover{background:#db4437;color:#fff;}
+.linkedin-btn:hover{background:#0a66c2;color:#fff;}
 
 /* ================= FOOTER ================= */
 .login-footer{
@@ -294,16 +295,32 @@ body{
             <button class="btn-theme">Log In</button>
         </form>
 
+        @php
+            $facebookEnabled = !empty(config('services.facebook.client_id')) && !empty(config('services.facebook.client_secret')) && config('services.facebook.client_id') !== 'disabled';
+            $googleEnabled = !empty(config('services.google.client_id')) && !empty(config('services.google.client_secret')) && config('services.google.client_id') !== 'disabled';
+            $linkedinEnabled = !empty(config('services.linkedin.client_id')) && !empty(config('services.linkedin.client_secret')) && config('services.linkedin.client_id') !== 'disabled';
+        @endphp
+
+        @if($facebookEnabled || $googleEnabled || $linkedinEnabled)
         <div class="divider"><span>Or</span></div>
-            
             <div class="social-login-buttons">
+                @if($facebookEnabled)
                 <a href="{{ route('user.social.facebook') }}" class="social-btn facebook-btn">
-                <i class="fab fa-facebook-f"></i> Facebook
+                    <i class="fab fa-facebook-f"></i> Facebook
                 </a>
+                @endif
+                @if($googleEnabled)
                 <a href="{{ route('user.social.google') }}" class="social-btn google-btn">
-                <i class="fab fa-google"></i> Google
+                    <i class="fab fa-google"></i> Google
                 </a>
-        </div>
+                @endif
+                @if($linkedinEnabled)
+                <a href="{{ route('user.social.linkedin') }}" class="social-btn linkedin-btn">
+                    <i class="fab fa-linkedin-in"></i> LinkedIn
+                </a>
+                @endif
+            </div>
+        @endif
 
         <div class="login-footer">
             Don’t have an account?

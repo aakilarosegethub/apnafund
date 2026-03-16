@@ -84,6 +84,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Site Currency Override (TCUR)
+    |--------------------------------------------------------------------------
+    | Set TCUR in .env to override DB currency. e.g. TCUR=USD or TCUR=PKR
+    | Used by Setting model for site_cur and cur_sym. Run config:clear after change.
+    |
+    */
+    'currency' => env('TCUR'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Locale Configuration
     |--------------------------------------------------------------------------
     |

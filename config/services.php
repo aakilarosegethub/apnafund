@@ -57,4 +57,10 @@ return [
         'redirect' => env('FACEBOOK_REDIRECT_URI', env('APP_URL') . '/user/auth/facebook/callback'),
     ],
 
+    'linkedin' => [
+        'client_id' => env('LINKEDIN_CLIENT_ID'),
+        'client_secret' => env('LINKEDIN_CLIENT_SECRET'),
+        'redirect' => env('LINKEDIN_REDIRECT_URI', env('APP_URL') . '/user/auth/linkedin/callback'),
+    ],
+
 ];

@@ -60,13 +60,14 @@ class FundController extends BaseApiController
             $charity_tinno = "";
             $charity_img = "";
             
-            // Use helper function to format campaign data (gallery handling is done in helper)
+            // Use helper function to format campaign data (exclude_story for list - detail in fundById)
             $pol = $this->formatCampaignData($row, [
                 'charity_name' => $charity_name,
                 'charity_tinno' => $charity_tinno,
                 'charity_img' => $charity_img,
-                'patient_photo' => [], // Not in campaigns table
-                'fund_for' => '' // Not in campaigns table
+                'patient_photo' => [],
+                'fund_for' => '',
+                'exclude_story' => true,
             ]);
             
             // Override specific fields for fundList
@@ -257,8 +258,29 @@ class FundController extends BaseApiController
         $short_description = strip_tags($this->h->real_string($request->input('short_description', '')));
         $location = strip_tags($this->h->real_string($request->input('location') ?: $request->input('full_address', '')));
         $goal_amount = strip_tags($this->h->real_string($goal_amount));
-        $start_date = $request->input('start_date') ?: date('Y-m-d');
-        $end_date = $request->input('end_date') ?: date('Y-m-d', strtotime('+30 days'));
+
+        // Parse dates: multipart form - try allInput, input, $_POST; strip quotes, validate Y-m-d
+        $allInput = $request->all();
+        $startDateRaw = $allInput['start_date'] ?? $request->input('start_date') ?? ($_POST['start_date'] ?? null);
+        $endDateRaw = $allInput['end_date'] ?? $request->input('end_date') ?? ($_POST['end_date'] ?? null);
+        $start_date = $this->parseDateInput($startDateRaw, date('Y-m-d'));
+        $end_date = $this->parseDateInput($endDateRaw, date('Y-m-d', strtotime('+30 days')));
+
+        // Campaign days limit (admin general settings)
+        $daysLimit = getCampaignDaysLimit();
+        $startDt = \DateTime::createFromFormat('Y-m-d', $start_date);
+        $endDt = \DateTime::createFromFormat('Y-m-d', $end_date);
+        if ($startDt && $endDt) {
+            $interval = $startDt->diff($endDt);
+            $daysDiff = (int) $interval->days;
+            if ($daysDiff > $daysLimit) {
+                return response()->json([
+                    "ResponseCode" => "401",
+                    "Result" => "false",
+                    "ResponseMsg" => "Campaign duration cannot exceed {$daysLimit} days. Please adjust start and end dates.",
+                ], 400);
+            }
+        }
         $lats = strip_tags($this->h->real_string($request->input('lats', '')));
         $longs = strip_tags($this->h->real_string($request->input('longs', '')));
         $status = $request->input('status', 'Pending');
@@ -278,11 +300,12 @@ class FundController extends BaseApiController
         }
 
         // Main image: web uses 'image', old API uses 'main_img'
+        // Must use getFilePath('campaign') so image shows in admin & frontend (assets/universal/images/campaign/)
         $mainImage = null;
         $gallery = [];
         $imageFile = $request->file('image') ?: $request->file('main_img');
         if ($imageFile) {
-            $mainImage = $this->uploadSingleImage($imageFile, '/images/fund_photo/');
+            $mainImage = fileUploader($imageFile, getFilePath('campaign'), getFileSize('campaign'), null, getThumbSize('campaign'));
             if ($mainImage) {
                 $gallery = [$mainImage];
             }
@@ -361,6 +384,35 @@ class FundController extends BaseApiController
     }
 
     /**
+     * Parse date input: strip quotes (e.g. from curl --form 'start_date="2026-03-01"'), trim, validate Y-m-d.
+     *
+     * @param mixed $value Raw input value
+     * @param string $default Default date in Y-m-d if invalid
+     * @return string Valid Y-m-d date string
+     */
+    private function parseDateInput($value, string $default): string
+    {
+        if (empty($value) && $value !== '0') {
+            return $default;
+        }
+        if (is_array($value)) {
+            $value = $value[0] ?? null;
+            if (empty($value)) return $default;
+        }
+        $cleaned = trim((string) $value, " \t\n\r\"'");
+        $parsed = \DateTime::createFromFormat('Y-m-d', $cleaned);
+        if ($parsed && $parsed->format('Y-m-d') === $cleaned) {
+            return $cleaned;
+        }
+        $ts = strtotime($cleaned);
+        if ($ts !== false) {
+            $d = date('Y-m-d', $ts);
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $d)) return $d;
+        }
+        return $default;
+    }
+
+    /**
      * Upload a single image (e.g. main_img) and return stored path relative to public.
      */
     private function uploadSingleImage($file, $url)
@@ -426,9 +478,9 @@ class FundController extends BaseApiController
 
         // Use campaigns table instead of tbl_fund
         // campaigns table: status = 1 (approved), status = 2 (pending), status = 0 (rejected)
-        // For public API, show only approved campaigns (status = 1)
+        // For public API discovery: show only approved, non-expired campaigns (Kickstarter style)
         if ($cat_id != 0) {
-            $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE category_id=" . $cat_id . " AND status = 1  ORDER BY id DESC");
+            $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE category_id=" . $cat_id . " AND status = 1 AND (end_date IS NULL OR end_date >= '" . $timestamp . "') ORDER BY id DESC");
         } else {
             $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE status = 1 AND (end_date IS NULL OR end_date >= '" . $timestamp . "') ORDER BY id DESC");
         }
@@ -447,10 +499,9 @@ class FundController extends BaseApiController
         while ($rows = $sel->fetch_assoc()) {
             if (!$rows) break;
             
-            // Use helper function to format campaign data
-            $fundData = $this->formatCampaignData($rows);
-            
-                $cp[] = $fundData;
+            // Use helper function to format campaign data (exclude_story for list - detail in fundById)
+            $fundData = $this->formatCampaignData($rows, ['exclude_story' => true]);
+            $cp[] = $fundData;
         }
 
         return response()->json([
@@ -507,11 +558,11 @@ class FundController extends BaseApiController
         while ($pop = $selpop->fetch_assoc()) {
             if (!$pop) break;
             
-            // Use helper function to format campaign data
+            // Use helper function to format campaign data (exclude_story for list - detail in fundById)
             $fundData = $this->formatCampaignData($pop, [
-                'patient_photo' => $pop['image'] ?? ''
+                'patient_photo' => $pop['image'] ?? '',
+                'exclude_story' => true,
             ]);
-            
             $listnearby[] = $fundData;
         }
 

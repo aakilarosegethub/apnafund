@@ -1,4 +1,5 @@
 @php
+    
     $activeTheme = activeTheme();
     $activeThemeTrue = activeTheme();
 @endphp
@@ -87,14 +88,15 @@
                                             <p class="text-muted small mb-3">{{ Str::limit(strip_tags($campaign->short_description ?? $campaign->description), 60) }}</p>
                                             <div class="progress mb-3" style="height: 6px;">
                                                 @php
-                                                    $raised = $campaign->raised ?? 0;
+                                                    $raised = $campaign->raised_amount ?? 0;
                                                     $goal = $campaign->goal_amount ?? 1;
                                                     $percentage = min(100, ($raised / $goal) * 100);
+                                                    $curSym = $setting->cur_sym ?? getDefaultCurrency();
                                                 @endphp
                                                 <div class="progress-bar bg-success" style="width:{{ $percentage }}%"></div>
                                             </div>
                                             <div class="d-flex justify-content-between small fw-semibold text-dark">
-                                                <span>${{ number_format($raised, 0) }} RAISED</span>
+                                                <span>{{ $curSym . showAmount($raised) }} RAISED</span>
                                                 <span>
                                                     @if($campaign->end_date)
                                                         @php

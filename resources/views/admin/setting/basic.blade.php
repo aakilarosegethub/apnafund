@@ -69,6 +69,17 @@
                         <small class="form-text text-muted">@lang('Amount in') {{ $setting->site_cur ?? 'USD' }} @lang('(platform currency)')</small>
                     </div>
                     @endif
+                    <!-- Campaign Days Limit -->
+                    <div class="col-12 mt-3">
+                        <hr>
+                        <h5 class="mb-3">@lang('Campaign Duration Limit')</h5>
+                        <p class="text-muted small">@lang('Maximum days between campaign start date and end date. Applies to both web and API (SPUI).')</p>
+                    </div>
+                    <div class="col-lg-4 col-sm-6">
+                        <label class="form--label">@lang('Campaign Days Limit')</label>
+                        <input type="number" class="form--control" name="campaign_days_limit" value="{{ $campaignDaysLimit ?? 30 }}" placeholder="30" min="1" max="365" required>
+                        <small class="form-text text-muted">@lang('E.g. 30 = start to end date max 30 days. Error shown if exceeded.')</small>
+                    </div>
                     <div class="col-lg-4 col-sm-6">
                         <label class="form--label required">@lang('Primary Color')</label>
                         <div class="input--group colorpicker">

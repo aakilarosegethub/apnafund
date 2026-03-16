@@ -223,6 +223,18 @@
         font-size: 18px;
         margin-right: 10px;
     }
+
+    /* Rate debug icon (shown when ?test=1) */
+    .rate-debug-icon {
+        cursor: pointer;
+        color: #198754;
+        font-size: 12px;
+        margin-left: 4px;
+        opacity: 0.8;
+    }
+    .rate-debug-icon:hover {
+        opacity: 1;
+    }
     
     @media (max-width: 768px) {
         .toast-notification {
@@ -249,6 +261,14 @@
     $percentage = donationPercentage($goalAmount, $raisedAmount);
     $activeTab = request()->get('tab', 'campaign');
     $setting = bs();
+    $showRateDebug = request()->has('test');
+    $siteCur = strtoupper($setting->site_cur ?? 'USD');
+    $campaignCur = strtoupper($campaignData->original_currency ?? $siteCur);
+    $exchangeRate = (float)($campaignData->exchange_rate_used ?? 1);
+    $donateUrl = route('campaign.donate', $campaignData->slug);
+    if ($showRateDebug) {
+        $donateUrl .= (strpos($donateUrl, '?') !== false ? '&' : '?') . 'test=1';
+    }
 @endphp
 
 <!-- ================= MAIN ================= -->
@@ -425,7 +445,7 @@
                                             <div class="card-body">
                                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                                     <h5 class="card-title mb-0">{{ $reward->title }}</h5>
-                                                    <span class="badge bg-success">{{ $setting->site_currency_sym }}{{ number_format($reward->minimum_amount, 0) }}</span>
+                                                    <span class="badge bg-success">{{ $setting->cur_sym ?? '$' }}{{ number_format($reward->minimum_amount, 0) }}</span>
                                                 </div>
                                                 <p class="card-text text-muted">{{ $reward->description }}</p>
                                                 
@@ -671,8 +691,26 @@
         <!-- RIGHT COLUMN -->
         <div class="col-lg-4">
             <div class="funding-box sticky-top">
-                <h2 class="amount">{{ $setting->site_currency_sym }}{{ number_format($raisedAmount, 0) }}</h2>
-                <p class="goal">pledged of {{ $setting->site_currency_sym }}{{ number_format($goalAmount, 0) }} goal</p>
+                <h2 class="amount d-inline-block">
+                    {{ $setting->cur_sym ?? '$' }}{{ number_format($raisedAmount, 0) }}
+                    @if($showRateDebug)
+                    <i class="fas fa-calculator rate-debug-icon ms-1" role="button" tabindex="0"
+                       data-bs-toggle="popover" data-bs-placement="bottom" data-bs-trigger="click"
+                       data-bs-html="true"
+                       data-bs-content="<div class='rate-debug-popover'><strong>Currency &amp; Rate</strong><br>Site: {{ $siteCur }}<br>Campaign: {{ $campaignCur }}<br>Rate: 1 {{ $siteCur }} = {{ number_format($exchangeRate, 4) }} {{ $campaignCur }}<br><small class='text-muted'>Amounts shown in {{ $siteCur }}</small></div>"
+                       title="Rate Info"></i>
+                    @endif
+                </h2>
+                <p class="goal">
+                    pledged of {{ $setting->cur_sym ?? '$' }}{{ number_format($goalAmount, 0) }} goal
+                    @if($showRateDebug)
+                    <i class="fas fa-calculator rate-debug-icon ms-1" role="button" tabindex="0"
+                       data-bs-toggle="popover" data-bs-placement="bottom" data-bs-trigger="click"
+                       data-bs-html="true"
+                       data-bs-content="<div class='rate-debug-popover'><strong>Currency &amp; Rate</strong><br>Site: {{ $siteCur }}<br>Campaign: {{ $campaignCur }}<br>Rate: 1 {{ $siteCur }} = {{ number_format($exchangeRate, 4) }} {{ $campaignCur }}</div>"
+                       title="Rate Info"></i>
+                    @endif
+                </p>
 
                 <div class="progress">
                     <div class="progress-bar" style="width: {{ $percentage }}%"></div>
@@ -712,7 +750,7 @@
                     </div>
                 </div>
 
-                <a href="{{ route('campaign.donate', $campaignData->slug) }}" class="btn btn-success w-100 mt-3">Back This Project</a>
+                <a href="{{ $donateUrl }}" class="btn btn-success w-100 mt-3">Back This Project</a>
 
                 <!-- Recent Donations/Backers List -->
                 @if(isset($donations) && $donations->count() > 0)
@@ -731,9 +769,9 @@
                                                 <div class="fw-semibold">{{ __($donation->donorName) }}</div>
                                                 <small class="text-muted">
                                                     @if($loop->first)
-                                                        Recent donation
+                                                        Recent contribution
                                                     @elseif($donation->amount == $donations->max('amount'))
-                                                        Top donation
+                                                        Top contribution
                                                     @else
                                                         {{ diffForHumans($donation->created_at) }}
                                                     @endif
@@ -741,7 +779,14 @@
                                             </div>
                                         </div>
                                         <div class="text-success fw-bold">
-                                            {{ $setting->site_currency_sym }}{{ number_format($donation->amount, 0) }}
+                                            {{ $setting->cur_sym ?? '$' }}{{ number_format($donation->amount, 0) }}
+                                            @if($showRateDebug)
+                                            <i class="fas fa-calculator rate-debug-icon ms-1" role="button" tabindex="0"
+                                               data-bs-toggle="popover" data-bs-placement="left" data-bs-trigger="click"
+                                               data-bs-html="true"
+                                               data-bs-content="<div class='rate-debug-popover'><strong>Donation</strong><br>{{ number_format($donation->amount, 2) }} {{ $siteCur }}<br>Rate: 1 {{ $siteCur }} = {{ number_format($exchangeRate, 4) }} {{ $campaignCur }}</div>"
+                                               title="Rate Info"></i>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -755,7 +800,7 @@
                             Recent Backers
                         </h6>
                         <div class="text-center py-3">
-                            <p class="text-muted mb-0 small">No donations yet. Be the first!</p>
+                            <p class="text-muted mb-0 small">No contributions yet. Be the first!</p>
                         </div>
                     </div>
                 @endif
@@ -772,7 +817,16 @@
                         <h5>Support Tiers</h5>
                         @foreach($campaignData->rewards as $reward)
                             <div class="tier-card">
-                                <strong>{{ $setting->site_currency_sym }}{{ number_format($reward->amount, 0) }}</strong>
+                                <strong>
+                                    {{ $setting->cur_sym ?? '$' }}{{ number_format($reward->amount, 0) }}
+                                    @if($showRateDebug)
+                                    <i class="fas fa-calculator rate-debug-icon ms-1" role="button" tabindex="0"
+                                       data-bs-toggle="popover" data-bs-placement="right" data-bs-trigger="click"
+                                       data-bs-html="true"
+                                       data-bs-content="<div class='rate-debug-popover'><strong>Reward</strong><br>{{ number_format($reward->amount, 2) }} {{ $siteCur }}<br>Rate: 1 {{ $siteCur }} = {{ number_format($exchangeRate, 4) }} {{ $campaignCur }}</div>"
+                                       title="Rate Info"></i>
+                                    @endif
+                                </strong>
                                 <span class="backers">{{ $reward->backers_count ?? 0 }} backers</span>
                                 <p>{{ $reward->name }}</p>
                                 <small>{{ Str::limit($reward->description, 60) }}</small>
@@ -835,6 +889,15 @@
             }, 300);
         }, 5000);
     }
+
+    // Initialize rate debug popovers (when ?test=1)
+    $(document).ready(function() {
+        if (typeof bootstrap !== 'undefined') {
+            document.querySelectorAll('.rate-debug-icon[data-bs-toggle="popover"]').forEach(function(el) {
+                new bootstrap.Popover(el, { sanitize: false });
+            });
+        }
+    });
 
     // Comment Form Submission with AJAX
     $(document).ready(function() {

@@ -5,7 +5,7 @@
     <div class="custom--card">
         <div class="card-header">
             <h3 class="title">@lang('Social Login Settings')</h3>
-            <p class="text-muted">@lang('Configure Facebook and Google social login for your users')</p>
+            <p class="text-muted">@lang('Configure Facebook, Google and LinkedIn social login for your users')</p>
         </div>
         <div class="card-body">
             <form action="{{ route('admin.social.login.update') }}" method="POST" id="socialLoginForm">
@@ -129,6 +129,65 @@
                     </div>
                 </div>
 
+                <!-- LinkedIn Settings -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="social-provider-card">
+                            <div class="provider-header">
+                                <div class="provider-icon">
+                                    <i class="fab fa-linkedin-in"></i>
+                                </div>
+                                <div class="provider-info">
+                                    <h4>LinkedIn Login</h4>
+                                    <p>Allow users to login with their LinkedIn account</p>
+                                </div>
+                                <div class="provider-toggle">
+                                    <div class="form-check form--switch">
+                                        <input class="form-check-input" type="checkbox" name="linkedin_status"
+                                               id="linkedin_status" value="1"
+                                               @if(@$socialLoginSettings->data_info['linkedin']['status'] ?? false) checked @endif>
+                                        <label class="form-check-label" for="linkedin_status">
+                                            @lang('Enable LinkedIn Login')
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="provider-settings" id="linkedin_settings"
+                                 style="display: {{ @$socialLoginSettings->data_info['linkedin']['status'] ? 'block' : 'none' }};">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form--label">@lang('LinkedIn Client ID')</label>
+                                        <input type="text" class="form--control" name="linkedin_client_id"
+                                               value="{{ @$socialLoginSettings->data_info['linkedin']['client_id'] }}"
+                                               placeholder="Enter LinkedIn Client ID">
+                                        <small class="text-muted">Get this from LinkedIn Developer Console</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form--label">@lang('LinkedIn Client Secret')</label>
+                                        <input type="password" class="form--control" name="linkedin_client_secret"
+                                               value="{{ @$socialLoginSettings->data_info['linkedin']['client_secret'] }}"
+                                               placeholder="Enter LinkedIn Client Secret">
+                                        <small class="text-muted">Get this from LinkedIn Developer Console</small>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form--label">@lang('Redirect URI')</label>
+                                        <input type="text" class="form--control" readonly
+                                               value="{{ @$socialLoginSettings->data_info['linkedin']['redirect_uri'] ?? env('APP_URL') . '/user/auth/linkedin/callback' }}">
+                                        <small class="text-muted">Add this URL to your LinkedIn App settings</small>
+                                    </div>
+                                    <div class="col-12">
+                                        <button type="button" class="btn btn--sm btn--info test-config-btn"
+                                                data-provider="linkedin">
+                                            <i class="fas fa-check"></i> @lang('Test Configuration')
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Setup Instructions -->
                 <div class="row mb-4">
                     <div class="col-12">
@@ -141,7 +200,7 @@
                                         <li>@lang('Go to') <a href="https://developers.facebook.com/" target="_blank">Facebook Developers</a></li>
                                         <li>@lang('Create a new app or select existing one')</li>
                                         <li>@lang('Add "Facebook Login" product to your app')</li>
-                                        <li>@lang('Set Valid OAuth Redirect URIs to:') <code>{{ env('APP_URL') }}/auth/facebook/callback</code></li>
+                                        <li>@lang('Set Valid OAuth Redirect URIs to:') <code>{{ env('APP_URL') }}/user/auth/facebook/callback</code></li>
                                         <li>@lang('Copy App ID and App Secret to the fields above')</li>
                                     </ol>
                                 </div>
@@ -153,7 +212,18 @@
                                         <li>@lang('Create a new project or select existing one')</li>
                                         <li>@lang('Enable Google+ API')</li>
                                         <li>@lang('Create OAuth 2.0 credentials')</li>
-                                        <li>@lang('Add authorized redirect URI:') <code>{{ env('APP_URL') }}/auth/google/callback</code></li>
+                                        <li>@lang('Add authorized redirect URI:') <code>{{ env('APP_URL') }}/user/auth/google/callback</code></li>
+                                        <li>@lang('Copy Client ID and Client Secret to the fields above')</li>
+                                    </ol>
+                                </div>
+
+                                <div class="instruction-section">
+                                    <h6>@lang('LinkedIn Setup:')</h6>
+                                    <ol>
+                                        <li>@lang('Go to') <a href="https://www.linkedin.com/developers/apps" target="_blank">LinkedIn Developer Portal</a></li>
+                                        <li>@lang('Create a new app or select existing one')</li>
+                                        <li>@lang('Add "Sign In with LinkedIn using OpenID Connect" product')</li>
+                                        <li>@lang('Add authorized redirect URI:') <code>{{ env('APP_URL') }}/user/auth/linkedin/callback</code></li>
                                         <li>@lang('Copy Client ID and Client Secret to the fields above')</li>
                                     </ol>
                                 </div>
@@ -213,6 +283,12 @@
 
 .provider-icon .fa-google {
     background: #db4437;
+    padding: 12px;
+    border-radius: 50%;
+}
+
+.provider-icon .fa-linkedin-in {
+    background: #0a66c2;
     padding: 12px;
     border-radius: 50%;
 }
@@ -296,6 +372,14 @@ $(document).ready(function() {
             $('#google_settings').slideDown();
         } else {
             $('#google_settings').slideUp();
+        }
+    });
+
+    $('#linkedin_status').change(function() {
+        if ($(this).is(':checked')) {
+            $('#linkedin_settings').slideDown();
+        } else {
+            $('#linkedin_settings').slideUp();
         }
     });
 

@@ -92,7 +92,7 @@ class CampaignController extends Controller
      */
     function galleryUpload() {
         $validator = Validator::make(request()->all(), [
-            'file' => ['required', File::types(['png', 'jpg', 'jpeg', 'webp'])],
+            'file' => ['required', File::types(['png', 'jpg', 'jpeg', 'webp'])->max(5120)],
         ]);
 
         if ($validator->fails()) {
@@ -118,9 +118,9 @@ class CampaignController extends Controller
     function uploadCampaignImage() {
         try {
             $validator = Validator::make(request()->all(), [
-                'image' => 'required|image|mimes:jpeg,jpg,png,gif,webp|max:51200', // 50MB max
+                'image' => 'required|image|mimes:jpeg,jpg,png,gif,webp|max:5120', // 5MB max
             ], [
-                'image.max' => 'Campaign image must be under 50 MB.',
+                'image.max' => 'Campaign image must be under 5 MB.',
             ]);
 
             if ($validator->fails()) {
@@ -134,7 +134,7 @@ class CampaignController extends Controller
                     'success' => false,
                     'message' => 'Validation failed',
                     'errors' => $validator->errors(),
-                    'max_size_mb' => 50,
+                    'max_size_mb' => 5,
                     'actual_size_kb' => $actualFileSizeKb
                 ], 400);
             }
@@ -308,6 +308,7 @@ class CampaignController extends Controller
             $startDate = request('start_date', date('Y-m-d'));
             $endDate = request('end_date', date('Y-m-d', strtotime('+30 days')));
             
+            $daysLimit = getCampaignDaysLimit();
             $this->validate(request(), [
                 'category_id'         => 'required|integer|gt:0',
                 'image'               => ['nullable', File::types(['png', 'jpg', 'jpeg', 'webp'])], // Made optional for draft creation
@@ -319,7 +320,7 @@ class CampaignController extends Controller
                 'description'         => 'required|min:30',
                 'goal_amount'         => 'nullable|numeric|gt:0',
                 'start_date'          => 'nullable|date_format:Y-m-d|after_or_equal:today',
-                'end_date'            => 'nullable|date_format:Y-m-d|after:start_date',
+                'end_date'            => 'nullable|date_format:Y-m-d|after:start_date|before_or_equal:' . Carbon::parse($startDate)->addDays($daysLimit)->format('Y-m-d'),
             ], [
                 'category_id.required' => 'The category field is required.',
                 'category_id.integer'  => 'The category must be an integer.',
@@ -329,6 +330,7 @@ class CampaignController extends Controller
                 'video.max'           => 'Video file size must be less than 500MB.',
                 'youtube_url.url'     => 'YouTube URL must be a valid URL.',
                 'youtube_url.regex'   => 'Please enter a valid YouTube URL.',
+                'end_date.before_or_equal' => 'Campaign duration cannot exceed ' . $daysLimit . ' days. Please adjust start and end dates.',
             ]);
             
             // Custom YouTube URL validation
@@ -894,6 +896,7 @@ class CampaignController extends Controller
                 ]);
             } else {
                 // Basics section - all fields required
+                $daysLimit = getCampaignDaysLimit();
                 $this->validate(request(), [
                     'category_id'         => 'required|integer|gt:0',
                     'image'               => ['nullable', File::types(['png', 'jpg', 'jpeg', 'webp'])],
@@ -904,7 +907,7 @@ class CampaignController extends Controller
                     'short_description'   => 'required|string|max:255',
                     'goal_amount'         => 'required|numeric|gt:0',
                     'start_date'          => 'required|date_format:Y-m-d',
-                    'end_date'            => 'required|date_format:Y-m-d|after:start_date|before_or_equal:' . Carbon::parse(request('start_date'))->addDays(30)->format('Y-m-d'),
+                    'end_date'            => 'required|date_format:Y-m-d|after:start_date|before_or_equal:' . Carbon::parse(request('start_date'))->addDays($daysLimit)->format('Y-m-d'),
                     'document'            => ['nullable', File::types('pdf')],
                 ], [
                     'category_id.required' => 'The category field is required.',
@@ -915,7 +918,7 @@ class CampaignController extends Controller
                     'goal_amount.required' => 'The goal amount field is required.',
                     'start_date.required' => 'The start date field is required.',
                     'end_date.required' => 'The end date field is required.',
-                    'end_date.before_or_equal' => 'The campaign can last maximum 30 days from start date.',
+                    'end_date.before_or_equal' => 'Campaign duration cannot exceed ' . $daysLimit . ' days from start date.',
                     'image.max'            => 'Campaign image must be under 50 MB.',
                     'video.max'           => 'Video file size must be less than 500MB.',
                     'youtube_url.url'     => 'YouTube URL must be a valid URL.',
@@ -1010,10 +1013,10 @@ class CampaignController extends Controller
                 try {
                     // Validate image file
                     $imageFile = request('image');
-                    $maxSize = 51200; // 50MB in KB
+                    $maxSize = 5120; // 5MB in KB
                     
                     if ($imageFile->getSize() > $maxSize * 1024) {
-                        throw new Exception('Image size must be less than 50MB');
+                        throw new Exception('Image size must be less than 5MB');
                     }
                     
                     $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
@@ -1458,7 +1461,7 @@ class CampaignController extends Controller
             
             // Validate file
             $validator = Validator::make(['file' => $file], [
-                'file' => ['required', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:51200'] // 50MB max
+                'file' => ['required', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:5120'] // 5MB max
             ]);
 
             if ($validator->fails()) {
@@ -1524,8 +1527,8 @@ class CampaignController extends Controller
             $isVideo = Str::startsWith($mimeType, 'video/');
 
             $rules = $isVideo
-                ? ['file' => ['required', 'mimes:mp4,webm,ogg,mov', 'max:51200']]
-                : ['file' => ['required', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:51200']];
+                ? ['file' => ['required', 'mimes:mp4,webm,ogg,mov', 'max:512000']] // 500MB for video
+                : ['file' => ['required', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:5120']]; // 5MB for image
 
             $validator = Validator::make(['file' => $file], $rules);
             if ($validator->fails()) {

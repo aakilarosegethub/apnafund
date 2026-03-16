@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\User;
+use App\Services\ActivityLogger;
 
 class UserObserver extends AdminActivityObserver
 {

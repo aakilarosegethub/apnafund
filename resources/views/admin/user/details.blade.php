@@ -116,7 +116,7 @@
             <div class="card-header">
                 <h3 class="title">@lang('Information About') {{ $user->fullname }}</h3>
             </div>
-            <form action="{{ route('admin.user.update', $user->id) }}" method="POST">
+            <form action="{{ route('admin.user.update', $user->id) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="card-body">
                     <div class="row gy-3">
@@ -204,6 +204,48 @@
                                 </div>
                                 <div class="col-lg-8">
                                     <input type="text" class="form--control" name="zip" value="{{ @$user->address->zip }}">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <hr class="my-3">
+                            <h5 class="mb-3">@lang('CNIC Images')</h5>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="row g-2 align-items-center">
+                                <div class="col-lg-4">
+                                    <label class="col-form--label">@lang('CNIC Front')</label>
+                                </div>
+                                <div class="col-lg-8">
+                                    @if($user->cnic_front_image)
+                                        <div class="mb-2">
+                                            <img src="{{ asset(getFilePath('cnic') . '/' . $user->cnic_front_image) }}" alt="CNIC Front" class="img-thumbnail" style="max-width: 200px; max-height: 140px; object-fit: contain;">
+                                            <br><a href="{{ asset(getFilePath('cnic') . '/' . $user->cnic_front_image) }}" target="_blank" class="small">@lang('View')</a>
+                                        </div>
+                                    @else
+                                        <span class="text-muted">@lang('Not uploaded')</span>
+                                    @endif
+                                    <input type="file" class="form--control mt-2" name="cnic_front_image" accept="image/*">
+                                    <small class="text-muted">@lang('Upload new to replace')</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="row g-2 align-items-center">
+                                <div class="col-lg-4">
+                                    <label class="col-form--label">@lang('CNIC Back')</label>
+                                </div>
+                                <div class="col-lg-8">
+                                    @if($user->cnic_back_image)
+                                        <div class="mb-2">
+                                            <img src="{{ asset(getFilePath('cnic') . '/' . $user->cnic_back_image) }}" alt="CNIC Back" class="img-thumbnail" style="max-width: 200px; max-height: 140px; object-fit: contain;">
+                                            <br><a href="{{ asset(getFilePath('cnic') . '/' . $user->cnic_back_image) }}" target="_blank" class="small">@lang('View')</a>
+                                        </div>
+                                    @else
+                                        <span class="text-muted">@lang('Not uploaded')</span>
+                                    @endif
+                                    <input type="file" class="form--control mt-2" name="cnic_back_image" accept="image/*">
+                                    <small class="text-muted">@lang('Upload new to replace')</small>
                                 </div>
                             </div>
                         </div>
@@ -558,18 +600,7 @@
                             </ul>
                             <p class="mt-2 mb-0"><strong>This action cannot be undone!</strong></p>
                         </div>
-                        
-                        <div class="mb-3">
-                            <label class="form--label required">Type "DELETE USER" to confirm</label>
-                            <input type="text" class="form--control" name="confirmation_text" 
-                                   placeholder="Type: DELETE USER" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form--label required">Admin Password</label>
-                            <input type="password" class="form--control" name="admin_password" 
-                                   placeholder="Enter your admin password" required>
-                        </div>
+                        <p class="mb-0">@lang('Are you sure you want to delete this user?')</p>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn--sm btn--secondary" data-bs-dismiss="modal">Cancel</button>

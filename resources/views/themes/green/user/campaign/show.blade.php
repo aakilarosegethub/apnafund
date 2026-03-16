@@ -1293,7 +1293,7 @@
 
                 <div class="donation-stats">
                     <i class="fas fa-chart-line"></i>
-                    <span>{{ $donations->count() }} people just donated</span>
+                    <span>{{ $donations->count() }} people just contributed</span>
                 </div>
 
                 <div class="recent-donations">
@@ -1308,9 +1308,9 @@
                             </div>
                             <span class="donation-type">
                                 @if($loop->first)
-                                    Recent donation
+                                    Recent contribution
                                 @elseif($donation->amount == $donations->max('amount'))
-                                    Top donation
+                                    Top contribution
                                 @else
                                     {{ diffForHumans($donation->created_at) }}
                                 @endif
@@ -1321,11 +1321,11 @@
                             <div class="donation-info">
                                 <i class="fas fa-heart" style="color: #666; font-size: 0.9rem;"></i>
                                 <div class="donation-details">
-                                    <span class="donation-name">No donations yet</span>
+                                    <span class="donation-name">No contributions yet</span>
                                     <span class="donation-amount">Be the first!</span>
                                 </div>
                             </div>
-                            <span class="donation-type">Start donating</span>
+                            <span class="donation-type">Start contributing</span>
                         </div>
                     @endforelse
                     

@@ -229,7 +229,11 @@
         color: #6c757d;
         font-size: 14px;
         line-height: 1.5;
-        margin: 0;
+        margin: 0 0 8px 0;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
 
     /* Campaign Creator */

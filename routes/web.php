@@ -411,8 +411,7 @@ Route::prefix('api')->group(function () {
                 return [
                     'id' => $campaign->id,
                     'title' => $campaign->name,
-                    'description' => $campaign->description,
-                    'short_description' => $campaign->short_description ?? strLimit($campaign->description, 150),
+                    'short_description' => $campaign->short_description ?? strLimit($campaign->description ?? '', 150),
                     'image_url' => getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')),
                     'url' => route('campaign.show', $campaign->slug),
                     'product_url' => route('campaign.show', $campaign->slug),
@@ -530,7 +529,6 @@ Route::prefix('api')->group(function () {
                 return [
                     'id' => $campaign->id,
                     'title' => $campaign->name,
-                    'description' => $campaign->description,
                     'short_description' => $campaign->short_description ?? strLimit($campaign->description, 150),
                     'image_url' => getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')),
                     'url' => route('campaign.show', $campaign->slug),

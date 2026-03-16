@@ -1,0 +1,215 @@
+{
+	"info": {
+		"_postman_id": "apnafund-api-collection-2026",
+		"name": "ApnaFund API Collection",
+		"description": "Complete API collection for ApnaFund - Protected & Non-Protected endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost/apnafund"
+		},
+		{
+			"key": "bearer_token",
+			"value": ""
+		},
+		{
+			"key": "admin_token",
+			"value": ""
+		}
+	],
+	"item": [
+		{
+			"name": "Non-Protected (Public) APIs",
+			"item": [
+				{
+					"name": "1. Utility",
+					"item": [
+						{
+							"name": "CSRF Token",
+							"request": {
+								"method": "GET",
+								"url": "{{base_url}}/csrf-token"
+							}
+						},
+						{
+							"name": "Verify Email",
+							"request": {
+								"method": "POST",
+								"url": "{{base_url}}/api/verify-email"
+							}
+						}
+					]
+				},
+				{
+					"name": "2. Home & Fund (Public)",
+					"item": [
+						{"name": "Home API", "request": {"method": "POST", "url": "{{base_url}}/api/home_api.php"}},
+						{"name": "Home", "request": {"method": "POST", "url": "{{base_url}}/api/home.php"}},
+						{"name": "Category Wise Fund", "request": {"method": "POST", "url": "{{base_url}}/api/catwisefund.php"}},
+						{"name": "Search Fund", "request": {"method": "POST", "url": "{{base_url}}/api/search_fund.php"}},
+						{"name": "Fund By ID", "request": {"method": "POST", "url": "{{base_url}}/api/fundidwise.php"}}
+					]
+				},
+				{
+					"name": "3. Categories & Pages",
+					"item": [
+						{"name": "Category List", "request": {"method": "POST", "url": "{{base_url}}/api/catlist.php"}},
+						{"name": "Charity List", "request": {"method": "POST", "url": "{{base_url}}/api/charitylist.php"}},
+						{"name": "FAQ List", "request": {"method": "POST", "url": "{{base_url}}/api/faq.php"}},
+						{"name": "Page List", "request": {"method": "POST", "url": "{{base_url}}/api/pagelist.php"}}
+					]
+				},
+				{
+					"name": "4. Payment Gateways",
+					"item": [
+						{"name": "Payment Gateway List", "request": {"method": "POST", "url": "{{base_url}}/api/paymentgateway.php"}},
+						{"name": "Gateways", "request": {"method": "GET", "url": "{{base_url}}/api/gateways"}},
+						{"name": "Payment Webview URL", "request": {"method": "POST", "url": "{{base_url}}/api/payment/webview-url"}}
+					]
+				},
+				{
+					"name": "5. Auth (Register/Login)",
+					"item": [
+						{"name": "Register User", "request": {"method": "POST", "url": "{{base_url}}/api/reg_user.php"}},
+						{"name": "User Login", "request": {"method": "POST", "url": "{{base_url}}/api/user_login.php"}},
+						{"name": "Forget Password", "request": {"method": "POST", "url": "{{base_url}}/api/forget_password.php"}},
+						{"name": "Social Login", "request": {"method": "POST", "url": "{{base_url}}/api/social_login.php"}}
+					]
+				},
+				{
+					"name": "6. Auth (OTP & Verification)",
+					"item": [
+						{"name": "Mobile Check", "request": {"method": "POST", "url": "{{base_url}}/api/mobile_check.php"}},
+						{"name": "Verify Email OTP", "request": {"method": "POST", "url": "{{base_url}}/api/verify_email_otp.php"}},
+						{"name": "Resend Mobile OTP", "request": {"method": "POST", "url": "{{base_url}}/api/resend_mobile_otp.php"}},
+						{"name": "Verify Mobile OTP", "request": {"method": "POST", "url": "{{base_url}}/api/verify_mobile_otp.php"}},
+						{"name": "Send Password Reset OTP", "request": {"method": "POST", "url": "{{base_url}}/api/send_password_reset_otp.php"}},
+						{"name": "Verify Password Reset OTP", "request": {"method": "POST", "url": "{{base_url}}/api/verify_password_reset_otp.php"}},
+						{"name": "Reset Password", "request": {"method": "POST", "url": "{{base_url}}/api/reset_password.php"}}
+					]
+				},
+				{
+					"name": "7. OTP APIs",
+					"item": [
+						{"name": "MSG OTP", "request": {"method": "POST", "url": "{{base_url}}/api/msg_otp.php"}},
+						{"name": "Twilio OTP", "request": {"method": "POST", "url": "{{base_url}}/api/twilio_otp.php"}},
+						{"name": "SMS Type", "request": {"method": "POST", "url": "{{base_url}}/api/sms_type.php"}}
+					]
+				},
+				{
+					"name": "8. Campaigns API (REST)",
+					"item": [
+						{"name": "Get All Campaigns", "request": {"method": "GET", "url": "{{base_url}}/api/campaigns?limit=10&offset=0"}},
+						{"name": "Get Featured Campaigns", "request": {"method": "GET", "url": "{{base_url}}/api/campaigns/featured"}},
+						{"name": "Get Campaign by Slug", "request": {"method": "GET", "url": "{{base_url}}/api/campaigns/:slug"}},
+						{"name": "Get Categories", "request": {"method": "GET", "url": "{{base_url}}/api/categories"}},
+						{"name": "Get Subcategories", "request": {"method": "GET", "url": "{{base_url}}/api/subcategories/:categoryId"}}
+					]
+				}
+			]
+		},
+		{
+			"name": "Protected APIs (Bearer Token Required)",
+			"item": [
+				{
+					"name": "1. Fund Management",
+					"item": [
+						{"name": "Fund List", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{bearer_token}}"}], "url": "{{base_url}}/api/fundlist.php"}},
+						{"name": "Fund Raise", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{bearer_token}}"}], "url": "{{base_url}}/api/fundraise.php"}},
+						{"name": "Fund Update", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{bearer_token}}"}], "url": "{{base_url}}/api/fund_update.php"}},
+						{"name": "Cancel Fund", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{bearer_token}}"}], "url": "{{base_url}}/api/fund_cancle.php"}},
+						{"name": "Complete Fund", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{bearer_token}}"}], "url": "{{base_url}}/api/fund_complete.php"}},
+						{"name": "Delete Fund", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{bearer_token}}"}], "url": "{{base_url}}/api/fund_delete.php"}},
+						{"name": "Edit Fund", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{bearer_token}}"}], "url": "{{base_url}}/api/edit_fund.php"}}
+					]
+				},
+				{
+					"name": "2. User Profile",
+					"item": [
+						{"name": "Edit Profile", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{bearer_token}}"}], "url": "{{base_url}}/api/edit_profile.php"}},
+						{"name": "Upload Profile Image", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{bearer_token}}"}], "url": "{{base_url}}/api/pro_image.php"}},
+						{"name": "Update Wallet", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{bearer_token}}"}], "url": "{{base_url}}/api/wallet_up.php"}},
+						{"name": "Get Balance", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{bearer_token}}"}], "url": "{{base_url}}/api/getbalance.php"}}
+					]
+				},
+				{
+					"name": "3. Donate",
+					"item": [
+						{"name": "Donate Now", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{bearer_token}}"}], "url": "{{base_url}}/api/donate_now.php"}},
+						{"name": "My Donate Fund List", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{bearer_token}}"}], "url": "{{base_url}}/api/my_donate_fundlist.php"}}
+					]
+				},
+				{
+					"name": "4. Withdraw",
+					"item": [
+						{"name": "Request Withdraw", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{bearer_token}}"}], "url": "{{base_url}}/api/request_withdraw.php"}},
+						{"name": "Payout List", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{bearer_token}}"}], "url": "{{base_url}}/api/payout_list.php"}}
+					]
+				},
+				{
+					"name": "5. Wallet & Activity",
+					"item": [
+						{"name": "Wallet Report", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{bearer_token}}"}], "url": "{{base_url}}/api/wallet_report.php"}},
+						{"name": "Activity List", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{bearer_token}}"}], "url": "{{base_url}}/api/activity.php"}},
+						{"name": "Notification", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{bearer_token}}"}], "url": "{{base_url}}/api/notification.php"}}
+					]
+				},
+				{
+					"name": "6. Account",
+					"item": [
+						{"name": "Delete Account", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{bearer_token}}"}], "url": "{{base_url}}/api/acc_delete.php"}}
+					]
+				}
+			]
+		},
+		{
+			"name": "Admin APIs",
+			"item": [
+				{
+					"name": "Admin Login",
+					"request": {
+						"method": "POST",
+						"url": "{{base_url}}/api/admin/login"
+					}
+				},
+				{
+					"name": "Admin Settings (Protected)",
+					"item": [
+						{"name": "Get Gemini Settings", "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}], "url": "{{base_url}}/api/admin/settings/gemini"}},
+						{"name": "Update Gemini Settings", "request": {"method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}], "url": "{{base_url}}/api/admin/settings/gemini"}},
+						{"name": "Test Gemini", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}], "url": "{{base_url}}/api/admin/settings/gemini/test"}},
+						{"name": "Reset Gemini", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}], "url": "{{base_url}}/api/admin/settings/gemini/reset"}}
+					]
+				}
+			]
+		},
+		{
+			"name": "IPN Webhooks (Payment Callbacks)",
+			"description": "Payment gateway IPN callbacks - called by external payment providers",
+			"item": [
+				{"name": "Authorize IPN", "request": {"method": "POST", "url": "{{base_url}}/ipn/authorize"}},
+				{"name": "BTCPay IPN", "request": {"method": "POST", "url": "{{base_url}}/ipn/btc-pay"}},
+				{"name": "Checkout IPN", "request": {"method": "POST", "url": "{{base_url}}/ipn/checkout"}},
+				{"name": "Coinbase Commerce IPN", "request": {"method": "POST", "url": "{{base_url}}/ipn/coinbase-commerce"}},
+				{"name": "Coinpayments IPN", "request": {"method": "POST", "url": "{{base_url}}/ipn/coinpayments"}},
+				{"name": "Flutterwave IPN", "request": {"method": "GET", "url": "{{base_url}}/ipn/flutterwave/:trx/:type"}},
+				{"name": "Mercado Pago IPN", "request": {"method": "POST", "url": "{{base_url}}/ipn/mercado-pago"}},
+				{"name": "Now Payments IPN", "request": {"method": "POST", "url": "{{base_url}}/ipn/now-payments-checkout"}},
+				{"name": "Payeer IPN", "request": {"method": "POST", "url": "{{base_url}}/ipn/payeer"}},
+				{"name": "PayPal SDK IPN", "request": {"method": "GET", "url": "{{base_url}}/ipn/paypal-sdk"}},
+				{"name": "Paystack IPN", "request": {"method": "POST", "url": "{{base_url}}/ipn/paystack"}},
+				{"name": "Perfect Money IPN", "request": {"method": "POST", "url": "{{base_url}}/ipn/perfect-money"}},
+				{"name": "Razorpay IPN", "request": {"method": "POST", "url": "{{base_url}}/ipn/razorpay"}},
+				{"name": "Stripe V3 IPN", "request": {"method": "POST", "url": "{{base_url}}/ipn/stripe-v3"}},
+				{"name": "2Checkout IPN", "request": {"method": "POST", "url": "{{base_url}}/ipn/2checkout"}},
+				{"name": "Stripe JS IPN", "request": {"method": "POST", "url": "{{base_url}}/ipn/stripe-js"}},
+				{"name": "Card Payment IPN", "request": {"method": "POST", "url": "{{base_url}}/ipn/card-payment"}},
+				{"name": "MWallet IPN", "request": {"method": "POST", "url": "{{base_url}}/ipn/mwallet"}},
+				{"name": "JazzCash Wallet IPN", "request": {"method": "POST", "url": "{{base_url}}/ipn/jazzcash-wallet"}},
+				{"name": "JazzCash Wallet Process", "request": {"method": "POST", "url": "{{base_url}}/ipn/jazzcash-wallet/process"}}
+			]
+		}
+	]
+}

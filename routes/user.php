@@ -36,6 +36,8 @@ Route::namespace('User\Auth')->name('user.')->group(function () {
         Route::get('facebook/callback', 'handleFacebookCallback')->name('facebook.callback');
         Route::get('google', 'redirectToGoogle')->name('google');
         Route::get('google/callback', 'handleGoogleCallback')->name('google.callback');
+        Route::get('linkedin', 'redirectToLinkedIn')->name('linkedin');
+        Route::get('linkedin/callback', 'handleLinkedInCallback')->name('linkedin.callback');
     });
 
     // Forgot Password

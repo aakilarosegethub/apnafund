@@ -9,10 +9,11 @@ class TrustProxies extends Middleware
 {
     /**
      * The trusted proxies for this application.
+     * Use '*' to trust all proxies (Cloudflare, load balancer) so request()->ip() returns real visitor IP.
      *
      * @var array<int, string>|string|null
      */
-    protected $proxies;
+    protected $proxies = '*';
 
     /**
      * The headers that should be used to detect proxies.

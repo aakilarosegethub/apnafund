@@ -32,6 +32,12 @@ class SocialLoginSettingController extends Controller
                     'client_id' => '',
                     'client_secret' => '',
                     'redirect_uri' => env('APP_URL') . '/user/auth/google/callback'
+                ],
+                'linkedin' => [
+                    'status' => false,
+                    'client_id' => '',
+                    'client_secret' => '',
+                    'redirect_uri' => env('APP_URL') . '/user/auth/linkedin/callback'
                 ]
             ];
             
@@ -39,6 +45,18 @@ class SocialLoginSettingController extends Controller
             $socialLoginSettings->data_key = 'social_login.data';
             $socialLoginSettings->data_info = $defaultSettings;
             $socialLoginSettings->save();
+        } else {
+            $dataInfo = $socialLoginSettings->data_info ?? [];
+            if (!isset($dataInfo['linkedin'])) {
+                $dataInfo['linkedin'] = [
+                    'status' => false,
+                    'client_id' => '',
+                    'client_secret' => '',
+                    'redirect_uri' => env('APP_URL') . '/user/auth/linkedin/callback'
+                ];
+                $socialLoginSettings->data_info = $dataInfo;
+                $socialLoginSettings->save();
+            }
         }
 
         return view('admin.setting.social_login', compact('pageTitle', 'socialLoginSettings'));
@@ -56,6 +74,9 @@ class SocialLoginSettingController extends Controller
             'google_status' => 'boolean',
             'google_client_id' => 'nullable|string|max:255',
             'google_client_secret' => 'nullable|string|max:255',
+            'linkedin_status' => 'boolean',
+            'linkedin_client_id' => 'nullable|string|max:255',
+            'linkedin_client_secret' => 'nullable|string|max:255',
         ]);
 
         $socialLoginSettings = SiteData::where('data_key', 'social_login.data')->first();
@@ -81,6 +102,14 @@ class SocialLoginSettingController extends Controller
             'client_id' => $request->google_client_id ?? '',
             'client_secret' => $request->google_client_secret ?? '',
             'redirect_uri' => env('APP_URL') . '/user/auth/google/callback'
+        ];
+
+        // Update LinkedIn settings
+        $settings['linkedin'] = [
+            'status' => $request->boolean('linkedin_status'),
+            'client_id' => $request->linkedin_client_id ?? '',
+            'client_secret' => $request->linkedin_client_secret ?? '',
+            'redirect_uri' => env('APP_URL') . '/user/auth/linkedin/callback'
         ];
 
         $socialLoginSettings->data_info = $settings;
@@ -115,6 +144,11 @@ class SocialLoginSettingController extends Controller
         $envContent = $this->updateEnvVariable($envContent, 'GOOGLE_CLIENT_ID', $settings['google']['client_id']);
         $envContent = $this->updateEnvVariable($envContent, 'GOOGLE_CLIENT_SECRET', $settings['google']['client_secret']);
         $envContent = $this->updateEnvVariable($envContent, 'GOOGLE_REDIRECT_URI', $settings['google']['redirect_uri']);
+
+        // LinkedIn settings
+        $envContent = $this->updateEnvVariable($envContent, 'LINKEDIN_CLIENT_ID', $settings['linkedin']['client_id']);
+        $envContent = $this->updateEnvVariable($envContent, 'LINKEDIN_CLIENT_SECRET', $settings['linkedin']['client_secret']);
+        $envContent = $this->updateEnvVariable($envContent, 'LINKEDIN_REDIRECT_URI', $settings['linkedin']['redirect_uri']);
 
         file_put_contents($envFile, $envContent);
     }
@@ -172,6 +206,21 @@ class SocialLoginSettingController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Google configuration is valid'
+                ]);
+            } elseif ($provider === 'linkedin') {
+                $clientId = config('services.linkedin.client_id');
+                $clientSecret = config('services.linkedin.client_secret');
+                
+                if (empty($clientId) || empty($clientSecret)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'LinkedIn credentials not configured'
+                    ]);
+                }
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => 'LinkedIn configuration is valid'
                 ]);
             }
             

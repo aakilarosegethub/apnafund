@@ -84,7 +84,7 @@
                             <div class="form-check mb-3">
                                 <input class="form-check-input" type="checkbox" id="emailNotifications" checked>
                                 <label class="form-check-label" for="emailNotifications">
-                                    Email notifications for new donations
+                                    Email notifications for new contributions
                                 </label>
                             </div>
                             <div class="form-check mb-3">

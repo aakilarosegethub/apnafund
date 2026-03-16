@@ -1,6 +1,21 @@
 @extends('admin.layouts.master')
 
 @section('master')
+    @if(isset($expiredTrendingCampaign) && $expiredTrendingCampaign)
+    <div class="col-12">
+        <div class="alert alert-warning d-flex align-items-center justify-content-between flex-wrap gap-2" role="alert">
+            <div>
+                <i class="ti ti-alert-triangle me-2"></i>
+                <strong>@lang('Trending campaign has expired'):</strong> "{{ $expiredTrendingCampaign->name }}"
+                @lang('Change the campaign to keep the home page updated.').
+            </div>
+            <a href="{{ route('admin.homepage.index') }}#trending" class="btn btn-sm btn-warning">
+                @lang('Click here') @lang('to change campaign')
+            </a>
+        </div>
+    </div>
+    @endif
+
     @if(admin_has_widget('users'))
     <div class="col-12">
         <div class="row g-lg-4 g-3">

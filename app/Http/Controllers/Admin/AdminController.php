@@ -102,7 +102,20 @@ class AdminController extends Controller
             }
         }
 
-        return view('admin.page.dashboard', compact('pageTitle', 'widget', 'latestUsers', 'depositsMonth', 'withdrawalMonth', 'months', 'passwordAlert'));
+        // Check if trending campaign has expired (admin notice)
+        $expiredTrendingCampaign = null;
+        $trendingCampaignContent = \App\Models\SiteData::where('data_key', 'home.trending_campaign')->first();
+        if ($trendingCampaignContent?->data_info) {
+            $dataInfo = is_array($trendingCampaignContent->data_info) ? $trendingCampaignContent->data_info : (array)$trendingCampaignContent->data_info;
+            if (($dataInfo['show_trending'] ?? 0) == 1 && !empty($dataInfo['trending_campaign_id'])) {
+                $trendingCampaign = Campaign::find($dataInfo['trending_campaign_id']);
+                if ($trendingCampaign && $trendingCampaign->isExpired()) {
+                    $expiredTrendingCampaign = $trendingCampaign;
+                }
+            }
+        }
+
+        return view('admin.page.dashboard', compact('pageTitle', 'widget', 'latestUsers', 'depositsMonth', 'withdrawalMonth', 'months', 'passwordAlert', 'expiredTrendingCampaign'));
     }
 
     function profile() {

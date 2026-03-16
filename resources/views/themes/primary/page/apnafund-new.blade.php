@@ -35,8 +35,8 @@
                         <div class="col-lg-12">
                             <div class="text-dark">
                                 <h1 class="display-4 hero-heading fw-bold"><span class="theme-color-text">Crowd </span>Funding</h1>
-                                <h1 class="display-4 hero-heading text-white fw-bold"><span class="theme-color-text font-italic">By</span> The People,</h1>
-                                <h1 class="display-4 hero-heading text-white fw-bold"><span class="theme-color-text font-italic">For</span> The People,</h1>
+                                <h1 class="display-4 hero-heading text-white fw-bold"><span class="theme-color-text">By</span> The People,</h1>
+                                <h1 class="display-4 hero-heading text-white fw-bold"><span class="theme-color-text">For</span> The People,</h1>
                             </div>
                             <div class="mt-2">
                                 <p class="text-white font-bold mb-0 me-4"><span class="quotes">Together, we empower

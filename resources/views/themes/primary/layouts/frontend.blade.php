@@ -93,14 +93,14 @@
 
                                 <li class="nav-item dropdown">
                                     <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        @lang('Donations')
+                                        @lang('Contributions')
                                     </a>
                                     <ul class="dropdown-menu">
                                         <li class="dropdown-menu__list">
-                                            <a href="{{ route('user.donation.history') }}" class="dropdown-menu__link">@lang('My Donations')</a>
+                                            <a href="{{ route('user.donation.history') }}" class="dropdown-menu__link">@lang('My Contributions')</a>
                                         </li>
                                         <li class="dropdown-menu__list">
-                                            <a href="{{ route('user.donation.received') }}" class="dropdown-menu__link">@lang('Received Donations')</a>
+                                            <a href="{{ route('user.donation.received') }}" class="dropdown-menu__link">@lang('Received Contributions')</a>
                                         </li>
                                     </ul>
                                 </li>

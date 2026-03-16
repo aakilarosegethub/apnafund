@@ -60,10 +60,10 @@ class WebsiteController extends Controller
                 if ($showTrending == 1) {
                     $trendingCampaignId = $dataInfo['trending_campaign_id'] ?? null;
                     
-                    // Fetch the trending campaign if ID is provided
+                    // Fetch the trending campaign if ID is provided (only show if not expired - Kickstarter style)
                     if ($trendingCampaignId) {
                         try {
-                            $trendingCampaign = Campaign::commonQuery()->approve()->where('id', $trendingCampaignId)->first();
+                            $trendingCampaign = Campaign::commonQuery()->approve()->running()->where('id', $trendingCampaignId)->first();
                         } catch (\Exception $e) {
                             \Log::error('Error fetching trending campaign', ['error' => $e->getMessage()]);
                             $trendingCampaign = null;
@@ -72,10 +72,10 @@ class WebsiteController extends Controller
                 }
             }
             
-            // Get featured campaigns (approved and featured, regardless of date status)
+            // Get featured campaigns (approved, featured, running only - no upcoming/expired)
             // Exclude trending campaign if it exists
             try {
-                $query = Campaign::commonQuery()->approve()->featured();
+                $query = Campaign::commonQuery()->approve()->featured()->running();
                 
                 // Exclude trending campaign from featured list if it exists
                 if ($trendingCampaignId) {
@@ -157,7 +157,7 @@ class WebsiteController extends Controller
         $categories = Category::active()
             ->select('name', 'slug')
             ->withCount(['campaigns' => function($query) {
-                $query->commonQuery()->approve();
+                $query->commonQuery()->approve()->running();
             }])
             ->get();
             
@@ -174,8 +174,9 @@ class WebsiteController extends Controller
                                     $endDate   = Carbon::parse($dateArray[1])->format('Y-m-d');
 
                                     $query->where('start_date', '>=', $startDate)->where('end_date', '<=', $endDate);
-                                })                                ->commonQuery()
+                                })->commonQuery()
                                 ->approve()
+                                ->running()
                                 ->latest()
                                 ->paginate(getPaginate(10));
 
@@ -246,7 +247,7 @@ class WebsiteController extends Controller
         $categories = Category::active()
             ->select('name', 'slug')
             ->withCount(['campaigns' => function($query) {
-                $query->commonQuery()->approve();
+                $query->commonQuery()->approve()->running();
             }])
             ->get();
 
@@ -263,6 +264,7 @@ class WebsiteController extends Controller
                                 $query->where('start_date', '>=', $startDate)->where('end_date', '<=', $endDate);
                             })->commonQuery()
                             ->approve()
+                            ->running()
                             ->latest()
                             ->paginate(getPaginate(10));
 
@@ -281,7 +283,7 @@ class WebsiteController extends Controller
 
         $commentCount     = Comment::where('campaign_id', $campaignData->id)->approve()->count();
         $authUser         = auth()->user();
-        $relatedCampaigns = Campaign::where('category_id', $campaignData->category_id)->whereNot('slug', $campaignData->slug)->approve()->latest()->limit(4)->get();
+        $relatedCampaigns = Campaign::where('category_id', $campaignData->category_id)->whereNot('slug', $campaignData->slug)->approve()->running()->latest()->limit(4)->get();
 
         $seoContents['keywords']           = $campaignData->meta_keywords ?? [];
         $seoContents['social_title']       = $campaignData->name;

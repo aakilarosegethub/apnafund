@@ -17,7 +17,7 @@
                         <div class="account-form__content mb-4">
                             <h3 class="account-form__title mb-2">{{ __(@$registerContent->data_info->form_heading) }}</h3>
                         </div>
-                        <form action="{{ route('user.register') }}" method="POST" class="verify-gcaptcha">
+                        <form action="{{ route('user.register') }}" method="POST" class="verify-gcaptcha" enctype="multipart/form-data">
                             @csrf
                             <div class="row g-3">
                                 <div class="col-sm-6">
@@ -98,6 +98,16 @@
                                         <input type="password" class="form-control form--control" name="password_confirmation" id="confirm-password" required>
                                         <span class="password-show-hide ti ti-eye toggle-password" id="#confirm-password"></span>
                                     </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="form--label">@lang('CNIC Front')</label>
+                                    <input type="file" class="form--control" name="cnic_front_image" accept="image/jpeg,image/jpg,image/png">
+                                    <small class="text-muted">@lang('Upload front side of your CNIC')</small>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="form--label">@lang('CNIC Back')</label>
+                                    <input type="file" class="form--control" name="cnic_back_image" accept="image/jpeg,image/jpg,image/png">
+                                    <small class="text-muted">@lang('Upload back side of your CNIC')</small>
                                 </div>
 
                                 @if ($setting->agree_policy)

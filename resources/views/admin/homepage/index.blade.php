@@ -281,6 +281,7 @@
                         }
                         $allCampaigns = \App\Models\Campaign::approve()->latest()->get(['id', 'name', 'slug']);
                     @endphp
+                    <div id="trending"></div>
                     <form action="{{ route('admin.homepage.trending-campaign.update') }}" method="POST">
                         @csrf
                         <div class="row">

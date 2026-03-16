@@ -37,6 +37,11 @@ class FileDetails
             'path' => 'assets/verify'
         ];
 
+        $data['cnic'] = [
+            'path' => 'assets/universal/images/cnic',
+            'size' => '1000x600',
+        ];
+
         $data['category'] = [
             'path' => 'assets/universal/images/category',
             'size' => '300x300',

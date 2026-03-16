@@ -88,7 +88,7 @@
                             <input type="file" class="form--control" name="image" id="adminCampaignImageInput" accept="image/png,image/jpg,image/jpeg,image/webp">
                             <input type="hidden" name="uploaded_image" id="adminUploadedImageName" value="">
                             <input type="hidden" name="uploaded_image_original" id="adminUploadedImageOriginalName" value="">
-                            <small class="text-muted">@lang('Leave empty to keep current image. Formats: PNG, JPG, JPEG, WEBP')</small>
+                            <small class="text-muted">@lang('Leave empty to keep current image. Max 5MB. Formats: PNG, JPG, JPEG, WEBP')</small>
                             <div id="adminImageErrorMsg" class="text-danger mt-2" style="display: none;"></div>
                             <div id="adminImageUploadStatus" class="text-muted mt-1" style="display: none;"></div>
                             @error('image')
@@ -160,6 +160,16 @@
                 if (imageUploadStatus) imageUploadStatus.style.display = "none";
                 if (uploadedImageName) uploadedImageName.value = "";
                 if (uploadedImageOriginalName) uploadedImageOriginalName.value = "";
+                return;
+            }
+            const maxSizeBytes = 5 * 1024 * 1024; // 5MB
+            if (file.size > maxSizeBytes) {
+                if (imageErrorMsg) {
+                    imageErrorMsg.textContent = "Image must be under 5MB. Selected file: " + (file.size / 1024 / 1024).toFixed(2) + " MB";
+                    imageErrorMsg.style.display = "block";
+                }
+                if (imageUploadStatus) imageUploadStatus.style.display = "none";
+                this.value = "";
                 return;
             }
 

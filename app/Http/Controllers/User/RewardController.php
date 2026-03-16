@@ -86,7 +86,7 @@ class RewardController extends Controller
                 'type' => 'nullable|in:digital,physical',
                 'color_theme' => 'nullable|string',
                 'terms_conditions' => 'nullable|string',
-                'image' => ['nullable', File::types(['png', 'jpg', 'jpeg', 'gif', 'webp'])->max(51200)],
+                'image' => ['nullable', File::types(['png', 'jpg', 'jpeg', 'gif', 'webp'])->max(5120)],
             ], [
                 'title.required' => 'Reward title is required',
                 'title.max' => 'Reward title cannot exceed 255 characters',
@@ -98,7 +98,7 @@ class RewardController extends Controller
                 'quantity.integer' => 'Quantity must be a valid number',
                 'quantity.min' => 'Quantity must be at least 1',
                 'type.in' => 'Reward type must be either digital or physical',
-                'image.max' => 'Image size must be less than 50MB',
+                'image.max' => 'Image size must be less than 5MB',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             if ($request->ajax() || $request->wantsJson()) {
@@ -125,10 +125,10 @@ class RewardController extends Controller
             try {
                 // Validate image file
                 $imageFile = $request->image;
-                $maxSize = 51200; // 50MB in KB
+                $maxSize = 5120; // 5MB in KB
                 
                 if ($imageFile->getSize() > $maxSize * 1024) {
-                    throw new \Exception('Image size must be less than 50MB');
+                    throw new \Exception('Image size must be less than 5MB');
                 }
                 
                 $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
@@ -273,7 +273,7 @@ class RewardController extends Controller
                 'type' => 'nullable|in:digital,physical',
                 'color_theme' => 'nullable|string',
                 'terms_conditions' => 'nullable|string',
-                'image' => ['nullable', File::types(['png', 'jpg', 'jpeg', 'gif', 'webp'])->max(51200)],
+                'image' => ['nullable', File::types(['png', 'jpg', 'jpeg', 'gif', 'webp'])->max(5120)],
             ], [
                 'title.required' => 'Reward title is required',
                 'title.max' => 'Reward title cannot exceed 255 characters',
@@ -285,7 +285,7 @@ class RewardController extends Controller
                 'quantity.integer' => 'Quantity must be a valid number',
                 'quantity.min' => 'Quantity must be at least 1',
                 'type.in' => 'Reward type must be either digital or physical',
-                'image.max' => 'Image size must be less than 50MB',
+                'image.max' => 'Image size must be less than 5MB',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             if ($request->ajax() || $request->wantsJson()) {
@@ -310,10 +310,10 @@ class RewardController extends Controller
             try {
                 // Validate image file
                 $imageFile = $request->image;
-                $maxSize = 51200; // 50MB in KB
+                $maxSize = 5120; // 5MB in KB
                 
                 if ($imageFile->getSize() > $maxSize * 1024) {
-                    throw new \Exception('Image size must be less than 50MB');
+                    throw new \Exception('Image size must be less than 5MB');
                 }
                 
                 $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];

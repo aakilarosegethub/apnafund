@@ -123,6 +123,59 @@ class SocialLoginController extends Controller
     }
 
     /**
+     * Redirect to LinkedIn
+     */
+    public function redirectToLinkedIn()
+    {
+        try {
+            $clientId = config('services.linkedin.client_id');
+            $clientSecret = config('services.linkedin.client_secret');
+
+            if (empty($clientId) || empty($clientSecret) || $clientId === 'disabled') {
+                $toast[] = ['error', 'LinkedIn login is not configured. Please contact administrator.'];
+                return redirect()->route('user.login')->withToasts($toast);
+            }
+
+            return Socialite::driver('linkedin')->redirect();
+
+        } catch (\Exception $e) {
+            $toast[] = ['error', 'LinkedIn login is not available. Please contact administrator.'];
+            return redirect()->route('user.login')->withToasts($toast);
+        }
+    }
+
+    /**
+     * Handle LinkedIn callback
+     */
+    public function handleLinkedInCallback()
+    {
+        try {
+            $linkedInUser = Socialite::driver('linkedin')->user();
+
+            if (!$linkedInUser->getEmail()) {
+                $toast[] = ['error', 'LinkedIn account email is required for registration'];
+                return redirect()->route('user.login')->withToasts($toast);
+            }
+
+            $user = $this->findOrCreateUser($linkedInUser, 'linkedin');
+
+            if (!$user) {
+                $toast[] = ['error', 'Failed to create user account. Please check logs for details.'];
+                return redirect()->route('user.login')->withToasts($toast);
+            }
+
+            Auth::login($user);
+
+            $toast[] = ['success', 'Successfully logged in with LinkedIn!'];
+            return redirect()->route('user.dashboard')->withToasts($toast);
+
+        } catch (\Exception $e) {
+            $toast[] = ['error', 'LinkedIn login failed: ' . $e->getMessage()];
+            return redirect()->route('user.login')->withToasts($toast);
+        }
+    }
+
+    /**
      * Find or create user based on social provider
      */
     private function findOrCreateUser($socialUser, $provider)

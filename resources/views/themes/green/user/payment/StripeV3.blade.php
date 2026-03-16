@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <title>@lang('Donation with Stripe')</title>
+        <title>@lang('Contribution with Stripe')</title>
     </head>
 
     <body>
