@@ -2,15 +2,14 @@
 
 namespace App\Http\Middleware;
 
-use App\Services\CurrencyService;
 use Closure;
 use Illuminate\Http\Request;
 
 class DetectCurrencyByIP
 {
     /**
-     * When TCUR is not set, detect currency from visitor IP and store in session.
-     * Setting model will use this for site_cur and cur_sym display.
+     * When TCUR is not set in .env: detect currency from visitor IP, store in DB (ip_currency_cache),
+     * refresh every hour. Session stores currency, country, symbol for current request.
      */
     public function handle(Request $request, Closure $next)
     {
@@ -18,21 +17,28 @@ class DetectCurrencyByIP
             return $next($request);
         }
 
-        if (session()->has('user_detected_currency')) {
+        $currentIp = request()->ip();
+        // Re-detect when IP changed (e.g. user traveled, VPN, different network)
+        if (session()->has('user_detected_currency') && session('user_detected_ip') === $currentIp) {
             return $next($request);
         }
 
         try {
-            $country = getUserCountryByIP();
-            if ($country) {
-                $currencyService = app(CurrencyService::class);
-                $code = $currencyService->resolveCurrencyCodeFromCountry($country);
-                if ($code) {
-                    session()->put('user_detected_currency', $code);
-                }
+            $data = getOrFetchIpCurrencyData($currentIp);
+            if ($data && !empty($data['currency_code'])) {
+                session()->put('user_detected_currency', $data['currency_code']);
+                session()->put('user_detected_symbol', $data['currency_symbol'] ?? '$');
+                session()->put('user_detected_country', $data['country_name'] ?? '');
+                session()->put('user_detected_ip', $currentIp);
+                session()->put('user_detected_ip', $currentIp);
+                session()->put('user_detected_ip', $currentIp);
+                session()->put('user_detected_ip', $currentIp);
+                \Log::channel('single')->info('DetectCurrencyByIP: set session', ['currency' => $data['currency_code'], 'ip' => $currentIp]);
+            } else {
+                \Log::channel('single')->info('DetectCurrencyByIP: getOrFetchIpCurrencyData returned null/empty, falling back to DB', ['ip' => request()->ip()]);
             }
         } catch (\Throwable $e) {
-            \Log::warning('DetectCurrencyByIP failed', ['error' => $e->getMessage()]);
+            \Log::warning('DetectCurrencyByIP failed', ['error' => $e->getMessage(), 'ip' => request()->ip()]);
         }
 
         return $next($request);

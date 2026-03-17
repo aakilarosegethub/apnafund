@@ -652,8 +652,10 @@
                                     <div class="row">
                                         <div class="col-md-12">
                                             <div class="form-group required-field">
-                                                <label for="targetAmount" class="form-label">Target Amount ({{ $setting->cur_sym }})  </label>
+                                                <label for="targetAmount" class="form-label">@lang('Target Amount') ({{ $creatorSymbol ?? $setting->cur_sym }}) - @lang('Enter amount in') {{ $creatorCurrency ?? 'USD' }}</label>
                                                 <input type="number" name="goal_amount" class="form-control" id="targetAmount" placeholder="5000" min="1" step="0.01" required>
+                                                <input type="hidden" name="input_currency" value="{{ $creatorCurrency ?? 'USD' }}">
+                                                <small class="text-muted">@lang('Amount will be converted and stored in platform currency') ({{ getPlatformCurrency() }})</small>
                                             </div>
                                         </div>
                                     </div>
@@ -1339,7 +1341,7 @@
             
             // Update amount
             const amount = document.getElementById('targetAmount').value || '0';
-            const currencySymbol = '{{ $setting->cur_sym }}';
+            const currencySymbol = '{{ $creatorSymbol ?? $setting->cur_sym }}';
             const amountElement = document.getElementById('previewAmount');
             const goalAmountElement = document.getElementById('previewGoalAmount');
             if (amountElement) amountElement.textContent = currencySymbol + parseFloat(amount).toLocaleString();

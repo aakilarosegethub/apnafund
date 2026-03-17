@@ -846,6 +846,55 @@ function getDefaultCurrencyCode(): string {
     return $setting->site_cur ?? 'USD';
 }
 
+/**
+ * Format USD amount for display: convert to user's currency (TCUR/IP) and show with symbol.
+ * DB stores all prices in USD; use this helper for frontend display.
+ */
+/**
+ * Platform currency = Admin-set currency in which ALL amounts are stored in DB.
+ * Returns raw DB value (not overridden by TCUR/session).
+ */
+function getPlatformCurrency(): string
+{
+    $s = bs();
+    if (!$s) return 'USD';
+    $raw = $s->getRawOriginal('site_cur') ?? ($s->attributes['site_cur'] ?? null);
+    return $raw ? strtoupper(trim($raw)) : 'USD';
+}
+
+/**
+ * Format amount for display: DB stores in platform currency; convert to visitor's currency (IP) and show with symbol.
+ */
+function formatPlatformForDisplay($amount, int $decimal = 0): string
+{
+    $amount = (float) ($amount ?? 0);
+    $setting = bs();
+    $displayCode = $setting->site_cur ?? 'USD';
+    $sym = $setting->cur_sym ?? '$';
+
+    $platform = getPlatformCurrency();
+    if (strtoupper($displayCode ?? '') === $platform) {
+        return $sym . showAmount($amount, $decimal);
+    }
+
+    try {
+        $cs = app(\App\Services\CurrencyService::class);
+        $converted = $cs->convertFromPlatform((float) $amount, $displayCode);
+        return $sym . showAmount($converted, $decimal);
+    } catch (\Throwable $e) {
+        \Log::warning('formatPlatformForDisplay failed', ['error' => $e->getMessage(), 'amount' => $amount]);
+        return $sym . showAmount($amount, $decimal);
+    }
+}
+
+/**
+ * @deprecated Use formatPlatformForDisplay. Kept for backward compatibility.
+ */
+function formatUsdForDisplay($usdAmount, int $decimal = 0): string
+{
+    return formatPlatformForDisplay($usdAmount, $decimal);
+}
+
 function getNotificationCount(): int {
     // This can be customized based on actual notification logic
     return auth()->check() ? 3 : 0;
@@ -1067,6 +1116,159 @@ function formatBytes($bytes, $precision = 2): string {
     }
     
     return round($bytes, $precision) . ' ' . $units[$i];
+}
+
+/**
+ * Get geo data (country name + code) from IP. Used for IP currency cache.
+ *
+ * @param string|null $ip IP address (uses request IP if null)
+ * @return array{country: string, country_code: string}|null
+ */
+function getIpGeoData(?string $ip = null): ?array
+{
+    $ip = $ip ?: request()->ip();
+
+    // Resolve localhost to public IP
+    if (in_array($ip, ['127.0.0.1', '::1', 'localhost'])) {
+        $headers = ['HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'HTTP_CLIENT_IP', 'REMOTE_ADDR'];
+        foreach ($headers as $header) {
+            if (!empty($_SERVER[$header])) {
+                $ip = trim(explode(',', $_SERVER[$header])[0]);
+                if (!in_array($ip, ['127.0.0.1', '::1', 'localhost'])) {
+                    break;
+                }
+            }
+        }
+    }
+    if (in_array($ip, ['127.0.0.1', '::1', 'localhost'])) {
+        try {
+            $publicIP = @file_get_contents('https://api.ipify.org');
+            if ($publicIP && filter_var(trim($publicIP), FILTER_VALIDATE_IP)) {
+                $ip = trim($publicIP);
+            }
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+    if (in_array($ip, ['127.0.0.1', '::1', 'localhost'])) {
+        return null;
+    }
+
+    $ctx = stream_context_create(['http' => ['timeout' => 5, 'user_agent' => 'Mozilla/5.0']]);
+
+    // ip-api.com: country (name), countryCode
+    try {
+        $res = @file_get_contents("http://ip-api.com/json/{$ip}", false, $ctx);
+        $data = $res ? json_decode($res, true) : null;
+        if ($data && ($data['status'] ?? '') === 'success' && !empty($data['country'])) {
+            return [
+                'country' => $data['country'],
+                'country_code' => $data['countryCode'] ?? '',
+            ];
+        }
+    } catch (\Throwable $e) {
+    }
+
+    // ipapi.co: country_name, country_code
+    try {
+        $res = @file_get_contents("https://ipapi.co/{$ip}/json/", false, $ctx);
+        $data = $res ? json_decode($res, true) : null;
+        if ($data && !empty($data['country_name'])) {
+            return [
+                'country' => $data['country_name'],
+                'country_code' => $data['country_code'] ?? '',
+            ];
+        }
+    } catch (\Throwable $e) {
+    }
+
+    // ipinfo.io: country (2-letter code)
+    try {
+        $res = @file_get_contents("https://ipinfo.io/{$ip}/json", false, $ctx);
+        $data = $res ? json_decode($res, true) : null;
+        if ($data && !empty($data['country'])) {
+            $code = strtoupper($data['country']);
+            $names = [
+                'US' => 'United States', 'PK' => 'Pakistan', 'IN' => 'India', 'GB' => 'United Kingdom',
+                'CA' => 'Canada', 'AU' => 'Australia', 'DE' => 'Germany', 'FR' => 'France',
+            ];
+            return [
+                'country' => $names[$code] ?? $code,
+                'country_code' => $code,
+            ];
+        }
+    } catch (\Throwable $e) {
+    }
+
+    \Log::channel('single')->info('IpCurrencyDebug: getIpGeoData all APIs failed', ['ip' => $ip ?? '']);
+    return null;
+}
+
+/**
+ * Get or fetch IP currency data from DB. Cached 1 hour. Returns ['currency_code','currency_symbol','country_name','country_code'] or null.
+ */
+function getOrFetchIpCurrencyData(?string $ip = null): ?array
+{
+    if ($ip === null) {
+        $ip = request()->ip();
+        if (in_array($ip, ['127.0.0.1', '::1', 'localhost'])) {
+            foreach (['HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'HTTP_CLIENT_IP', 'REMOTE_ADDR'] as $h) {
+                if (!empty($_SERVER[$h])) {
+                    $ip = trim(explode(',', (string) ($_SERVER[$h] ?? ''))[0]);
+                    if (!in_array($ip, ['127.0.0.1', '::1', 'localhost'])) break;
+                }
+            }
+        }
+        if (in_array($ip, ['127.0.0.1', '::1', 'localhost'])) {
+            \Log::channel('single')->info('IpCurrencyDebug: IP is localhost, skipping', ['ip' => $ip]);
+            return null;
+        }
+    }
+    try {
+        if (!\Illuminate\Support\Facades\Schema::hasTable('ip_currency_cache')) {
+            \Log::channel('single')->info('IpCurrencyDebug: ip_currency_cache table missing');
+            return null;
+        }
+        $row = \Illuminate\Support\Facades\DB::table('ip_currency_cache')->where('ip', $ip)->first();
+        $now = now();
+        $fiveMinutesAgo = $now->copy()->subMinutes(5);
+        if ($row && $row->refreshed_at && strtotime($row->refreshed_at) >= $fiveMinutesAgo->timestamp) {
+            return [
+                'currency_code' => $row->currency_code ?? 'USD',
+                'currency_symbol' => $row->currency_symbol ?? '$',
+                'country_name' => $row->country_name ?? '',
+                'country_code' => $row->country_code ?? '',
+            ];
+        }
+        $geo = getIpGeoData($ip);
+        if (!$geo) {
+            \Log::channel('single')->info('IpCurrencyDebug: getIpGeoData returned null', ['ip' => $ip]);
+            return null;
+        }
+        $currencyService = app(\App\Services\CurrencyService::class);
+        $currencyCode = $currencyService->resolveCurrencyCodeFromCountry($geo['country_code'] ?: $geo['country']) ?: 'USD';
+        $symbol = \App\Services\CurrencyService::getSymbolForCode($currencyCode);
+        \Illuminate\Support\Facades\DB::table('ip_currency_cache')->updateOrInsert(
+            ['ip' => $ip],
+            [
+                'country_code' => $geo['country_code'] ?? '',
+                'country_name' => $geo['country'] ?? '',
+                'currency_code' => $currencyCode,
+                'currency_symbol' => $symbol,
+                'refreshed_at' => $now,
+                'updated_at' => $now,
+            ]
+        );
+        return [
+            'currency_code' => $currencyCode,
+            'currency_symbol' => $symbol,
+            'country_name' => $geo['country'] ?? '',
+            'country_code' => $geo['country_code'] ?? '',
+        ];
+    } catch (\Throwable $e) {
+        \Log::channel('single')->warning('IpCurrencyDebug: getOrFetchIpCurrencyData failed', ['ip' => $ip ?? '', 'error' => $e->getMessage()]);
+        return null;
+    }
 }
 
 /**

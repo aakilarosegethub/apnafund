@@ -25,23 +25,19 @@ class Setting extends Model
     }
 
     /**
-     * Currency symbol - TCUR > IP-detected > DB. When TCUR not set, uses IP-detected currency symbol.
+     * Currency symbol - TCUR > IP-detected (from DB cache) > DB. When TCUR not set, uses session user_detected_symbol.
      */
     public function getCurSymAttribute($value)
     {
-        $tcur = config('app.currency') ?: session('user_detected_currency');
+        if (config('app.currency')) {
+            return \App\Services\CurrencyService::getSymbolForCode(config('app.currency'));
+        }
+        if (session('user_detected_symbol')) {
+            return session('user_detected_symbol');
+        }
+        $tcur = session('user_detected_currency');
         if ($tcur) {
-            $map = [
-                'USD' => '$', 'PKR' => 'Rs', 'EUR' => '€', 'GBP' => '£',
-                'INR' => '₹', 'SAR' => '﷼', 'AED' => 'د.إ', 'TRY' => '₺',
-                'CAD' => 'C$', 'AUD' => 'A$', 'NZD' => 'NZ$', 'SEK' => 'kr',
-                'NOK' => 'kr', 'DKK' => 'kr', 'CHF' => 'CHF', 'JPY' => '¥',
-                'CNY' => '¥', 'HKD' => 'HK$', 'SGD' => 'S$', 'MYR' => 'RM',
-                'BDT' => '৳', 'IDR' => 'Rp', 'THB' => '฿', 'PHP' => '₱',
-                'ZAR' => 'R', 'NGN' => '₦', 'KES' => 'KSh', 'EGP' => 'E£',
-                'BRL' => 'R$', 'MXN' => '$', 'RUB' => '₽',
-            ];
-            return $map[strtoupper(trim($tcur))] ?? $value ?? '$';
+            return \App\Services\CurrencyService::getSymbolForCode($tcur);
         }
         return $value ?? '$';
     }

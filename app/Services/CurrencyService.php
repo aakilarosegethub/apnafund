@@ -123,6 +123,38 @@ class CurrencyService
     }
 
     /**
+     * Approximate rate_to_usd fallbacks when DB has no rate (1 unit = X USD).
+     * Used when currencies table is empty; Admin > Currencies > Sync for accurate rates.
+     */
+    private const FALLBACK_RATE_TO_USD = [
+        'PKR' => 0.0036,  'INR' => 0.012,  'BDT' => 0.009,
+        'TRY' => 0.029,   'EUR' => 1.05,   'GBP' => 1.27,
+        'AED' => 0.27,    'SAR' => 0.27,   'CAD' => 0.72,
+        'AUD' => 0.65,    'JPY' => 0.0067, 'CNY' => 0.14,
+    ];
+
+    /**
+     * Convert USD amount to target currency. DB stores USD; use this for frontend display.
+     * rate_to_usd = how many USD per 1 unit of target. So: target_amount = usd_amount / rate_to_usd.
+     */
+    public function convertUsdTo(float $usdAmount, string $targetCode): float
+    {
+        $targetCode = $this->normalizeCode($targetCode);
+        if ($targetCode === self::BASE_CURRENCY) {
+            return $usdAmount;
+        }
+        $target = $this->getOrCreateByCode($targetCode);
+        $rate = $this->getRateToUsd($target);
+
+        // If DB has default rate 1 for non-USD, use fallback
+        if ($rate >= 0.999 && $rate <= 1.001 && isset(self::FALLBACK_RATE_TO_USD[$targetCode])) {
+            $rate = self::FALLBACK_RATE_TO_USD[$targetCode];
+        }
+
+        return $rate > 0 ? $usdAmount / $rate : $usdAmount;
+    }
+
+    /**
      * Convert amount from one currency to another (via USD).
      */
     public function convertAmount(float $amount, Currency $from, Currency $to): float
@@ -134,6 +166,37 @@ class CurrencyService
         $toRate = $this->getRateToUsd($to);
 
         return $toRate > 0 ? $usd / $toRate : $usd;
+    }
+
+    /**
+     * Convert amount from user's currency TO platform currency (for saving to DB).
+     * Platform currency = Admin-set currency in which all amounts are stored.
+     */
+    public function convertToPlatform(float $amount, string $fromCurrencyCode): float
+    {
+        $platform = strtoupper(trim((string) (getPlatformCurrency())));
+        $fromCode = $this->normalizeCode($fromCurrencyCode);
+        if ($fromCode === $platform) {
+            return $amount;
+        }
+        $from = $this->getOrCreateByCode($fromCode);
+        $to = $this->getOrCreateByCode($platform);
+        return $this->convertAmount($amount, $from, $to);
+    }
+
+    /**
+     * Convert amount FROM platform currency TO display currency (for frontend).
+     */
+    public function convertFromPlatform(float $amount, string $toCurrencyCode): float
+    {
+        $platform = strtoupper(trim((string) (getPlatformCurrency())));
+        $toCode = $this->normalizeCode($toCurrencyCode);
+        if ($toCode === $platform) {
+            return $amount;
+        }
+        $from = $this->getOrCreateByCode($platform);
+        $to = $this->getOrCreateByCode($toCode);
+        return $this->convertAmount($amount, $from, $to);
     }
 
     public function normalizeCode(?string $code): string
@@ -170,6 +233,24 @@ class CurrencyService
         }
 
         return $currency ?: self::BASE_CURRENCY;
+    }
+
+    /**
+     * Get currency symbol for code. Used by IP cache and Setting.
+     */
+    public static function getSymbolForCode(?string $code): string
+    {
+        $map = [
+            'USD' => '$', 'PKR' => 'Rs', 'EUR' => '€', 'GBP' => '£',
+            'INR' => '₹', 'SAR' => '﷼', 'AED' => 'د.إ', 'TRY' => '₺',
+            'CAD' => 'C$', 'AUD' => 'A$', 'NZD' => 'NZ$', 'SEK' => 'kr',
+            'NOK' => 'kr', 'DKK' => 'kr', 'CHF' => 'CHF', 'JPY' => '¥',
+            'CNY' => '¥', 'HKD' => 'HK$', 'SGD' => 'S$', 'MYR' => 'RM',
+            'BDT' => '৳', 'IDR' => 'Rp', 'THB' => '฿', 'PHP' => '₱',
+            'ZAR' => 'R', 'NGN' => '₦', 'KES' => 'KSh', 'EGP' => 'E£',
+            'BRL' => 'R$', 'MXN' => '$', 'RUB' => '₽',
+        ];
+        return $map[strtoupper(trim((string) $code ?? ''))] ?? '$';
     }
 
     public function resolveCurrencyCodeFromCountry(?string $country): ?string

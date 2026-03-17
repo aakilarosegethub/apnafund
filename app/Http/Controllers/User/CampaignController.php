@@ -84,7 +84,12 @@ class CampaignController extends Controller
         $pageTitle  = 'Create New Campaign';
         $categories = Category::active()->get();
 
-        return view($this->activeTheme . 'user.campaign.new', compact('pageTitle', 'categories'));
+        // Creator's local currency (from profile or IP) - they enter amount in this
+        $currencyService = app(\App\Services\CurrencyService::class);
+        $creatorCurrency = $currencyService->detectCurrencyCode(auth()->user());
+        $creatorSymbol = \App\Services\CurrencyService::getSymbolForCode($creatorCurrency);
+
+        return view($this->activeTheme . 'user.campaign.new', compact('pageTitle', 'categories', 'creatorCurrency', 'creatorSymbol'));
     }
 
     /**
@@ -304,7 +309,10 @@ class CampaignController extends Controller
         
         try {
             // Set default values if not provided (for quick campaign creation)
-            $goalAmount = request('goal_amount', 1000);
+            $goalAmountRaw = (float) request('goal_amount', 1000);
+            $currencyService = app(\App\Services\CurrencyService::class);
+            $inputCurrency = request('input_currency') ?: $currencyService->detectCurrencyCode(auth()->user());
+            $goalAmount = $currencyService->convertToPlatform($goalAmountRaw, $inputCurrency);
             $startDate = request('start_date', date('Y-m-d'));
             $endDate = request('end_date', date('Y-m-d', strtotime('+30 days')));
             
@@ -489,10 +497,24 @@ class CampaignController extends Controller
             $campaign->description = request('description');
             $campaign->short_description = request('short_description');
 
+            $goalAmountRaw = (float) request('goal_amount', 1000);
+            $inputCurrency = request('input_currency') ?: $currencyService->detectCurrencyCode(auth()->user());
+            $goalAmount = $currencyService->convertToPlatform($goalAmountRaw, $inputCurrency);
+
             $campaign->goal_amount     = $goalAmount;
             $campaign->start_date        = Carbon::parse($startDate);
             $campaign->end_date          = Carbon::parse($endDate);
             $campaign->status           = ManageStatus::CAMPAIGN_PENDING;
+
+            // Preferred amounts (primary theme) - convert from creator currency to platform
+            $preferredRaw = request('preferred_amounts');
+            if (is_array($preferredRaw) && !empty($preferredRaw)) {
+                $campaign->preferred_amounts = array_values(array_filter(array_map(function ($amt) use ($currencyService, $inputCurrency) {
+                    $a = (float) $amt;
+                    return $a > 0 ? $currencyService->convertToPlatform($a, $inputCurrency) : null;
+                }, $preferredRaw)));
+            }
+
             $campaign->save();
             
             // Debug logging

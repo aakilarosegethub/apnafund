@@ -16,6 +16,7 @@
                     <div class="col-lg-4 col-sm-6">
                         <label class="form--label required">@lang('Platform Currency')</label>
                         <input type="text" class="form--control" name="site_cur" value="{{ $setting->site_cur }}" placeholder="@lang('USD')" required>
+                        <small class="form-text text-muted">@lang('All amounts (campaigns, donations, etc.) are stored in this currency in the database. Creators and contributors enter amounts in their local currency; the system converts to this before saving.')</small>
                     </div>
                     <div class="col-lg-4 col-sm-6">
                         <label class="form--label required">@lang('Currency Symbol')</label>
