@@ -13,6 +13,10 @@ class DetectCurrencyByIP
      */
     public function handle(Request $request, Closure $next)
     {
+        if (session('user_currency_manual')) {
+            return $next($request);
+        }
+
         if (config('app.currency')) {
             return $next($request);
         }

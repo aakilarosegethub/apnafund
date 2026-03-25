@@ -6,6 +6,7 @@ use App\Lib\ClientInfo;
 use App\Lib\FileManager;
 use App\Lib\GoogleAuthenticator;
 use App\Models\Plugin;
+use App\Models\CampaignDocumentField;
 use App\Models\Setting;
 use App\Models\SiteData;
 use App\Notify\Notify;
@@ -651,6 +652,85 @@ function getCampaignDaysLimit(): int
     return max(1, min(365, (int) $data->data_info['campaign_days_limit']));
 }
 
+/**
+ * Get admin-configurable required campaign documents list.
+ * Stored in SiteData key: general.campaign_required_documents.
+ * Returns non-empty lines; falls back to sensible defaults.
+ */
+function getCampaignRequiredDocuments(): array
+{
+    $requirements = getCampaignDocumentRequirements(true);
+    return array_map(function ($item) {
+        return $item['label'];
+    }, $requirements);
+}
+
+/**
+ * Campaign document requirements config.
+ * If no config exists, returns defaults for CNIC front/back and supporting PDF.
+ *
+ * @param bool $onlyActive
+ * @return array<int, array{id:string,field_key:string,label:string,is_required:bool,is_active:bool}>
+ */
+function getCampaignDocumentRequirements(bool $onlyActive = true): array
+{
+    $defaults = [
+        [
+            'id' => 'default-cnic-front',
+            'field_key' => 'cnic_front_image',
+            'label' => 'CNIC Front Copy',
+            'is_required' => true,
+            'is_active' => true,
+        ],
+        [
+            'id' => 'default-cnic-back',
+            'field_key' => 'cnic_back_image',
+            'label' => 'CNIC Back Copy',
+            'is_required' => true,
+            'is_active' => true,
+        ],
+        [
+            'id' => 'default-supporting-doc',
+            'field_key' => 'document',
+            'label' => 'Business Registration / Supporting Document',
+            'is_required' => false,
+            'is_active' => true,
+        ],
+    ];
+
+    if (!\Illuminate\Support\Facades\Schema::hasTable('campaign_document_fields')) {
+        return $defaults;
+    }
+    $rows = CampaignDocumentField::query()
+        ->orderBy('sort_order')
+        ->orderBy('id')
+        ->get();
+
+    if ($rows->isEmpty()) return $defaults;
+
+    $normalized = $rows->map(function ($row) {
+        return [
+            'id' => (string) $row->id,
+            'field_key' => (string) $row->field_key,
+            'label' => (string) $row->label,
+            'is_required' => (bool) $row->is_required,
+            'is_active' => (bool) $row->is_active,
+        ];
+    })->all();
+
+    if (empty($normalized)) {
+        return $defaults;
+    }
+
+    if ($onlyActive) {
+        $normalized = array_values(array_filter($normalized, function ($item) {
+            return !empty($item['is_active']);
+        }));
+    }
+
+    return !empty($normalized) ? $normalized : $defaults;
+}
+
 function getSiteData($dataKeys, $singleQuery = false, $limit = null, $orderById = false) {
     if ($singleQuery) {
         $siteData = SiteData::where('data_key', $dataKeys)->first();
@@ -749,8 +829,11 @@ function gatewayRedirectUrl($type = false): string {
  * Error case: dedicated user.deposit.error page (mobile-friendly).
  * Uses url() to avoid "Route [user.deposit.error] not defined" when route cache is stale.
  */
-function gatewayRedirectUrlFull(bool $success = false): string {
+function gatewayRedirectUrlFull(bool $success = false, ?string $message = null): string {
     $params = $success ? ['payment_status' => 'success'] : ['payment_status' => 'error'];
+    if (!$success && $message !== null && trim($message) !== '') {
+        $params['message'] = trim($message);
+    }
     $path = match (gatewayRedirectUrl($success)) {
         'user.deposit.error'   => '/user/deposit/error',
         'user.deposit.success' => '/user/deposit/success',
@@ -847,6 +930,166 @@ function getDefaultCurrencyCode(): string {
 }
 
 /**
+ * System/platform currency code from admin settings.
+ * Alias helper for clearer naming in views/controllers.
+ */
+function getSystemCurrency(): string
+{
+    return getPlatformCurrency();
+}
+
+/**
+ * Full country name list (same as Admin Basic → allowed countries fallback).
+ */
+function getAdminDefaultAllCountryNames(): array
+{
+    return [
+        'Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Antigua and Barbuda', 'Argentina', 'Armenia', 'Australia', 'Austria',
+        'Azerbaijan', 'Bahamas', 'Bahrain', 'Bangladesh', 'Barbados', 'Belarus', 'Belgium', 'Belize', 'Benin', 'Bhutan',
+        'Bolivia', 'Bosnia and Herzegovina', 'Botswana', 'Brazil', 'Brunei', 'Bulgaria', 'Burkina Faso', 'Burundi', 'Cambodia', 'Cameroon',
+        'Canada', 'Cape Verde', 'Central African Republic', 'Chad', 'Chile', 'China', 'Colombia', 'Comoros', 'Congo', 'Costa Rica',
+        'Croatia', 'Cuba', 'Cyprus', 'Czech Republic', 'Denmark', 'Djibouti', 'Dominica', 'Dominican Republic', 'Ecuador', 'Egypt',
+        'El Salvador', 'Equatorial Guinea', 'Eritrea', 'Estonia', 'Eswatini', 'Ethiopia', 'Fiji', 'Finland', 'France', 'Gabon',
+        'Gambia', 'Georgia', 'Germany', 'Ghana', 'Greece', 'Grenada', 'Guatemala', 'Guinea', 'Guinea-Bissau', 'Guyana',
+        'Haiti', 'Honduras', 'Hungary', 'Iceland', 'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland', 'Israel',
+        'Italy', 'Jamaica', 'Japan', 'Jordan', 'Kazakhstan', 'Kenya', 'Kiribati', 'Kosovo', 'Kuwait', 'Kyrgyzstan',
+        'Laos', 'Latvia', 'Lebanon', 'Lesotho', 'Liberia', 'Libya', 'Liechtenstein', 'Lithuania', 'Luxembourg', 'Madagascar',
+        'Malawi', 'Malaysia', 'Maldives', 'Mali', 'Malta', 'Marshall Islands', 'Mauritania', 'Mauritius', 'Mexico', 'Micronesia',
+        'Moldova', 'Monaco', 'Mongolia', 'Montenegro', 'Morocco', 'Mozambique', 'Myanmar', 'Namibia', 'Nauru', 'Nepal',
+        'Netherlands', 'New Zealand', 'Nicaragua', 'Niger', 'Nigeria', 'North Korea', 'North Macedonia', 'Norway', 'Oman', 'Pakistan',
+        'Palau', 'Palestine', 'Panama', 'Papua New Guinea', 'Paraguay', 'Peru', 'Philippines', 'Poland', 'Portugal', 'Qatar',
+        'Romania', 'Russia', 'Rwanda', 'Saint Kitts and Nevis', 'Saint Lucia', 'Saint Vincent and the Grenadines', 'Samoa', 'San Marino', 'Sao Tome and Principe', 'Saudi Arabia',
+        'Senegal', 'Serbia', 'Seychelles', 'Sierra Leone', 'Singapore', 'Slovakia', 'Slovenia', 'Solomon Islands', 'Somalia', 'South Africa',
+        'South Korea', 'South Sudan', 'Spain', 'Sri Lanka', 'Sudan', 'Suriname', 'Sweden', 'Switzerland', 'Syria', 'Taiwan',
+        'Tajikistan', 'Tanzania', 'Thailand', 'Timor-Leste', 'Togo', 'Tonga', 'Trinidad and Tobago', 'Tunisia', 'Turkey', 'Turkmenistan',
+        'Tuvalu', 'Uganda', 'Ukraine', 'United Arab Emirates', 'United Kingdom', 'United States', 'Uruguay', 'Uzbekistan', 'Vanuatu', 'Vatican City',
+        'Venezuela', 'Vietnam', 'Yemen', 'Zambia', 'Zimbabwe',
+    ];
+}
+
+/**
+ * Countries allowed in Admin → Basic Settings (same rules as project location / WebsiteController).
+ */
+function getSiteAllowedCountryNames(): array
+{
+    $siteData = \App\Models\SiteData::where('data_key', 'general.allowed_countries')->first();
+
+    if ($siteData && $siteData->data_info) {
+        $dataInfo = $siteData->data_info;
+        if (!is_array($dataInfo)) {
+            $dataInfo = is_object($dataInfo) ? (array) $dataInfo : json_decode($dataInfo, true);
+        }
+
+        $selectedCountries = $dataInfo['selected_countries'] ?? [];
+        $useSelectedOnly = false;
+        if (isset($dataInfo['use_selected_only'])) {
+            $value = $dataInfo['use_selected_only'];
+            $useSelectedOnly = ($value === true || $value === '1' || $value === 1 || $value === 'true');
+        }
+
+        if ($useSelectedOnly) {
+            if (!empty($selectedCountries) && is_array($selectedCountries)) {
+                $selectedCountries = array_filter($selectedCountries);
+                if (!empty($selectedCountries)) {
+                    sort($selectedCountries);
+
+                    return array_values($selectedCountries);
+                }
+            }
+
+            return [];
+        }
+
+        if (!empty($selectedCountries) && is_array($selectedCountries)) {
+            $selectedCountries = array_filter($selectedCountries);
+            if (!empty($selectedCountries)) {
+                sort($selectedCountries);
+
+                return array_values($selectedCountries);
+            }
+        }
+    }
+
+    return getAdminDefaultAllCountryNames();
+}
+
+/**
+ * Currency ISO code for a full country name (Admin list / project location).
+ */
+function getCurrencyCodeForCountryName(string $countryName): string
+{
+    $code = app(\App\Services\CurrencyService::class)->resolveCurrencyCodeFromCountry($countryName);
+
+    return $code ? strtoupper($code) : 'USD';
+}
+
+/**
+ * Visitor ki display/local currency (ISO 4217): TCUR (.env) > session > IP > site default.
+ */
+function getLocalCurrencyCode(): string
+{
+    $tcur = config('app.currency');
+    if ($tcur !== null && trim((string) $tcur) !== '') {
+        return strtoupper(trim((string) $tcur));
+    }
+
+    if (session('user_detected_currency')) {
+        return strtoupper(trim((string) session('user_detected_currency')));
+    }
+
+    $ipData = getOrFetchIpCurrencyData();
+    if (!empty($ipData['currency_code'])) {
+        return strtoupper(trim((string) $ipData['currency_code']));
+    }
+
+    return getDefaultCurrencyCode();
+}
+
+/**
+ * Visitor/local currency code based on TCUR/IP fallback logic.
+ * Alias helper for concise usage in templates.
+ */
+function getLocalCurrency(): string
+{
+    return getLocalCurrencyCode();
+}
+
+/**
+ * Visitor ki local currency symbol — TCUR > session > IP > site default.
+ */
+function getLocalCurrencySymbol(): string
+{
+    $tcur = config('app.currency');
+    if ($tcur !== null && trim((string) $tcur) !== '') {
+        return \App\Services\CurrencyService::getSymbolForCode(trim((string) $tcur));
+    }
+
+    if (session('user_detected_symbol')) {
+        return (string) session('user_detected_symbol');
+    }
+
+    if (session('user_detected_currency')) {
+        return \App\Services\CurrencyService::getSymbolForCode((string) session('user_detected_currency'));
+    }
+
+    $ipData = getOrFetchIpCurrencyData();
+    if (!empty($ipData['currency_symbol'])) {
+        return (string) $ipData['currency_symbol'];
+    }
+
+    return getDefaultCurrency();
+}
+
+/**
+ * Amount pehle se visitor ki local currency mein ho (e.g. usdToLocal ke baad).
+ * Output: local currency symbol + formatted number (TCUR / IP symbol, `getLocalCurrencySymbol`).
+ */
+function showCurrency($amount, int $decimal = 0, bool $separate = true, bool $exceptZeros = false): string
+{
+    return getLocalCurrencySymbol() . showAmount((float) ($amount ?? 0), $decimal, $separate, $exceptZeros);
+}
+
+/**
  * Format USD amount for display: convert to user's currency (TCUR/IP) and show with symbol.
  * DB stores all prices in USD; use this helper for frontend display.
  */
@@ -893,6 +1136,29 @@ function formatPlatformForDisplay($amount, int $decimal = 0): string
 function formatUsdForDisplay($usdAmount, int $decimal = 0): string
 {
     return formatPlatformForDisplay($usdAmount, $decimal);
+}
+
+/**
+ * Convert USD amount to local/site currency. Returns numeric value.
+ *
+ * @param float $usdAmount Amount in USD
+ * @param string|null $targetCurrency Target currency code (e.g. PKR, INR). If null, uses site currency from settings.
+ * @return float Converted amount in target currency
+ */
+function usdToLocal(float $usdAmount, ?string $targetCurrency = null): float
+{
+    $target = $targetCurrency ?? getLocalCurrencyCode();
+    $target = strtoupper(trim($target ?: 'USD'));
+    if ($target === 'USD') {
+        return $usdAmount;
+    }
+    try {
+        $cs = app(\App\Services\CurrencyService::class);
+        return $cs->convertUsdTo($usdAmount, $target);
+    } catch (\Throwable $e) {
+        \Log::warning('usdToLocal failed', ['error' => $e->getMessage(), 'amount' => $usdAmount]);
+        return $usdAmount;
+    }
 }
 
 function getNotificationCount(): int {

@@ -2,6 +2,21 @@
     $footerContent = getSiteData('footer.content', true);
     $footerElements = getSiteData('footer.element', false, null, true);
     $footerCategories = \App\Models\Admins\FooterCategory::with('category')->where('status', 'active')->orderBy('sort_order')->orderBy('id')->take(8)->get();
+
+    $tcurLocked = config('app.currency') !== null && trim((string) config('app.currency')) !== '';
+    $allowedCountriesForCurrency = getSiteAllowedCountryNames();
+    $currentLocalCode = getLocalCurrencyCode();
+    $currentLocalSym = getLocalCurrencySymbol();
+    $sessionCountry = session('user_detected_country');
+    $selectedCountryForFooter = $sessionCountry;
+    if (!$selectedCountryForFooter && !empty($allowedCountriesForCurrency)) {
+        foreach ($allowedCountriesForCurrency as $c) {
+            if (getCurrencyCodeForCountryName($c) === $currentLocalCode) {
+                $selectedCountryForFooter = $c;
+                break;
+            }
+        }
+    }
 @endphp
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -24,15 +39,33 @@
                     <a href="{{ route('home') }}" class="footer-logo mb-4 d-block">
                         <img src="{{ $logoUrl }}" alt="Logo" style="height: 40px; filter: brightness(0) invert(1);">
                     </a>
-
-                    <div class="ks-selector mb-2">
-                        <span>English</span>
-                        <i class="ti ti-chevron-down"></i>
-                    </div>
-                    <div class="ks-selector">
-                        <span>$ US Dollar (USD)</span>
-                        <i class="ti ti-chevron-down"></i>
-                    </div>
+                    @if(empty($allowedCountriesForCurrency))
+                        <div class="ks-selector ks-selector--readonly">
+                            <span>{{ $currentLocalSym }} {{ $currentLocalCode }}</span>
+                        </div>
+                    @else
+                        <div class="footer-currency-wrap">
+                            <label class="visually-hidden" for="footer-currency-country">{{ __('Allowed countries') }}</label>
+                            <select
+                                id="footer-currency-country"
+                                class="ks-selector ks-selector-select"
+                                data-url="{{ route('update.user.currency') }}"
+                                aria-label="{{ __('Select allowed country') }}"
+                            >
+                                @foreach($allowedCountriesForCurrency as $countryName)
+                                    @php
+                                        $cc = getCurrencyCodeForCountryName($countryName);
+                                        $sym = \App\Services\CurrencyService::getSymbolForCode($cc);
+                                    @endphp
+                                    <option
+                                        value="{{ $countryName }}"
+                                        title="{{ $sym }} {{ $cc }}"
+                                        @selected($selectedCountryForFooter === $countryName)
+                                    >{{ $countryName }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @endif
                 </div>
             </div>
 
@@ -134,6 +167,43 @@
     </div>
 </footer>
 
+@if(!empty($allowedCountriesForCurrency))
+<script>
+(function () {
+    var el = document.getElementById('footer-currency-country');
+    if (!el) return;
+    var url = el.getAttribute('data-url');
+    var prev = el.value;
+    el.addEventListener('change', function () {
+        var country = this.value;
+        var tokenMeta = document.querySelector('meta[name="csrf-token"]');
+        var token = tokenMeta ? tokenMeta.getAttribute('content') : '';
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': token,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({ country: country })
+        }).then(function (r) { return r.json(); }).then(function (data) {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.message || 'Error');
+                el.value = prev;
+            }
+        }).catch(function () {
+            alert('Network error');
+            el.value = prev;
+        });
+    });
+})();
+</script>
+@endif
+
 @if(!empty($whatsappChatbotNumber))
 <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $whatsappChatbotNumber) }}" target="_blank" class="whatsapp-chatbot-fab" title="Chat with us">
     <i class="fab fa-whatsapp"></i>
@@ -181,10 +251,50 @@
     justify-content: space-between;
     align-items: center;
     font-size: 14px;
-    max-width: 200px;
+    max-width: 280px;
     cursor: pointer;
 }
+.ks-selector--readonly {
+    cursor: default;
+    opacity: 0.95;
+}
+.ks-selector-select {
+    width: 100%;
+    max-width: 280px;
+    background: #000;
+    color: #fff;
+    border: 1px solid #333;
+    appearance: auto;
+    cursor: pointer;
+}
+.ks-selector-select:focus {
+    outline: 2px solid #666;
+    outline-offset: 2px;
+}
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
 
+.footer-currency-wrap {
+    max-width: 280px;
+}
+.footer-currency-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #999;
+    margin-bottom: 6px;
+}
 .ks-huge-branding {
     padding: 60px 0;
     text-align: center;

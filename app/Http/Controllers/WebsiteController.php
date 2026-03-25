@@ -21,6 +21,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Request;
 
 class WebsiteController extends Controller
 {
@@ -273,6 +274,78 @@ class WebsiteController extends Controller
         }
 
         return view($this->activeTheme . 'page.campaign', compact('pageTitle', 'categories', 'campaigns', 'category', 'pageSEO'));
+    }
+
+    /**
+     * Load more campaigns for infinite scroll (AJAX).
+     * Supports same filters as campaigns/campaignCategory.
+     */
+    function loadMoreCampaigns()
+    {
+        $page = max(1, (int) request('page', 1));
+        $perPage = getPaginate(10);
+
+        // Resolve category filter: category_slug for /campaigns/category/{slug} pages
+        $category = null;
+        $categoryIds = [];
+        $categorySlug = request('category_slug');
+
+        if ($categorySlug) {
+            $headerCategory = HeaderCategory::where('slug', $categorySlug)->where('status', 'active')->first();
+            if ($headerCategory) {
+                $categoryIds = $headerCategory->getCategoryIdsForFilter();
+            }
+            if (empty($categoryIds)) {
+                $footerCategory = FooterCategory::where('slug', $categorySlug)->where('status', 'active')->first();
+                if ($footerCategory) {
+                    $categoryIds = $footerCategory->getCategoryIdsForFilter();
+                }
+            }
+            if (empty($categoryIds)) {
+                $category = Category::where('slug', $categorySlug)->active()->first();
+            }
+        } elseif (request()->filled('category')) {
+            $category = Category::where('slug', request('category'))->active()->first();
+        }
+
+        $query = Campaign::query()
+            ->when(!empty($categoryIds), fn ($q) => $q->whereIn('category_id', $categoryIds))
+            ->when($category && empty($categoryIds), fn ($q) => $q->where('category_id', $category->id))
+            ->when(request()->filled('category') && $category, fn ($q) => $q->where('category_id', $category->id))
+            ->when(request()->filled('name'), fn ($q) => $q->where('name', 'like', '%' . request('name') . '%'))
+            ->when(request()->filled('date_range'), function ($q) {
+                $dateArray = explode(' - ', request('date_range'));
+                $startDate = Carbon::parse($dateArray[0])->format('Y-m-d');
+                $endDate = Carbon::parse($dateArray[1])->format('Y-m-d');
+                $q->where('start_date', '>=', $startDate)->where('end_date', '<=', $endDate);
+            })
+            ->commonQuery()
+            ->approve()
+            ->running();
+
+        // Apply sort
+        $sort = request('sort', 'latest');
+        match ($sort) {
+            'oldest' => $query->oldest(),
+            'goal-high' => $query->orderByDesc('goal_amount'),
+            'goal-low' => $query->orderBy('goal_amount'),
+            'raised-high' => $query->orderByDesc('raised_amount'),
+            'raised-low' => $query->orderBy('raised_amount'),
+            default => $query->latest(),
+        };
+
+        $campaigns = $query->paginate($perPage, ['*'], 'page', $page);
+
+        $html = '';
+        foreach ($campaigns as $campaign) {
+            $html .= view(activeTheme() . 'partials.campaign-card-item', compact('campaign'))->render();
+        }
+
+        return response()->json([
+            'html' => $html,
+            'hasMore' => $campaigns->hasMorePages(),
+            'nextPage' => $campaigns->currentPage() + 1,
+        ]);
     }
 
     function campaignShow($slug) {
@@ -1303,6 +1376,40 @@ class WebsiteController extends Controller
             
             return response()->json(['success' => true, 'message' => 'All Countries selected']);
         }
+    }
+
+    /**
+     * Footer / local display currency: set session from Admin-allowed country → currency mapping.
+     * Skipped when TCUR is set in .env (site forces one currency).
+     */
+    public function updateUserCurrency(Request $request)
+    {
+        $request->validate([
+            'country' => 'required|string|max:120',
+        ]);
+
+        $allowed = getSiteAllowedCountryNames();
+        if (!in_array($request->country, $allowed, true)) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Invalid country.'),
+            ], 422);
+        }
+
+        $currencyCode = getCurrencyCodeForCountryName($request->country);
+        $symbol = \App\Services\CurrencyService::getSymbolForCode($currencyCode);
+
+        session()->put('user_detected_currency', $currencyCode);
+        session()->put('user_detected_symbol', $symbol);
+        session()->put('user_detected_country', $request->country);
+        session()->put('user_currency_manual', true);
+        session()->save();
+
+        return response()->json([
+            'success' => true,
+            'currency_code' => $currencyCode,
+            'currency_symbol' => $symbol,
+        ]);
     }
 
     public function help()

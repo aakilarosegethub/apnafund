@@ -10,10 +10,12 @@ use App\Http\Controllers\Api\FundController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\FundUpdateController;
+use App\Http\Controllers\Api\CampaignManageApiController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\DonateController;
 use App\Http\Controllers\Api\WithdrawController;
 use App\Http\Controllers\Api\WalletController;
+use App\Http\Controllers\Api\CurrencyInfoController;
 use Illuminate\Support\Facades\Cookie;
 
 // Beta landing page logic
@@ -37,6 +39,45 @@ Route::post('/beta/start', function (\Illuminate\Http\Request $request) {
 Route::get('/csrf-token', function () {
     return response()->json(['token' => csrf_token()]);
 })->name('csrf.token');
+
+// Debug currency detection (live: ?key=YOUR_SECRET from .env DEBUG_CURRENCY_KEY)
+Route::get('/debug-currency', function () {
+    $key = request('key');
+    if ($key !== env('DEBUG_CURRENCY_KEY') && !config('app.debug')) {
+        return response()->json(['error' => 'Forbidden'], 403);
+    }
+    $ip = request()->ip();
+    $ipHeaders = ['HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'HTTP_CLIENT_IP', 'REMOTE_ADDR'];
+    $resolvedIp = $ip;
+    foreach ($ipHeaders as $h) {
+        if (!empty($_SERVER[$h])) {
+            $resolvedIp = trim(explode(',', (string)($_SERVER[$h] ?? ''))[0]);
+            if ($resolvedIp && !in_array($resolvedIp, ['127.0.0.1', '::1', 'localhost'])) break;
+        }
+    }
+    $tcur = config('app.currency');
+    $hasTable = \Illuminate\Support\Facades\Schema::hasTable('ip_currency_cache');
+    $dbRow = $hasTable ? \Illuminate\Support\Facades\DB::table('ip_currency_cache')->where('ip', $resolvedIp)->first() : null;
+    $geo = function_exists('getIpGeoData') ? getIpGeoData($resolvedIp) : null;
+    $data = function_exists('getOrFetchIpCurrencyData') ? getOrFetchIpCurrencyData($resolvedIp) : null;
+    $setting = \App\Models\Setting::first();
+    return response()->json([
+        'ip_raw' => $ip,
+        'ip_resolved' => $resolvedIp,
+        'ip_likely_localhost' => in_array($resolvedIp, ['127.0.0.1', '::1', 'localhost']),
+        'tcur_env' => env('TCUR'),
+        'config_app_currency' => $tcur,
+        'session_currency' => session('user_detected_currency'),
+        'session_symbol' => session('user_detected_symbol'),
+        'session_country' => session('user_detected_country'),
+        'ip_currency_cache_exists' => $hasTable,
+        'db_row_for_ip' => $dbRow ? ['currency_code' => $dbRow->currency_code, 'country_name' => $dbRow->country_name, 'refreshed_at' => $dbRow->refreshed_at] : null,
+        'getIpGeoData_result' => $geo,
+        'getOrFetchIpCurrencyData_result' => $data,
+        'setting_cur_sym' => $setting?->cur_sym ?? null,
+        'setting_site_cur' => $setting?->site_cur ?? null,
+    ], 200, ['Content-Type' => 'application/json'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+})->name('debug.currency');
 
 // API routes for email verification (no CSRF required)
 Route::post('/api/verify-email', 'App\Http\Controllers\User\AuthorizationController@emailVerificationApi')->name('api.verify.email');
@@ -62,8 +103,9 @@ Route::controller('WebsiteController')->group(function () {
     })->name('about.redirect');
     Route::get('faq', 'faq')->name('faq');
     Route::get('creators', 'creators')->name('creators');
+    Route::get('campaigns/load-more', 'loadMoreCampaigns')->name('campaign.load-more');
     Route::get('campaigns', 'campaigns')->name('campaign');
-        Route::get('campaigns/category/{slug}', 'campaignCategory')->name('campaign.category');
+    Route::get('campaigns/category/{slug}', 'campaignCategory')->name('campaign.category');
 
     // Campaign 
     Route::prefix('campaign/{slug}')->name('campaign.')->group(function () {
@@ -141,6 +183,7 @@ Route::controller('WebsiteController')->group(function () {
 
     // Update user country in session
     Route::post('/update-user-country', [App\Http\Controllers\WebsiteController::class, 'updateUserCountry'])->name('update.user.country');
+    Route::post('/update-user-currency', [App\Http\Controllers\WebsiteController::class, 'updateUserCurrency'])->name('update.user.currency');
 });
 
 // Redirect /page/about to /about-us
@@ -304,6 +347,7 @@ Route::prefix('api')->group(function () {
     Route::match(['get', 'post'], '/catwisefund.php', [FundController::class, 'categoryWiseFund']);
     Route::match(['get', 'post'], '/search_fund.php', [FundController::class, 'searchFund']);
     Route::match(['get', 'post'], '/fundidwise.php', [FundController::class, 'fundById']);
+    Route::match(['get', 'post'], '/currency_info.php', [CurrencyInfoController::class, 'index']);
     Route::match(['get', 'post'], '/catlist.php', [CategoryController::class, 'categoryList']);
     Route::match(['get', 'post'], '/charitylist.php', [CategoryController::class, 'charityList']);
     Route::match(['get', 'post'], '/faq.php', [FaqController::class, 'faqList']);
@@ -335,6 +379,12 @@ Route::prefix('api')->group(function () {
         // Fund APIs
         Route::match(['get', 'post'], '/fundlist.php', [FundController::class, 'fundList']);
         Route::match(['get', 'post'], '/fundraise.php', [FundController::class, 'fundRaise']);
+
+        // Campaign story, rewards, FAQ, backer updates (op=...; campaign_id|fund_id|slug)
+        Route::match(['get', 'post'], '/campaign_story.php', [CampaignManageApiController::class, 'story']);
+        Route::match(['get', 'post'], '/campaign_rewards.php', [CampaignManageApiController::class, 'rewards']);
+        Route::match(['get', 'post'], '/campaign_faq.php', [CampaignManageApiController::class, 'faqs']);
+        Route::match(['get', 'post'], '/campaign_post_updates.php', [CampaignManageApiController::class, 'postUpdates']);
 
         // Fund Update APIs
         Route::match(['get', 'post'], '/fund_update.php', [FundUpdateController::class, 'fundUpdate']);

@@ -17,15 +17,19 @@ class Setting extends Model
     }
 
     /**
-     * Site currency - TCUR > IP-detected > DB. When TCUR not set, uses session(user_detected_currency) from IP.
+     * Site currency for display - TCUR > session > DB.
      */
     public function getSiteCurAttribute($value)
     {
-        return config('app.currency') ?: (session('user_detected_currency') ?: ($value ?? 'USD'));
+        if (config('app.currency')) {
+            return config('app.currency');
+        }
+
+        return session('user_detected_currency') ?: ($value ?? 'USD');
     }
 
     /**
-     * Currency symbol - TCUR > IP-detected (from DB cache) > DB. When TCUR not set, uses session user_detected_symbol.
+     * Currency symbol for display - TCUR > session > DB.
      */
     public function getCurSymAttribute($value)
     {
