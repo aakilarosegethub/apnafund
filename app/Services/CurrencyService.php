@@ -242,7 +242,7 @@ class CurrencyService
     {
         $map = [
             'USD' => '$', 'PKR' => 'Rs', 'EUR' => '€', 'GBP' => '£',
-            'INR' => '₹', 'SAR' => '﷼', 'AED' => 'د.إ', 'TRY' => '₺',
+            'INR' => '₹', 'SAR' => '﷼', 'AED' => 'د.إ', 'QAR' => 'QR', 'TRY' => '₺',
             'CAD' => 'C$', 'AUD' => 'A$', 'NZD' => 'NZ$', 'SEK' => 'kr',
             'NOK' => 'kr', 'DKK' => 'kr', 'CHF' => 'CHF', 'JPY' => '¥',
             'CNY' => '¥', 'HKD' => 'HK$', 'SGD' => 'S$', 'MYR' => 'RM',
