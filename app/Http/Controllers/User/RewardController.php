@@ -87,6 +87,7 @@ class RewardController extends Controller
                 'color_theme' => 'nullable|string',
                 'terms_conditions' => 'nullable|string',
                 'image' => ['nullable', File::types(['png', 'jpg', 'jpeg', 'gif', 'webp'])->max(5120)],
+                'reward_tab_type' => 'nullable|in:items,tiers,addons',
             ], [
                 'title.required' => 'Reward title is required',
                 'title.max' => 'Reward title cannot exceed 255 characters',
@@ -99,6 +100,7 @@ class RewardController extends Controller
                 'quantity.min' => 'Quantity must be at least 1',
                 'type.in' => 'Reward type must be either digital or physical',
                 'image.max' => 'Image size must be less than 5MB',
+                'reward_tab_type.in' => 'Reward tab type must be items, tiers, or addons',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             if ($request->ajax() || $request->wantsJson()) {
@@ -120,6 +122,7 @@ class RewardController extends Controller
         $reward->type = $request->type ?? 'physical'; // Default to physical
         $reward->color_theme = $request->color_theme ?? 'primary'; // Default to primary
         $reward->terms_conditions = $request->terms_conditions;
+        $reward->reward_tab_type = $request->reward_tab_type ?? 'items';
 
         if ($request->hasFile('image')) {
             try {
@@ -242,7 +245,8 @@ class RewardController extends Controller
                     'color_theme' => $reward->color_theme,
                     'terms_conditions' => $reward->terms_conditions,
                     'image' => $reward->image,
-                    'image_url' => $imageUrl
+                    'image_url' => $imageUrl,
+                    'reward_tab_type' => $reward->reward_tab_type
                 ]
             ]);
         }
@@ -274,6 +278,7 @@ class RewardController extends Controller
                 'color_theme' => 'nullable|string',
                 'terms_conditions' => 'nullable|string',
                 'image' => ['nullable', File::types(['png', 'jpg', 'jpeg', 'gif', 'webp'])->max(5120)],
+                'reward_tab_type' => 'nullable|in:items,tiers,addons',
             ], [
                 'title.required' => 'Reward title is required',
                 'title.max' => 'Reward title cannot exceed 255 characters',
@@ -286,6 +291,7 @@ class RewardController extends Controller
                 'quantity.min' => 'Quantity must be at least 1',
                 'type.in' => 'Reward type must be either digital or physical',
                 'image.max' => 'Image size must be less than 5MB',
+                'reward_tab_type.in' => 'Reward tab type must be items, tiers, or addons',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             if ($request->ajax() || $request->wantsJson()) {
@@ -305,6 +311,7 @@ class RewardController extends Controller
         $reward->type = $request->type ?? $reward->type ?? 'physical'; // Keep existing or default
         $reward->color_theme = $request->color_theme ?? $reward->color_theme ?? 'primary'; // Keep existing or default
         $reward->terms_conditions = $request->terms_conditions;
+        $reward->reward_tab_type = $request->reward_tab_type ?? $reward->reward_tab_type ?? 'items';
 
         if ($request->hasFile('image')) {
             try {

@@ -355,6 +355,7 @@ Route::prefix('api')->group(function () {
     Route::match(['get', 'post'], '/paymentgateway.php', [PaymentController::class, 'paymentGatewayList']);
     Route::get('/gateways', [PaymentController::class, 'gateways']);
     Route::match(['get', 'post'], '/payment/webview-url', [PaymentController::class, 'webviewUrl']);
+    Route::post('/payment/manual-proof', [PaymentController::class, 'manualProof']);
 
     // Auth APIs (Public - No token required for login/register)
     Route::match(['get', 'post'], '/reg_user.php', [AuthController::class, 'register']);
@@ -385,6 +386,8 @@ Route::prefix('api')->group(function () {
         Route::match(['get', 'post'], '/campaign_rewards.php', [CampaignManageApiController::class, 'rewards']);
         Route::match(['get', 'post'], '/campaign_faq.php', [CampaignManageApiController::class, 'faqs']);
         Route::match(['get', 'post'], '/campaign_post_updates.php', [CampaignManageApiController::class, 'postUpdates']);
+        Route::match(['get', 'post'], '/campaign_required_documents.php', [CampaignManageApiController::class, 'requiredDocuments']);
+        Route::post('/campaign_required_documents_submit.php', [CampaignManageApiController::class, 'submitRequiredDocuments']);
 
         // Fund Update APIs
         Route::match(['get', 'post'], '/fund_update.php', [FundUpdateController::class, 'fundUpdate']);

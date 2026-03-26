@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Models\Campaign;
 use App\Models\Deposit;
 use App\Models\Gateway;
+use App\Models\AdminNotification;
 use App\Models\GatewayCurrency;
 use App\Constants\ManageStatus;
 use Illuminate\Http\Request;
@@ -328,6 +329,78 @@ class PaymentController extends BaseApiController
             'payment_url'  => $paymentUrl,
             'trx'          => $deposit->trx,
             'gateway_type' => 'automated',
+        ]);
+    }
+
+    /**
+     * Submit manual gateway payment proof from mobile app.
+     * POST /api/payment/manual-proof
+     */
+    public function manualProof(Request $request): JsonResponse
+    {
+        $request->validate([
+            'trx'           => 'required|string|max:191',
+            'payment_proof' => 'required|file|mimes:jpeg,jpg,png,pdf,webp|max:5120',
+            'note'          => 'nullable|string|max:1000',
+        ]);
+
+        $deposit = Deposit::with(['gateway', 'campaign', 'user'])
+            ->where('trx', $request->trx)
+            ->whereIn('status', [ManageStatus::PAYMENT_INITIATE, ManageStatus::PAYMENT_PENDING])
+            ->first();
+
+        if (!$deposit) {
+            return response()->json([
+                'Result' => 'false',
+                'ResponseCode' => '404',
+                'ResponseMsg' => 'Transaction not found',
+            ], 404);
+        }
+
+        if ((int) $deposit->method_code < 1000) {
+            return response()->json([
+                'Result' => 'false',
+                'ResponseCode' => '400',
+                'ResponseMsg' => 'This transaction is not a manual gateway payment',
+            ], 400);
+        }
+
+        $directory = date('Y') . '/' . date('m') . '/' . date('d');
+        $path = getFilePath('verify') . '/' . $directory;
+        $value = $directory . '/' . fileUploader($request->file('payment_proof'), $path);
+
+        $details = [
+            [
+                'name'  => __('Payment proof'),
+                'type'  => 'file',
+                'value' => $value,
+            ],
+        ];
+
+        if ($request->filled('note')) {
+            $details[] = [
+                'name'  => __('Note'),
+                'type'  => 'textarea',
+                'value' => (string) $request->note,
+            ];
+        }
+
+        $deposit->details = $details;
+        $deposit->status = ManageStatus::PAYMENT_PENDING;
+        $deposit->save();
+
+        $adminNotification = new AdminNotification();
+        $adminNotification->user_id = $deposit->user->id ?? 0;
+        $adminNotification->title = 'Payment proof submitted — ' . ($deposit->full_name ?? $deposit->email ?? 'Guest') . ' — ' . ($deposit->campaign->name ?? 'Campaign');
+        $adminNotification->click_url = urlPath('admin.donations.pending');
+        $adminNotification->save();
+
+        return response()->json([
+            'Result' => 'true',
+            'ResponseCode' => '200',
+            'ResponseMsg' => 'Payment proof submitted successfully',
+            'trx' => $deposit->trx,
+            'status' => 'pending_approval',
         ]);
     }
 }

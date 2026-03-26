@@ -672,7 +672,7 @@ function getCampaignRequiredDocuments(): array
  * @param bool $onlyActive
  * @return array<int, array{id:string,field_key:string,label:string,is_required:bool,is_active:bool}>
  */
-function getCampaignDocumentRequirements(bool $onlyActive = true): array
+function getCampaignDocumentRequirements(bool $onlyActive = true, ?string $countryName = null): array
 {
     $defaults = [
         [
@@ -681,6 +681,8 @@ function getCampaignDocumentRequirements(bool $onlyActive = true): array
             'label' => 'CNIC Front Copy',
             'is_required' => true,
             'is_active' => true,
+            'is_global' => true,
+            'countries' => [],
         ],
         [
             'id' => 'default-cnic-back',
@@ -688,6 +690,8 @@ function getCampaignDocumentRequirements(bool $onlyActive = true): array
             'label' => 'CNIC Back Copy',
             'is_required' => true,
             'is_active' => true,
+            'is_global' => true,
+            'countries' => [],
         ],
         [
             'id' => 'default-supporting-doc',
@@ -695,6 +699,8 @@ function getCampaignDocumentRequirements(bool $onlyActive = true): array
             'label' => 'Business Registration / Supporting Document',
             'is_required' => false,
             'is_active' => true,
+            'is_global' => true,
+            'countries' => [],
         ],
     ];
 
@@ -715,6 +721,8 @@ function getCampaignDocumentRequirements(bool $onlyActive = true): array
             'label' => (string) $row->label,
             'is_required' => (bool) $row->is_required,
             'is_active' => (bool) $row->is_active,
+            'is_global' => (bool) ($row->is_global ?? true),
+            'countries' => array_values(array_filter((array) ($row->countries ?? []))),
         ];
     })->all();
 
@@ -725,6 +733,20 @@ function getCampaignDocumentRequirements(bool $onlyActive = true): array
     if ($onlyActive) {
         $normalized = array_values(array_filter($normalized, function ($item) {
             return !empty($item['is_active']);
+        }));
+    }
+
+    if ($countryName !== null && trim($countryName) !== '') {
+        $targetCountry = strtolower(trim($countryName));
+        $normalized = array_values(array_filter($normalized, function ($item) use ($targetCountry) {
+            if (!empty($item['is_global'])) {
+                return true;
+            }
+            $countries = array_map(function ($c) {
+                return strtolower(trim((string) $c));
+            }, (array) ($item['countries'] ?? []));
+
+            return in_array($targetCountry, $countries, true);
         }));
     }
 

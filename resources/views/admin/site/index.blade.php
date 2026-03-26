@@ -134,10 +134,10 @@
                                                 <div class="col-12">
                                                     <div class="row g-2 align-items-center">
                                                         <div class="col-lg-3">
-                                                            <label class="form--label required">{{ __(keyToTitle($k)) }}</label>
+                                                            <label class="form--label {{ ($key == 'contact_us' && in_array($k, ['latitude', 'longitude'])) ? '' : 'required' }}">{{ __(keyToTitle($k)) }}</label>
                                                         </div>
                                                         <div class="col-lg-9">
-                                                            <input type="text" class="form--control" name="{{ $k }}" value="{{ @$content->data_info[$k] ?? '' }}" required>
+                                                            <input type="text" class="form--control" name="{{ $k }}" value="{{ @$content->data_info[$k] ?? '' }}" {{ ($key == 'contact_us' && in_array($k, ['latitude', 'longitude'])) ? '' : 'required' }}>
                                                         </div>
                                                     </div>
                                                 </div>

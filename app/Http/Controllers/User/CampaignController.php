@@ -674,6 +674,8 @@ class CampaignController extends Controller
                 $section = 'story';
             } elseif (strpos($routeName, 'people') !== false) {
                 $section = 'people';
+            } elseif (strpos($routeName, 'documents') !== false) {
+                $section = 'documents';
             } elseif (strpos($routeName, 'payment') !== false) {
                 $section = 'payment';
             } elseif (strpos($routeName, 'boost') !== false) {
@@ -719,7 +721,17 @@ class CampaignController extends Controller
                 $collaborators = $campaign->collaborators()->with('user')->get();
             }
 
-            return view($this->activeTheme . 'user.campaign.edit', compact('pageTitle', 'categories', 'campaign', 'section', 'rewards', 'faqs', 'updates', 'payoutBanks', 'collaborators'));
+            // Creator currency for Funding Goal (basics) - enter in local, stored in platform
+            $currencyService = app(\App\Services\CurrencyService::class);
+            $creatorCurrency = $currencyService->detectCurrencyCode($campaign->user ?? auth()->user());
+            $creatorSymbol = \App\Services\CurrencyService::getSymbolForCode($creatorCurrency);
+            $goalAmountInCreatorCurrency = $currencyService->convertFromPlatform((float) $campaign->goal_amount, $creatorCurrency);
+            $platformCurrency = getPlatformCurrency();
+            $platformSymbol = \App\Services\CurrencyService::getSymbolForCode($platformCurrency);
+            $rateCreatorToPlatform = $currencyService->convertToPlatform(1, $creatorCurrency);
+            $showRealtimeConversion = request('test') == '1';
+
+            return view($this->activeTheme . 'user.campaign.edit', compact('pageTitle', 'categories', 'campaign', 'section', 'rewards', 'faqs', 'updates', 'payoutBanks', 'collaborators', 'creatorCurrency', 'creatorSymbol', 'goalAmountInCreatorCurrency', 'platformCurrency', 'platformSymbol', 'rateCreatorToPlatform', 'showRealtimeConversion'));
         } catch (\Exception $e) {
             $toast[] = ['error', 'Error loading campaign: ' . $e->getMessage()];
             return back()->withToasts($toast);
@@ -916,6 +928,34 @@ class CampaignController extends Controller
                     'description.required' => 'The story description field is required.',
                     'description.min' => 'The story description must be at least 30 characters.',
                 ]);
+            } elseif ($section == 'documents') {
+                // Documents section - dynamic admin-defined document fields
+                $campaignForDocs = Campaign::find($id);
+                $docCountry = optional(optional($campaignForDocs)->user)->country_name
+                    ?: auth()->user()->country_name
+                    ?: session('user_detected_country');
+                $documentRequirements = getCampaignDocumentRequirements(true, $docCountry);
+                $existingDocs = is_array(optional($campaignForDocs)->verification_documents) ? $campaignForDocs->verification_documents : [];
+                $rules = [];
+
+                foreach ($documentRequirements as $docItem) {
+                    $fieldKey = $docItem['field_key'] ?? null;
+                    $isRequired = !empty($docItem['is_required']);
+                    if (!$fieldKey) {
+                        continue;
+                    }
+
+                    $key = 'documents.' . $fieldKey;
+                    $base = 'file|mimes:pdf,jpg,jpeg,png,webp|max:10240';
+                    $alreadyUploaded = !empty($existingDocs[$fieldKey]);
+                    $rules[$key] = ($isRequired && !$alreadyUploaded) ? 'required|' . $base : 'nullable|' . $base;
+                }
+
+                $this->validate(request(), $rules, [
+                    'documents.*.required' => 'This document is required.',
+                    'documents.*.mimes' => 'Document must be PDF/JPG/JPEG/PNG/WEBP.',
+                    'documents.*.max' => 'Document size must be under 10 MB.',
+                ]);
             } else {
                 // Basics section - all fields required
                 $daysLimit = getCampaignDaysLimit();
@@ -1004,6 +1044,8 @@ class CampaignController extends Controller
                 // Story section - only update description
                 $purifier = new HTMLPurifier();
                 $campaign->description = request('description');
+            } elseif ($section == 'documents') {
+                // Documents section only uploads files; no basics fields update needed
             } else {
                 // Basics section - update all fields
                 $category = Category::where('id', request('category_id'))->active()->first();
@@ -1025,7 +1067,10 @@ class CampaignController extends Controller
                 $campaign->location    = request('location');
                 $purifier              = new HTMLPurifier();
                 $campaign->short_description = request('short_description');
-                $campaign->goal_amount = request('goal_amount');
+                $goalAmountRaw = (float) request('goal_amount', 0);
+                $currencyService = app(\App\Services\CurrencyService::class);
+                $inputCurrency = request('input_currency') ?: $currencyService->detectCurrencyCode($campaign->user ?? auth()->user());
+                $campaign->goal_amount = $currencyService->convertToPlatform($goalAmountRaw, $inputCurrency);
                 $campaign->start_date  = Carbon::parse(request('start_date'));
                 $campaign->end_date    = Carbon::parse(request('end_date'));
             }
@@ -1276,12 +1321,38 @@ class CampaignController extends Controller
                 }
             }
 
+            // Upload/replace dynamic verification documents from Documents section
+            if ($section == 'documents') {
+                $docCountry = optional($campaign->user)->country_name
+                    ?: auth()->user()->country_name
+                    ?: session('user_detected_country');
+                $documentRequirements = getCampaignDocumentRequirements(true, $docCountry);
+                $existingDocs = is_array($campaign->verification_documents) ? $campaign->verification_documents : [];
+
+                foreach ($documentRequirements as $docItem) {
+                    $fieldKey = $docItem['field_key'] ?? null;
+                    if (!$fieldKey || !request()->hasFile('documents.' . $fieldKey)) {
+                        continue;
+                    }
+
+                    $oldFile = $existingDocs[$fieldKey] ?? null;
+                    $existingDocs[$fieldKey] = fileUploader(
+                        request()->file('documents.' . $fieldKey),
+                        getFilePath('document'),
+                        getFileSize('document'),
+                        $oldFile
+                    );
+                }
+
+                $campaign->verification_documents = $existingDocs;
+            }
+
             $campaign->save();
             
             // Redirect based on section and next_tab parameter
             $nextTab = request('next_tab');
             
-            if ($nextTab && in_array($nextTab, ['basics', 'story', 'reward', 'people', 'payment', 'boost', 'faq', 'updates'])) {
+            if ($nextTab && in_array($nextTab, ['basics', 'story', 'reward', 'people', 'documents', 'payment', 'boost', 'faq', 'updates'])) {
                 // Redirect to next tab if specified
                 $redirectRoute = 'user.campaign.edit.' . $nextTab;
             } elseif ($section == 'story') {

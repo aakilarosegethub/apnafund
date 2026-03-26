@@ -131,7 +131,13 @@ class SiteController extends Controller
         $imgJson           = @getPageSections()->$key->$type->images;
         $validationRule    = [];
         $validationMessage = [];
-        $excludeFromValidation = ['_token', 'video', 'key', 'status', 'type', 'id', 'image_url', 'seo_meta_title', 'seo_meta_description', 'seo_meta_keywords', 'sort_order'];
+        $excludeFromValidation = [
+            '_token', 'video', 'key', 'status', 'type', 'id', 'image_url', 'sort_order',
+            // SEO helper fields shown on same page; they are saved separately below.
+            'seo_meta_title', 'seo_meta_description', 'seo_meta_keywords',
+            'seo_meta_author', 'seo_meta_robots', 'seo_canonical_url',
+            'seo_meta_viewport', 'seo_meta_charset',
+        ];
         
         // For page_seo, schema_markup, footer_menu, and dynamic_pages, don't exclude slug from validation
         if ($key != 'page_seo' && $key != 'schema_markup' && $key != 'footer_menu' && $key != 'dynamic_pages') {
@@ -227,6 +233,12 @@ class SiteController extends Controller
             if ($key == 'footer' && $type == 'content' && $keyName == 'footer_text') {
                 // Allow empty string for footer_text
                 $inputContentValue[$keyName] = $input === null ? '' : htmlspecialchars_decode($purifier->purify($input));
+                continue;
+            }
+
+            // For contact_us section, always persist latitude/longitude (including empty values).
+            if ($key == 'contact_us' && $type == 'content' && in_array($keyName, ['latitude', 'longitude'], true)) {
+                $inputContentValue[$keyName] = $input === null ? '' : trim((string) $input);
                 continue;
             }
             

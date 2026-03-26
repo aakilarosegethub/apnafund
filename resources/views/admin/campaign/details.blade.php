@@ -266,6 +266,40 @@
             </div>
         </div>
 
+        <div class="custom--card h-auto mb-4">
+            <div class="card-header">
+                <h3 class="title">@lang('Verification Documents')</h3>
+            </div>
+            <div class="card-body">
+                @php
+                    $requirements = getCampaignDocumentRequirements(true, optional($campaign->user)->country_name);
+                    $verificationDocs = is_array($campaign->verification_documents ?? null) ? $campaign->verification_documents : [];
+                @endphp
+                <div class="row g-3">
+                    @foreach($requirements as $item)
+                        @php $file = $verificationDocs[$item['field_key']] ?? null; @endphp
+                        <div class="col-12">
+                            <strong>{{ $item['label'] }}</strong>
+                            @if(!empty($item['is_required']))
+                                <span class="badge badge--danger ms-1">@lang('Required')</span>
+                            @else
+                                <span class="badge badge--warning ms-1">@lang('Optional')</span>
+                            @endif
+                            @if($file)
+                                <div class="mt-2">
+                                    <a href="{{ asset(getFilePath('document') . '/' . $file) }}" target="_blank" class="btn btn--sm btn--base">
+                                        @lang('Open File')
+                                    </a>
+                                </div>
+                            @else
+                                <p class="text-muted mt-2 mb-0">@lang('Not uploaded')</p>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+
         @if($campaign->document)
             <div class="custom--card h-auto">
                 <div class="card-header">

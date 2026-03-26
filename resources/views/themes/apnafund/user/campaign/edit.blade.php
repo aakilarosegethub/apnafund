@@ -421,6 +421,7 @@
             <a href="{{ route('user.campaign.edit.reward', $campaign->slug) }}" class="{{ ($section ?? 'basics') == 'reward' ? 'active' : '' }}">Rewards</a>
             <a href="{{ route('user.campaign.edit.story', $campaign->slug) }}" class="{{ ($section ?? 'basics') == 'story' ? 'active' : '' }}">Story</a>
             <a href="{{ route('user.campaign.edit.people', $campaign->slug) }}" class="{{ ($section ?? 'basics') == 'people' ? 'active' : '' }}">People</a>
+            <a href="{{ route('user.campaign.edit.documents', $campaign->slug) }}" class="{{ ($section ?? 'basics') == 'documents' ? 'active' : '' }}">Documents</a>
             <a href="{{ route('user.campaign.edit.payment', $campaign->slug) }}" class="{{ ($section ?? 'basics') == 'payment' ? 'active' : '' }}">Payment</a>
             <a href="{{ route('user.campaign.edit.boost', $campaign->slug) }}" class="{{ ($section ?? 'basics') == 'boost' ? 'active' : '' }}">Boost</a>
             <a href="{{ route('user.campaign.edit.faq', $campaign->slug) }}" class="{{ ($section ?? 'basics') == 'faq' ? 'active' : '' }}">FAQ</a>
@@ -598,11 +599,24 @@
                     Set an achievable goal that covers what you need to complete your project.
                 </p>
 
-                <label>Goal amount *</label>
-                <input type="number" name="goal_amount" step="0.01" min="0" value="{{ old('goal_amount', $campaign->goal_amount) }}" placeholder="0.00" required>
+                <label>Goal amount ({{ $creatorSymbol ?? $setting->cur_sym }}) - Enter amount in {{ $creatorCurrency ?? 'USD' }} *</label>
+                <input type="number" name="goal_amount" id="goalAmountInput" step="0.01" min="0" value="{{ old('goal_amount', round($goalAmountInCreatorCurrency ?? $campaign->goal_amount, 2)) }}" placeholder="0.00" required>
+                <input type="hidden" name="input_currency" value="{{ $creatorCurrency ?? 'USD' }}">
                 @error('goal_amount')
                     <p class="note" style="color: red;">{{ $message }}</p>
                 @enderror
+
+                @if(!empty($showRealtimeConversion) && isset($rateCreatorToPlatform))
+                <div id="goalRealtimeConversion" style="margin-top:12px; padding:12px; background:#f0f9ff; border:1px solid #0ea5e9; border-radius:8px; font-size:14px;"
+                     data-rate="{{ $rateCreatorToPlatform ?? 1 }}"
+                     data-creator-sym="{{ $creatorSymbol ?? '$' }}"
+                     data-creator-code="{{ $creatorCurrency ?? 'USD' }}"
+                     data-platform-sym="{{ $platformSymbol ?? '$' }}"
+                     data-platform-code="{{ $platformCurrency ?? 'USD' }}">
+                    <div><strong>Real-time conversion:</strong> <span id="conversionResult">—</span></div>
+                    <div style="margin-top:6px; color:#0369a1;">Current rate: 1 {{ $creatorCurrency ?? 'USD' }} = {{ number_format($rateCreatorToPlatform ?? 1, 6) }} {{ $platformCurrency ?? 'USD' }}</div>
+                </div>
+                @endif
 
                 <div style="margin-top:18px; border-top:1px solid #eee; padding-top:18px;">
                     <img src="https://cdn-icons-png.flaticon.com/512/992/992651.png"
@@ -724,21 +738,67 @@
                 <h1>Create your rewards</h1>
                 
                 <div class="tabs" style="display: flex; gap: 30px; margin-bottom: 10px;">
-                    <button class="tab active" data-tab="items" style="font-size: 16px; color: #555; padding-bottom: 8px; cursor: pointer; border: none; background: none; font-weight: 600; color: #000;">Items</button>
-                    <button class="tab" data-tab="tiers" style="font-size: 16px; color: #555; padding-bottom: 8px; cursor: pointer; border: none; background: none;">Reward tiers</button>
-                    <button class="tab" data-tab="addons" style="font-size: 16px; color: #555; padding-bottom: 8px; cursor: pointer; border: none; background: none;">Add-ons</button>
+                    <button type="button" id="rewardTabItems" class="tab active" data-tab="items" onclick="window.switchRewardTab && window.switchRewardTab('items')" style="font-size: 16px; color: #555; padding-bottom: 8px; cursor: pointer; border: none; background: none; font-weight: 600; color: #000;">Items</button>
+                    <button type="button" id="rewardTabTiers" class="tab" data-tab="tiers" onclick="window.switchRewardTab && window.switchRewardTab('tiers')" style="font-size: 16px; color: #555; padding-bottom: 8px; cursor: pointer; border: none; background: none;">Reward tiers</button>
+                    <button type="button" id="rewardTabAddons" class="tab" data-tab="addons" onclick="window.switchRewardTab && window.switchRewardTab('addons')" style="font-size: 16px; color: #555; padding-bottom: 8px; cursor: pointer; border: none; background: none;">Add-ons</button>
                 </div>
                 
                 <div class="underline" style="width: 50px; height: 3px; background: black; margin-top: -6px; margin-bottom: 20px;"></div>
                 
-                <p class="desc" style="width: 70%; color: #444; line-height: 1.5; font-size: 15px;">
+                <p class="desc" id="rewardTabDescription" style="width: 70%; color: #444; line-height: 1.5; font-size: 15px;">
                     Including items in your rewards and add-ons makes it easy for backers to understand and 
                     compare your offerings. An item can be anything you plan to offer your backers. Some 
                     examples include playing cards, a digital copy of a book, a ticket to a play, or even a 
                     thank-you in your documentary.
                 </p>
                 
-                <a href="#" class="learn" style="color: #009b5b; text-decoration: none; font-size: 15px;">Learn about creating items</a>
+                <a href="#" id="rewardTabLearnLink" class="learn" style="color: #009b5b; text-decoration: none; font-size: 15px;">Learn about creating items</a>
+                <script>
+                    alert('OKK');
+                    (function () {
+                        const tabContentMap = {
+                            items: {
+                                text: "Including items in your rewards and add-ons makes it easy for backers to understand and compare your offerings. An item can be anything you plan to offer your backers. Some examples include playing cards, a digital copy of a book, a ticket to a play, or even a thank-you in your documentary.",
+                                link: "Learn about creating items",
+                                href: "/help#items"
+                            },
+                            tiers: {
+                                text: "Reward tiers let you bundle one or more items with a clear minimum pledge amount. Use tiers to present simple choices so backers can quickly pick the right reward level.",
+                                link: "Learn about reward tiers",
+                                href: "/help#reward-tiers"
+                            },
+                            addons: {
+                                text: "Add-ons are optional extras backers can select on top of their chosen reward tier. Use add-ons for upgrades, bonus merchandise, or limited extras to increase average pledge value.",
+                                link: "Learn about add-ons",
+                                href: "/help#add-ons"
+                            }
+                        };
+
+                        window.switchRewardTab = function (tabKey) {
+                            const tabTypeInput = document.getElementById('rewardTabType');
+                            if (tabTypeInput) tabTypeInput.value = tabKey || 'items';
+                            const map = tabContentMap[tabKey] || tabContentMap.items;
+                            const descEl = document.getElementById('rewardTabDescription');
+                            const linkEl = document.getElementById('rewardTabLearnLink');
+                            const tabs = document.querySelectorAll('#rewardsMainContent .tab');
+
+                            tabs.forEach(function (btn) {
+                                const active = btn.getAttribute('data-tab') === tabKey;
+                                btn.classList.toggle('active', active);
+                                btn.style.fontWeight = active ? '600' : '400';
+                                btn.style.color = active ? '#000' : '#555';
+                            });
+
+                            if (descEl) descEl.textContent = map.text;
+                            if (linkEl) {
+                                linkEl.textContent = map.link;
+                                linkEl.setAttribute('href', map.href || '#');
+                            }
+                        };
+
+                        window.switchRewardTab('items');
+                    })();
+                </script>
                 
                 <button class="new-item" id="newItemBtn" style="float: right; background: black; color: white; border: none; padding: 10px 18px; font-size: 15px; border-radius: 5px; cursor: pointer; margin-top: -60px;">+ New item</button>
                 
@@ -794,6 +854,7 @@
                     @csrf
                     <input type="hidden" id="rewardId" name="reward_id">
                     <input type="hidden" id="formAction" name="form_action" value="create">
+                    <input type="hidden" id="rewardTabType" name="reward_tab_type" value="items">
                     
                     <div class="input-group" style="margin-bottom: 25px;">
                         <label style="font-size: 15px; font-weight: 600; display: block; margin-bottom: 8px;">Item title *</label>
@@ -843,6 +904,7 @@
             </div>
 
             <script>
+                (function () {
                 // SHOW/HIDE LOGIC
                 const newItemBtn = document.getElementById('newItemBtn');
                 const rewardsMainContent = document.getElementById('rewardsMainContent');
@@ -851,14 +913,66 @@
                 const formTitle = document.getElementById('formTitle');
                 const formAction = document.getElementById('formAction');
                 const rewardId = document.getElementById('rewardId');
+                const tabsWrap = document.querySelector('#rewardsMainContent .tabs');
+                const tabDescription = document.getElementById('rewardTabDescription');
+                const tabLearnLink = document.getElementById('rewardTabLearnLink');
 
-                newItemBtn.addEventListener('click', function () {
-                    resetRewardForm();
-                    rewardsMainContent.style.display = "none";
-                    itemForm.style.display = "block";
-                    formTitle.textContent = "Add a new item";
-                    formAction.value = "create";
-                });
+                const rewardTabContent = {
+                    items: {
+                        description: "Including items in your rewards and add-ons makes it easy for backers to understand and compare your offerings. An item can be anything you plan to offer your backers. Some examples include playing cards, a digital copy of a book, a ticket to a play, or even a thank-you in your documentary.",
+                        linkText: "Learn about creating items",
+                        linkHref: "#"
+                    },
+                    tiers: {
+                        description: "Reward tiers let you bundle one or more items with a clear minimum pledge amount. Use tiers to present simple choices so backers can quickly pick the right reward level.",
+                        linkText: "Learn about reward tiers",
+                        linkHref: "#"
+                    },
+                    addons: {
+                        description: "Add-ons are optional extras backers can select on top of their chosen reward tier. Use add-ons for upgrades, bonus merchandise, or limited extras to increase average pledge value.",
+                        linkText: "Learn about add-ons",
+                        linkHref: "#"
+                    }
+                };
+
+                function activateRewardTab(tabKey) {
+                    const tabButtons = document.querySelectorAll('#rewardsMainContent .tab');
+                    tabButtons.forEach(function (btn) {
+                        const isActive = btn.getAttribute('data-tab') === tabKey;
+                        btn.classList.toggle('active', isActive);
+                        btn.style.fontWeight = isActive ? '600' : '400';
+                        btn.style.color = isActive ? '#000' : '#555';
+                    });
+
+                    const data = rewardTabContent[tabKey] || rewardTabContent.items;
+                    if (tabDescription) tabDescription.textContent = data.description;
+                    if (tabLearnLink) {
+                        tabLearnLink.textContent = data.linkText;
+                        tabLearnLink.setAttribute('href', data.linkHref);
+                    }
+                }
+
+                if (tabsWrap) {
+                    tabsWrap.addEventListener('click', function (e) {
+                        const btn = e.target.closest('.tab');
+                        if (!btn) return;
+                        e.preventDefault();
+                        e.stopPropagation();
+                        activateRewardTab(btn.getAttribute('data-tab') || 'items');
+                    });
+                }
+
+                activateRewardTab('items');
+
+                if (newItemBtn && rewardsMainContent && itemForm && formTitle && formAction) {
+                    newItemBtn.addEventListener('click', function () {
+                        resetRewardForm();
+                        rewardsMainContent.style.display = "none";
+                        itemForm.style.display = "block";
+                        formTitle.textContent = "Add a new item";
+                        formAction.value = "create";
+                    });
+                }
 
                 function cancelRewardForm() {
                     rewardsMainContent.style.display = "block";
@@ -867,10 +981,11 @@
                 }
 
                 function resetRewardForm() {
+                    if (!rewardForm) return;
                     rewardForm.reset();
                     document.getElementById('fileName').textContent = '';
                     document.getElementById('imagePreview').innerHTML = '';
-                    rewardId.value = '';
+                    if (rewardId) rewardId.value = '';
                 }
 
                 // UPLOAD FILE NAME DISPLAY & PREVIEW
@@ -878,24 +993,26 @@
                 const fileName = document.getElementById('fileName');
                 const imagePreview = document.getElementById('imagePreview');
 
-                fileInput.addEventListener('change', function () {
-                    if (this.files.length > 0) {
-                        fileName.textContent = "Selected file: " + this.files[0].name;
-                        
-                        // Show preview
-                        const reader = new FileReader();
-                        reader.onload = function(e) {
-                            imagePreview.innerHTML = '<img src="' + e.target.result + '" style="max-width: 200px; max-height: 200px; margin-top: 15px; border-radius: 5px; border: 1px solid #ddd;" alt="Preview">';
-                        };
-                        reader.readAsDataURL(this.files[0]);
-                    } else {
-                        fileName.textContent = '';
-                        imagePreview.innerHTML = '';
-                    }
-                });
+                if (fileInput && fileName && imagePreview) {
+                    fileInput.addEventListener('change', function () {
+                        if (this.files.length > 0) {
+                            fileName.textContent = "Selected file: " + this.files[0].name;
+                            
+                            // Show preview
+                            const reader = new FileReader();
+                            reader.onload = function(e) {
+                                imagePreview.innerHTML = '<img src="' + e.target.result + '" style="max-width: 200px; max-height: 200px; margin-top: 15px; border-radius: 5px; border: 1px solid #ddd;" alt="Preview">';
+                            };
+                            reader.readAsDataURL(this.files[0]);
+                        } else {
+                            fileName.textContent = '';
+                            imagePreview.innerHTML = '';
+                        }
+                    });
+                }
 
                 // FORM SUBMISSION
-                rewardForm.addEventListener('submit', function(e) {
+                if (rewardForm) rewardForm.addEventListener('submit', function(e) {
                     e.preventDefault();
                     
                     const formData = new FormData(this);
@@ -956,6 +1073,8 @@
                             document.getElementById('itemQuantity').value = reward.quantity || '';
                             document.getElementById('rewardId').value = reward.id;
                             formAction.value = 'edit';
+                            const tabTypeInput = document.getElementById('rewardTabType');
+                            if (tabTypeInput) tabTypeInput.value = reward.reward_tab_type || 'items';
                             formTitle.textContent = "Edit item";
                             
                             // Clear file input
@@ -1005,6 +1124,7 @@
                         alert('An error occurred. Please try again.');
                     });
                 }
+                })();
             </script>
             @endif
 
@@ -1036,6 +1156,60 @@
             <div class="box">
                 <p>People section content will be here. You can manage team members for your campaign.</p>
             </div>
+            @endif
+
+            @if($currentSection == 'documents')
+            <form action="{{ route('user.campaign.update', $campaign->id) }}" method="POST" enctype="multipart/form-data" id="documentsForm">
+                @csrf
+                <input type="hidden" name="section" value="documents">
+                <h1>Documents</h1>
+                <p class="subtitle">Upload verification documents for admin review and campaign approval.</p>
+                @php $requiredDocuments = getCampaignDocumentRequirements(true, auth()->user()->country_name ?? session('user_detected_country')); @endphp
+
+                <div class="box">
+                    <label>Required Documents (Admin Defined)</label>
+                    <ul style="margin: 10px 0 0 18px; color: #555;">
+                        @foreach($requiredDocuments as $docItem)
+                            <li style="margin-bottom: 6px;">
+                                {{ $docItem['label'] }}
+                                @if(!empty($docItem['is_required']))
+                                    <span style="color:#c00; font-size:12px;">(Required)</span>
+                                @else
+                                    <span style="color:#777; font-size:12px;">(Optional)</span>
+                                @endif
+                            </li>
+                        @endforeach
+                    </ul>
+                    <p class="note">Please upload these documents below. Admin will review them before campaign approval.</p>
+                </div>
+                @php
+                    $existingDocs = is_array($campaign->verification_documents ?? null) ? $campaign->verification_documents : [];
+                @endphp
+                @foreach($requiredDocuments as $docItem)
+                    @php $fieldKey = $docItem['field_key']; @endphp
+                    <div class="box">
+                        <label>{{ $docItem['label'] }} @if(!empty($docItem['is_required']))* @endif</label>
+                        @if(!empty($existingDocs[$fieldKey]))
+                            <p class="note" style="margin-bottom: 10px;">
+                                Existing file:
+                                <a href="{{ asset(getFilePath('document') . '/' . $existingDocs[$fieldKey]) }}" target="_blank">View current file</a>
+                            </p>
+                        @endif
+                        <input type="file" name="documents[{{ $fieldKey }}]" accept=".pdf,.jpg,.jpeg,.png,.webp">
+                        <p class="note">Allowed: PDF, JPG, JPEG, PNG, WEBP (max 10MB)</p>
+                        @error('documents.' . $fieldKey)
+                            <p class="note" style="color: red;">{{ $message }}</p>
+                        @enderror
+                    </div>
+                @endforeach
+
+                <div class="box" style="text-align: right; background: transparent; border: none; padding: 0; margin-top: 30px;">
+                    <input type="hidden" name="next_tab" value="payment">
+                    <button type="submit" class="btn btn-success" style="padding: 12px 40px; font-size: 16px; font-weight: 600; background: #16a34a; border: none; border-radius: 6px; cursor: pointer;">
+                        <i class="fas fa-save"></i> Save and Next
+                    </button>
+                </div>
+            </form>
             @endif
 
             @if($currentSection == 'payment')
@@ -1305,6 +1479,11 @@
                         if (storyForm) {
                             storyForm.submit();
                         }
+                    } else if (currentSection === 'documents') {
+                        const documentsForm = document.getElementById("documentsForm");
+                        if (documentsForm) {
+                            documentsForm.submit();
+                        }
                     } else if (currentSection === 'faq') {
                         const faqForm = document.getElementById("faqFormElement");
                         if (faqForm && document.getElementById("faqForm").style.display !== 'none') {
@@ -1328,6 +1507,32 @@
         })();
 
         @if($currentSection == 'basics')
+        // Real-time goal amount conversion (when ?test=1)
+        (function() {
+            const convDiv = document.getElementById("goalRealtimeConversion");
+            const goalInput = document.getElementById("goalAmountInput");
+            if (convDiv && goalInput) {
+                const rate = parseFloat(convDiv.dataset.rate) || 1;
+                const creatorSym = convDiv.dataset.creatorSym || '';
+                const platformSym = convDiv.dataset.platformSym || '';
+                const creatorCode = convDiv.dataset.creatorCode || '';
+                const platformCode = convDiv.dataset.platformCode || '';
+                const resultEl = document.getElementById("conversionResult");
+                function updateConversion() {
+                    const amount = parseFloat(goalInput.value) || 0;
+                    const platformAmount = amount * rate;
+                    if (amount > 0) {
+                        resultEl.textContent = creatorSym + amount.toLocaleString() + ' ' + creatorCode + ' ≈ ' + platformSym + platformAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ' + platformCode;
+                    } else {
+                        resultEl.textContent = '—';
+                    }
+                }
+                goalInput.addEventListener('input', updateConversion);
+                goalInput.addEventListener('change', updateConversion);
+                updateConversion();
+            }
+        })();
+
         // Basics form handling
         (function() {
             const basicsForm = document.getElementById("basicsForm");

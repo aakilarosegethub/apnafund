@@ -19,6 +19,7 @@ class Reward extends Model
         'type',
         'color_theme',
         'terms_conditions',
+        'reward_tab_type',
         'is_active'
     ];
 
