@@ -386,7 +386,7 @@ Route::prefix('api')->group(function () {
         Route::match(['get', 'post'], '/campaign_rewards.php', [CampaignManageApiController::class, 'rewards']);
         Route::match(['get', 'post'], '/campaign_faq.php', [CampaignManageApiController::class, 'faqs']);
         Route::match(['get', 'post'], '/campaign_post_updates.php', [CampaignManageApiController::class, 'postUpdates']);
-        Route::match(['get', 'post'], '/campaign_required_documents.php', [CampaignManageApiController::class, 'requiredDocuments']);
+        Route::get('/campaign_required_documents.php', [CampaignManageApiController::class, 'requiredDocuments']);
         Route::post('/campaign_required_documents_submit.php', [CampaignManageApiController::class, 'submitRequiredDocuments']);
 
         // Fund Update APIs

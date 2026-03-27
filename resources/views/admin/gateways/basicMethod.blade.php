@@ -25,30 +25,7 @@
                                             <label class="col-form--label required">@lang('Currency')</label>
                                         </div>
                                         <div class="col-xxl-9">
-                                            <input type="text" class="form--control" name="currency" value="{{ $method ? @$methodRelation->currency : old('currency') }}" required>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="row align-items-center gy-2">
-                                        <div class="col-xxl-3">
-                                            <label class="col-form--label required">@lang('Rate')</label>
-                                        </div>
-                                        <div class="col-xxl-9">
-                                                <div class="input--group">
-                                                <span class="input-group-text">1 {{ __($setting->site_cur ) }} =</span>
-                                                <input type="number" step="any" min="0" class="form--control" name="rate" value="{{ $method ? getAmount(@$methodRelation->rate) : old('rate') }}" required>
-                                                <span class="input-group-text currencySymbol">{{ @$methodRelation->currency }}</span>
-                                            </div>
-                                        </div>
-                                        <div class="col-12">
-                                            <label class="col-form--label">@lang('Input Currency Conversion')</label>
-                                            <p class="text-muted small mb-1">@lang('When contributor pays in PKR, convert to gateway currency: 1 PKR = X')</p>
-                                            <div class="input--group">
-                                                <span class="input-group-text">1 PKR =</span>
-                                                <input type="number" step="any" min="0" class="form--control" name="input_currency_rates[PKR]" value="{{ $method ? getAmount(@$methodRelation->input_currency_rates['PKR'] ?? '') : old('input_currency_rates.PKR') }}" placeholder="0.0035">
-                                                <span class="input-group-text currencySymbol">{{ @$methodRelation->currency }}</span>
-                                            </div>
+                                            <input type="text" class="form--control" name="currency" value="{{ getPlatformCurrency() }}" readonly required>
                                         </div>
                                     </div>
                                 </div>
@@ -68,7 +45,7 @@
                                         <div class="col-xxl-3 col-sm-4"><label class="col-form--label required">@lang('Minimum Amount')</label></div>
                                         <div class="col-xxl-9 col-sm-8">
                                             <div class="input--group">
-                                                <input type="number" step="any" min="0" class="form--control" name="min_amount" value="{{ $method ? getAmount(@$methodRelation->min_amount) : old('min_amount') }}" required>
+                                                <input type="number" step="0.001" min="0.001" class="form--control" name="min_amount" value="{{ $method ? getAmount(@$methodRelation->min_amount) : old('min_amount') }}" required>
                                                 <span class="input-group-text">{{ __($setting->site_cur) }}</span>
                                             </div>
                                         </div>
@@ -105,17 +82,6 @@
                                                 <span class="input-group-text">{{ __($setting->site_cur) }}</span>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <div class="row align-items-center gy-2">
-                                            <div class="col-xxl-3 col-sm-4"><label class="col-form--label required">@lang('Percent Charge')</label></div>
-                                            <div class="col-xxl-9 col-sm-8">
-                                                <div class="input--group">
-                                                    <input type="number" step="0.01" min="0" class="form--control" name="percent_charge" value="{{ $method ? getAmount(@$methodRelation->percent_charge) : old('percent_charge') }}" required>
-                                                    <span class="input-group-text">%</span>
-                                                </div>
-                                            </div>
                                     </div>
                                 </div>
                             </div>

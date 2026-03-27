@@ -11,6 +11,19 @@ use App\Lib\CurlRequest;
 
 class ProcessController extends Controller
 {
+    private function regenerateTransactionId(Deposit $deposit): string
+    {
+        do {
+            $newTrx = 'T' . time() . random_int(1000, 9999);
+        } while (Deposit::where('trx', $newTrx)->exists());
+
+        $deposit->trx = $newTrx;
+        $deposit->save();
+        session()->put('Track', $newTrx);
+
+        return $newTrx;
+    }
+
     public static function process($deposit)
     {
         $gatewayAcc = json_decode($deposit->gatewayCurrency()->gateway_parameter);
@@ -29,11 +42,23 @@ class ProcessController extends Controller
         date_default_timezone_set("Asia/Karachi");
         $pp_TxnDateTime = date('YmdHis');
         $pp_TxnExpiryDateTime = date('YmdHis', strtotime('+1 day'));
+        $country = (string) ($deposit->country ?? '');
+        $localCurrency = strtoupper((string) getCurrencyCodeForCountryName($country));
+        $localCurrency = $localCurrency ?: strtoupper((string) ($deposit->method_currency ?? 'PKR'));
+        $currencyService = app(\App\Services\CurrencyService::class);
+        $localAmount = (float) $deposit->final_amount;
+        try {
+            // DB amount is stored in platform currency; convert to depositor local currency for gateway request.
+            $localAmount = (float) $currencyService->convertFromPlatform((float) $deposit->amount, $localCurrency);
+        } catch (\Throwable $e) {
+            $localAmount = (float) $deposit->final_amount;
+        }
         $pp_TxnRefNo = "T" . time() . rand(1000, 9999); // Unique reference number
         
         // Prepare JazzCash Wallet payment data
+        // die($localAmount);
         $paymentData = [
-            "pp_Amount"            => number_format($deposit->final_amount * 100, 0, '', ''), // Convert to paisa
+            "pp_Amount"            => number_format($localAmount * 100, 0, '', ''), // Convert to paisa
             "pp_BillReference"     => $deposit->trx, // Use transaction ID directly as bill reference
             "pp_CNIC"              => "", // Will be filled by user
             "pp_Description"       => "Donation to " . $setting->site_name,
@@ -54,6 +79,7 @@ class ProcessController extends Controller
         
         // Store transaction reference for later use
         $deposit->update(['trx' => $pp_TxnRefNo]);
+        session()->put('Track', $pp_TxnRefNo);
         
         $send['val'] = [
             'merchant_id' => $merchantId,
@@ -109,10 +135,20 @@ class ProcessController extends Controller
         date_default_timezone_set("Asia/Karachi");
         $pp_TxnDateTime = date('YmdHis');
         $pp_TxnExpiryDateTime = date('YmdHis', strtotime('+1 day'));
+        $country = (string) ($deposit->country ?? '');
+        $localCurrency = strtoupper((string) getCurrencyCodeForCountryName($country));
+        $localCurrency = $localCurrency ?: strtoupper((string) ($deposit->method_currency ?? 'PKR'));
+        $currencyService = app(\App\Services\CurrencyService::class);
+        $localAmount = (float) $deposit->final_amount;
+        try {
+            $localAmount = (float) $currencyService->convertFromPlatform((float) $deposit->final_amount, $localCurrency);
+        } catch (\Throwable $e) {
+            $localAmount = (float) $deposit->final_amount;
+        }
         
         // Prepare JazzCash Wallet payment data
         $data = [
-            "pp_Amount"            => number_format($deposit->final_amount * 100, 0, '', ''), // Convert to paisa
+            "pp_Amount"            => number_format($localAmount * 100, 0, '', ''), // Convert to paisa
             "pp_BillReference"     => $deposit->trx, // Use transaction ID directly as bill reference
             "pp_CNIC"              => $request->cnic_last_6,
             "pp_Description"       => "Donation to " . bs()->site_name,
@@ -152,10 +188,12 @@ class ProcessController extends Controller
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         
         if (curl_errno($ch)) {
+            $newTransactionId = $this->regenerateTransactionId($deposit);
             curl_close($ch);
             return response()->json([
                 'success' => false,
-                'message' => 'Connection error: ' . curl_error($ch)
+                'message' => 'Connection error: ' . curl_error($ch),
+                'transaction_id' => $newTransactionId,
             ], 500);
         }
         
@@ -167,20 +205,23 @@ class ProcessController extends Controller
             // Payment successful
             $deposit->status = ManageStatus::PAYMENT_PENDING;
             PaymentController::campaignDataUpdate($deposit);
+            session()->put('Track', $deposit->trx);
             
             return response()->json([
                 'success' => true,
                 'message' => 'Payment processed successfully',
                 'transaction_id' => $deposit->trx,
-                'amount' => $deposit->final_amount
+                'amount' => round($localAmount, 2),
             ]);
         } else {
             $errorMessage = $responseData['pp_ResponseMessage'] ?? 'Payment failed';
+            $newTransactionId = $this->regenerateTransactionId($deposit);
             
             return response()->json([
                 'success' => false,
                 'message' => $errorMessage,
-                'response_code' => $responseData['pp_ResponseCode'] ?? 'UNKNOWN'
+                'response_code' => $responseData['pp_ResponseCode'] ?? 'UNKNOWN',
+                'transaction_id' => $newTransactionId,
             ], 400);
         }
     }

@@ -482,6 +482,11 @@ class BaseApiController extends Controller
             'remain_amt' => max(0, $goal_amount - $total_deposite)
         ];
 
+        // fund_story = campaigns.description (excluded from list APIs via exclude_story option)
+        if (empty($options['exclude_story'])) {
+            $fundData['fund_story'] = $rows['description'] ?? $rows['fund_story'] ?? '';
+        }
+
         // Add optional fields if provided
         if (isset($options['charity_name'])) {
             $fundData['charity_name'] = $options['charity_name'];

@@ -94,7 +94,7 @@ class PaymentController extends BaseApiController
     /**
      * Get Payment Webview URL for mobile apps
      * POST /api/payment/webview-url
-     * Body: gateway_id (int) OR gateway (string code), amount, campaign_id (int), full_name, email, country, currency, phone (optional)
+     * Body: gateway_id (int) OR gateway (string code), amount, campaign_id (int), full_name, email, country, phone (optional)
      */
     public function webviewUrl(Request $request): JsonResponse
     {
@@ -136,7 +136,6 @@ class PaymentController extends BaseApiController
             'amount'       => 'required|numeric|gt:0',
             'full_name'    => 'required|string|max:255',
             'email'        => 'required|email|max:40',
-            'currency'     => 'nullable|string|max:10',
             'campaign_id'  => 'required|integer|min:1',
         ]);
 
@@ -165,17 +164,21 @@ class PaymentController extends BaseApiController
             ], 400);
         }
 
-        $userCurrency = !empty($data['currency']) ? strtoupper(trim($data['currency'])) : null;
+        // API currency is auto-detected from request country/IP; client-sent currency is ignored.
+        $country = !empty($data['country']) ? trim((string) $data['country']) : (getUserCountryByIP() ?? 'Pakistan');
+        
+        $userCurrency = strtoupper((string) getCurrencyCodeForCountryName($country));
+        // Fallback: if country mapping missing, use gateway's first/default currency.
+        if (empty($userCurrency)) {
 
-        // If currency not provided, use gateway's first/default currency (fallback: PKR for Pakistan)
-        if (!$userCurrency) {
             $defaultCurrency = GatewayCurrency::whereHas('method', function ($q) {
                 $q->active();
             })->where('method_code', $gatewayCode)
-              ->where('status', 1)
-              ->orderBy('id')
-              ->value('currency');
-            $userCurrency = $defaultCurrency ? strtoupper($defaultCurrency) : 'PKR';
+                ->where('status', 1)
+                ->orderBy('id')
+                ->value('currency');
+            $userCurrency = $defaultCurrency ? strtoupper((string) $defaultCurrency) : 'PKR';
+            dd($defaultCurrency);
         }
 
         if (!$userCurrency) {
@@ -186,32 +189,32 @@ class PaymentController extends BaseApiController
             ], 400);
         }
 
-        // 1. Try direct currency match (PKR gateway for PKR, USD gateway for USD)
+        // Prefer gateway currency matching local currency, then mapping via input_currency_rates, then first active.
         $currencyMatch = [$userCurrency];
-        if ($userCurrency === 'PKR') {
-            $currencyMatch[] = '0'; // JazzCash etc use "0" for PKR
-        }
+        // if ($userCurrency === 'PKR') {
+        //     $currencyMatch[] = '0'; // Some gateways store PKR as "0".
+        // }
 
-        $gatewayData = GatewayCurrency::whereHas('method', function ($q) {
+        $baseGatewayQuery = GatewayCurrency::whereHas('method', function ($q) {
             $q->active();
         })->where('method_code', $gatewayCode)
-          ->whereIn('currency', $currencyMatch)
-          ->where('status', 1)
-          ->first();
+          ->where('status', 1);
 
-        // 2. If no direct match, try gateway with input_currency_rates (e.g. Stripe USD accepts PKR via conversion)
-        $convertedFromUserCurrency = false;
+        $gatewayData = (clone $baseGatewayQuery)
+            ->whereIn('currency', $currencyMatch)
+            ->first();
+
         if (!$gatewayData) {
-            $gatewayData = GatewayCurrency::whereHas('method', function ($q) {
-                $q->active();
-            })->where('method_code', $gatewayCode)
-              ->where('status', 1)
-              ->get()
-              ->first(function ($gc) use ($userCurrency) {
-                  $rates = $gc->input_currency_rates ?? [];
-                  return !empty($rates) && isset($rates[$userCurrency]) && (float) ($rates[$userCurrency] ?? 0) > 0;
-              });
-            $convertedFromUserCurrency = (bool) $gatewayData;
+            $gatewayData = (clone $baseGatewayQuery)
+                ->get()
+                ->first(function ($gc) use ($userCurrency) {
+                    $rates = $gc->input_currency_rates ?? [];
+                    return !empty($rates) && isset($rates[$userCurrency]) && (float) ($rates[$userCurrency] ?? 0) > 0;
+                });
+        }
+
+        if (!$gatewayData) {
+            $gatewayData = (clone $baseGatewayQuery)->orderBy('id')->first();
         }
 
         if (!$gatewayData) {
@@ -222,24 +225,28 @@ class PaymentController extends BaseApiController
             ], 400);
         }
 
+        // DB amount must be in platform/system currency (USD by default).
         $amountUser = (float) $data['amount'];
-
-        if ($convertedFromUserCurrency) {
-            // Convert user amount to gateway currency
-            $conversionRate = (float) ($gatewayData->input_currency_rates[$userCurrency] ?? 0);
-            $amount = $amountUser * $conversionRate;
-            if ($amount <= 0) {
-                return response()->json([
-                    'Result' => 'false',
-                    'ResponseCode' => '400',
-                    'ResponseMsg' => 'Invalid conversion rate for ' . $userCurrency,
-                ], 400);
-            }
-        } else {
-            $amount = $amountUser;
+        
+        $currencyService = app(\App\Services\CurrencyService::class);
+        $amount = round((float) $currencyService->convertToPlatform($amountUser, $userCurrency), 8);
+        if ($amount <= 0) {
+            return response()->json([
+                'Result' => 'false',
+                'ResponseCode' => '400',
+                'ResponseMsg' => 'Invalid amount for currency conversion',
+            ], 400);
         }
 
-        if ($gatewayData->min_amount > $amount || $gatewayData->max_amount < $amount) {
+        // Validate limits in gateway/method currency (not platform currency).
+        $gatewayCurrencyCode = strtoupper((string) $gatewayData->currency);
+        $isDirectGatewayCurrency = in_array($gatewayCurrencyCode, $currencyMatch, true)
+            || ($gatewayCurrencyCode === '0' && $userCurrency === 'PKR');
+        $amountForGatewayLimit = $isDirectGatewayCurrency
+            ? $amountUser
+            : ($amount * (float) $gatewayData->rate);
+
+        if ((float)$gatewayData->min_amount > $amountForGatewayLimit || (float)$gatewayData->max_amount < $amountForGatewayLimit) {
             return response()->json([
                 'Result' => 'false',
                 'ResponseCode' => '400',
@@ -249,8 +256,9 @@ class PaymentController extends BaseApiController
 
         $charge = $gatewayData->fixed_charge + (($amount * $gatewayData->percent_charge) / 100);
         $payable = $amount + $charge;
-        // Amount is in gateway currency (direct match or converted); final_amount = payable
-        $finalAmount = $payable;
+        // final_amount is payable in gateway/method currency.
+        // dd($payable,$gatewayData->rate);
+        $finalAmount = $payable + $gatewayData->charge;
 
         $deposit = new Deposit();
         $deposit->campaign_id = $campaign->id;
@@ -258,8 +266,7 @@ class PaymentController extends BaseApiController
         $deposit->donor_type = ManageStatus::KNOWN_DONOR;
         $deposit->full_name = $data['full_name'];
         $deposit->email = $data['email'];
-        $country = !empty($data['country']) ? trim($data['country']) : (getUserCountryByIP() ?? 'Pakistan');
-        $deposit->phone = formatPhoneForStorage($data['phone'] ?? '', $country);
+    $deposit->phone = formatPhoneForStorage($data['phone'] ?? '', $country);
         $deposit->country = $country;
         $deposit->receiver_id = $campaign->user->id;
         $deposit->reward_id = null;
@@ -267,9 +274,7 @@ class PaymentController extends BaseApiController
         $deposit->amount = $amount;
         $deposit->method_currency = strtoupper($gatewayData->currency);
         $deposit->charge = $charge;
-        $deposit->rate = $convertedFromUserCurrency
-            ? (float) ($gatewayData->input_currency_rates[$userCurrency] ?? 1)
-            : $gatewayData->rate;
+        $deposit->rate = $gatewayData->rate;
         $deposit->final_amount = $finalAmount;
         $deposit->btc_amount = 0;
         $deposit->btc_wallet = '';
@@ -286,10 +291,12 @@ class PaymentController extends BaseApiController
                 'gateway_type'   => 'manual',
                 'gateway_name'   => $gateway->name ?? $gatewayData->name,
                 'guideline'      => $gateway->guideline ?? '',
-                'amount'         => (float) $deposit->amount,
+                'amount'         => (float) $deposit->final_amount,
                 'final_amount'   => (float) $deposit->final_amount,
                 'currency'       => $deposit->method_currency,
                 'charge'         => (float) $deposit->charge,
+                'platform_amount'   => (float) $deposit->amount,
+                'platform_currency' => strtoupper((string) getPlatformCurrency()),
                 'trx'            => $deposit->trx,
                 'form_fields'    => [],
             ];
@@ -315,6 +322,7 @@ class PaymentController extends BaseApiController
                 'ResponseMsg'   => 'Payment guide generated',
                 'payment_url'   => null,
                 'trx'           => $deposit->trx,
+                'final_amount'  => $deposit->final_amount,
                 'payment_guide' => $paymentGuide,
             ]);
         }
@@ -327,6 +335,7 @@ class PaymentController extends BaseApiController
             'ResponseCode' => '200',
             'ResponseMsg'  => 'Payment URL generated',
             'payment_url'  => $paymentUrl,
+            'final_amount' => $deposit->final_amount,
             'trx'          => $deposit->trx,
             'gateway_type' => 'automated',
         ]);

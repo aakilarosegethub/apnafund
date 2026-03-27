@@ -25,11 +25,13 @@ class ProcessController extends Controller
         Stripe::setApiKey("$stripeAcc->secret_key");
         Stripe::setApiVersion("2020-03-02");
 
-        // Hard code to 5 USD
-        $amount = $deposit->amount;
-        $unitAmount = (int) round($amount * 100); // 298
-        $currency = 'USD';
-        
+        // Charge in gateway currency (deposits.final_amount); deposits.amount stays in platform currency.
+        $currency = strtolower((string) $deposit->method_currency);
+        $final = round((float) $deposit->final_amount, 2);
+        $zeroDecimal = ['bif', 'clp', 'djf', 'gnf', 'jpy', 'kmf', 'krw', 'mga', 'pyg', 'rwf', 'ugx', 'vnd', 'vuv', 'xaf', 'xof', 'xpf'];
+        $unitAmount = in_array($currency, $zeroDecimal, true)
+            ? (int) round($final)
+            : (int) round($final * 100);
 
         try {
             $session = Session::create([
@@ -53,6 +55,31 @@ class ProcessController extends Controller
                 'success_url'          => gatewayRedirectUrlFull(true),
             ]);
         } catch (Exception $e) {
+            $errorContext = [
+                'exception_class' => get_class($e),
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'trx' => $deposit->trx ?? null,
+                'deposit_id' => $deposit->id ?? null,
+                'gateway' => 'StripeV3',
+            ];
+            if (method_exists($e, 'getHttpStatus')) {
+                $errorContext['http_status'] = $e->getHttpStatus();
+            }
+            if (method_exists($e, 'getHttpBody')) {
+                $errorContext['http_body'] = $e->getHttpBody();
+            }
+            if (method_exists($e, 'getJsonBody')) {
+                $errorContext['json_body'] = $e->getJsonBody();
+            }
+            if (method_exists($e, 'getStripeCode')) {
+                $errorContext['stripe_code'] = $e->getStripeCode();
+            }
+            if (method_exists($e, 'getError') && $e->getError()) {
+                $errorContext['stripe_error'] = $e->getError();
+            }
+            \Log::error('StripeV3 checkout session create failed', $errorContext);
+
             $send['error']   = true;
             $send['message'] = $e->getMessage();
 
@@ -70,6 +97,8 @@ class ProcessController extends Controller
 
     public function ipn()
     {
+        dd(request()->all(), request()->getContent());
+
         $stripeAcc         = GatewayCurrency::where('gateway_alias', 'StripeV3')->first();
         $gateway_parameter = json_decode($stripeAcc->gateway_parameter);
 

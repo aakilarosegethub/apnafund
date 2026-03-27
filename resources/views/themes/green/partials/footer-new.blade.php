@@ -35,10 +35,6 @@
                             $logoUrl = getImage($logoPath, getFileSize('logoFavicon'));
                         }
                     @endphp
-                    
-                    <a href="{{ route('home') }}" class="footer-logo mb-4 d-block">
-                        <img src="{{ $logoUrl }}" alt="Logo" style="height: 40px; filter: brightness(0) invert(1);">
-                    </a>
                     @if(empty($allowedCountriesForCurrency))
                         <div class="ks-selector ks-selector--readonly">
                             <span>{{ $currentLocalSym }} {{ $currentLocalCode }}</span>
@@ -174,30 +170,40 @@
     if (!el) return;
     var url = el.getAttribute('data-url');
     var prev = el.value;
+    var csrf = '{{ csrf_token() }}';
     el.addEventListener('change', function () {
         var country = this.value;
-        var tokenMeta = document.querySelector('meta[name="csrf-token"]');
-        var token = tokenMeta ? tokenMeta.getAttribute('content') : '';
+        el.disabled = true;
+        var payload = new URLSearchParams();
+        payload.append('country', country);
         fetch(url, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-CSRF-TOKEN': token,
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'Accept': 'application/json, text/plain, */*',
+                'X-CSRF-TOKEN': csrf,
                 'X-Requested-With': 'XMLHttpRequest'
             },
             credentials: 'same-origin',
-            body: JSON.stringify({ country: country })
-        }).then(function (r) { return r.json(); }).then(function (data) {
-            if (data.success) {
+            body: payload.toString()
+        }).then(function (r) {
+            return r.text().then(function (text) {
+                var data = {};
+                try { data = JSON.parse(text || '{}'); } catch (e) {}
+                return { ok: r.ok, data: data };
+            });
+        }).then(function (result) {
+            if (result.ok && result.data && result.data.success) {
                 window.location.reload();
             } else {
-                alert(data.message || 'Error');
+                alert((result.data && result.data.message) ? result.data.message : 'Unable to update currency');
                 el.value = prev;
+                el.disabled = false;
             }
         }).catch(function () {
-            alert('Network error');
+            alert('Network error while updating currency');
             el.value = prev;
+            el.disabled = false;
         });
     });
 })();

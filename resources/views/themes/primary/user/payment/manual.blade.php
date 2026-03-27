@@ -17,10 +17,8 @@
                                     <p class="fw-bold payment-preview-text">
                                         @lang('You have requested a contribution of') <span class="text--base">{{ showAmount(@$deposit['amount']) . ' ' . __(@$setting->site_cur) }}</span>, @lang('Please pay') <span class="text--base">{{ showAmount(@$deposit['final_amount']) . ' ' . @$deposit['method_currency'] }}</span> @lang('for the successful payment.')
                                     </p>
-                                    <h5 class="payment-preview-text mt-4 mb-1">@lang('Please follow the instruction below')</h5>
+                                    <h5 class="payment-preview-text mt-4 mb-1">@lang('Upload your payment proof below')</h5>
                                 </div>
-
-                                @php echo @$gateway->guideline @endphp
 
                                 <x-phinix-form identifier="id" identifierValue="{{ @$gateway->form_id }}" />
 

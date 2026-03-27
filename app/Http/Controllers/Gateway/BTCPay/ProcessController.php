@@ -81,6 +81,7 @@ class ProcessController extends Controller
                 }
 
                 $deposit = Deposit::where('btc_wallet', $postData->invoiceId)->where('status', ManageStatus::PAYMENT_INITIATE)->first();
+                dd($deposit);
 
                 if ($deposit) $this->processPayment($deposit, $postData);
             } catch (Throwable $e) {

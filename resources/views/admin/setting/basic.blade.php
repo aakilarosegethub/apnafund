@@ -81,6 +81,11 @@
                         <input type="number" class="form--control" name="campaign_days_limit" value="{{ $campaignDaysLimit ?? 30 }}" placeholder="30" min="1" max="365" required>
                         <small class="form-text text-muted">@lang('E.g. 30 = start to end date max 30 days. Error shown if exceeded.')</small>
                     </div>
+                    <div class="col-12">
+                        <label class="form--label">@lang('Required Documents List (Campaign)')</label>
+                        <textarea class="form--control" name="campaign_required_documents" rows="5" placeholder="CNIC Front Copy&#10;CNIC Back Copy&#10;Business Registration Certificate">{{ $requiredDocuments ?? '' }}</textarea>
+                        <small class="form-text text-muted">@lang('Add one document per line. This list will be shown on the campaign Documents step for creators.')</small>
+                    </div>
                     <div class="col-lg-4 col-sm-6">
                         <label class="form--label required">@lang('Primary Color')</label>
                         <div class="input--group colorpicker">

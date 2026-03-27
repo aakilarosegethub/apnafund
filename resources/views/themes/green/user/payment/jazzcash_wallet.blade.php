@@ -14,17 +14,19 @@
                     <div class="payment-info mb-4">
                         <div class="row">
                             <div class="col-sm-6">
-                                <p><strong>@lang('Amount'):</strong> {{ showAmount($data->val->amount) }} {{ $data->val->currency }}</p>
+                                <p class="mb-1"><strong>@lang('Contribution Amount'):</strong> {{ formatPlatformForDisplay($deposit->amount, 2) }} ({{ getLocalCurrencyCode() }})</p>
+                                <p class="mb-1"><strong>@lang('Processing Charges'):</strong> {{ formatPlatformForDisplay($deposit->charge, 2) }} ({{ getLocalCurrencyCode() }})</p>
+                                <p class="mb-0"><strong>@lang('Total Payable'):</strong> {{ formatPlatformForDisplay($deposit->final_amount, 2) }} ({{ getLocalCurrencyCode() }})</p>
                             </div>
                             <div class="col-sm-6">
-                                <p><strong>@lang('Transaction ID'):</strong> {{ $data->val->transaction_id }}</p>
+                                <p><strong>@lang('Transaction ID'):</strong> <span id="transaction-id-text">{{ $data->val->transaction_id }}</span></p>
                             </div>
                         </div>
                     </div>
 
                     <form id="jazzcash-wallet-form" onsubmit="return false;">
                         @csrf
-                        <input type="hidden" name="transaction_id" value="{{ $data->val->transaction_id }}">
+                        <input type="hidden" id="transaction-id-input" name="transaction_id" value="{{ $data->val->transaction_id }}">
                         
                         <div class="form-group mb-3">
                             <label for="phone_number" class="form-label">@lang('Phone Number') <span class="text-danger">*</span></label>
@@ -161,6 +163,10 @@ function initJazzCashWallet() {
                         window.location.href = '{{ route("user.deposit.success", ["payment_status" => "success"]) }}';
                     }, 3000);
                 } else {
+                    if (response.transaction_id) {
+                        $('#transaction-id-input').val(response.transaction_id);
+                        $('#transaction-id-text').text(response.transaction_id);
+                    }
                     showResult('error', response.message);
                 }
             },
@@ -169,6 +175,10 @@ function initJazzCashWallet() {
                 let errorMessage = '@lang("An error occurred while processing your payment")';
                 if (xhr.responseJSON && xhr.responseJSON.message) {
                     errorMessage = xhr.responseJSON.message;
+                }
+                if (xhr.responseJSON && xhr.responseJSON.transaction_id) {
+                    $('#transaction-id-input').val(xhr.responseJSON.transaction_id);
+                    $('#transaction-id-text').text(xhr.responseJSON.transaction_id);
                 }
                 showResult('error', errorMessage);
             },

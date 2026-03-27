@@ -15,6 +15,7 @@
                                 <form action="{{ route('user.deposit.insert', $campaignData->slug) }}" method="POST" id="donationForm">
                                     @csrf
                                     <input type="hidden" name="currency">
+                                    <input type="hidden" name="input_currency" value="{{ getLocalCurrencyCode() }}">
 
                                     @auth
                                         <input type="hidden" name="country" value="{{ @$authUser->country_name }}">

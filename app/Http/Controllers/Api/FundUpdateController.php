@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Api;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use App\Models\Campaign;
+use App\Models\CampaignUpdate;
+use Illuminate\Support\Str;
 
 class FundUpdateController extends BaseApiController
 {
@@ -13,8 +16,8 @@ class FundUpdateController extends BaseApiController
      */
     public function fundUpdate(Request $request): JsonResponse
     {
-        
-        // Web: campaign_id, title, content, image | Old: fund_id, description, main_img
+        // Web parity: creates a row in campaign_updates (CampaignUpdate), same as user campaign "Updates" tab.
+        // Accepts: campaign_id|fund_id, content|description, optional title, image|main_img
         $fundIdRaw = $request->input('campaign_id') ?: $request->input('fund_id');
         $content = trim((string) ($request->input('content') ?? $request->input('description') ?? ''));
         if ($fundIdRaw === null || $fundIdRaw === '' || $content === '') {
@@ -26,12 +29,17 @@ class FundUpdateController extends BaseApiController
         }
 
         $fund_id = (int) round((float) trim((string) $fundIdRaw, " \t\n\r\0\x0B\"'"));
-        $title = strip_tags($this->h->real_string($request->input('title') ?: \Illuminate\Support\Str::limit($content, 80)));
-        $description = strip_tags($this->h->real_string($content));
-        
-        // Get user ID from authenticated user
+        $titleRaw = $request->input('title');
+        $title = $titleRaw !== null && $titleRaw !== ''
+            ? strip_tags($this->h->real_string((string) $titleRaw))
+            : Str::limit(strip_tags($this->h->real_string($content)), 500);
+        if ($title === '') {
+            $title = 'Update';
+        }
+        $description = $content;
+
         $uid = $this->getUserId($request);
-        
+
         if (empty($uid)) {
             return response()->json([
                 "ResponseCode" => "401",
@@ -39,45 +47,9 @@ class FundUpdateController extends BaseApiController
                 "ResponseMsg" => "Unauthorized! Please login first."
             ], 401);
         }
-        $timestamp = date("Y-m-d H:i:s");
 
-        // Image: web uses 'image', old API uses 'main_img'
-        $multifile = null;
-        $imageFile = $request->file('image') ?: $request->file('main_img');
-        if ($imageFile && $imageFile->isValid()) {
-            $multifile = $this->uploadSingleImage($imageFile, '/images/fund_update/');
-        }
-        if ($multifile === null && $imageFile) {
-            $multifile = $this->uploadSingleImageFromPath($imageFile, '/images/fund_update/');
-        }
-        // Fallback: $_FILES when Laravel Request file() doesn't populate (e.g. some curl/Postman)
-        foreach (['image', 'main_img'] as $fileKey) {
-            if ($multifile !== null) {
-                break;
-            }
-            if (!isset($_FILES[$fileKey])) {
-                continue;
-            }
-            $fu = $_FILES[$fileKey];
-            $err = is_array($fu['error'] ?? null) ? ($fu['error'][0] ?? UPLOAD_ERR_NO_FILE) : ($fu['error'] ?? UPLOAD_ERR_NO_FILE);
-            if ($err === UPLOAD_ERR_OK) {
-                $multifile = $this->uploadFromPhpFiles($fileKey, '/images/fund_update/');
-            } elseif ($err !== UPLOAD_ERR_NO_FILE) {
-                return response()->json([
-                    "ResponseCode" => "400",
-                    "Result" => "false",
-                    "ResponseMsg" => $this->uploadErrorMessage($err)
-                ], 400);
-            }
-        }
-
-        // Store update in campaigns.updates (JSON) – no campaign_updates table
-        if (empty($title)) {
-            $title = \Illuminate\Support\Str::limit($description, 80) ?: 'Update';
-        }
-
-        $campaign = DB::table('campaigns')->where('id', $fund_id)->where('user_id', $uid)->first();
-        if (!$campaign) {
+        $campaign = Campaign::where('id', $fund_id)->first();
+        if (!$campaign || !$campaign->canBeEditedBy($uid)) {
             return response()->json([
                 "ResponseCode" => "401",
                 "Result" => "false",
@@ -85,23 +57,73 @@ class FundUpdateController extends BaseApiController
             ], 401);
         }
 
-        $updates = [];
-        if (!empty($campaign->updates)) {
-            $updates = is_string($campaign->updates) ? json_decode($campaign->updates, true) : (array) $campaign->updates;
+        if ($campaign->isExpired()) {
+            return response()->json([
+                "ResponseCode" => "400",
+                "Result" => "false",
+                "ResponseMsg" => "This campaign has expired."
+            ], 400);
         }
-        $updateData = [
-            'id' => $fund_id,
-            'name' => $title,
-            'description' => $description,
-            'image' => $multifile ?: '',
-            'updated_at' => date('Y-m-d H:i:s'),
-        ];
+
+        if (strlen($description) < 30) {
+            return response()->json([
+                "ResponseCode" => "422",
+                "Result" => "false",
+                "ResponseMsg" => "Content must be at least 30 characters."
+            ], 422);
+        }
+
+        // Same storage as web updates: filename only, under campaign image path
+        $imageName = null;
+        $imageFile = $request->file('image') ?: $request->file('main_img');
+        if ($imageFile && $imageFile->isValid()) {
+            try {
+                $imageName = fileUploader($imageFile, getFilePath('campaign'), getFileSize('campaign'));
+            } catch (\Exception $e) {
+                return response()->json([
+                    "ResponseCode" => "400",
+                    "Result" => "false",
+                    "ResponseMsg" => 'Image upload failed: ' . $e->getMessage(),
+                ], 400);
+            }
+        }
+
+        if ($imageName === null) {
+            foreach (['image', 'main_img'] as $fileKey) {
+                if (!isset($_FILES[$fileKey])) {
+                    continue;
+                }
+                $fu = $_FILES[$fileKey];
+                $err = is_array($fu['error'] ?? null) ? ($fu['error'][0] ?? UPLOAD_ERR_NO_FILE) : ($fu['error'] ?? UPLOAD_ERR_NO_FILE);
+                if ($err === UPLOAD_ERR_OK) {
+                    $imageName = $this->uploadFromPhpFiles($fileKey, '/' . trim(getFilePath('campaign'), '/') . '/');
+                    break;
+                }
+                if ($err !== UPLOAD_ERR_NO_FILE) {
+                    return response()->json([
+                        "ResponseCode" => "400",
+                        "Result" => "false",
+                        "ResponseMsg" => $this->uploadErrorMessage($err),
+                    ], 400);
+                }
+            }
+        }
+        if ($imageName !== null && str_contains($imageName, '/')) {
+            $imageName = basename($imageName);
+        }
 
         try {
-            DB::table('campaigns')
-                ->where('id', $fund_id)
-                ->where('user_id', $uid)
-                ->update($updateData);
+            $update = new CampaignUpdate();
+            $update->campaign_id = $fund_id;
+            $update->user_id = $uid;
+            $update->title = $title;
+            $update->content = $description;
+            $update->slug = slug($title) . '-' . time();
+            $update->is_published = true;
+            if ($imageName) {
+                $update->image = $imageName;
+            }
+            $update->save();
         } catch (\Exception $e) {
             return response()->json([
                 "ResponseCode" => "500",
@@ -113,7 +135,8 @@ class FundUpdateController extends BaseApiController
         return response()->json([
             "ResponseCode" => "200",
             "Result" => "true",
-            "ResponseMsg" => "Fund Update Send Successfully!!"
+            "ResponseMsg" => "Fund Update Send Successfully!!",
+            "update_id" => $update->id,
         ]);
     }
 

@@ -713,6 +713,10 @@
 @endsection
 
 @section('frontend')
+@php
+    $showRateDebug = request()->has('test');
+    $siteCur = strtoupper($setting->site_cur ?? 'USD');
+@endphp
 <!--New design-->
 <!-- Main Content -->
 <div class="payment-container">
@@ -721,6 +725,7 @@
                                     <input type="hidden" name="currency">
             <input type="hidden" name="gateway">
             <input type="hidden" name="amount" id="amountInput">
+            <input type="hidden" name="input_currency" value="{{ getLocalCurrencyCode() }}">
             <input type="hidden" name="reward_id" id="rewardIdInput" value="{{ request('reward_id') ?: request('reward') }}">
 
                                     @auth
@@ -797,6 +802,15 @@
                         <span class="currency-label">{{ strtoupper($setting->site_cur) }}</span>
                     </div>
                 @endif
+
+                <div class="local-currency-info" style="margin-top: 14px; padding: 12px 14px; background: #f8faf9; border-radius: 10px; border: 1px solid #e8ecea; font-size: 0.9rem; line-height: 1.5;">
+                    <div id="gatewayEstimateEmpty" class="text-muted small">@lang('Select a payment method to see the amount you will be charged in that currency.')</div>
+                    <div id="gatewayEstimateDetail" style="display:none;">
+                        <span class="text-muted">@lang('Estimated charge')</span>:
+                        <strong id="gatewayEstimatedCharge">—</strong>
+                        <span class="text-muted small">@lang('(includes gateway fees; matches checkout)')</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Country Selection (Hidden by default) -->
@@ -862,7 +876,7 @@
                         <div class="payment-option" 
                              data-method="{{ $gatewayCurrency->method_code }}" 
                              data-currency="{{ $gatewayCurrency->currency }}"
-                             data-gateway="{{ json_encode($gatewayCurrency) }}">
+                             data-gateway="{{ e(json_encode($gatewayCurrency->only(['method_code','currency','symbol','rate','percent_charge','fixed_charge','name']))) }}">
                             <div class="payment-radio"></div>
                             <div class="payment-info">
                                 <div class="payment-logo">{{ strtoupper(substr(trim($gatewayCurrency->method->name), 0, 2)) }}</div>
@@ -1756,6 +1770,42 @@
             let selectedAmount = 0;
             let tipPercentage = 0;
             let selectedGateway = null;
+
+            function computeGatewayFinalAmount(platformDonation, gw) {
+                if (!gw || platformDonation <= 0) return null;
+                const pct = parseFloat(gw.percent_charge) || 0;
+                const fixed = parseFloat(gw.fixed_charge) || 0;
+                const rate = parseFloat(gw.rate) || 0;
+                const charge = fixed + (platformDonation * pct / 100);
+                const payable = platformDonation + charge;
+                return payable * rate;
+            }
+
+            function updateGatewayPaymentEstimate() {
+                const opt = $('.payment-option.selected');
+                const gw = opt.length ? opt.data('gateway') : null;
+                const platformAmt = parseFloat($('#customAmount').val()) || 0;
+                const $empty = $('#gatewayEstimateEmpty');
+                const $detail = $('#gatewayEstimateDetail');
+                const $line = $('#gatewayEstimatedCharge');
+                if (!gw || platformAmt <= 0) {
+                    $empty.show();
+                    $detail.hide();
+                    return;
+                }
+                const final = computeGatewayFinalAmount(platformAmt, gw);
+                if (final === null || isNaN(final)) {
+                    $empty.show();
+                    $detail.hide();
+                    return;
+                }
+                const sym = (gw.symbol || '').toString().trim();
+                const cur = (gw.currency || '').toString().toUpperCase();
+                const text = (sym ? sym : '') + (sym ? ' ' : '') + final.toFixed(2) + (cur ? ' ' + cur : '');
+                $empty.hide();
+                $detail.show();
+                $line.text(text);
+            }
             
             // Function to show country selection
             window.showCountrySelection = function() {
@@ -1955,6 +2005,7 @@
                 $('input[name="gateway"]').val(selectedGateway);
                 $('input[name="currency"]').val($(this).data('currency'));
                 
+                updateGatewayPaymentEstimate();
                 checkFormValidity();
             });
 
@@ -1983,6 +2034,7 @@
                 $('#donationAmount').text('{{ $setting->cur_sym }}' + selectedAmount.toFixed(2));
                 $('#tipAmount').text('{{ $setting->cur_sym }}' + tipAmount.toFixed(2));
                 $('#totalAmount').text('{{ $setting->cur_sym }}' + totalAmount.toFixed(2));
+                updateGatewayPaymentEstimate();
             }
 
             // Check if form is valid

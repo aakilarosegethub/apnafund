@@ -139,6 +139,7 @@ body{
 
 /* ================= PASSWORD ================= */
 .input-group{position:relative;}
+.input-group .form-control{padding-right:48px;}
 .input-group-text{
     position:absolute;
     right:16px;
@@ -279,8 +280,8 @@ body{
                 <label class="form-label">Password</label>
                 <div class="input-group">
                     <input type="password" class="form-control" name="password" id="password" required>
-                    <button type="button" class="input-group-text" id="togglePassword">
-                        <i class="fas fa-eye"></i>
+                    <button type="button" class="input-group-text" id="togglePassword" aria-label="@lang('Show password')">
+                        <i class="fas fa-eye" id="togglePasswordIcon"></i>
                     </button>
                 </div>
             </div>
@@ -331,10 +332,17 @@ body{
 </div>
 
 <script>
-document.getElementById('togglePassword').onclick=function(){
-    const p=document.getElementById('password');
-    p.type=p.type==='password'?'text':'password';
-}
+document.getElementById('togglePassword').addEventListener('click', function () {
+    const p = document.getElementById('password');
+    const icon = document.getElementById('togglePasswordIcon');
+    const show = p.type === 'password';
+    p.type = show ? 'text' : 'password';
+    if (icon) {
+        icon.classList.toggle('fa-eye', !show);
+        icon.classList.toggle('fa-eye-slash', show);
+    }
+    this.setAttribute('aria-label', show ? @json(__('Hide password')) : @json(__('Show password')));
+});
 </script>
 
 @endsection

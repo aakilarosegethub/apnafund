@@ -22,6 +22,7 @@ Complete list of all APIs - **Protected** and **Non-Protected** (Public)
 | GET/POST | `/api/catwisefund.php` | Category wise funds |
 | GET/POST | `/api/search_fund.php` | Search fund |
 | GET/POST | `/api/fundidwise.php` | Fund by ID |
+| GET/POST | `/api/currency_info.php` | Currency info: `local_currency`, `local_currency_symbol`, `exchange_rate` (local units per 1 platform currency); optional `?currency=PKR` |
 
 ### 3. Categories & Pages
 | Method | Endpoint | Description |
@@ -37,6 +38,52 @@ Complete list of all APIs - **Protected** and **Non-Protected** (Public)
 | GET/POST | `/api/paymentgateway.php` | Payment gateway list |
 | GET | `/api/gateways` | Gateways list |
 | GET/POST | `/api/payment/webview-url` | Payment webview URL |
+
+#### `/api/payment/webview-url` amount conversion and DB save flow
+
+This endpoint now saves **platform/system currency amount** in DB (normally `USD`) and keeps gateway payable separately.
+
+Request example:
+
+```json
+{
+  "gateway_id": "1001",
+  "amount": "100",
+  "campaign_id": "129",
+  "full_name": "Demo User",
+  "email": "demo@example.com",
+  "country": "Pakistan",
+  "phone": "3001234567"
+}
+```
+
+Flow:
+
+1. `country` se local currency detect hoti hai (`Pakistan` -> `PKR`).
+2. Input `amount` ko local currency maana jata hai (`100 PKR`).
+3. Local amount ko platform currency me convert karke `deposits.amount` me save kiya jata hai.  
+   - Example: `100 PKR` -> `0.357828 USD` (`deposits.amount`)
+4. Charges platform amount par apply hote hain:
+   - `charge = fixed_charge + (amount * percent_charge / 100)`
+5. Gateway payable calculate hota hai:
+   - `payable = amount + charge` (platform currency)
+   - `final_amount = payable * gateway_rate` (gateway/method currency)
+6. DB fields:
+   - `deposits.amount` = platform/system currency (USD)
+   - `deposits.method_currency` = gateway currency (e.g. `PKR`)
+   - `deposits.final_amount` = gateway ko pay karne wali amount
+   - `deposits.rate` = gateway rate
+
+Validation note:
+
+- Min/max gateway limits (`gateway_currencies.min_amount`, `max_amount`) **gateway currency** me check hoti hain, not platform USD.
+- Isliye error message jaise `Amount must be between ... PKR` gateway currency context me hota hai.
+
+Manual gateway response note (`code >= 1000`):
+
+- `payment_url` null hota hai.
+- `payment_guide.amount` and `payment_guide.final_amount` donor-facing payable (gateway currency context).
+- `payment_guide.platform_amount` and `payment_guide.platform_currency` DB accounting values show karte hain.
 
 ### 5. Auth (Register/Login)
 | Method | Endpoint | Description |
@@ -86,7 +133,11 @@ Complete list of all APIs - **Protected** and **Non-Protected** (Public)
 |--------|----------|-------------|
 | GET/POST | `/api/fundlist.php` | User's fund list |
 | GET/POST | `/api/fundraise.php` | Create fundraise |
-| GET/POST | `/api/fund_update.php` | Update fund |
+| GET/POST | `/api/fund_update.php` | Post a **backer update** (`campaign_updates` row); params: `campaign_id`/`fund_id`, `content` or `description` (min 30 chars), optional `title`, `image`/`main_img` |
+| GET/POST | `/api/campaign_story.php` | Story tab: `op=read` or `op=save` + `description` (min 30 on save); campaign via `campaign_id`/`fund_id`/`slug` |
+| GET/POST | `/api/campaign_rewards.php` | Rewards CRUD: `op` = `list`, `get`, `create`, `update`, `delete`, `toggle_active` |
+| GET/POST | `/api/campaign_faq.php` | Per-campaign FAQ CRUD: `op` = `list`, `get`, `create`, `update`, `delete` |
+| GET/POST | `/api/campaign_post_updates.php` | Backer updates CRUD (same model as web “Updates” tab): `op` = `list`, `get`, `create`, `update`, `delete` |
 | GET/POST | `/api/fund_cancle.php` | Cancel fund |
 | GET/POST | `/api/fund_complete.php` | Complete fund |
 | GET/POST | `/api/fund_delete.php` | Delete fund |

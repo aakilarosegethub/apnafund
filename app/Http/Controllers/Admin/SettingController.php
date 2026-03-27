@@ -50,7 +50,14 @@ class SettingController extends Controller
             $campaignDaysLimit = (int) $campaignDaysLimitData->data_info['campaign_days_limit'];
         }
 
-        return view('admin.setting.basic', compact('pageTitle', 'timeRegions', 'selectedCountries', 'useSelectedOnly', 'allCountries', 'whatsappContactMessage', 'whatsappChatbotNumber', 'campaignDaysLimit'));
+        // Admin-configurable required campaign documents list
+        $requiredDocuments = '';
+        $requiredDocumentsData = SiteData::where('data_key', 'general.campaign_required_documents')->first();
+        if ($requiredDocumentsData && isset($requiredDocumentsData->data_info['required_documents'])) {
+            $requiredDocuments = (string) $requiredDocumentsData->data_info['required_documents'];
+        }
+
+        return view('admin.setting.basic', compact('pageTitle', 'timeRegions', 'selectedCountries', 'useSelectedOnly', 'allCountries', 'whatsappContactMessage', 'whatsappChatbotNumber', 'campaignDaysLimit', 'requiredDocuments'));
     }
     
     private function getAllCountriesList() {
@@ -153,6 +160,16 @@ class SettingController extends Controller
         }
         $campaignDaysLimitData->data_info = ['campaign_days_limit' => $campaignDaysLimit];
         $campaignDaysLimitData->save();
+
+        // Save required campaign documents list (one item per line)
+        $requiredDocumentsText = trim((string) request('campaign_required_documents', ''));
+        $requiredDocumentsData = SiteData::where('data_key', 'general.campaign_required_documents')->first();
+        if (!$requiredDocumentsData) {
+            $requiredDocumentsData = new SiteData();
+            $requiredDocumentsData->data_key = 'general.campaign_required_documents';
+        }
+        $requiredDocumentsData->data_info = ['required_documents' => $requiredDocumentsText];
+        $requiredDocumentsData->save();
 
         $toast[] = ['success', 'Basic setting update success'];
         return back()->withToasts($toast);

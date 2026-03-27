@@ -1,13 +1,17 @@
 @extends('admin.layouts.master')
 
 @section('master')
+    @php
+        $adminDisplayCurSym = '$';
+        $adminDisplayCur = 'USD';
+    @endphp
     @if(request()->routeIs('admin.donations.index'))
         <div class="col-12">
             <div class="row g-lg-4 g-3">
                 <div class="col-xl-3 col-sm-6">
                     <a href="{{ route('admin.donations.done') }}" class="dashboard-widget-3 dashboard-widget-3__success bg-img" data-background-image="{{ asset('assets/admin/images/widget-bg.png') }}">
                         <div class="dashboard-widget-3__top">
-                            <h3 class="dashboard-widget-3__number">{{ $setting->cur_sym }}{{ showAmount($done) }}</h3>
+                            <h3 class="dashboard-widget-3__number">{{ $adminDisplayCurSym }}{{ showAmount($done) }}</h3>
                             <div class="dashboard-widget-3__icon">
                                 <i class="ti ti-circle-check"></i>
                             </div>
@@ -18,7 +22,7 @@
                 <div class="col-xl-3 col-sm-6">
                     <a href="{{ route('admin.donations.index') }}" class="dashboard-widget-3 dashboard-widget-3__info bg-img" data-background-image="{{ asset('assets/admin/images/widget-bg.png') }}">
                         <div class="dashboard-widget-3__top">
-                            <h3 class="dashboard-widget-3__number">{{ $setting->cur_sym }}{{ showAmount($charge) }}</h3>
+                            <h3 class="dashboard-widget-3__number">{{ $adminDisplayCurSym }}{{ showAmount($charge) }}</h3>
                             <div class="dashboard-widget-3__icon">
                                 <i class="ti ti-coins"></i>
                             </div>
@@ -29,7 +33,7 @@
                 <div class="col-xl-3 col-sm-6">
                     <a href="{{ route('admin.donations.pending') }}" class="dashboard-widget-3 dashboard-widget-3__warning bg-img" data-background-image="{{ asset('assets/admin/images/widget-bg.png') }}">
                         <div class="dashboard-widget-3__top">
-                            <h3 class="dashboard-widget-3__number">{{ $setting->cur_sym }}{{ showAmount($pending) }}</h3>
+                            <h3 class="dashboard-widget-3__number">{{ $adminDisplayCurSym }}{{ showAmount($pending) }}</h3>
                             <div class="dashboard-widget-3__icon">
                                 <i class="ti ti-rotate-clockwise-2"></i>
                             </div>
@@ -40,7 +44,7 @@
                 <div class="col-xl-3 col-sm-6">
                     <a href="{{ route('admin.donations.cancelled') }}" class="dashboard-widget-3 dashboard-widget-3__danger bg-img" data-background-image="{{ asset('assets/admin/images/widget-bg.png') }}">
                         <div class="dashboard-widget-3__top">
-                            <h3 class="dashboard-widget-3__number">{{ $setting->cur_sym }}{{ showAmount($cancelled) }}</h3>
+                            <h3 class="dashboard-widget-3__number">{{ $adminDisplayCurSym }}{{ showAmount($cancelled) }}</h3>
                             <div class="dashboard-widget-3__icon">
                                 <i class="ti ti-circle-x"></i>
                             </div>
@@ -71,6 +75,20 @@
             </thead>
             <tbody>
                 @forelse ($deposits as $deposit)
+                    @php
+                        $depositRate = $deposit->getRawOriginal('rate');
+                        $depositCurrency = $deposit->getRawOriginal('method_currency');
+                        $truncateToTwoDecimals = function ($value) {
+                            $amount = (float) $value;
+                            $scaled = $amount >= 0 ? floor($amount * 100) : ceil($amount * 100);
+                            return number_format($scaled / 100, 2, '.', ',');
+                        };
+                        $depositAmount = $truncateToTwoDecimals($deposit->getRawOriginal('amount'));
+                        $depositCharge = $truncateToTwoDecimals($deposit->getRawOriginal('charge'));
+                        $depositAfterCharge = $truncateToTwoDecimals(
+                            (float) $deposit->getRawOriginal('amount') + (float) $deposit->getRawOriginal('charge')
+                        );
+                    @endphp
                     <tr>
                         <td>
                             <div class="table-card-with-image">
@@ -129,8 +147,8 @@
                         </td>
                         <td>
                             <div>
-                                <p>{{ $setting->cur_sym . showAmount($deposit->amount) }} + <span class="text--danger" title="@lang('Charge')">{{ __($setting->cur_sym) }}{{ showAmount($deposit->charge) }}</span></p>
-                                <p class="fw-semibold" title="Amount With Charge">{{ showAmount($deposit->amount + $deposit->charge) . ' ' . __($setting->site_cur) }}</p>
+                                <p>{{ $adminDisplayCurSym . $depositAmount }} + <span class="text--danger" title="@lang('Charge')">{{ $adminDisplayCurSym }}{{ $depositCharge }}</span></p>
+                                <p class="fw-semibold" title="Amount With Charge">{{ $depositAfterCharge . ' ' . $adminDisplayCur }}</p>
                             </div>
                         </td>
                         <td>
@@ -146,7 +164,7 @@
                         </td>
                         <td>
                             <div>
-                                <p>1 {{ __($setting->site_cur) }} = {{ showAmount($deposit->rate, 4) . ' ' . __($deposit->method_currency) }}</p>
+                                <p>1 {{ $adminDisplayCur }} = {{ showAmount($depositRate, 4) . ' ' . __($depositCurrency) }}</p>
                                 <p class="fw-semibold">{{ showAmount($deposit->final_amount) . ' ' . __($deposit->method_currency) }}</p>
                             </div>
                         </td>
@@ -169,16 +187,20 @@
                                    data-trx            = "{{ $deposit->trx }}"
                                    data-username       = "{{ @$deposit->user->username }}"
                                    data-method         = "{{ __(@$deposit->gateway->name) }}"
-                                   data-amount         = "{{ showAmount($deposit->amount) }} {{ __($setting->site_cur) }}"
-                                   data-charge         = "{{ showAmount($deposit->charge) }} {{ __($setting->site_cur) }}"
-                                   data-after_charge   = "{{ showAmount($deposit->amount + $deposit->charge) }} {{ __($setting->site_cur) }}"
-                                   data-rate           = "1 {{ __($setting->site_cur) }} = {{ showAmount($deposit->rate) }} {{ __($deposit->baseCurrency()) }}"
+                                   data-amount         = "{{ $depositAmount }} {{ $adminDisplayCur }}"
+                                   data-charge         = "{{ $depositCharge }} {{ $adminDisplayCur }}"
+                                   data-after_charge   = "{{ $depositAfterCharge }} {{ $adminDisplayCur }}"
+                                   data-rate           = "1 {{ $adminDisplayCur }} = {{ showAmount($depositRate, 4) }} {{ __($depositCurrency) }}"
                                    data-donated        = "{{ showAmount($deposit->final_amount) }} {{ __($deposit->method_currency) }}"
                                    data-status         = "{{ $deposit->status }}"
-                                   data-user_data      = "{{ json_encode($deposit->detail) }}"
+                                   data-user_data      = "{{ json_encode($deposit->details) }}"
                                    data-admin_feedback = "{{ $deposit->admin_feedback }}"
                                    data-user_type      = "{{ $deposit->user_id }}"
                                    data-donation_type  = "{{ $deposit->donor_type }}"
+                                   data-donor_name     = "{{ $deposit->donor_name }}"
+                                   data-donor_email    = "{{ $deposit->donor_email }}"
+                                   data-donor_phone    = "{{ $deposit->donor_phone }}"
+                                   data-donor_country  = "{{ $deposit->donor_country }}"
                                    data-campaign_name  = "{{ $deposit->campaign ? $deposit->campaign->name : 'N/A' }}"
                                    data-campaign_id    = "{{ $deposit->campaign ? $deposit->campaign->id : '' }}"
                                    data-url            = "{{ route('admin.file.download', ['filePath' => 'verify']) }}"

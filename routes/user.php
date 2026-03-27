@@ -80,6 +80,7 @@ Route::middleware('auth')->name('user.')->namespace('User')->group(function () {
             Route::get('edit/{slug}/reward', 'editSection')->name('edit.reward');
             Route::get('edit/{slug}/story', 'editSection')->name('edit.story');
             Route::get('edit/{slug}/people', 'editSection')->name('edit.people');
+            Route::get('edit/{slug}/documents', 'editSection')->name('edit.documents');
             Route::get('edit/{slug}/payment', 'editSection')->name('edit.payment');
             Route::post('edit/{slug}/payment', 'updatePayment')->name('edit.payment.update');
             Route::get('edit/{slug}/boost', 'editSection')->name('edit.boost');
@@ -211,6 +212,9 @@ Route::prefix('deposit')->name('user.deposit.')->controller('Gateway\PaymentCont
     Route::get('success', 'success')->name('success');
     Route::get('error', 'paymentError')->name('error');
     Route::prefix('manual')->name('manual.')->group(function () {
+        Route::get('instructions', 'manualDepositInstructions')->name('instructions');
+        Route::get('proof', 'manualDepositProof')->name('proof');
+        Route::post('proof', 'manualDepositProofSubmit')->name('proof.submit');
         Route::get('', 'manualDepositConfirm')->name('confirm');
         Route::post('', 'manualDepositUpdate')->name('update');
     });

@@ -127,6 +127,13 @@ Route::middleware(['admin', 'admin.permission'])->group(function () {
         Route::post('featured-update/{id}', 'updateFeatured')->name('featured.update');
     });
 
+    Route::controller('CampaignDocumentRequirementController')->prefix('campaigns/document-requirements')->name('campaigns.document.requirements.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('store', 'store')->name('store');
+        Route::post('update/{id}', 'update')->name('update');
+        Route::post('delete/{id}', 'destroy')->name('delete');
+    });
+
     // Registration Steps Management
     Route::controller('RegistrationStepController')->prefix('registration/steps')->name('registration.steps.')->group(function () {
         Route::get('/', 'index')->name('index');

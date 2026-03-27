@@ -42,7 +42,8 @@ class Campaign extends Model
         'featured',
         'payout_bank_id',
         'bank_account_number',
-        'bank_account_email'
+        'bank_account_email',
+        'verification_documents',
     ];
 
     /**
@@ -53,6 +54,7 @@ class Campaign extends Model
     protected $casts = [
         'gallery'           => 'array',
         'preferred_amounts' => 'array',
+        'verification_documents' => 'array',
         'goal_amount'       => 'decimal:2',
         'raised_amount'     => 'decimal:2',
         'start_date'        => 'date',

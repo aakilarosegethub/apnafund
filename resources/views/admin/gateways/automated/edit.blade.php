@@ -1,6 +1,9 @@
 @extends('admin.layouts.master')
 
 @section('master')
+    @php
+        $isJazzCashWallet = strtolower($gateway->alias) === 'jazzcashwallet';
+    @endphp
     @if($gateway->guideline)
         <div class="col-12">
             <div class="custom--card">
@@ -137,15 +140,15 @@
                                                     <div class="col-12">
                                                         <label class="form--label required">@lang('Minimum')</label>
                                                         <div class="input--group">
-                                                            <input type="number" step="any" min="0" class="form--control" name="currency[{{ $currencyIndex }}][min_amount]" value="{{ getAmount($gatewayCurrency->min_amount) }}" required>
-                                                            <span class="input-group-text">{{ __($setting->site_cur) }}</span>
+                                                            <input type="number" step="0.001" min="0.001" class="form--control" name="currency[{{ $currencyIndex }}][min_amount]" value="{{ getAmount($gatewayCurrency->min_amount) }}" required>
+                                                            <span class="input-group-text">{{ getPlatformCurrency() }}</span>
                                                         </div>
                                                     </div>
                                                     <div class="col-12">
                                                         <label class="form--label required">@lang('Maximum')</label>
                                                         <div class="input--group">
                                                             <input type="number" step="any" min="0" class="form--control" name="currency[{{ $currencyIndex }}][max_amount]" value="{{ getAmount($gatewayCurrency->max_amount) }}" required>
-                                                            <span class="input-group-text">{{ __($setting->site_cur) }}</span>
+                                                            <span class="input-group-text">{{ getPlatformCurrency() }}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -161,50 +164,60 @@
                                                         <label class="form--label required">@lang('Fixed')</label>
                                                         <div class="input--group">
                                                             <input type="number" step="any" min="0" class="form--control" name="currency[{{ $currencyIndex }}][fixed_charge]" value="{{ getAmount($gatewayCurrency->fixed_charge) }}" required>
-                                                            <span class="input-group-text">{{ __($setting->site_cur) }}</span>
+                                                            <span class="input-group-text">{{ getPlatformCurrency() }}</span>
                                                         </div>
                                                     </div>
-                                                    <div class="col-12">
-                                                        <label class="form--label required">@lang('Percent')</label>
-                                                        <div class="input--group">
-                                                            <input type="number" step="0.01" min="0" class="form--control" name="currency[{{ $currencyIndex }}][percent_charge]" value="{{ getAmount($gatewayCurrency->percent_charge) }}" required>
-                                                            <span class="input-group-text">%</span>
+                                                    @if($isJazzCashWallet)
+                                                        <input type="hidden" name="currency[{{ $currencyIndex }}][percent_charge]" value="{{ getAmount($gatewayCurrency->percent_charge) }}">
+                                                    @else
+                                                        <div class="col-12">
+                                                            <label class="form--label required">@lang('Percent')</label>
+                                                            <div class="input--group">
+                                                                <input type="number" step="0.01" min="0" class="form--control" name="currency[{{ $currencyIndex }}][percent_charge]" value="{{ getAmount($gatewayCurrency->percent_charge) }}" required>
+                                                                <span class="input-group-text">%</span>
+                                                            </div>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @if($isJazzCashWallet)
+                                        <input type="hidden" name="currency[{{ $currencyIndex }}][symbol]" value="{{ $gatewayCurrency->symbol }}">
+                                        <input type="hidden" name="currency[{{ $currencyIndex }}][rate]" value="{{ getAmount($gatewayCurrency->rate) }}">
+                                        <input type="hidden" name="currency[{{ $currencyIndex }}][input_currency_rates][PKR]" value="{{ getAmount($gatewayCurrency->input_currency_rates['PKR'] ?? '') }}">
+                                    @else
+                                        <div class="col-lg-4">
+                                            <div class="custom--card">
+                                                <div class="card-body">
+                                                    <h3 class="card-subtitle">@lang('Currency')</h3>
+                                                    <div class="row g-3">
+                                                        <div class="col-12">
+                                                            <label class="form--label required">@lang('Symbol')</label>
+                                                            <input type="text" class="form--control dynamic-symbol" name="currency[{{ $currencyIndex }}][symbol]" value="{{ $gatewayCurrency->symbol }}" data-crypto="{{ $gateway->crypto }}" required>
+                                                        </div>
+                                                        <div class="col-12">
+                                                            <label class="form--label required">@lang('Rate')</label>
+                                                            <div class="input--group">
+                                                                <span class="input-group-text">1 {{ getPlatformCurrency() }} =</span>
+                                                                <input type="number" step="any" min="0" class="form--control" name="currency[{{ $currencyIndex }}][rate]" value="{{ getAmount($gatewayCurrency->rate) }}" required>
+                                                                <span class="input-group-text currency_symbol">{{ __($gatewayCurrency->baseSymbol()) }}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-12">
+                                                            <label class="form--label">@lang('Input Currency Conversion')</label>
+                                                            <p class="text-muted small mb-2">@lang('When contributor pays in PKR but gateway needs') {{ __($gatewayCurrency->currency) }}, @lang('convert using rate: 1 PKR = X') {{ __($gatewayCurrency->currency) }}</p>
+                                                            <div class="input--group">
+                                                                <span class="input-group-text">1 PKR =</span>
+                                                                <input type="number" step="any" min="0" class="form--control" name="currency[{{ $currencyIndex }}][input_currency_rates][PKR]" value="{{ getAmount($gatewayCurrency->input_currency_rates['PKR'] ?? '') }}" placeholder="0.0035">
+                                                                <span class="input-group-text">{{ __($gatewayCurrency->currency) }}</span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="col-lg-4">
-                                        <div class="custom--card">
-                                            <div class="card-body">
-                                                <h3 class="card-subtitle">@lang('Currency')</h3>
-                                                <div class="row g-3">
-                                                    <div class="col-12">
-                                                        <label class="form--label required">@lang('Symbol')</label>
-                                                        <input type="text" class="form--control dynamic-symbol" name="currency[{{ $currencyIndex }}][symbol]" value="{{ $gatewayCurrency->symbol }}" data-crypto="{{ $gateway->crypto }}" required>
-                                                    </div>
-                                                    <div class="col-12">
-                                                        <label class="form--label required">@lang('Rate')</label>
-                                                        <div class="input--group">
-                                                            <span class="input-group-text">1 {{ __($setting->site_cur ) }} =</span>
-                                                            <input type="number" step="any" min="0" class="form--control" name="currency[{{ $currencyIndex }}][rate]" value="{{ getAmount($gatewayCurrency->rate) }}" required>
-                                                            <span class="input-group-text currency_symbol">{{ __($gatewayCurrency->baseSymbol()) }}</span>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-12">
-                                                        <label class="form--label">@lang('Input Currency Conversion')</label>
-                                                        <p class="text-muted small mb-2">@lang('When contributor pays in PKR but gateway needs') {{ __($gatewayCurrency->currency) }}, @lang('convert using rate: 1 PKR = X') {{ __($gatewayCurrency->currency) }}</p>
-                                                        <div class="input--group">
-                                                            <span class="input-group-text">1 PKR =</span>
-                                                            <input type="number" step="any" min="0" class="form--control" name="currency[{{ $currencyIndex }}][input_currency_rates][PKR]" value="{{ getAmount($gatewayCurrency->input_currency_rates['PKR'] ?? '') }}" placeholder="0.0035">
-                                                            <span class="input-group-text">{{ __($gatewayCurrency->currency) }}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    @endif
 
                                     @if($parameters->where('global', false)->count() != 0)
                                         @php
@@ -265,15 +278,15 @@
                                             <div class="col-12">
                                                 <label class="form--label required">@lang('Minimum')</label>
                                                 <div class="input--group">
-                                                    <input type="number" step="any" min="0" class="form--control" name="currency[{{ $currencyIndex }}][min_amount]" disabled required>
-                                                    <span class="input-group-text">{{ __($setting->site_cur) }}</span>
+                                                    <input type="number" step="0.001" min="0.001" class="form--control" name="currency[{{ $currencyIndex }}][min_amount]" disabled required>
+                                                    <span class="input-group-text">{{ getPlatformCurrency() }}</span>
                                                 </div>
                                             </div>
                                             <div class="col-12">
                                                 <label class="form--label required">@lang('Maximum')</label>
                                                 <div class="input--group">
                                                     <input type="number" step="any" min="0" class="form--control" name="currency[{{ $currencyIndex }}][max_amount]" disabled required>
-                                                    <span class="input-group-text">{{ __($setting->site_cur) }}</span>
+                                                    <span class="input-group-text">{{ getPlatformCurrency() }}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -289,49 +302,59 @@
                                                 <label class="form--label required">@lang('Fixed')</label>
                                                 <div class="input--group">
                                                     <input type="number" step="any" min="0" class="form--control" name="currency[{{ $currencyIndex }}][fixed_charge]" disabled required>
-                                                    <span class="input-group-text">{{ __($setting->site_cur) }}</span>
+                                                    <span class="input-group-text">{{ getPlatformCurrency() }}</span>
                                                 </div>
                                             </div>
-                                            <div class="col-12">
-                                                <label class="form--label required">@lang('Percent')</label>
-                                                <div class="input--group">
-                                                    <input type="number" step="0.01" min="0" class="form--control" name="currency[{{ $currencyIndex }}][percent_charge]" disabled required>
-                                                    <span class="input-group-text">%</span>
+                                            @if($isJazzCashWallet)
+                                                <input type="hidden" name="currency[{{ $currencyIndex }}][percent_charge]" disabled value="0">
+                                            @else
+                                                <div class="col-12">
+                                                    <label class="form--label required">@lang('Percent')</label>
+                                                    <div class="input--group">
+                                                        <input type="number" step="0.01" min="0" class="form--control" name="currency[{{ $currencyIndex }}][percent_charge]" disabled required>
+                                                        <span class="input-group-text">%</span>
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            @if($isJazzCashWallet)
+                                <input type="hidden" class="dynamic-symbol" name="currency[{{ $currencyIndex }}][symbol]" data-crypto="{{ $gateway->crypto }}" disabled value="{{ $gatewayCurrency->symbol ?? '$' }}">
+                                <input type="hidden" name="currency[{{ $currencyIndex }}][rate]" disabled value="{{ getAmount($gatewayCurrency->rate ?? 1) }}">
+                                <input type="hidden" name="currency[{{ $currencyIndex }}][input_currency_rates][PKR]" disabled value="">
+                            @else
+                                <div class="col-lg-4">
+                                    <div class="custom--card">
+                                        <div class="card-body">
+                                            <h3 class="card-subtitle">@lang('Currency')</h3>
+                                            <div class="row g-3">
+                                                <div class="col-12">
+                                                    <label class="form--label required">@lang('Symbol')</label>
+                                                    <input type="text" class="form--control dynamic-symbol" name="currency[{{ $currencyIndex }}][symbol]" data-crypto="{{ $gateway->crypto }}" disabled required>
+                                                </div>
+                                                <div class="col-12">
+                                                    <label class="form--label required">@lang('Rate')</label>
+                                                    <div class="input--group">
+                                                        <span class="input-group-text">1 {{ getPlatformCurrency() }} =</span>
+                                                        <input type="number" step="any" min="0" class="form--control" name="currency[{{ $currencyIndex }}][rate]" disabled required>
+                                                        <span class="input-group-text currency_symbol">{{ __($gatewayCurrency && method_exists($gatewayCurrency, 'baseSymbol') ? $gatewayCurrency->baseSymbol() : '$') }}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-12">
+                                                    <label class="form--label">@lang('Input Currency Conversion')</label>
+                                                    <div class="input--group">
+                                                        <span class="input-group-text">1 PKR =</span>
+                                                        <input type="number" step="any" min="0" class="form--control" name="currency[{{ $currencyIndex }}][input_currency_rates][PKR]" disabled placeholder="0.0035">
+                                                        <span class="input-group-text currency_symbol">USD</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="col-lg-4">
-                                <div class="custom--card">
-                                    <div class="card-body">
-                                        <h3 class="card-subtitle">@lang('Currency')</h3>
-                                        <div class="row g-3">
-                                            <div class="col-12">
-                                                <label class="form--label required">@lang('Symbol')</label>
-                                                <input type="text" class="form--control dynamic-symbol" name="currency[{{ $currencyIndex }}][symbol]" data-crypto="{{ $gateway->crypto }}" disabled required>
-                                            </div>
-                                            <div class="col-12">
-                                                <label class="form--label required">@lang('Rate')</label>
-                                                <div class="input--group">
-                                                    <span class="input-group-text">1 {{ __($setting->site_cur ) }} =</span>
-                                                    <input type="number" step="any" min="0" class="form--control" name="currency[{{ $currencyIndex }}][rate]" disabled required>
-                                                    <span class="input-group-text currency_symbol">{{ __($gatewayCurrency && method_exists($gatewayCurrency, 'baseSymbol') ? $gatewayCurrency->baseSymbol() : '$') }}</span>
-                                                </div>
-                                            </div>
-                                            <div class="col-12">
-                                                <label class="form--label">@lang('Input Currency Conversion')</label>
-                                                <div class="input--group">
-                                                    <span class="input-group-text">1 PKR =</span>
-                                                    <input type="number" step="any" min="0" class="form--control" name="currency[{{ $currencyIndex }}][input_currency_rates][PKR]" disabled placeholder="0.0035">
-                                                    <span class="input-group-text currency_symbol">USD</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            @endif
 
                             @if($parameters->where('global', false)->count() != 0)
                                 <div class="col-12">
@@ -376,7 +399,7 @@
     <x-decisionModal />
 @endsection
 
-@if(count($supportedCurrencies) > 0)
+@if(count($supportedCurrencies) > 0 && !$isJazzCashWallet)
     @push('breadcrumb')
         <div class="input--group">
             <select class="form--control form--control--sm form-select newCurrencyVal">

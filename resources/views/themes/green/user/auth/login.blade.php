@@ -64,6 +64,34 @@
         background: #ffffff;
     }
 
+    .ks-password-wrap {
+        position: relative;
+    }
+
+    .ks-password-wrap input {
+        padding-right: 44px;
+    }
+
+    .ks-password-toggle {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        border: none;
+        background: transparent;
+        color: #6b7280;
+        cursor: pointer;
+        padding: 6px;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .ks-password-toggle:hover {
+        color: #05ce78;
+    }
+
     .ks-forgot {
         display: inline-block;
         font-size: 14px;
@@ -256,8 +284,11 @@
                        value="{{ old('username') }}" required>
             </div>
 
-            <div class="ks-form-group">
-                <input type="password" name="password" placeholder="Password" required>
+            <div class="ks-form-group ks-password-wrap">
+                <input type="password" name="password" id="loginPassword" placeholder="Password" required autocomplete="current-password">
+                <button type="button" class="ks-password-toggle" id="toggleLoginPassword" aria-label="@lang('Show password')">
+                    <i class="fas fa-eye" id="toggleLoginPasswordIcon"></i>
+                </button>
             </div>
 
             <a href="{{ route('user.password.request.form') }}" class="ks-forgot">
@@ -333,6 +364,19 @@ document.addEventListener('DOMContentLoaded', function() {
             // Show loader
             loginBtn.classList.add('btn-loading');
             loginBtn.disabled = true;
+        });
+    }
+
+    const pwd = document.getElementById('loginPassword');
+    const toggleBtn = document.getElementById('toggleLoginPassword');
+    const toggleIcon = document.getElementById('toggleLoginPasswordIcon');
+    if (pwd && toggleBtn && toggleIcon) {
+        toggleBtn.addEventListener('click', function() {
+            const show = pwd.type === 'password';
+            pwd.type = show ? 'text' : 'password';
+            toggleIcon.classList.toggle('fa-eye', !show);
+            toggleIcon.classList.toggle('fa-eye-slash', show);
+            toggleBtn.setAttribute('aria-label', show ? @json(__('Hide password')) : @json(__('Show password')));
         });
     }
 });

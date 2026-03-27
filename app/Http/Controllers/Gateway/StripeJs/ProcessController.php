@@ -12,9 +12,37 @@ use Illuminate\Http\Request;
 use App\Constants\ManageStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Gateway\PaymentController;
+use Throwable;
 
 class ProcessController extends Controller
 {
+    private function stripeErrorContext(Throwable $e): array
+    {
+        $context = [
+            'exception_class' => get_class($e),
+            'message' => $e->getMessage(),
+            'code' => $e->getCode(),
+        ];
+
+        if (method_exists($e, 'getHttpStatus')) {
+            $context['http_status'] = $e->getHttpStatus();
+        }
+        if (method_exists($e, 'getHttpBody')) {
+            $context['http_body'] = $e->getHttpBody();
+        }
+        if (method_exists($e, 'getJsonBody')) {
+            $context['json_body'] = $e->getJsonBody();
+        }
+        if (method_exists($e, 'getStripeCode')) {
+            $context['stripe_code'] = $e->getStripeCode();
+        }
+        if (method_exists($e, 'getError') && $e->getError()) {
+            $context['stripe_error'] = $e->getError();
+        }
+
+        return $context;
+    }
+
     public static function process($deposit)
     {
         $stripeJSAcc        = json_decode($deposit->gatewayCurrency()->gateway_parameter);
@@ -42,7 +70,7 @@ class ProcessController extends Controller
         if ($deposit->status == ManageStatus::PAYMENT_SUCCESS) {
             $toast[] = ['error', 'Invalid request.'];
 
-            return redirect()->to(gatewayRedirectUrlFull(false))->withToasts($toast);
+            return redirect()->to(gatewayRedirectUrlFull(false, 'Invalid request.'))->withToasts($toast);
         }
 
         $stripeJSAcc = json_decode($deposit->gatewayCurrency()->gateway_parameter);
@@ -56,9 +84,17 @@ class ProcessController extends Controller
                 'source' => $request->stripeToken,
             ]);
         } catch (Exception $e) {
+            \Log::error('StripeJs customer create failed', array_merge(
+                $this->stripeErrorContext($e),
+                [
+                    'trx' => $deposit->trx ?? null,
+                    'deposit_id' => $deposit->id ?? null,
+                    'gateway' => 'StripeJs',
+                ]
+            ));
             $toast[] = ['error', $e->getMessage()];
 
-            return redirect()->to(gatewayRedirectUrlFull(false))->withToasts($toast);
+            return redirect()->to(gatewayRedirectUrlFull(false, $e->getMessage()))->withToasts($toast);
         }
 
         try {
@@ -69,9 +105,17 @@ class ProcessController extends Controller
                 'currency'    => $deposit->method_currency,
             ]);
         } catch (Exception $e) {
+            \Log::error('StripeJs charge create failed', array_merge(
+                $this->stripeErrorContext($e),
+                [
+                    'trx' => $deposit->trx ?? null,
+                    'deposit_id' => $deposit->id ?? null,
+                    'gateway' => 'StripeJs',
+                ]
+            ));
             $toast[] = ['error', $e->getMessage()];
 
-            return redirect()->to(gatewayRedirectUrlFull(false))->withToasts($toast);
+            return redirect()->to(gatewayRedirectUrlFull(false, $e->getMessage()))->withToasts($toast);
         }
 
         if ($charge['status'] == 'succeeded') {
@@ -167,7 +211,7 @@ class ProcessController extends Controller
         } else {
             $toast[] = ['error', 'Failed to process'];
 
-            return redirect()->to(gatewayRedirectUrlFull(false))->withToasts($toast);
+            return redirect()->to(gatewayRedirectUrlFull(false, 'Failed to process'))->withToasts($toast);
         }
     }
 }

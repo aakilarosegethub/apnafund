@@ -141,6 +141,11 @@
                         @lang('Expired')
                     </a>
                 </li>
+                <li class="sidebar-dropdown-item">
+                    <a href="{{ route('admin.campaigns.document.requirements.index') }}" class="sidebar-link {{ navigationActive('admin.campaigns.document.requirements.*', 1) }}">
+                        @lang('Document Requirements')
+                    </a>
+                </li>
             </ul>
         </li>
         @endif
@@ -341,21 +346,6 @@
                 <span class="nav-icon"><i class="ti ti-arrows-left-right"></i></span>
                 <span class="sidebar-txt">@lang('Transactions')</span>
             </a>
-        </li>
-        @endif
-        @if(admin_can('store'))
-        <li class="sidebar-item">
-            <a role="button" class="sidebar-link has-sub {{ navigationActive('admin.store*', 2) }}">
-                <span class="nav-icon"><i class="ti ti-shopping-cart"></i></span>
-                <span class="sidebar-txt">@lang('Store Management')</span>
-            </a>
-            <ul class="sidebar-dropdown-menu">
-                <li class="sidebar-dropdown-item">
-                    <a href="{{ route('admin.store.dashboard') }}" class="sidebar-link {{ navigationActive('admin.store.dashboard', 1) }}">
-                        @lang('Store Dashboard')
-                    </a>
-                </li>
-            </ul>
         </li>
         @endif
         @if(admin_can('contacts'))

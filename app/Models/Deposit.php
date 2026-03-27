@@ -67,8 +67,7 @@ class Deposit extends Model
         return $this->belongsTo(Reward::class, 'reward_id', 'id');
     }
 
-    // Scope
-    public function scopeGatewayCurrency()
+    public function gatewayCurrency()
     {
         return GatewayCurrency::where('method_code', $this->method_code)->where('currency', $this->method_currency)->first();
     }

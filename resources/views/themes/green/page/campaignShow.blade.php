@@ -249,22 +249,32 @@
 
 @section('content')
 @php
-    $goalAmount = @$campaignData->goal_amount ?? 0;
-    $raisedAmount = @$campaignData->raised_amount ?? 0;
-    
-    if ($raisedAmount == 0) {
-        $raisedAmount = $campaignData->deposits()
+    // DB: goal_amount / goal_amount_usd in platform (USD base), original_goal_amount in creator currency
+    $goalAmountUsd = (float)(@$campaignData->goal_amount ?? @$campaignData->goal_amount_usd ?? 0);
+    $raisedAmountUsd = (float)(@$campaignData->raised_amount ?? 0);
+    if ($raisedAmountUsd == 0) {
+        $raisedAmountUsd = $campaignData->deposits()
             ->where('status', \App\Constants\ManageStatus::PAYMENT_SUCCESS)
-            ->sum('amount');
+            ->sum(\DB::raw('COALESCE(usd_amount, amount)'));
     }
-    
+    $setting = bs();
+    $goalAmount = usdToLocal($goalAmountUsd);
+    $raisedAmount = usdToLocal($raisedAmountUsd);
     $percentage = donationPercentage($goalAmount, $raisedAmount);
     $activeTab = request()->get('tab', 'campaign');
-    $setting = bs();
     $showRateDebug = request()->has('test');
-    $siteCur = strtoupper($setting->site_cur ?? 'USD');
-    $campaignCur = strtoupper($campaignData->original_currency ?? $siteCur);
-    $exchangeRate = (float)($campaignData->exchange_rate_used ?? 1);
+    $localCur = strtoupper(getLocalCurrencyCode());
+    $localPerOneUsd = 1.0;
+    if ($localCur !== 'USD') {
+        try {
+            $cs = app(\App\Services\CurrencyService::class);
+            $lc = $cs->getOrCreateByCode($localCur);
+            $rUsdPerUnit = $cs->getRateToUsd($lc);
+            $localPerOneUsd = ($rUsdPerUnit > 0) ? (1 / $rUsdPerUnit) : 1.0;
+        } catch (\Throwable $e) {
+            $localPerOneUsd = 1.0;
+        }
+    }
     $donateUrl = route('campaign.donate', $campaignData->slug);
     if ($showRateDebug) {
         $donateUrl .= (strpos($donateUrl, '?') !== false ? '&' : '?') . 'test=1';
@@ -445,7 +455,7 @@
                                             <div class="card-body">
                                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                                     <h5 class="card-title mb-0">{{ $reward->title }}</h5>
-                                                    <span class="badge bg-success">{{ $setting->cur_sym ?? '$' }}{{ number_format($reward->minimum_amount, 0) }}</span>
+                                                    <span class="badge bg-success">{{ formatUsdForDisplay($reward->minimum_amount, 0) }}</span>
                                                 </div>
                                                 <p class="card-text text-muted">{{ $reward->description }}</p>
                                                 
@@ -692,22 +702,22 @@
         <div class="col-lg-4">
             <div class="funding-box sticky-top">
                 <h2 class="amount d-inline-block">
-                    {{ $setting->cur_sym ?? '$' }}{{ number_format($raisedAmount, 0) }}
+                {{ showCurrency(round($raisedAmount, 0), 0) }}
                     @if($showRateDebug)
                     <i class="fas fa-calculator rate-debug-icon ms-1" role="button" tabindex="0"
                        data-bs-toggle="popover" data-bs-placement="bottom" data-bs-trigger="click"
                        data-bs-html="true"
-                       data-bs-content="<div class='rate-debug-popover'><strong>Currency &amp; Rate</strong><br>Site: {{ $siteCur }}<br>Campaign: {{ $campaignCur }}<br>Rate: 1 {{ $siteCur }} = {{ number_format($exchangeRate, 4) }} {{ $campaignCur }}<br><small class='text-muted'>Amounts shown in {{ $siteCur }}</small></div>"
+                       data-bs-content="<div class='rate-debug-popover'><strong>Currency &amp; Rate</strong><br>USD: {{ '$' . number_format($raisedAmountUsd, 2) }}<br>Local currency: {{ $localCur }}<br>Rate: 1 USD = {{ number_format($localPerOneUsd, 4) }} {{ $localCur }}<br>Converted: {{ number_format($raisedAmount, 2) }} {{ $localCur }}</div>"
                        title="Rate Info"></i>
                     @endif
                 </h2>
                 <p class="goal">
-                    pledged of {{ $setting->cur_sym ?? '$' }}{{ number_format($goalAmount, 0) }} goal
+                    pledged of {{ showCurrency(round($goalAmount, 0), 0) }} goal
                     @if($showRateDebug)
                     <i class="fas fa-calculator rate-debug-icon ms-1" role="button" tabindex="0"
                        data-bs-toggle="popover" data-bs-placement="bottom" data-bs-trigger="click"
                        data-bs-html="true"
-                       data-bs-content="<div class='rate-debug-popover'><strong>Currency &amp; Rate</strong><br>Site: {{ $siteCur }}<br>Campaign: {{ $campaignCur }}<br>Rate: 1 {{ $siteCur }} = {{ number_format($exchangeRate, 4) }} {{ $campaignCur }}</div>"
+                       data-bs-content="<div class='rate-debug-popover'><strong>Currency &amp; Rate</strong><br>USD: {{ '$' . number_format($goalAmountUsd, 2) }}<br>Local currency: {{ $localCur }}<br>Rate: 1 USD = {{ number_format($localPerOneUsd, 4) }} {{ $localCur }}<br>Converted: {{ number_format($goalAmount, 2) }} {{ $localCur }}</div>"
                        title="Rate Info"></i>
                     @endif
                 </p>
@@ -720,7 +730,7 @@
 
                 <div class="stats">
                     <div>
-                        <strong>{{ $campaignData->deposits ? $campaignData->deposits->count() : ($donations ? $donations->count() : 0) }}</strong>
+                        <strong>{{ $campaignData->deposits->where('status', \App\Constants\ManageStatus::PAYMENT_SUCCESS)->count() }}</strong>
                         <span>backers</span>
                     </div>
                     <div>
@@ -729,7 +739,7 @@
                                 @php
                                     $endDate = \Carbon\Carbon::parse($campaignData->end_date);
                                     $now = \Carbon\Carbon::now();
-                                    $daysLeft = $endDate->diffInDays($now, false);
+                                    $daysLeft =(int) $now->diffInDays($campaignData->end_date, false);
                                 @endphp
                                 @if($daysLeft < 0)
                                     0
@@ -744,7 +754,7 @@
                             @if($campaignData->end_date && \Carbon\Carbon::parse($campaignData->end_date)->isPast())
                                 days ago
                             @else
-                                days to go
+                                days left
                             @endif
                         </span>
                     </div>
@@ -761,6 +771,10 @@
                         </h6>
                         <div class="donations-list" style="max-height: 300px; overflow-y: auto;">
                             @foreach($donations as $donation)
+                            @php
+                                $donationUsd = (float)($donation->amount ?? 0);
+                                $donationAmount = usdToLocal($donationUsd);
+                            @endphp
                                 <div class="donation-item mb-3 pb-3 border-bottom">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div class="d-flex align-items-center gap-2">
@@ -779,12 +793,12 @@
                                             </div>
                                         </div>
                                         <div class="text-success fw-bold">
-                                            {{ $setting->cur_sym ?? '$' }}{{ number_format($donation->amount, 0) }}
+                                        {{ showCurrency($donationAmount, 0) }}
                                             @if($showRateDebug)
                                             <i class="fas fa-calculator rate-debug-icon ms-1" role="button" tabindex="0"
                                                data-bs-toggle="popover" data-bs-placement="left" data-bs-trigger="click"
                                                data-bs-html="true"
-                                               data-bs-content="<div class='rate-debug-popover'><strong>Donation</strong><br>{{ number_format($donation->amount, 2) }} {{ $siteCur }}<br>Rate: 1 {{ $siteCur }} = {{ number_format($exchangeRate, 4) }} {{ $campaignCur }}</div>"
+                                               data-bs-content="<div class='rate-debug-popover'><strong>Donation</strong><br>USD: {{ '$' . number_format($donationUsd, 2) }}<br>Local currency: {{ $localCur }}<br>Rate: 1 USD = {{ number_format($localPerOneUsd, 4) }} {{ $localCur }}<br>Converted: {{ number_format($donationAmount, 2) }} {{ $localCur }}</div>"
                                                title="Rate Info"></i>
                                             @endif
                                         </div>
@@ -816,14 +830,18 @@
                     <div class="tiers">
                         <h5>Support Tiers</h5>
                         @foreach($campaignData->rewards as $reward)
+                            @php
+                                $rewardUsd = (float)($reward->minimum_amount ?? $reward->amount ?? 0);
+                                $rewardLocal = usdToLocal($rewardUsd);
+                            @endphp
                             <div class="tier-card">
                                 <strong>
-                                    {{ $setting->cur_sym ?? '$' }}{{ number_format($reward->amount, 0) }}
+                                    {{ formatUsdForDisplay($reward->minimum_amount ?? $reward->amount ?? 0, 0) }}
                                     @if($showRateDebug)
                                     <i class="fas fa-calculator rate-debug-icon ms-1" role="button" tabindex="0"
                                        data-bs-toggle="popover" data-bs-placement="right" data-bs-trigger="click"
                                        data-bs-html="true"
-                                       data-bs-content="<div class='rate-debug-popover'><strong>Reward</strong><br>{{ number_format($reward->amount, 2) }} {{ $siteCur }}<br>Rate: 1 {{ $siteCur }} = {{ number_format($exchangeRate, 4) }} {{ $campaignCur }}</div>"
+                                       data-bs-content="<div class='rate-debug-popover'><strong>Reward</strong><br>USD: {{ '$' . number_format($rewardUsd, 2) }}<br>Local currency: {{ $localCur }}<br>Rate: 1 USD = {{ number_format($localPerOneUsd, 4) }} {{ $localCur }}<br>Converted: {{ number_format($rewardLocal, 2) }} {{ $localCur }}</div>"
                                        title="Rate Info"></i>
                                     @endif
                                 </strong>

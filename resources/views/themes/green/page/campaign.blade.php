@@ -1,5 +1,5 @@
 @php
-    
+        
     $activeTheme = activeTheme();
     $activeThemeTrue = activeTheme();
 @endphp
@@ -66,7 +66,7 @@
                 <div class="row align-items-center">
                     <div class="col-md-6">
                         <h4 class="mb-0">Campaigns</h4>
-                        <small class="text-muted">Showing {{ $campaigns->count() }} of {{ $campaigns->total() }} campaigns</small>
+                        <small class="text-muted" id="campaigns-count">Showing <span id="campaigns-shown">{{ $campaigns->count() }}</span> of {{ $campaigns->total() }} campaigns</small>
                     </div>
                 </div>
             </div>
@@ -77,61 +77,24 @@
 
                     <!-- Campaign Cards -->
                     @if($campaigns->count() > 0)
-                    <div class="row g-4" id="campaign-container">
+                    <div class="row g-4" id="campaign-container"
+                         data-load-more-url="{{ route('campaign.load-more') }}"
+                         data-total="{{ $campaigns->total() }}"
+                         data-category-slug="{{ request()->routeIs('campaign.category') ? request()->route('slug') : '' }}"
+                         data-has-more="{{ $campaigns->hasMorePages() ? '1' : '0' }}">
                         @foreach ($campaigns as $campaign)
-                            <div class="col-lg-4 col-md-6 campaign-item">
-                                <a href="{{ route('campaign.show', $campaign->slug) }}" class="text-decoration-none text-dark d-block">
-                                    <div class="campaign-card h-100 rounded overflow-hidden shadow-sm" style="border-radius: 12px; cursor: pointer;">
-                                        <div class="campaign-image" style="background-image: url('{{ getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')) }}'); background-size: cover; background-position: center; background-repeat: no-repeat; height: 250px; width: 100%; display: block; border-top-left-radius: 12px; border-top-right-radius: 12px;"></div>
-                                        <div class="p-4">
-                                            <h6 class="fw-semibold mb-2">{{ Str::limit($campaign->name, 40) }}</h6>
-                                            <p class="text-muted small mb-3">{{ Str::limit(strip_tags($campaign->short_description ?? $campaign->description), 60) }}</p>
-                                            <div class="progress mb-3" style="height: 6px;">
-                                                @php
-                                                    $raised = $campaign->raised_amount ?? 0;
-                                                    $goal = $campaign->goal_amount ?? 1;
-                                                    $percentage = min(100, ($raised / $goal) * 100);
-                                                    $curSym = $setting->cur_sym ?? getDefaultCurrency();
-                                                @endphp
-                                                <div class="progress-bar bg-success" style="width:{{ $percentage }}%"></div>
-                                            </div>
-                                            <div class="d-flex justify-content-between small fw-semibold text-dark">
-                                                <span>{{ $curSym . showAmount($raised) }} RAISED</span>
-                                                <span>
-                                                    @if($campaign->end_date)
-                                                        @php
-                                                            try {
-                                                                $endDate = \Carbon\Carbon::parse($campaign->end_date);
-                                                                $now = \Carbon\Carbon::now();
-                                                                
-                                                                // Check if campaign has ended
-                                                                if ($endDate->isPast()) {
-                                                                    $daysText = '0';
-                                                                }
-                                                                if ($endDate->isPast() || $endDate->isToday()) {
-                                                                    $daysText = 'ENDED';
-                                                                } else {
-                                                                    // Calculate integer number of days remaining
-                                                                    $daysLeft = $now->diffInDays($endDate, false);
-                                                                    $daysLeft = max(0, (int)$daysLeft);
-                                                                    $daysText = $daysLeft . ' DAYS LEFT';
-                                                                }
-                                                            } catch (\Exception $e) {
-                                                                $daysText = 'ONGOING';
-                                                            }
-                                                        @endphp
-                                                        {{ $daysText }}
-                                                    @else
-                                                        ONGOING
-                                                    @endif
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </a>
-                            </div>
+                            @include($activeTheme . 'partials.campaign-card-item', ['campaign' => $campaign])
                         @endforeach
                     </div>
+                    {{-- See more button + infinite scroll sentinel --}}
+                    @if($campaigns->hasMorePages())
+                    <div class="col-12 text-center py-4" id="see-more-wrapper">
+                        <button type="button" class="btn btn-outline-primary btn-lg px-5" id="see-more-btn">
+                            <i class="fas fa-chevron-down me-2"></i>See more
+                        </button>
+                        <div id="load-more-sentinel" style="min-height: 1px;"></div>
+                    </div>
+                    @endif
                     @else
                         <div class="empty-state text-center py-5">
                             <div class="empty-icon mb-4">
@@ -467,6 +430,58 @@
                     $('.search-campaign').click()
                 }
             })
+
+            // Infinite scroll - load more on scroll to bottom
+            var loadMorePage = 2;
+            var isLoading = false;
+            var hasMore = $('#campaign-container').data('has-more') === 1;
+
+            function loadMoreCampaigns() {
+                if (!hasMore || isLoading) return;
+                var $container = $('#campaign-container');
+                if (!$container.length) return;
+
+                isLoading = true;
+                var $btn = $('#see-more-btn');
+                if ($btn.length) {
+                    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Loading...');
+                }
+                var params = new URLSearchParams();
+                params.append('page', loadMorePage);
+                var catSlug = $container.data('category-slug');
+                if (catSlug) params.append('category_slug', catSlug);
+                if ($('#campaign-name').val()) params.append('name', $('#campaign-name').val());
+                if ($('#sort-campaigns').val()) params.append('sort', $('#sort-campaigns').val());
+                if ($('#date-range').val()) params.append('date_range', $('#date-range').val());
+                if ($('#filter-category').val()) params.append('category', $('#filter-category').val());
+
+                $.get($container.data('load-more-url') + '?' + params.toString())
+                    .done(function(res) {
+                        if (res.html) {
+                            $container.append(res.html);
+                            var newCount = $container.find('.campaign-item').length;
+                            $('#campaigns-shown').text(newCount);
+                        }
+                        hasMore = res.hasMore;
+                        if (res.hasMore) loadMorePage = res.nextPage;
+                        else $('#see-more-wrapper').hide();
+                    })
+                    .fail(function() { hasMore = false; })
+                    .always(function() {
+                        isLoading = false;
+                        $('#see-more-btn').prop('disabled', false).html('<i class="fas fa-chevron-down me-2"></i>See more');
+                    });
+            }
+
+            $('#see-more-btn').on('click', function() { loadMoreCampaigns(); });
+
+            $('#see-more-btn').on('click', function() { loadMoreCampaigns(); });
+
+            $(window).on('scroll', function() {
+                if (!hasMore || isLoading) return;
+                var scrollBottom = $(document).height() - $(window).height() - $(window).scrollTop();
+                if (scrollBottom < 400) loadMoreCampaigns();
+            });
 
             console.log('Campaign filters initialized successfully');
         });

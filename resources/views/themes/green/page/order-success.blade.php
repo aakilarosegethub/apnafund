@@ -36,8 +36,16 @@
                                             <td class="fw-medium py-2">{{ $deposit->trx }}</td>
                                         </tr>
                                         <tr>
-                                            <td class="text-muted py-2">@lang('Amount')</td>
-                                            <td class="fw-medium py-2">{{ showAmount($deposit->amount) }} {{ $deposit->method_currency }}</td>
+                                            <td class="text-muted py-2">@lang('Contribution Amount')</td>
+                                            <td class="fw-medium py-2">{{ formatPlatformForDisplay($deposit->amount, 2) }} ({{ getLocalCurrencyCode() }})</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted py-2">@lang('Processing Charges')</td>
+                                            <td class="fw-medium py-2">{{ formatPlatformForDisplay($deposit->rate, 2) }} ({{ getLocalCurrencyCode() }})</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted py-2">@lang('Total Payable')</td>
+                                            <td class="fw-medium py-2">{{ formatPlatformForDisplay($deposit->final_amount, 2) }} ({{ getLocalCurrencyCode() }})</td>
                                         </tr>
                                         @if($deposit->campaign)
                                         <tr>
@@ -88,9 +96,6 @@
 
                         {{-- Actions --}}
                         <div class="mt-5 pt-3 d-flex flex-wrap gap-3 justify-content-center">
-                            <a href="{{ route('campaign') }}" class="btn btn-lg px-4 py-3 fw-semibold rounded-pill" style="background: #05ce78; color: #fff; border: none;">
-                                <i class="fas fa-shopping-bag me-2"></i> @lang('Continue Shopping')
-                            </a>
                             <a href="{{ route('home') }}" class="btn btn-outline-secondary btn-lg px-4 py-3 fw-semibold rounded-pill">
                                 <i class="fas fa-home me-2"></i> @lang('Back to Home')
                             </a>

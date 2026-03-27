@@ -75,15 +75,14 @@ class ManualGatewayController extends Controller
 
         $gatewayCurrency->name           = request('name');
         $gatewayCurrency->gateway_alias  = strtolower(trim(str_replace(' ','_',request('name'))));
-        $gatewayCurrency->currency       = request('currency');
+        $gatewayCurrency->currency       = getPlatformCurrency();
         $gatewayCurrency->symbol         = '';
         $gatewayCurrency->min_amount     = request('min_amount');
         $gatewayCurrency->max_amount     = request('max_amount');
         $gatewayCurrency->fixed_charge   = request('fixed_charge');
-        $gatewayCurrency->percent_charge = request('percent_charge');
-        $gatewayCurrency->rate           = request('rate');
-        $inputRates = request('input_currency_rates', []);
-        $gatewayCurrency->input_currency_rates = !empty($inputRates) ? array_filter($inputRates) : null;
+        $gatewayCurrency->percent_charge = 0;
+        $gatewayCurrency->rate           = 1;
+        $gatewayCurrency->input_currency_rates = null;
         $gatewayCurrency->save();
 
         $toast[] = ['success', $method->name . $message];
@@ -109,12 +108,9 @@ class ManualGatewayController extends Controller
     private function validation($request, $formProcessor) {
         $validation = [
             'name'           => 'required|max:40',
-            'rate'           => 'required|numeric|gt:0',
-            'currency'       => 'required|max:40',
             'min_amount'     => 'required|numeric|gt:0',
             'max_amount'     => 'required|numeric|gt:min_amount',
             'fixed_charge'   => 'required|numeric|gte:0',
-            'percent_charge' => 'required|numeric|gte:0|regex:/^\d+(\.\d{1,2})?$/'
         ];
 
         $generatorValidation = $formProcessor->generatorValidation();

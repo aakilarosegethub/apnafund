@@ -1,7 +1,4 @@
-@php
-if(isset($_GET['test'])){   die('home');
-}
-@endphp
+
 
 <!DOCTYPE html>
 <html lang="en">

@@ -65,10 +65,14 @@ class PaymentController extends Controller
             return back()->withToasts($toast);
         }
 
-        $amount = request('amount');
+        // User enters amount in local/display currency; convert and store in platform currency (USD/site_cur).
+        $enteredAmount = round((float) request('amount'), 8);
+        $inputCurrency = request('input_currency') ?: (session('user_detected_currency') ?: getPlatformCurrency());
+        $currencyService = app(\App\Services\CurrencyService::class);
+        $amount = round((float) $currencyService->convertToPlatform($enteredAmount, $inputCurrency), 8);
 
         if ($gatewayData->min_amount > $amount || $gatewayData->max_amount < $amount) {
-            $toast[] = ['error', 'Please follow donation limit'];
+            $toast[] = ['error', 'Please follow contribution limit'];
             return back()->withToasts($toast);
         }
 
@@ -98,7 +102,7 @@ class PaymentController extends Controller
 
         $charge       = $gatewayData->fixed_charge + (($amount * $gatewayData->percent_charge) / 100);
         $payable      = $amount + $charge;
-        $final_amount = $payable * $gatewayData->rate;
+        $final_amount = round($amount + (float) $gatewayData->rate, 2);
 
         if (auth()->check()) {
             $userFullName = auth()->user()->fullname;
@@ -124,7 +128,7 @@ class PaymentController extends Controller
         $deposit->receiver_id     = $campaign->user->id;
         $deposit->reward_id       = $rewardId ? $rewardId : null;
         $deposit->method_code     = $gatewayData->method_code;
-        $deposit->amount          = $amount;
+        $deposit->amount          = round($amount, 2);
         $deposit->method_currency = strtoupper($gatewayData->currency);
         $deposit->charge          = $charge;
         $deposit->rate            = $gatewayData->rate;
@@ -139,33 +143,70 @@ class PaymentController extends Controller
         return to_route('user.deposit.confirm');
     }
 
+    /**
+     * Donation amount credited to campaign/receiver — always in platform currency (deposits.amount).
+     */
+    private static function platformDonationAmount(Deposit $deposit): float
+    {
+        return round((float) $deposit->amount, 2);
+    }
+
     function depositConfirm() {
+        
+        
         $track = session()->get('Track') ?? request()->query('trx');
+        if(!$track || !empty($_GET['trx'])){
+            $track = $_GET['trx'];
+        }
+        
         if (!$track) {
+
             abort(404, 'Invalid or missing payment session');
         }
         $deposit = Deposit::with('gateway')->where('trx', $track)->initiate()->firstOrFail();
-
         // Set session for webview/mobile flow (trx from query param)
         session()->put('Track', $deposit->trx);
 
-        if ($deposit->method_code >= 1000) return to_route('user.deposit.manual.confirm');
+        if ($deposit->method_code >= 1000) {
+            return to_route('user.deposit.manual.instructions');
+        }
 
         $dirName = $deposit->gateway->alias;
+        
+        $country = (string) $deposit->country;
+        $currencyFromCountry = strtoupper((string) getCurrencyCodeForCountryName($country));
+        $currencyFromCountry = $currencyFromCountry ?: $deposit->method_currency;
         $new     = __NAMESPACE__ . '\\' . $dirName . '\\ProcessController';
-        $deposit->final_amount = round((float) $deposit->final_amount, 2);
+        $currencyService = app(\App\Services\CurrencyService::class);
+        $hasCountryGatewayCurrency = GatewayCurrency::where('method_code', $deposit->method_code)
+            ->where('currency', $currencyFromCountry)
+            ->exists();
+        try {
+            if ($hasCountryGatewayCurrency) {
+                // Only switch currency when gateway has configuration for that currency.
+                $convertedFinalAmount = $currencyService->convertFromPlatform((float) $deposit->amount, $currencyFromCountry);
+                $deposit->final_amount = round((float) $convertedFinalAmount, 2);
+                dd($deposit->final_amount);
+                $deposit->method_currency = $currencyFromCountry;
+            } else {
+                $deposit->final_amount = round((float) $deposit->final_amount, 2);
+            }
+        } catch (\Throwable $e) {
+            // Fallback to stored final amount if conversion mapping is unavailable.
+            $deposit->final_amount = round((float) $deposit->final_amount, 2);
+        }
         \Log::channel('payments')->info('Payment process started', [
             'gateway'      => $dirName,
             'method_code'  => $deposit->method_code,
             'trx'          => $deposit->trx,
             'amount'       => $deposit->final_amount,
             'currency'     => $deposit->method_currency,
+            'country'      => $country,
+            'country_currency' => $currencyFromCountry,
         ]);
 
         $data    = $new::process($deposit);
         $data    = json_decode($data);
-        
-
         if (isset($data->error)) {
             $errorMsg = isset($data->message) ? $data->message : 'Payment failed';
             \Log::channel('payments')->error('Payment process returned error to user', [
@@ -175,7 +216,7 @@ class PaymentController extends Controller
             ]);
             $toast[] = ['error', $errorMsg];
 
-            return redirect()->to(gatewayRedirectUrlFull(false))->withToasts($toast);
+            return redirect()->to(gatewayRedirectUrlFull(false, $errorMsg))->withToasts($toast);
         }
         
 
@@ -235,9 +276,18 @@ class PaymentController extends Controller
                 ];
             }
 
-            $campaign                 = $deposit->campaign;
-            $campaign->raised_amount += $deposit->amount;
+            $campaign      = $deposit->campaign;
+            $platformAmount = self::platformDonationAmount($deposit);
+
+            // Keep existing campaign dates intact while updating raised amount.
+            $oldStartDate = $campaign->start_date;
+            $oldEndDate   = $campaign->getRawOriginal('end_date') ?: optional($campaign->end_date)->format('Y-m-d');
+
+            $campaign->raised_amount += $platformAmount;
+            $campaign->start_date = $oldStartDate;
+            $campaign->end_date   = $oldEndDate;
             $campaign->save();
+            
 
             // Update reward claimed count if reward was selected
             if ($deposit->reward_id) {
@@ -249,13 +299,13 @@ class PaymentController extends Controller
             }
 
             $campaignAuthor           = $campaign->user;
-            $campaignAuthor->balance += $deposit->amount;
+            $campaignAuthor->balance += $platformAmount;
             $campaignAuthor->save();
 
             // donor transaction
             $transaction               = new Transaction();
             $transaction->user_id      = $deposit->user_id;
-            $transaction->amount       = $deposit->amount;
+            $transaction->amount       = $platformAmount;
             $transaction->charge       = $deposit->charge;
             $transaction->post_balance = $user->balance ?? 0;
             $transaction->trx_type     = '-';
@@ -267,7 +317,7 @@ class PaymentController extends Controller
             // receiver transaction
             $transaction               = new Transaction();
             $transaction->user_id      = $campaignAuthor->id;
-            $transaction->amount       = $deposit->amount;
+            $transaction->amount       = $platformAmount;
             $transaction->charge       = 0;
             $transaction->post_balance = $campaignAuthor->balance ?? 0;
             $transaction->trx_type     = '+';
@@ -299,17 +349,214 @@ class PaymentController extends Controller
         }
     }
 
+    /**
+     * Step 1: Show admin guideline + notify admin (pending approval). Next: manual.confirm for proof form.
+     */
+    function manualDepositInstructions() {
+        $track = session()->get('Track') ?? request()->query('trx');
+        if (!$track) {
+            return redirect()->to(gatewayRedirectUrlFull(false));
+        }
+        session()->put('Track', $track);
+
+        $deposit = Deposit::with(['gateway', 'campaign', 'user'])->where('trx', $track)->initiate()->first();
+        if (!$deposit) {
+            return redirect()->to(gatewayRedirectUrlFull(false));
+        }
+
+        if ($deposit->method_code < 1000) {
+            abort(404);
+        }
+
+        $gatewayCurrency = $deposit->gatewayCurrency();
+        $gateway = $gatewayCurrency?->method;
+        if (!$gateway) {
+            $toast[] = ['error', 'Invalid gateway configuration'];
+            return redirect()->to(gatewayRedirectUrlFull(false))->withToasts($toast);
+        }
+
+        $notifSessionKey = 'manual_instr_admin_notif_' . $deposit->trx;
+        if (!session()->get($notifSessionKey)) {
+            $adminNotification = new AdminNotification();
+            $adminNotification->user_id = $deposit->user_id ?: 0;
+            $campaignName = $deposit->campaign->name ?? 'Campaign';
+            $donor = ($deposit->user_id && $deposit->user)
+                ? $deposit->user->fullname
+                : ($deposit->full_name ?? 'Guest');
+            $adminNotification->title = 'Manual payment pending approval: ' . $donor . ' — ' . $campaignName;
+            $adminNotification->click_url = urlPath('admin.donations.pending');
+            $adminNotification->save();
+            session()->put($notifSessionKey, true);
+        }
+
+        session()->put('manual_guide_seen', $deposit->trx);
+
+        $pageTitle = __('Payment instructions');
+
+        return view($this->activeTheme . 'user.payment.manual-instructions', compact('deposit', 'pageTitle', 'gateway', 'gatewayCurrency'));
+    }
+
+    /**
+     * Upload payment proof (screenshot) when gateway has no Phinix form — avoids manual.confirm failing on missing form.
+     */
+    function manualDepositProof() {
+        $track = session()->get('Track') ?? request()->query('trx');
+        if (!$track) {
+            return redirect()->to(gatewayRedirectUrlFull(false));
+        }
+        session()->put('Track', $track);
+
+        $deposit = Deposit::with(['gateway', 'campaign', 'user'])->where('trx', $track)->initiate()->first();
+        if (!$deposit) {
+            return redirect()->to(gatewayRedirectUrlFull(false));
+        }
+
+        if ($deposit->method_code < 1000) {
+            abort(404);
+        }
+
+        if (session('manual_guide_seen') !== $deposit->trx) {
+            return redirect()->route('user.deposit.manual.instructions');
+        }
+
+        $gatewayCurrency = $deposit->gatewayCurrency();
+        $gateway         = $gatewayCurrency?->method;
+        if (!$gateway) {
+            $toast[] = ['error', 'Invalid gateway configuration'];
+            return redirect()->to(gatewayRedirectUrlFull(false))->withToasts($toast);
+        }
+
+        $pageTitle = __('Submit payment proof');
+
+        return view($this->activeTheme . 'user.payment.manual-proof', compact('deposit', 'pageTitle', 'gateway', 'gatewayCurrency'));
+    }
+
+    function manualDepositProofSubmit() {
+        $request = request();
+
+        $request->validate([
+            'trx'           => 'required|string',
+            'payment_proof' => 'required|file|mimes:jpeg,jpg,png,pdf,webp|max:5120',
+            'note'          => 'nullable|string|max:1000',
+        ]);
+
+        $track = $request->string('trx')->toString();
+        if (session()->get('Track') && session()->get('Track') !== $track) {
+            $toast[] = ['error', 'Invalid session. Please open the payment link again.'];
+            return redirect()->to(gatewayRedirectUrlFull(false))->withToasts($toast);
+        }
+        session()->put('Track', $track);
+
+        $deposit = Deposit::with(['gateway', 'campaign', 'user'])->where('trx', $track)->initiate()->first();
+        if (!$deposit) {
+            return redirect()->to(gatewayRedirectUrlFull(false));
+        }
+
+        if ($deposit->method_code < 1000) {
+            abort(404);
+        }
+
+        if (session('manual_guide_seen') !== $deposit->trx) {
+            return redirect()->route('user.deposit.manual.instructions');
+        }
+
+        $gatewayCurrency = $deposit->gatewayCurrency();
+        $gateway         = $gatewayCurrency?->method;
+        if (!$gateway) {
+            $toast[] = ['error', 'Invalid gateway configuration'];
+            return redirect()->to(gatewayRedirectUrlFull(false))->withToasts($toast);
+        }
+
+        $directory = date('Y') . '/' . date('m') . '/' . date('d');
+        $path      = getFilePath('verify') . '/' . $directory;
+        $value     = $directory . '/' . fileUploader($request->file('payment_proof'), $path);
+
+        $details = [
+            [
+                'name'  => __('Payment proof'),
+                'type'  => 'file',
+                'value' => $value,
+            ],
+        ];
+        if ($request->filled('note')) {
+            $details[] = [
+                'name'  => __('Note'),
+                'type'  => 'textarea',
+                'value' => $request->string('note')->toString(),
+            ];
+        }
+
+        $deposit->details = $details;
+        $deposit->status  = ManageStatus::PAYMENT_PENDING;
+        $deposit->save();
+
+        $adminNotification          = new AdminNotification();
+        $adminNotification->user_id = $deposit->user->id ?? 0;
+
+        if ($deposit->donor_type) {
+            if ($deposit->user_id) {
+                $donor = $deposit->user->fullname;
+            } else {
+                $donor = $deposit->full_name;
+            }
+        } else {
+            $donor = 'an anonymous user';
+        }
+
+        $adminNotification->title     = 'Payment proof submitted — ' . $donor . ' — ' . ($deposit->campaign->name ?? 'Campaign');
+        $adminNotification->click_url = urlPath('admin.donations.pending');
+        $adminNotification->save();
+
+        if (!$deposit->user) {
+            $user = [
+                'fullname' => $deposit->full_name,
+                'username' => $deposit->email,
+                'email'    => $deposit->email,
+                'mobile'   => $deposit->phone,
+            ];
+        } else {
+            $user = $deposit->user;
+        }
+
+        notify($user, 'DONATION_REQUEST', [
+            'method_name'     => $deposit->gatewayCurrency()->name,
+            'method_currency' => $deposit->method_currency,
+            'method_amount'   => showAmount($deposit->final_amount),
+            'amount'          => showAmount($deposit->amount),
+            'charge'          => showAmount($deposit->charge),
+            'rate'            => showAmount($deposit->rate),
+            'trx'             => $deposit->trx,
+            'campaign_name'   => $deposit->campaign->name,
+        ]);
+
+        $toast[]   = ['success', 'Your donation request has been taken. Please wait for admin response'];
+        $routeName = auth()->check() ? 'user.donation.history' : 'campaign';
+
+        return to_route($routeName)->withToasts($toast);
+    }
+
     function manualDepositConfirm() {
-        $track   = session()->get('Track');
+        $track = session()->get('Track') ?? request()->query('trx');
+        if (!$track) {
+            return redirect()->to(gatewayRedirectUrlFull(false));
+        }
+        session()->put('Track', $track);
+
         $deposit = Deposit::with('gateway')->where('trx', $track)->initiate()->first();
 
-        if (!$deposit) return redirect()->to(gatewayRedirectUrlFull(false));
+        if (!$deposit) {
+            return redirect()->to(gatewayRedirectUrlFull(false));
+        }
 
         if ($deposit->method_code > 999) {
+            if (session('manual_guide_seen') !== $deposit->trx) {
+                return redirect()->route('user.deposit.manual.instructions');
+            }
+
             $pageTitle       = 'Donation Confirmation';
             $gatewayCurrency = $deposit->gatewayCurrency();
             $gateway         = $gatewayCurrency->method;
-            
+
             // Check if gateway and form exist
             if (!$gateway || !$gateway->form) {
                 $toast[] = ['error', 'Invalid gateway configuration'];
@@ -359,7 +606,7 @@ class PaymentController extends Controller
             $donor = 'an anonymous user';
         }
 
-        $adminNotification->title     = "Donation request from $donor for a campaign";
+        $adminNotification->title     = 'Payment proof submitted — ' . $donor . ' — ' . ($deposit->campaign->name ?? 'Campaign');
         $adminNotification->click_url = urlPath('admin.donations.pending');
         $adminNotification->save();
 

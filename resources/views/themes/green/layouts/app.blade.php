@@ -28,6 +28,20 @@
   --green:#16a34a;
 }
 
+.btn--base{
+  background: var(--green) !important;
+  border-color: var(--green) !important;
+  color: #fff !important;
+}
+
+.btn--base:hover,
+.btn--base:focus,
+.btn--base:active{
+  background: #15803d !important;
+  border-color: #15803d !important;
+  color: #fff !important;
+}
+
 body{
   font-family:'Inter',sans-serif;
   background:#f9fafb;
