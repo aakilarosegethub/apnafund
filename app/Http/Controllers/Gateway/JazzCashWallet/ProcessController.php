@@ -26,7 +26,21 @@ class ProcessController extends Controller
 
     public static function process($deposit)
     {
-        $gatewayAcc = json_decode($deposit->gatewayCurrency()->gateway_parameter);
+        $gwCurrency = $deposit->gatewayCurrency();
+        if (!$gwCurrency) {
+            return json_encode([
+                'error' => true,
+                'message' => 'Gateway currency configuration not found for this payment.',
+            ]);
+        }
+
+        $gatewayAcc = json_decode($gwCurrency->gateway_parameter ?? '{}');
+        if (!$gatewayAcc || !isset($gatewayAcc->merchant_id, $gatewayAcc->password, $gatewayAcc->integrity_salt)) {
+            return json_encode([
+                'error' => true,
+                'message' => 'Gateway is not configured correctly. Please contact support.',
+            ]);
+        }
         $setting = bs();
         
         // Get JazzCash Wallet configuration parameters
@@ -125,7 +139,22 @@ class ProcessController extends Controller
             ], 400);
         }
 
-        $gatewayAcc = json_decode($deposit->gatewayCurrency()->gateway_parameter);
+        $gwCurrency = $deposit->gatewayCurrency();
+        if (!$gwCurrency) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gateway currency configuration not found for this payment.',
+            ], 422);
+        }
+
+        $gatewayAcc = json_decode($gwCurrency->gateway_parameter ?? '{}');
+        if (!$gatewayAcc || !isset($gatewayAcc->merchant_id, $gatewayAcc->password, $gatewayAcc->integrity_salt)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gateway is not configured correctly. Please contact support.',
+            ], 500);
+        }
+
         $merchantId = $gatewayAcc->merchant_id;
         $password = $gatewayAcc->password;
         $integritySalt = $gatewayAcc->integrity_salt;
@@ -250,9 +279,17 @@ class ProcessController extends Controller
         if ($deposit->status == ManageStatus::PAYMENT_SUCCESS) {
             return response('Already processed', 200);
         }
-        
-        // Get JazzCash gateway configuration
-        $gatewayAcc = json_decode($deposit->gatewayCurrency()->gateway_parameter);
+
+        $gwCurrency = $deposit->gatewayCurrency();
+        if (!$gwCurrency) {
+            return response('Gateway configuration not found', 500);
+        }
+
+        $gatewayAcc = json_decode($gwCurrency->gateway_parameter ?? '{}');
+        if (!$gatewayAcc || !isset($gatewayAcc->merchant_id, $gatewayAcc->integrity_salt)) {
+            return response('Gateway not configured', 500);
+        }
+
         $merchantId = $gatewayAcc->merchant_id;
         $integritySalt = $gatewayAcc->integrity_salt;
         

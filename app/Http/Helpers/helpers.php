@@ -580,39 +580,43 @@ function osBrowser(): array {
     return ClientInfo::osBrowser();
 }
 
-function getRealIP() {
-    $ip = $_SERVER["REMOTE_ADDR"];
+/**
+ * Request ka client IP (visitor), proxy/load balancer ke baad wala — sirf REMOTE_ADDR (server internal) nahi.
+ * Pehle CF / X-Forwarded-For ka pehla hop / X-Real-IP, phir Laravel trusted client IP, phir REMOTE_ADDR.
+ */
+function getRealIP(): string
+{
+    $headerKeys = [
+        'HTTP_CF_CONNECTING_IP',
+        'HTTP_TRUE_CLIENT_IP',
+        'HTTP_X_REAL_IP',
+        'HTTP_X_FORWARDED_FOR',
+        'HTTP_FORWARDED_FOR',
+        'HTTP_FORWARDED',
+        'HTTP_CLIENT_IP',
+    ];
 
-    //Deep detect ip
-    if (filter_var(@$_SERVER['HTTP_FORWARDED'], FILTER_VALIDATE_IP)) {
-        $ip = $_SERVER['HTTP_FORWARDED'];
+    foreach ($headerKeys as $key) {
+        if (empty($_SERVER[$key])) {
+            continue;
+        }
+        $raw   = (string) $_SERVER[$key];
+        $first = trim(explode(',', $raw)[0]);
+        if ($first !== '' && filter_var($first, FILTER_VALIDATE_IP)) {
+            return $first === '::1' ? '127.0.0.1' : $first;
+        }
     }
 
-    if (filter_var(@$_SERVER['HTTP_FORWARDED_FOR'], FILTER_VALIDATE_IP)) {
-        $ip = $_SERVER['HTTP_FORWARDED_FOR'];
+    if (function_exists('request') && request()) {
+        $clientIp = request()->getClientIp();
+        if ($clientIp && filter_var($clientIp, FILTER_VALIDATE_IP)) {
+            return $clientIp === '::1' ? '127.0.0.1' : $clientIp;
+        }
     }
 
-    if (filter_var(@$_SERVER['HTTP_X_FORWARDED_FOR'], FILTER_VALIDATE_IP)) {
-        $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
-    }
+    $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
 
-    if (filter_var(@$_SERVER['HTTP_CLIENT_IP'], FILTER_VALIDATE_IP)) {
-        $ip = $_SERVER['HTTP_CLIENT_IP'];
-    }
-
-    if (filter_var(@$_SERVER['HTTP_X_REAL_IP'], FILTER_VALIDATE_IP)) {
-        $ip = $_SERVER['HTTP_X_REAL_IP'];
-    }
-
-    if (filter_var(@$_SERVER['HTTP_CF_CONNECTING_IP'], FILTER_VALIDATE_IP)) {
-        $ip = $_SERVER['HTTP_CF_CONNECTING_IP'];
-    }
-
-    if ($ip == '::1') {
-        $ip = '127.0.0.1';
-    }
-
-    return $ip;
+    return $ip === '::1' ? '127.0.0.1' : $ip;
 }
 
 function loadReCaptcha(): ?string {
@@ -1046,6 +1050,165 @@ function getCurrencyCodeForCountryName(string $countryName): string
 }
 
 /**
+ * Default country name for a currency code (matches typical gateway `countries` JSON labels).
+ * Used when no admin “allowed country” maps to that currency.
+ */
+function getCanonicalCountryNameForCurrencyCode(string $currencyCode): ?string
+{
+    $code = strtoupper(trim($currencyCode));
+    $map  = [
+        'USD' => 'United States',
+        'PKR' => 'Pakistan',
+        'GBP' => 'United Kingdom',
+        'EUR' => 'Germany',
+        'INR' => 'India',
+        'BDT' => 'Bangladesh',
+        'AED' => 'United Arab Emirates',
+        'SAR' => 'Saudi Arabia',
+        'CAD' => 'Canada',
+        'AUD' => 'Australia',
+        'NZD' => 'New Zealand',
+        'SEK' => 'Sweden',
+        'NOK' => 'Norway',
+        'DKK' => 'Denmark',
+        'CHF' => 'Switzerland',
+        'JPY' => 'Japan',
+        'CNY' => 'China',
+        'HKD' => 'Hong Kong',
+        'SGD' => 'Singapore',
+        'MYR' => 'Malaysia',
+        'IDR' => 'Indonesia',
+        'THB' => 'Thailand',
+        'PHP' => 'Philippines',
+        'ZAR' => 'South Africa',
+        'NGN' => 'Nigeria',
+        'KES' => 'Kenya',
+        'EGP' => 'Egypt',
+        'BRL' => 'Brazil',
+        'MXN' => 'Mexico',
+        'TRY' => 'Turkey',
+        'RUB' => 'Russia',
+        'QAR' => 'Qatar',
+        'KWD' => 'Kuwait',
+    ];
+
+    return $map[$code] ?? null;
+}
+
+/**
+ * Display/local currency → canonical country for gateway `countries` matching (PKR → Pakistan, USD → United States).
+ * Phir sirf woh gateways jahan yeh country allow ho; agar map na mile to session/IP fallback country.
+ */
+function resolveCountryForGatewayCurrencyList(?string $gatewayContextCountry = null): ?string
+{
+    $localCode = strtoupper(trim(getLocalCurrencyCode()));
+    $canonical = $localCode !== '' ? getCanonicalCountryNameForCurrencyCode($localCode) : null;
+    if ($canonical !== null) {
+        return $canonical;
+    }
+
+    return $gatewayContextCountry;
+}
+
+/**
+ * Country label used for gateway availability (forCountry): follows visitor display currency first,
+ * so e.g. Pakistan + USD (footer) shows gateways allowed for United States / USD, not only Pakistan.
+ *
+ * Strict country→currency only: getCurrencyCodeForCountryName unknown pe USD default karta hai — is se
+ * galat country (jo map mein nahi) pehle match ho kar PayPal jaisi restricted gateways exclude ho jate the.
+ */
+function resolveCountryForGatewayFiltering(): ?string
+{
+    $localCode = strtoupper(getLocalCurrencyCode());
+
+    $fromDetected = session('user_detected_country');
+    if (is_string($fromDetected) && $fromDetected !== '') {
+        $r = resolveStrictCurrencyCodeForCountryName($fromDetected);
+        if ($r !== null && $r === $localCode) {
+            return $fromDetected;
+        }
+    }
+
+    $allowed = getSiteAllowedCountryNames();
+    $matched = [];
+    foreach ($allowed as $countryName) {
+        $r = resolveStrictCurrencyCodeForCountryName($countryName);
+        if ($r !== null && $r === $localCode) {
+            $matched[] = $countryName;
+        }
+    }
+    if ($matched !== []) {
+        if (is_string($fromDetected) && $fromDetected !== ''
+            && in_array($fromDetected, $matched, true)) {
+            return $fromDetected;
+        }
+
+        return $matched[0];
+    }
+
+    $canonical = getCanonicalCountryNameForCurrencyCode($localCode);
+    if ($canonical !== null) {
+        return $canonical;
+    }
+
+    $sessionCountry = session('user_country');
+    if (is_string($sessionCountry) && $sessionCountry !== '') {
+        $r = resolveStrictCurrencyCodeForCountryName($sessionCountry);
+        if ($r !== null && $r === $localCode) {
+            return $sessionCountry;
+        }
+    }
+
+    $ipCountry = getUserCountryByIP();
+    if (is_string($ipCountry) && $ipCountry !== '') {
+        $r = resolveStrictCurrencyCodeForCountryName($ipCountry);
+        if ($r !== null && $r === $localCode) {
+            return $ipCountry;
+        }
+    }
+
+    if (is_string($sessionCountry) && $sessionCountry !== '') {
+        return $sessionCountry;
+    }
+
+    return is_string($ipCountry) && $ipCountry !== '' ? $ipCountry : null;
+}
+
+/**
+ * Koi active gateway hai jiske `countries` mein yeh country allow ho (forGatewayRegion) aur kam az kam ek active currency row ho.
+ * $restrictToCurrencyCode agar set ho to sirf us currency wali rows ginni hain; contribute list ke liye null rakho.
+ */
+function countryHasActiveGatewayForRegion(?string $gatewayContextCountry, ?string $restrictToCurrencyCode = null): bool
+{
+    $cc = $restrictToCurrencyCode !== null && trim((string) $restrictToCurrencyCode) !== ''
+        ? strtoupper(trim($restrictToCurrencyCode))
+        : '';
+
+    $q = \App\Models\Gateway::query()
+        ->active()
+        ->whereHas('currencies', function ($currencies) use ($cc) {
+            $currencies->where('status', ManageStatus::ACTIVE);
+            if ($cc !== '') {
+                $currencies->whereRaw('UPPER(TRIM(currency)) = ?', [$cc]);
+            }
+        });
+
+    if (is_string($gatewayContextCountry) && $gatewayContextCountry !== '') {
+        $q->forGatewayRegion($gatewayContextCountry, $cc !== '' ? $cc : '');
+    }
+
+    return $q->exists();
+}
+
+/**
+ * @deprecated Use countryHasActiveGatewayForRegion($country, null).
+ */
+function localCurrencyHasGatewayForRegion(?string $gatewayContextCountry, string $localCurrencyCode): bool
+{
+    return countryHasActiveGatewayForRegion($gatewayContextCountry, null);
+}
+
+/**
  * Visitor ki display/local currency (ISO 4217): TCUR (.env) > session > IP > site default.
  */
 function getLocalCurrencyCode(): string
@@ -1054,12 +1217,14 @@ function getLocalCurrencyCode(): string
     if ($tcur !== null && trim((string) $tcur) !== '') {
         return strtoupper(trim((string) $tcur));
     }
+    
 
     if (session('user_detected_currency')) {
         return strtoupper(trim((string) session('user_detected_currency')));
     }
 
     $ipData = getOrFetchIpCurrencyData();
+    
     if (!empty($ipData['currency_code'])) {
         return strtoupper(trim((string) $ipData['currency_code']));
     }
@@ -1074,6 +1239,82 @@ function getLocalCurrencyCode(): string
 function getLocalCurrency(): string
 {
     return getLocalCurrencyCode();
+}
+
+/**
+ * TCUR (.env) / config('app.currency') set ho to display currency env se lock (session/IP override nahi).
+ */
+function isLocalCurrencyLockedByEnv(): bool
+{
+    $tcur = config('app.currency');
+
+    return $tcur !== null && trim((string) $tcur) !== '';
+}
+
+/**
+ * Country label → ISO currency jab map resolve ho; unknown label ke liye null.
+ * (getCurrencyCodeForCountryName unknown pe USD default karta hai — footer matching ke liye yeh use karein.)
+ */
+function resolveStrictCurrencyCodeForCountryName(string $countryName): ?string
+{
+    $code = app(\App\Services\CurrencyService::class)->resolveCurrencyCodeFromCountry($countryName);
+
+    return $code ? strtoupper(trim((string) $code)) : null;
+}
+
+/**
+ * Footer country dropdown selection: same currency priority as getLocalCurrencyCode() (TCUR sab se pehle).
+ * Env lock par session country ignore agar uski currency TCUR se mismatch ho; canonical country (e.g. USD → United States) allowed list mein ho to select.
+ */
+function resolveFooterCountryForLocalCurrency(array $allowedCountryNames): ?string
+{
+    $allowedCountryNames = array_values(array_filter($allowedCountryNames, static function ($c) {
+        return is_string($c) && $c !== '';
+    }));
+    if ($allowedCountryNames === []) {
+        return null;
+    }
+
+    $localCode     = strtoupper(getLocalCurrencyCode());
+    $sessionCountry = session('user_detected_country');
+    $locked        = isLocalCurrencyLockedByEnv();
+
+    $matched = [];
+    foreach ($allowedCountryNames as $c) {
+        $resolved = resolveStrictCurrencyCodeForCountryName($c);
+        if ($resolved !== null && $resolved === $localCode) {
+            $matched[] = $c;
+        }
+    }
+
+    if ($matched !== []) {
+        if (is_string($sessionCountry) && $sessionCountry !== ''
+            && in_array($sessionCountry, $matched, true)) {
+            return $sessionCountry;
+        }
+
+        return $matched[0];
+    }
+
+    if ($locked) {
+        $canonical = getCanonicalCountryNameForCurrencyCode($localCode);
+        if ($canonical !== null && in_array($canonical, $allowedCountryNames, true)) {
+            return $canonical;
+        }
+    }
+
+    if (is_string($sessionCountry) && $sessionCountry !== ''
+        && in_array($sessionCountry, $allowedCountryNames, true)) {
+        if (!$locked) {
+            return $sessionCountry;
+        }
+        $sessCode = resolveStrictCurrencyCodeForCountryName($sessionCountry);
+        if ($sessCode !== null && $sessCode === $localCode) {
+            return $sessionCountry;
+        }
+    }
+
+    return $allowedCountryNames[0];
 }
 
 /**
@@ -1093,6 +1334,9 @@ function getLocalCurrencySymbol(): string
     if (session('user_detected_currency')) {
         return \App\Services\CurrencyService::getSymbolForCode((string) session('user_detected_currency'));
     }
+    // yhn ip nkl k do customer ki 
+    // Get the user's IP address (taking care of proxies, cloudflare, localhost etc.)
+    
 
     $ipData = getOrFetchIpCurrencyData();
     if (!empty($ipData['currency_symbol'])) {
@@ -1414,15 +1658,16 @@ function formatBytes($bytes, $precision = 2): string {
  */
 function getIpGeoData(?string $ip = null): ?array
 {
-    $ip = $ip ?: request()->ip();
+    $ip = $ip ?: getRealIP();
 
     // Resolve localhost to public IP
-    if (in_array($ip, ['127.0.0.1', '::1', 'localhost'])) {
+    if (in_array($ip, ['127.0.0.1', '::1', 'localhost'], true)) {
         $headers = ['HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'HTTP_CLIENT_IP', 'REMOTE_ADDR'];
         foreach ($headers as $header) {
             if (!empty($_SERVER[$header])) {
-                $ip = trim(explode(',', $_SERVER[$header])[0]);
-                if (!in_array($ip, ['127.0.0.1', '::1', 'localhost'])) {
+                $candidate = trim(explode(',', (string) $_SERVER[$header])[0]);
+                if ($candidate !== '' && !in_array($candidate, ['127.0.0.1', '::1', 'localhost'], true)) {
+                    $ip = $candidate;
                     break;
                 }
             }
@@ -1497,62 +1742,63 @@ function getIpGeoData(?string $ip = null): ?array
  */
 function getOrFetchIpCurrencyData(?string $ip = null): ?array
 {
-    if ($ip === null) {
-        $ip = request()->ip();
-        if (in_array($ip, ['127.0.0.1', '::1', 'localhost'])) {
-            foreach (['HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'HTTP_CLIENT_IP', 'REMOTE_ADDR'] as $h) {
-                if (!empty($_SERVER[$h])) {
-                    $ip = trim(explode(',', (string) ($_SERVER[$h] ?? ''))[0]);
-                    if (!in_array($ip, ['127.0.0.1', '::1', 'localhost'])) break;
-                }
+    if ($ip === null || $ip === '') {
+        $ip = getRealIP();
+    }
+
+    try {
+        $hasCacheTable = \Illuminate\Support\Facades\Schema::hasTable('ip_currency_cache');
+        if (!$hasCacheTable) {
+            \Log::channel('single')->info('IpCurrencyDebug: ip_currency_cache table missing — geo only, no DB cache');
+        }
+
+        if ($hasCacheTable) {
+            $row = \Illuminate\Support\Facades\DB::table('ip_currency_cache')->where('ip', $ip)->first();
+            $now = now();
+            $fiveMinutesAgo = $now->copy()->subMinutes(5);
+            if ($row && $row->refreshed_at && strtotime($row->refreshed_at) >= $fiveMinutesAgo->timestamp) {
+                return [
+                    'currency_code' => $row->currency_code ?? 'USD',
+                    'currency_symbol' => $row->currency_symbol ?? '$',
+                    'country_name' => $row->country_name ?? '',
+                    'country_code' => $row->country_code ?? '',
+                ];
             }
         }
-        if (in_array($ip, ['127.0.0.1', '::1', 'localhost'])) {
-            \Log::channel('single')->info('IpCurrencyDebug: IP is localhost, skipping', ['ip' => $ip]);
-            return null;
-        }
-    }
-    try {
-        if (!\Illuminate\Support\Facades\Schema::hasTable('ip_currency_cache')) {
-            \Log::channel('single')->info('IpCurrencyDebug: ip_currency_cache table missing');
-            return null;
-        }
-        $row = \Illuminate\Support\Facades\DB::table('ip_currency_cache')->where('ip', $ip)->first();
-        $now = now();
-        $fiveMinutesAgo = $now->copy()->subMinutes(5);
-        if ($row && $row->refreshed_at && strtotime($row->refreshed_at) >= $fiveMinutesAgo->timestamp) {
-            return [
-                'currency_code' => $row->currency_code ?? 'USD',
-                'currency_symbol' => $row->currency_symbol ?? '$',
-                'country_name' => $row->country_name ?? '',
-                'country_code' => $row->country_code ?? '',
-            ];
-        }
+
+        // Localhost: getIpGeoData() ipify + external geo APIs use karta hai — yahan early return mat karo.
         $geo = getIpGeoData($ip);
         if (!$geo) {
             \Log::channel('single')->info('IpCurrencyDebug: getIpGeoData returned null', ['ip' => $ip]);
             return null;
         }
+
         $currencyService = app(\App\Services\CurrencyService::class);
         $currencyCode = $currencyService->resolveCurrencyCodeFromCountry($geo['country_code'] ?: $geo['country']) ?: 'USD';
         $symbol = \App\Services\CurrencyService::getSymbolForCode($currencyCode);
-        \Illuminate\Support\Facades\DB::table('ip_currency_cache')->updateOrInsert(
-            ['ip' => $ip],
-            [
-                'country_code' => $geo['country_code'] ?? '',
-                'country_name' => $geo['country'] ?? '',
-                'currency_code' => $currencyCode,
-                'currency_symbol' => $symbol,
-                'refreshed_at' => $now,
-                'updated_at' => $now,
-            ]
-        );
-        return [
+        $payload = [
             'currency_code' => $currencyCode,
             'currency_symbol' => $symbol,
             'country_name' => $geo['country'] ?? '',
             'country_code' => $geo['country_code'] ?? '',
         ];
+
+        if ($hasCacheTable) {
+            $now = now();
+            \Illuminate\Support\Facades\DB::table('ip_currency_cache')->updateOrInsert(
+                ['ip' => $ip],
+                [
+                    'country_code' => $geo['country_code'] ?? '',
+                    'country_name' => $geo['country'] ?? '',
+                    'currency_code' => $currencyCode,
+                    'currency_symbol' => $symbol,
+                    'refreshed_at' => $now,
+                    'updated_at' => $now,
+                ]
+            );
+        }
+
+        return $payload;
     } catch (\Throwable $e) {
         \Log::channel('single')->warning('IpCurrencyDebug: getOrFetchIpCurrencyData failed', ['ip' => $ip ?? '', 'error' => $e->getMessage()]);
         return null;
@@ -1564,33 +1810,8 @@ function getOrFetchIpCurrencyData(?string $ip = null): ?array
  */
 function getUserCountryByIP() {
     try {
-        $ip = request()->ip();
-        
-        // For localhost/development, try to get real IP from headers
-        if (in_array($ip, ['127.0.0.1', '::1', 'localhost'])) {
-            // Try to get real IP from various headers
-            $headers = [
-                'HTTP_CF_CONNECTING_IP', // Cloudflare
-                'HTTP_X_FORWARDED_FOR', // Proxy
-                'HTTP_X_REAL_IP',       // Nginx
-                'HTTP_CLIENT_IP',       // Client IP
-                'REMOTE_ADDR'           // Direct connection
-            ];
-            
-            foreach ($headers as $header) {
-                if (!empty($_SERVER[$header])) {
-                    $ip = $_SERVER[$header];
-                    // Get first IP if multiple (X-Forwarded-For can have multiple)
-                    $ip = explode(',', $ip)[0];
-                    $ip = trim($ip);
-                    
-                    if (!in_array($ip, ['127.0.0.1', '::1', 'localhost'])) {
-                        break;
-                    }
-                }
-            }
-        }
-        
+        $ip = getRealIP();
+
         // If still localhost, try external service to get public IP
         if (in_array($ip, ['127.0.0.1', '::1', 'localhost'])) {
             try {

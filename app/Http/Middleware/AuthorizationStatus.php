@@ -22,9 +22,18 @@ class AuthorizationStatus
             // Email verification only (mobile/SMS and 2FA skipped)
             if ($user->status && $user->ec) {
                 return $next($request);
-            } else {
-                return to_route('user.authorization');
             }
+
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please verify your email (complete account authorization) before continuing.',
+                    'requires_authorization' => true,
+                    'redirect_url' => route('user.authorization'),
+                ], 403);
+            }
+
+            return to_route('user.authorization');
         }
 
         abort(403);

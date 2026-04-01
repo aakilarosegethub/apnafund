@@ -87,7 +87,7 @@ class WithdrawMethodController extends Controller
             'name'           => 'required',
             'rate'           => 'required|numeric|gt:0',
             'currency'       => 'required',
-            'min_amount'     => 'required|numeric|gt:0',
+            'min_amount'     => 'required|numeric|gte:0.1',
             'max_amount'     => 'required|numeric|gt:min_amount',
             'fixed_charge'   => 'required|numeric|gte:0',
             'percent_charge' => 'required|numeric|gte:0|regex:/^\d+(\.\d{1,2})?$/',

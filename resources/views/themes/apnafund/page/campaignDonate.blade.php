@@ -716,6 +716,20 @@
 @php
     $showRateDebug = request()->has('test');
     $siteCur = strtoupper($setting->site_cur ?? 'USD');
+    $gatewayContextCountry = $gatewayContextCountry ?? session('user_country');
+    $donateCurrencyService = app(\App\Services\CurrencyService::class);
+    $donateInputCurrency = getLocalCurrencyCode();
+    $donatePlatformCurrency = getPlatformCurrency();
+    $donateInputToPlatformFactor = (float) $donateCurrencyService->convertToPlatform(1.0, $donateInputCurrency);
+    $donatePlatformToInputFactor = (float) $donateCurrencyService->convertFromPlatform(1.0, $donateInputCurrency);
+    if (!is_finite($donateInputToPlatformFactor) || $donateInputToPlatformFactor <= 0) {
+        $donateInputToPlatformFactor = 1.0;
+    }
+    if (!is_finite($donatePlatformToInputFactor) || $donatePlatformToInputFactor <= 0) {
+        $donatePlatformToInputFactor = 1.0;
+    }
+    $contributeLogDetectedCountry = $gatewayContextCountry ?? session('user_country') ?? 'None';
+    $gatewayCountForJs = is_countable($gatewayCurrencies ?? null) ? count($gatewayCurrencies) : 0;
 @endphp
 <!--New design-->
 <!-- Main Content -->
@@ -823,7 +837,7 @@
                         <div class="col-lg-6">
                             <label class="form--label required">@lang('Country')</label>
                             @php
-                                $detectedCountry = session('user_country') ?? detectUserCountry() ?? null;
+                                $detectedCountry = $gatewayContextCountry ?? detectUserCountry() ?? null;
                             @endphp
                             <select class="form--control" name="country" id="countrySelect">
                                 <option value="">@lang('All Countries')</option>
@@ -842,10 +856,10 @@
                 
                 <!-- Country Status Message -->
                 @if($gatewayCurrencies && count($gatewayCurrencies) > 0)
-                    @if(session('user_country'))
+                    @if($gatewayContextCountry)
                         <div class="alert alert-success mb-3">
                             <i class="ti ti-check"></i>
-                            @lang('Found') <strong>{{ count($gatewayCurrencies) }}</strong> @lang('payment methods available in') <strong>{{ session('user_country') }}</strong>
+                            @lang('Found') <strong>{{ count($gatewayCurrencies) }}</strong> @lang('payment methods available in') <strong>{{ $gatewayContextCountry }}</strong>
                             <a href="#" onclick="showCountrySelection()" class="text-decoration-underline ms-2">@lang('Change country')</a>
                         </div>
                     @else
@@ -858,14 +872,14 @@
                 @else
                     <div class="alert alert-warning mb-3">
                         <i class="ti ti-alert-triangle"></i>
-                        @lang('No payment methods available for') <strong>{{ session('user_country') ?? 'selected country' }}</strong>
+                        @lang('No payment methods available for') <strong>{{ $gatewayContextCountry ?? 'selected country' }}</strong>
                         <a href="#" onclick="showCountrySelection()" class="text-decoration-underline ms-2">@lang('Try different country')</a>
                     </div>
                 @endif
             </div>
 
             <!-- Hidden Country Field for Form Submission -->
-            <input type="hidden" name="selected_country" value="{{ session('user_country') ?? '' }}">
+            <input type="hidden" name="selected_country" value="{{ $gatewayContextCountry ?? '' }}">
 
             <!-- Payment Methods (Only show if gateways available) -->
             @if($gatewayCurrencies && count($gatewayCurrencies) > 0)
@@ -876,18 +890,22 @@
                         <div class="payment-option" 
                              data-method="{{ $gatewayCurrency->method_code }}" 
                              data-currency="{{ $gatewayCurrency->currency }}"
+                             data-percent-charge="{{ (float) $gatewayCurrency->percent_charge }}"
+                             data-fixed-charge="{{ $donateCurrencyService->convertFromPlatform((float) $gatewayCurrency->fixed_charge, $donateInputCurrency) }}"
+                             data-fixed-charge-platform="{{ (float) $gatewayCurrency->fixed_charge }}"
+                             data-gateway-rate="{{ (float) $gatewayCurrency->rate }}"
                              data-gateway="{{ e(json_encode($gatewayCurrency->only(['method_code','currency','symbol','rate','percent_charge','fixed_charge','name']))) }}">
                             <div class="payment-radio"></div>
                             <div class="payment-info">
                                 <div class="payment-logo">{{ strtoupper(substr(trim($gatewayCurrency->method->name), 0, 2)) }}</div>
-                                <span class="payment-text">{{ __($gatewayCurrency->method->name) }} ({{ strtoupper($gatewayCurrency->currency) }})</span>
+                                <span class="payment-text">{{ __($gatewayCurrency->method->name) }}</span>
                             </div>
                         </div>
                     @endforeach
                 </div>
             @endif
 
-            <!-- Tip Section -->
+            {{-- Tip Section (hidden)
             <div class="tip-section">
                 <h3 class="section-title">@lang('Tip') {!! apnaCrowdfundingLink() !!} @lang('services')</h3>
                 <p class="tip-description">
@@ -899,8 +917,9 @@
                 </div>
                 <div style="text-align: center;">
                     <a href="#" class="custom-tip-link" id="customTipLink">@lang('Enter custom tip')</a>
-                                        </div>
-                                    </div>
+                </div>
+            </div>
+            --}}
 
                                     <!-- Personal Information -->
             <div id="personalInfoSection">
@@ -946,9 +965,9 @@
                                             @if ($authUser)
                                                 <input type="text" class="form--control" name="country" value="{{ old('country', @$authUser->country_name) }}" @readonly(@$authUser) required>
                                             @else
-                            <input type="text" class="form--control" name="country_display" value="{{ session('user_country') ?? 'All Countries' }}" readonly>
-                            <input type="hidden" name="country" value="{{ session('user_country') ?? '' }}">
-                            @if(session('user_country'))
+                            <input type="text" class="form--control" name="country_display" value="{{ $gatewayContextCountry ?? 'All Countries' }}" readonly>
+                            <input type="hidden" name="country" value="{{ $gatewayContextCountry ?? '' }}">
+                            @if($gatewayContextCountry)
                                 <small class="form-text text-muted">
                                     <a href="#" onclick="showCountrySelection()" class="text-decoration-underline">@lang('Change country')</a>
                                 </small>
@@ -981,10 +1000,14 @@
                     <span class="summary-label">@lang('Your contribution')</span>
                     <span class="summary-value" id="donationAmount">{{ $setting->cur_sym }}0.00</span>
                                                         </div>
-                <div class="summary-item">
+                {{-- <div class="summary-item">
                     <span class="summary-label">{!! apnaCrowdfundingLink() !!} @lang('tip')</span>
                     <span class="summary-value" id="tipAmount">{{ $setting->cur_sym }}0.00</span>
-                                                </div>
+                </div> --}}
+                <div class="summary-item" id="summaryGatewayFeeRow">
+                    <span class="summary-label">@lang('Processing charges') <small class="text-muted fw-normal">({{ $donateInputCurrency }})</small></span>
+                    <span class="summary-value text-muted" id="gatewayProcessingFee">—</span>
+                </div>
                 <div class="summary-item summary-total">
                     <span class="summary-label">@lang('Total due today')</span>
                     <span class="summary-value" id="totalAmount">{{ $setting->cur_sym }}0.00</span>
@@ -1764,12 +1787,23 @@
     </style>
 @endpush
 
-@push('page-script')
+@section('script')
     <script>
         $(document).ready(function() {
-            let selectedAmount = 0;
+            let selectedAmount = parseFloat($('#customAmount').val()) || 0;
             let tipPercentage = 0;
             let selectedGateway = null;
+
+            const summaryCurSym = @json($setting->cur_sym);
+            let inputToPlatformFactor = {{ json_encode((float) $donateInputToPlatformFactor) }};
+            let platformToInputFactor = {{ json_encode((float) $donatePlatformToInputFactor) }};
+            if (!Number.isFinite(inputToPlatformFactor) || inputToPlatformFactor <= 0) {
+                inputToPlatformFactor = 1;
+            }
+            if (!Number.isFinite(platformToInputFactor) || platformToInputFactor <= 0) {
+                platformToInputFactor = 1;
+            }
+            const platformCurrency = @json($donatePlatformCurrency);
 
             function computeGatewayFinalAmount(platformDonation, gw) {
                 if (!gw || platformDonation <= 0) return null;
@@ -1784,7 +1818,8 @@
             function updateGatewayPaymentEstimate() {
                 const opt = $('.payment-option.selected');
                 const gw = opt.length ? opt.data('gateway') : null;
-                const platformAmt = parseFloat($('#customAmount').val()) || 0;
+                const entered = parseFloat($('#customAmount').val()) || 0;
+                const platformAmt = entered * inputToPlatformFactor;
                 const $empty = $('#gatewayEstimateEmpty');
                 const $detail = $('#gatewayEstimateDetail');
                 const $line = $('#gatewayEstimatedCharge');
@@ -1911,9 +1946,9 @@
                 
                 // Debug: Log country selection status
                 console.log('Country selection section is hidden by default');
-                console.log('Detected country:', '{{ $detectedCountry ?? "None" }}');
-                console.log('Session country:', '{{ session("user_country") ?? "None" }}');
-                console.log('Available gateways:', {{ count($gatewayCurrencies) }});
+                console.log('Detected country:', @json($contributeLogDetectedCountry));
+                console.log('Gateway context country:', @json($gatewayContextCountry ?? 'None'));
+                console.log('Available gateways:', {{ $gatewayCountForJs }});
                 
                 // Test click handlers
                 $('a[onclick*="showCountrySelection"]').on('click', function(e) {
@@ -1977,24 +2012,22 @@
                 checkFormValidity();
             });
 
-            // Tip slider
-            $('#tipSlider').on('input', function() {
-                tipPercentage = parseFloat($(this).val()) || 0;
-                $('#tipValue').text(tipPercentage + '%');
-                updateSummary();
-            });
-
-            // Custom tip link
-            $('#customTipLink').on('click', function(e) {
-                e.preventDefault();
-                const customTip = prompt('Enter custom tip percentage (0-25):', tipPercentage);
-                if (customTip !== null && !isNaN(customTip) && customTip >= 0 && customTip <= 25) {
-                    tipPercentage = parseFloat(customTip);
-                    $('#tipSlider').val(tipPercentage);
-                    $('#tipValue').text(tipPercentage + '%');
-                    updateSummary();
-                }
-            });
+            // Tip slider (UI commented out in Blade)
+            // $('#tipSlider').on('input', function() {
+            //     tipPercentage = parseFloat($(this).val()) || 0;
+            //     $('#tipValue').text(tipPercentage + '%');
+            //     updateSummary();
+            // });
+            // $('#customTipLink').on('click', function(e) {
+            //     e.preventDefault();
+            //     const customTip = prompt('Enter custom tip percentage (0-25):', tipPercentage);
+            //     if (customTip !== null && !isNaN(customTip) && customTip >= 0 && customTip <= 25) {
+            //         tipPercentage = parseFloat(customTip);
+            //         $('#tipSlider').val(tipPercentage);
+            //         $('#tipValue').text(tipPercentage + '%');
+            //         updateSummary();
+            //     }
+            // });
 
             // Payment method selection
             $('.payment-option').on('click', function() {
@@ -2005,7 +2038,7 @@
                 $('input[name="gateway"]').val(selectedGateway);
                 $('input[name="currency"]').val($(this).data('currency'));
                 
-                updateGatewayPaymentEstimate();
+                updateSummary();
                 checkFormValidity();
             });
 
@@ -2029,11 +2062,30 @@
             // Update summary calculations
             function updateSummary() {
                 const tipAmount = (selectedAmount * tipPercentage) / 100;
-                const totalAmount = selectedAmount + tipAmount;
-                
-                $('#donationAmount').text('{{ $setting->cur_sym }}' + selectedAmount.toFixed(2));
-                $('#tipAmount').text('{{ $setting->cur_sym }}' + tipAmount.toFixed(2));
-                $('#totalAmount').text('{{ $setting->cur_sym }}' + totalAmount.toFixed(2));
+                const opt = $('.payment-option.selected');
+                const gw = opt.length ? opt.data('gateway') : null;
+                const platformDonation = selectedAmount * inputToPlatformFactor;
+                let processingFeeDisplay = 0;
+                if (gw && selectedAmount > 0 && platformDonation > 0) {
+                    const fixedLocal = parseFloat(opt.attr('data-fixed-charge'));
+                    const fixedFromAttr = Number.isFinite(fixedLocal) ? fixedLocal : 0;
+                    const pct = parseFloat(gw.percent_charge) || 0;
+                    const percentFeePlatform = (platformDonation * pct) / 100;
+                    const percentFeeLocal = percentFeePlatform * platformToInputFactor;
+                    processingFeeDisplay = fixedFromAttr + percentFeeLocal;
+                }
+                const totalAmount = selectedAmount + tipAmount + processingFeeDisplay;
+
+                $('#donationAmount').text(summaryCurSym + selectedAmount.toFixed(2));
+                if ($('#tipAmount').length) {
+                    $('#tipAmount').text(summaryCurSym + tipAmount.toFixed(2));
+                }
+                if (gw && selectedAmount > 0) {
+                    $('#gatewayProcessingFee').removeClass('text-muted').text(summaryCurSym + processingFeeDisplay.toFixed(2));
+                } else {
+                    $('#gatewayProcessingFee').addClass('text-muted').text('—');
+                }
+                $('#totalAmount').text(summaryCurSym + totalAmount.toFixed(2));
                 updateGatewayPaymentEstimate();
             }
 
@@ -2172,7 +2224,7 @@
                 const selectedCountry = $('#countrySelect').val();
                 if (!selectedCountry) {
                     // If no country is selected, use the session country or default
-                    const sessionCountry = '{{ session("user_country") ?? "" }}';
+                    const sessionCountry = '{{ $gatewayContextCountry ?? "" }}';
                     if (sessionCountry) {
                         $('#countrySelect').val(sessionCountry);
                     } else {
@@ -2193,15 +2245,10 @@
                     }
                 }
 
-                // Add tip amount to form if tip is selected
-                if (tipPercentage > 0) {
-                    const tipAmount = (amount * tipPercentage) / 100;
-                    $('<input>').attr({
-                        type: 'hidden',
-                        name: 'tip_amount',
-                        value: tipAmount.toFixed(2)
-                    }).appendTo('#donationForm');
-                }
+                // if (tipPercentage > 0) {
+                //     const tipAmount = (amount * tipPercentage) / 100;
+                //     $('<input>').attr({ type: 'hidden', name: 'tip_amount', value: tipAmount.toFixed(2) }).appendTo('#donationForm');
+                // }
 
                 // Add anonymous flag if checked
                 if (isAnonymous) {
@@ -2226,4 +2273,4 @@
             });
         });
     </script>
-@endpush 
+@endsection 

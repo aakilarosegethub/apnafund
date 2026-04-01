@@ -89,7 +89,14 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->validateCsrfTokens(
-            except: ['user/deposit', 'ipn*', 'jazzcash/ipn', 'api/payment/*', 'api/admin/*']
+            except: [
+                'user/deposit',
+                'ipn*',
+                'jazzcash/ipn',
+                'api/*',
+                'api/payment/*',
+                'api/admin/*',
+            ]
         );
     })
     ->withExceptions(function (Exceptions $exceptions) {

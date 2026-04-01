@@ -3,20 +3,10 @@
     $footerElements = getSiteData('footer.element', false, null, true);
     $footerCategories = \App\Models\Admins\FooterCategory::with('category')->where('status', 'active')->orderBy('sort_order')->orderBy('id')->take(8)->get();
 
-    $tcurLocked = config('app.currency') !== null && trim((string) config('app.currency')) !== '';
     $allowedCountriesForCurrency = getSiteAllowedCountryNames();
-    $currentLocalCode = getLocalCurrencyCode();
+    $currentLocalCode = strtoupper(getLocalCurrencyCode());
     $currentLocalSym = getLocalCurrencySymbol();
-    $sessionCountry = session('user_detected_country');
-    $selectedCountryForFooter = $sessionCountry;
-    if (!$selectedCountryForFooter && !empty($allowedCountriesForCurrency)) {
-        foreach ($allowedCountriesForCurrency as $c) {
-            if (getCurrencyCodeForCountryName($c) === $currentLocalCode) {
-                $selectedCountryForFooter = $c;
-                break;
-            }
-        }
-    }
+    $selectedCountryForFooter = resolveFooterCountryForLocalCurrency($allowedCountriesForCurrency);
 @endphp
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">

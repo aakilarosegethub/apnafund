@@ -11,11 +11,15 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\FundUpdateController;
 use App\Http\Controllers\Api\CampaignManageApiController;
+use App\Http\Controllers\Api\CampaignCollaboratorApiController;
+use App\Http\Controllers\Api\CampaignPaymentApiController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\DonateController;
 use App\Http\Controllers\Api\WithdrawController;
 use App\Http\Controllers\Api\WalletController;
 use App\Http\Controllers\Api\CurrencyInfoController;
+use App\Http\Controllers\Api\AllowedLocationCountriesController;
+use App\Models\Campaign;
 use Illuminate\Support\Facades\Cookie;
 
 // Beta landing page logic
@@ -147,6 +151,9 @@ Route::controller('WebsiteController')->group(function () {
 
     // Subscriber
     Route::post('subscriber/store', 'subscriberStore')->name('subscriber.store');;
+
+    // Payments not available for visitor currency/region (contribute flow redirect)
+    Route::get('payments-unavailable', 'paymentsUnavailableInRegion')->name('payments.unavailable.region');
 
     // Contact
         // New pretty slug: /contact-us
@@ -348,9 +355,21 @@ Route::prefix('api')->group(function () {
     Route::match(['get', 'post'], '/search_fund.php', [FundController::class, 'searchFund']);
     Route::match(['get', 'post'], '/fundidwise.php', [FundController::class, 'fundById']);
     Route::match(['get', 'post'], '/currency_info.php', [CurrencyInfoController::class, 'index']);
+    /** Admin Basic → allowed project-location countries (country_id = 1-based index in master list) */
+    Route::match(['get', 'post'], '/allowed_location_countries.php', [AllowedLocationCountriesController::class, 'allowedList']);
+    /** Same currency fields as currency_info.php, scoped by country_id from allowed_location_countries.php */
+    Route::match(['get', 'post'], '/currency_info_by_country.php', [AllowedLocationCountriesController::class, 'currencyByCountry']);
     Route::match(['get', 'post'], '/catlist.php', [CategoryController::class, 'categoryList']);
     Route::match(['get', 'post'], '/charitylist.php', [CategoryController::class, 'charityList']);
     Route::match(['get', 'post'], '/faq.php', [FaqController::class, 'faqList']);
+    /** Per-campaign FAQ: list/get public; create/update/delete still require Bearer token in controller */
+    Route::match(['get', 'post'], '/campaign_faq.php', [CampaignManageApiController::class, 'faqs']);
+    /** Backer updates list/get (op=list|get): GET without token for approved campaigns; POST mutations stay behind sanctum */
+    Route::get('/campaign_post_updates.php', [CampaignManageApiController::class, 'postUpdatesPublicRead']);
+    /** Campaign comments create: guest(name/email) or user(token/user_id). */
+    Route::match(['get', 'post'], '/campaign_comment.php', [CampaignManageApiController::class, 'storeCampaignCommentApi']);
+    /** Campaign update comments list (public): slug/campaign_id + update_id. */
+    Route::match(['get', 'post'], '/campaign_update_comments.php', [CampaignManageApiController::class, 'listUpdateCommentsApi']);
     Route::match(['get', 'post'], '/pagelist.php', [PageController::class, 'pageList']);
     Route::match(['get', 'post'], '/paymentgateway.php', [PaymentController::class, 'paymentGatewayList']);
     Route::get('/gateways', [PaymentController::class, 'gateways']);
@@ -384,8 +403,13 @@ Route::prefix('api')->group(function () {
         // Campaign story, rewards, FAQ, backer updates (op=...; campaign_id|fund_id|slug)
         Route::match(['get', 'post'], '/campaign_story.php', [CampaignManageApiController::class, 'story']);
         Route::match(['get', 'post'], '/campaign_rewards.php', [CampaignManageApiController::class, 'rewards']);
-        Route::match(['get', 'post'], '/campaign_faq.php', [CampaignManageApiController::class, 'faqs']);
-        Route::match(['get', 'post'], '/campaign_post_updates.php', [CampaignManageApiController::class, 'postUpdates']);
+        Route::post('/campaign_post_updates.php', [CampaignManageApiController::class, 'postUpdates']);
+        /** Comment on published update — Bearer only; no CSRF (mobile vs web /updates/{id}/comment) */
+        Route::post('/campaign_update_comment.php', [CampaignManageApiController::class, 'storeUpdateCommentApi']);
+        /** People / collaborators — search users, list, add, remove (Bearer; web: user/campaign/collaborators/*) */
+        Route::match(['get', 'post'], '/campaign_collaborators.php', [CampaignCollaboratorApiController::class, 'collaborators']);
+        /** Payout banks list + save account (web: user/campaign/edit/{slug}/payment) */
+        Route::match(['get', 'post'], '/campaign_payment.php', [CampaignPaymentApiController::class, 'payment']);
         Route::get('/campaign_required_documents.php', [CampaignManageApiController::class, 'requiredDocuments']);
         Route::post('/campaign_required_documents_submit.php', [CampaignManageApiController::class, 'submitRequiredDocuments']);
 
@@ -405,6 +429,9 @@ Route::prefix('api')->group(function () {
         // Donate APIs
         Route::match(['get', 'post'], '/donate_now.php', [DonateController::class, 'donateNow']);
         Route::match(['get', 'post'], '/my_donate_fundlist.php', [DonateController::class, 'myDonateFundList']);
+        Route::match(['get', 'post'], '/user_payment_list.php', [PaymentController::class, 'userPaymentList']);
+        Route::match(['get', 'post'], '/donation_list.php', [PaymentController::class, 'donationList']);
+        Route::post('/user_payment_proof_submit.php', [PaymentController::class, 'userPaymentProofSubmit']);
 
         // Withdraw APIs
         Route::match(['get', 'post'], '/request_withdraw.php', [WithdrawController::class, 'requestWithdraw']);
@@ -460,7 +487,14 @@ Route::prefix('api')->group(function () {
                 ->offset($offset)
                 ->get();
             
+            $setting = bs();
+            $currencyCode = $setting ? (string) $setting->site_cur : 'USD';
+            $currencySymbol = $setting ? (string) $setting->cur_sym : '$';
+
             $formattedCampaigns = $campaigns->map(function($campaign) {
+                $raised = (float) $campaign->raised_amount;
+                $goal = (float) $campaign->goal_amount;
+
                 return [
                     'id' => $campaign->id,
                     'title' => $campaign->name,
@@ -473,9 +507,10 @@ Route::prefix('api')->group(function () {
                     'category_id' => $campaign->category_id,
                     'user' => $campaign->user->username ?? null,
                     'user_id' => $campaign->user_id,
-                    'goal_amount' => $campaign->goal_amount,
-                    'raised_amount' => $campaign->raised_amount,
-                    'progress_percentage' => $campaign->goal_amount > 0 ? round(($campaign->raised_amount / $campaign->goal_amount) * 100, 2) : 0,
+                    'goal_amount' => $goal,
+                    'raised_amount' => $raised,
+                    'progress_percentage' => $goal > 0 ? round(($raised / $goal) * 100, 2) : 0,
+                    'donors_count' => (int) $campaign->donors_count,
                     'status' => $campaign->status,
                     'featured' => $campaign->featured,
                     'created_at' => $campaign->created_at->toISOString(),
@@ -483,10 +518,14 @@ Route::prefix('api')->group(function () {
                     'end_date' => $campaign->end_date ? $campaign->end_date->toISOString() : null,
                 ];
             });
-            
+
             return response()->json([
                 'success' => true,
                 'data' => $formattedCampaigns,
+                'meta' => [
+                    'currency' => $currencyCode,
+                    'currency_symbol' => $currencySymbol,
+                ],
                 'total' => $campaigns->count(),
                 'limit' => $limit,
                 'offset' => $offset
@@ -500,11 +539,85 @@ Route::prefix('api')->group(function () {
             ], 500);
         }
     });
+
+    // Must be before /campaigns/{slug} so "featured" is not treated as a slug
+    Route::get('/campaigns/featured', function(\Illuminate\Http\Request $request) {
+        try {
+            $limit = $request->get('limit', 5);
+
+            $campaigns = Campaign::with(['category', 'user'])
+                ->approve()
+                ->featured()
+                ->latest()
+                ->limit($limit)
+                ->get();
+
+            $setting = bs();
+            $currencyCode = $setting ? (string) $setting->site_cur : 'USD';
+            $currencySymbol = $setting ? (string) $setting->cur_sym : '$';
+
+            $formattedCampaigns = $campaigns->map(function($campaign) {
+                $raised = (float) $campaign->raised_amount;
+                $goal = (float) $campaign->goal_amount;
+
+                return [
+                    'id' => $campaign->id,
+                    'title' => $campaign->name,
+                    'short_description' => $campaign->short_description ?? strLimit($campaign->description, 150),
+                    'image_url' => getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')),
+                    'url' => route('campaign.show', $campaign->slug),
+                    'product_url' => route('campaign.show', $campaign->slug),
+                    'permalink' => route('campaign.show', $campaign->slug),
+                    'category' => $campaign->category->name ?? null,
+                    'category_id' => $campaign->category_id,
+                    'user' => $campaign->user->username ?? null,
+                    'user_id' => $campaign->user_id,
+                    'goal_amount' => $goal,
+                    'raised_amount' => $raised,
+                    'progress_percentage' => $goal > 0 ? round(($raised / $goal) * 100, 2) : 0,
+                    'donors_count' => (int) $campaign->donors_count,
+                    'status' => $campaign->status,
+                    'featured' => $campaign->featured,
+                    'created_at' => $campaign->created_at->toISOString(),
+                    'updated_at' => $campaign->updated_at->toISOString(),
+                    'end_date' => $campaign->end_date ? $campaign->end_date->toISOString() : null,
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $formattedCampaigns,
+                'meta' => [
+                    'currency' => $currencyCode,
+                    'currency_symbol' => $currencySymbol,
+                ],
+                'total' => $campaigns->count()
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching featured campaigns: ' . $e->getMessage(),
+                'data' => []
+            ], 500);
+        }
+    });
     
     // Get single campaign/product by slug
     Route::get('/campaigns/{slug}', function($slug) {
         try {
-            $campaign = Campaign::with(['category', 'user', 'rewards'])
+            $campaign = Campaign::with([
+                    'category',
+                    'user',
+                    'rewards',
+                    'faqs' => function ($query) {
+                        $query->orderBy('order')->orderBy('id');
+                    },
+                    'updates.user',
+                    'updates.comments.user',
+                    'comments.user',
+                    'deposits.user',
+                ])
                 ->where('slug', $slug)
                 ->approve()
                 ->first();
@@ -517,6 +630,10 @@ Route::prefix('api')->group(function () {
                 ], 404);
             }
             
+            $setting = bs();
+            $raised = (float) $campaign->raised_amount;
+            $goal = (float) $campaign->goal_amount;
+
             $formattedCampaign = [
                 'id' => $campaign->id,
                 'title' => $campaign->name,
@@ -530,9 +647,10 @@ Route::prefix('api')->group(function () {
                 'category_id' => $campaign->category_id,
                 'user' => $campaign->user->username ?? null,
                 'user_id' => $campaign->user_id,
-                'goal_amount' => $campaign->goal_amount,
-                'raised_amount' => $campaign->raised_amount,
-                'progress_percentage' => $campaign->goal_amount > 0 ? round(($campaign->raised_amount / $campaign->goal_amount) * 100, 2) : 0,
+                'goal_amount' => $goal,
+                'raised_amount' => $raised,
+                'progress_percentage' => $goal > 0 ? round(($raised / $goal) * 100, 2) : 0,
+                'donors_count' => (int) $campaign->donors_count,
                 'status' => $campaign->status,
                 'featured' => $campaign->featured,
                 'created_at' => $campaign->created_at->toISOString(),
@@ -549,12 +667,87 @@ Route::prefix('api')->group(function () {
                         'image_url' => $reward->image_url,
                         'is_active' => $reward->is_active,
                     ];
-                })
+                })->values(),
+                'faqs' => $campaign->faqs->map(function ($faq) {
+                    return [
+                        'id' => $faq->id,
+                        'question' => $faq->question,
+                        'answer' => $faq->answer,
+                        'order' => (int) ($faq->order ?? 0),
+                    ];
+                })->values(),
+                'updates' => $campaign->updates->map(function ($update) {
+                    return [
+                        'id' => $update->id,
+                        'title' => $update->title,
+                        'content' => $update->content,
+                        'slug' => $update->slug,
+                        'image_url' => $update->image ? getImage(getFilePath('campaign') . '/' . $update->image, getFileSize('campaign')) : null,
+                        'is_published' => (bool) $update->is_published,
+                        'author' => [
+                            'id' => $update->user->id ?? null,
+                            'name' => $update->user->fullname ?? $update->user->username ?? null,
+                            'username' => $update->user->username ?? null,
+                        ],
+                        'comments' => $update->comments->map(function ($comment) {
+                            return [
+                                'id' => $comment->id,
+                                'name' => $comment->name,
+                                'email' => $comment->email,
+                                'comment' => $comment->comment,
+                                'rating' => $comment->rating,
+                                'title' => $comment->title,
+                                'created_at' => $comment->created_at?->toISOString(),
+                                'user' => [
+                                    'id' => $comment->user->id ?? null,
+                                    'name' => $comment->user->fullname ?? $comment->user->username ?? null,
+                                    'username' => $comment->user->username ?? null,
+                                ],
+                            ];
+                        })->values(),
+                        'created_at' => $update->created_at?->toISOString(),
+                        'updated_at' => $update->updated_at?->toISOString(),
+                    ];
+                })->values(),
+                'funds' => $campaign->deposits
+                    ->where('status', \App\Constants\ManageStatus::PAYMENT_SUCCESS)
+                    ->values()
+                    ->map(function ($deposit) {
+                        return [
+                            'id' => $deposit->id,
+                            'amount' => (float) $deposit->amount,
+                            'currency' => $deposit->method_currency,
+                            'donor_name' => $deposit->full_name ?? $deposit->name ?? $deposit->user->fullname ?? $deposit->user->username ?? null,
+                            'donor_email' => $deposit->email ?? $deposit->user->email ?? null,
+                            'trx' => $deposit->trx,
+                            'created_at' => $deposit->created_at?->toISOString(),
+                        ];
+                    }),
+                'comments' => $campaign->comments->map(function ($comment) {
+                    return [
+                        'id' => $comment->id,
+                        'name' => $comment->name,
+                        'email' => $comment->email,
+                        'comment' => $comment->comment,
+                        'rating' => $comment->rating,
+                        'title' => $comment->title,
+                        'created_at' => $comment->created_at?->toISOString(),
+                        'user' => [
+                            'id' => $comment->user->id ?? null,
+                            'name' => $comment->user->fullname ?? $comment->user->username ?? null,
+                            'username' => $comment->user->username ?? null,
+                        ],
+                    ];
+                })->values(),
             ];
             
             return response()->json([
                 'success' => true,
-                'data' => $formattedCampaign
+                'data' => $formattedCampaign,
+                'meta' => [
+                    'currency' => $setting ? (string) $setting->site_cur : 'USD',
+                    'currency_symbol' => $setting ? (string) $setting->cur_sym : '$',
+                ],
             ]);
             
         } catch (\Exception $e) {
@@ -562,57 +755,6 @@ Route::prefix('api')->group(function () {
                 'success' => false,
                 'message' => 'Error fetching campaign: ' . $e->getMessage(),
                 'data' => null
-            ], 500);
-        }
-    });
-    
-    // Get featured campaigns/products
-    Route::get('/campaigns/featured', function(\Illuminate\Http\Request $request) {
-        try {
-            $limit = $request->get('limit', 5);
-            
-            $campaigns = Campaign::with(['category', 'user'])
-                ->approve()
-                ->featured()
-                ->latest()
-                ->limit($limit)
-                ->get();
-            
-            $formattedCampaigns = $campaigns->map(function($campaign) {
-                return [
-                    'id' => $campaign->id,
-                    'title' => $campaign->name,
-                    'short_description' => $campaign->short_description ?? strLimit($campaign->description, 150),
-                    'image_url' => getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')),
-                    'url' => route('campaign.show', $campaign->slug),
-                    'product_url' => route('campaign.show', $campaign->slug),
-                    'permalink' => route('campaign.show', $campaign->slug),
-                    'category' => $campaign->category->name ?? null,
-                    'category_id' => $campaign->category_id,
-                    'user' => $campaign->user->username ?? null,
-                    'user_id' => $campaign->user_id,
-                    'goal_amount' => $campaign->goal_amount,
-                    'raised_amount' => $campaign->raised_amount,
-                    'progress_percentage' => $campaign->goal_amount > 0 ? round(($campaign->raised_amount / $campaign->goal_amount) * 100, 2) : 0,
-                    'status' => $campaign->status,
-                    'featured' => $campaign->featured,
-                    'created_at' => $campaign->created_at->toISOString(),
-                    'updated_at' => $campaign->updated_at->toISOString(),
-                    'end_date' => $campaign->end_date ? $campaign->end_date->toISOString() : null,
-                ];
-            });
-            
-            return response()->json([
-                'success' => true,
-                'data' => $formattedCampaigns,
-                'total' => $campaigns->count()
-            ]);
-            
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error fetching featured campaigns: ' . $e->getMessage(),
-                'data' => []
             ], 500);
         }
     });

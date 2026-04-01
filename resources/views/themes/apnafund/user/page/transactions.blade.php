@@ -1,3 +1,7 @@
+@php
+    $activeTheme = 'themes.apnafund.';
+    $activeThemeTrue = 'themes.apnafund.';
+@endphp
 @extends($activeTheme . 'layouts.dashboard')
 
 @section('frontend')
@@ -28,7 +32,7 @@
                             </div>
                         </div>
                     </form>
-                    <table class="table table-striped table-borderless table--responsive--xl">
+                    <table class="table table-striped table-borderless table--responsive--xl align-middle">
                         <thead>
                             <tr>
                                 <th>@lang('S.N.')</th>
@@ -37,6 +41,7 @@
                                 <th>@lang('Amount')</th>
                                 <th>@lang('Post Balance')</th>
                                 <th>@lang('Details')</th>
+                                <th>@lang('Action')</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -45,7 +50,9 @@
                                     <td>
                                         {{ @$transactions->firstItem() + $loop->index }}
                                     </td>
-                                    <td>{{ @$transaction->trx }}</td>
+                                    <td>
+                                        <span class="badge badge--primary">{{ @$transaction->trx }}</span>
+                                    </td>
                                     <td>
                                         <span>
                                             <span class="d-block">{{ showDateTime(@$transaction->created_at) }}</span>
@@ -58,7 +65,28 @@
                                         </span>
                                     </td>
                                     <td>{{ showAmount(@$transaction->post_balance) . ' ' . __($setting->site_cur) }}</td>
-                                    <td>{{ __(@$transaction->details) }}</td>
+                                    <td>
+                                        <div class="text-wrap" style="max-width: 320px;">
+                                            {{ __(@$transaction->details) }}
+                                        </div>
+                                        @if(@$transaction->remark)
+                                            <small class="text-muted d-block mt-1">{{ __(keyToTitle(@$transaction->remark)) }}</small>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @php
+                                            $canAttachProof = @$transaction->deposit
+                                                && (int) @$transaction->deposit->method_code >= 1000
+                                                && (int) @$transaction->deposit->status === \App\Constants\ManageStatus::PAYMENT_INITIATE;
+                                        @endphp
+                                        @if($canAttachProof)
+                                            <a href="{{ route('user.deposit.manual.instructions', ['trx' => $transaction->trx]) }}" class="btn btn--sm btn--base">
+                                                <i class="ti ti-upload"></i> @lang('Attach Proof')
+                                            </a>
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>

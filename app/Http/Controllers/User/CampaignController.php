@@ -1431,6 +1431,11 @@ class CampaignController extends Controller
     }
     function show($slug) {
         $pageTitle = 'Campaign Details';
+        $campaignOwnerCheck = Campaign::where('slug', $slug)->firstOrFail();
+        if ((int) $campaignOwnerCheck->user_id !== (int) auth()->id()) {
+            return redirect()->route('campaign.show', $slug);
+        }
+
         $campaign  = Campaign::with('user', 'category', 'comments.user', 'deposits')
                         ->where('slug', $slug)
                         ->where('user_id', auth()->id())
@@ -1927,7 +1932,15 @@ class CampaignController extends Controller
 
         request()->validate([
             'title' => 'required|string|max:500',
-            'content' => 'required|string|min:30',
+            'content' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    if ($this->campaignUpdatePlainTextLength((string) $value) < 30) {
+                        $fail(__('The content must be at least 30 characters (text only, not HTML tags).'));
+                    }
+                },
+            ],
             'image' => ['nullable', File::types(['png', 'jpg', 'jpeg', 'webp'])],
             'is_published' => 'nullable|boolean'
         ]);
@@ -1993,7 +2006,15 @@ class CampaignController extends Controller
 
         request()->validate([
             'title' => 'required|string|max:500',
-            'content' => 'required|string|min:30',
+            'content' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    if ($this->campaignUpdatePlainTextLength((string) $value) < 30) {
+                        $fail(__('The content must be at least 30 characters (text only, not HTML tags).'));
+                    }
+                },
+            ],
             'image' => ['nullable', File::types(['png', 'jpg', 'jpeg', 'webp'])],
             'is_published' => 'nullable|boolean'
         ]);
@@ -2328,5 +2349,15 @@ class CampaignController extends Controller
                 'message' => 'Error searching users: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Plain-text length of rich HTML (strip tags, normalize whitespace) for campaign update rules.
+     */
+    protected function campaignUpdatePlainTextLength(string $html): int
+    {
+        $plain = trim(preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+
+        return mb_strlen($plain);
     }
 }

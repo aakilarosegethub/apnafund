@@ -7,6 +7,8 @@ use App\Models\Deposit;
 use App\Models\Gateway;
 use App\Models\AdminNotification;
 use App\Models\GatewayCurrency;
+use App\Models\Transaction;
+use App\Services\CurrencyService;
 use App\Constants\ManageStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -14,7 +16,7 @@ use Illuminate\Http\JsonResponse;
 class PaymentController extends BaseApiController
 {
     /**
-     * Get Gateways List (with currencies, min/max amount)
+     * Get Gateways List (min/max & charges on each gateway root; primary currency row)
      * GET /api/gateways
      * Query: ?country=Pakistan (optional)
      */
@@ -24,7 +26,16 @@ class PaymentController extends BaseApiController
 
         $query = Gateway::active()
             ->with(['currencies' => function ($q) {
-                $q->where('status', 1)->select('id', 'method_code', 'currency', 'symbol', 'min_amount', 'max_amount');
+                $q->where('status', 1)
+                    ->orderBy('id')
+                    ->select(
+                        'id',
+                        'method_code',
+                        'min_amount',
+                        'max_amount',
+                        'fixed_charge',
+                        'percent_charge'
+                    );
             }]);
 
         if (!empty($country)) {
@@ -32,28 +43,45 @@ class PaymentController extends BaseApiController
         }
 
         $gateways = $query->orderBy('id')->get()->map(function ($g) {
-            $currencies = $g->currencies->map(function ($c) {
-                return [
-                    'currency'   => $c->currency,
-                    'symbol'     => $c->symbol ?? $c->currency,
-                    'min_amount' => (float) $c->min_amount,
-                    'max_amount' => (float) $c->max_amount,
-                ];
-            })->values()->all();
+            $c = $g->currencies->first();
             return [
-                'id'         => $g->id,
-                'code'       => $g->code,
-                'name'       => $g->name,
-                'alias'      => $g->alias ?? $g->name,
-                'currencies' => $currencies,
+                'id'               => $g->id,
+                'code'             => $g->code,
+                'name'             => $g->name,
+                'alias'            => $g->alias ?? $g->name,
+                'min_amount'       => $c ? (float) $c->min_amount : 0.0,
+                'max_amount'       => $c ? (float) $c->max_amount : 0.0,
+                'fixed_charge'     => $c ? (float) $c->fixed_charge : 0.0,
+                'percent_charge'   => $c ? (float) $c->percent_charge : 0.0,
             ];
         });
 
+        $localCode = !empty(trim((string) $country))
+            ? strtoupper(getCurrencyCodeForCountryName(trim((string) $country)))
+            : strtoupper(getLocalCurrencyCode());
+
+        $platformCurrency = strtoupper(getPlatformCurrency());
+        $currencyService = app(CurrencyService::class);
+        $exchangeRate = 1.0;
+        try {
+            if ($localCode === $platformCurrency) {
+                $exchangeRate = 1.0;
+            } else {
+                $exchangeRate = (float) $currencyService->convertFromPlatform(1.0, $localCode);
+            }
+        } catch (\Throwable $e) {
+            $exchangeRate = $localCode === $platformCurrency ? 1.0 : null;
+        }
+
         return response()->json([
-            'ResponseCode' => '200',
-            'Result'       => 'true',
-            'ResponseMsg'  => 'Gateways list.',
-            'gateways'     => $gateways,
+            'ResponseCode'           => '200',
+            'Result'                 => 'true',
+            'ResponseMsg'            => 'Gateways list.',
+            'platform_currency'      => $platformCurrency,
+            'local_currency_code'    => $localCode,
+            'local_currency_symbol'  => CurrencyService::getSymbolForCode($localCode),
+            'exchange_rate'          => $exchangeRate === null ? null : round($exchangeRate, 8),
+            'gateways'               => $gateways,
         ]);
     }
 
@@ -163,14 +191,17 @@ class PaymentController extends BaseApiController
                 'ResponseMsg' => 'This campaign has expired',
             ], 400);
         }
+        $data['country'] = getUserCountryByIP();
 
         // API currency is auto-detected from request country/IP; client-sent currency is ignored.
         $country = !empty($data['country']) ? trim((string) $data['country']) : (getUserCountryByIP() ?? 'Pakistan');
-        
         $userCurrency = strtoupper((string) getCurrencyCodeForCountryName($country));
-        // Fallback: if country mapping missing, use gateway's first/default currency.
-        if (empty($userCurrency)) {
-
+        // Fallback: strict country map miss — align with visitor local currency, then gateway default.
+        if ($userCurrency === '' || resolveStrictCurrencyCodeForCountryName($country) === null) {
+            $local = strtoupper(getLocalCurrencyCode());
+            $userCurrency = $local !== '' ? $local : $userCurrency;
+        }
+        if ($userCurrency === '') {
             $defaultCurrency = GatewayCurrency::whereHas('method', function ($q) {
                 $q->active();
             })->where('method_code', $gatewayCode)
@@ -178,7 +209,6 @@ class PaymentController extends BaseApiController
                 ->orderBy('id')
                 ->value('currency');
             $userCurrency = $defaultCurrency ? strtoupper((string) $defaultCurrency) : 'PKR';
-            dd($defaultCurrency);
         }
 
         if (!$userCurrency) {
@@ -258,7 +288,7 @@ class PaymentController extends BaseApiController
         $payable = $amount + $charge;
         // final_amount is payable in gateway/method currency.
         // dd($payable,$gatewayData->rate);
-        $finalAmount = $payable + $gatewayData->charge;
+        $finalAmount = $payable + $charge;
 
         $deposit = new Deposit();
         $deposit->campaign_id = $campaign->id;
@@ -272,7 +302,7 @@ class PaymentController extends BaseApiController
         $deposit->reward_id = null;
         $deposit->method_code = $gatewayData->method_code;
         $deposit->amount = $amount;
-        $deposit->method_currency = strtoupper($gatewayData->currency);
+        $deposit->method_currency = strtoupper(getLocalCurrencyCode());
         $deposit->charge = $charge;
         $deposit->rate = $gatewayData->rate;
         $deposit->final_amount = $finalAmount;
@@ -411,6 +441,241 @@ class PaymentController extends BaseApiController
             'trx' => $deposit->trx,
             'status' => 'pending_approval',
         ]);
+    }
+
+    /**
+     * List authenticated user's transactions for mobile app.
+     * GET /api/user_payment_list.php
+     */
+    public function userPaymentList(Request $request): JsonResponse
+    {
+        $uid = $this->getUserId($request);
+        if (empty($uid)) {
+            return response()->json([
+                'Result' => 'false',
+                'ResponseCode' => '401',
+                'ResponseMsg' => 'Unauthenticated! Please provide a valid token.',
+            ], 401);
+        }
+
+        $limit = max(1, min((int) $request->input('limit', 20), 100));
+
+        $transactions = Transaction::where('user_id', $uid)
+            ->with(['deposit'])
+            ->orderByDesc('id')
+            ->paginate($limit);
+
+        $items = $transactions->getCollection()->map(function (Transaction $transaction) {
+            $deposit = $transaction->deposit;
+            $isManual = $deposit && (int) $deposit->method_code >= 1000;
+            $needsProof = $isManual && (int) $deposit->status === ManageStatus::PAYMENT_INITIATE && !$this->hasPaymentProof($deposit);
+
+            return [
+                'id' => $transaction->id,
+                'trx' => $transaction->trx,
+                'amount' => (float) $transaction->amount,
+                'trx_type' => (string) $transaction->trx_type,
+                'post_balance' => (float) $transaction->post_balance,
+                'remark' => (string) ($transaction->remark ?? ''),
+                'details' => (string) ($transaction->details ?? ''),
+                'created_at' => optional($transaction->created_at)->toDateTimeString(),
+                'deposit' => $deposit ? [
+                    'id' => $deposit->id,
+                    'method_code' => (int) $deposit->method_code,
+                    'status' => (int) $deposit->status,
+                ] : null,
+                'can_upload_proof' => $needsProof,
+                'proof_submit_endpoint' => $needsProof ? url('/api/user_payment_proof_submit.php') : null,
+            ];
+        })->values();
+
+        return response()->json([
+            'Result' => 'true',
+            'ResponseCode' => '200',
+            'ResponseMsg' => 'User payment list fetched successfully',
+            'payments' => $items,
+            'pagination' => [
+                'current_page' => $transactions->currentPage(),
+                'last_page' => $transactions->lastPage(),
+                'per_page' => $transactions->perPage(),
+                'total' => $transactions->total(),
+            ],
+        ]);
+    }
+
+    /**
+     * List authenticated user's donation/deposit records.
+     * GET/POST /api/donation_list.php
+     */
+    public function donationList(Request $request): JsonResponse
+    {
+        $uid = $this->getUserId($request);
+        if (empty($uid)) {
+            return response()->json([
+                'Result' => 'false',
+                'ResponseCode' => '401',
+                'ResponseMsg' => 'Unauthenticated! Please provide a valid token.',
+            ], 401);
+        }
+
+        $limit = max(1, min((int) $request->input('limit', 20), 100));
+
+        $donations = Deposit::query()
+            ->where('user_id', $uid)
+            ->with(['campaign:id,name,slug,image', 'gateway:id,code,name'])
+            ->orderByDesc('id')
+            ->paginate($limit);
+
+        $items = $donations->getCollection()->map(function (Deposit $deposit) {
+            $isManualGateway = (int) $deposit->method_code >= 1000;
+            $hasProof = $this->hasPaymentProof($deposit);
+            $manualProofMissing = $isManualGateway && !$hasProof;
+
+            return [
+                'id' => (int) $deposit->id,
+                'trx' => (string) ($deposit->trx ?? ''),
+                'amount' => (float) $deposit->amount,
+                'charge' => (float) $deposit->charge,
+                'final_amount' => (float) $deposit->final_amount,
+                'method_code' => (int) $deposit->method_code,
+                'method_currency' => (string) ($deposit->method_currency ?? ''),
+                'status' => (int) $deposit->status,
+                'gateway_name' => $deposit->gateway->name ?? null,
+                'gateway_type' => $isManualGateway ? 'manual' : 'automated',
+                'is_manual_without_proof' => $manualProofMissing,
+                'can_upload_proof' => $manualProofMissing,
+                'proof_submit_endpoint' => $manualProofMissing ? url('/api/user_payment_proof_submit.php') : null,
+                'campaign' => $deposit->campaign ? [
+                    'id' => (int) $deposit->campaign->id,
+                    'name' => (string) $deposit->campaign->name,
+                    'slug' => (string) $deposit->campaign->slug,
+                    'image' => (string) ($deposit->campaign->image ?? ''),
+                ] : null,
+                'created_at' => optional($deposit->created_at)->toDateTimeString(),
+            ];
+        })->values();
+
+        return response()->json([
+            'Result' => 'true',
+            'ResponseCode' => '200',
+            'ResponseMsg' => 'Donation list fetched successfully',
+            'donations' => $items,
+            'pagination' => [
+                'current_page' => $donations->currentPage(),
+                'last_page' => $donations->lastPage(),
+                'per_page' => $donations->perPage(),
+                'total' => $donations->total(),
+            ],
+        ]);
+    }
+
+    /**
+     * Submit manual payment proof for authenticated user's own transaction.
+     * POST /api/user_payment_proof_submit.php
+     */
+    public function userPaymentProofSubmit(Request $request): JsonResponse
+    {
+        $uid = $this->getUserId($request);
+        if (empty($uid)) {
+            return response()->json([
+                'Result' => 'false',
+                'ResponseCode' => '401',
+                'ResponseMsg' => 'Unauthenticated! Please provide a valid token.',
+            ], 401);
+        }
+
+        $request->validate([
+            'trx' => 'required|string|max:191',
+            'payment_proof' => 'required|file|mimes:jpeg,jpg,png,pdf,webp|max:5120',
+            'note' => 'nullable|string|max:1000',
+        ]);
+
+        $deposit = Deposit::with(['gateway', 'campaign', 'user'])
+            ->where('trx', $request->trx)
+            ->where('user_id', $uid)
+            ->where('status', ManageStatus::PAYMENT_INITIATE)
+            ->first();
+
+        if (!$deposit) {
+            return response()->json([
+                'Result' => 'false',
+                'ResponseCode' => '404',
+                'ResponseMsg' => 'Payment transaction not found or proof already submitted.',
+            ], 404);
+        }
+
+        if ((int) $deposit->method_code < 1000) {
+            return response()->json([
+                'Result' => 'false',
+                'ResponseCode' => '400',
+                'ResponseMsg' => 'This transaction is not a manual gateway payment.',
+            ], 400);
+        }
+
+        $directory = date('Y') . '/' . date('m') . '/' . date('d');
+        $path = getFilePath('verify') . '/' . $directory;
+        $value = $directory . '/' . fileUploader($request->file('payment_proof'), $path);
+
+        $details = [
+            [
+                'name' => __('Payment proof'),
+                'type' => 'file',
+                'value' => $value,
+            ],
+        ];
+
+        if ($request->filled('note')) {
+            $details[] = [
+                'name' => __('Note'),
+                'type' => 'textarea',
+                'value' => (string) $request->note,
+            ];
+        }
+
+        $deposit->details = $details;
+        $deposit->status = ManageStatus::PAYMENT_PENDING;
+        $deposit->save();
+
+        $adminNotification = new AdminNotification();
+        $adminNotification->user_id = $deposit->user->id ?? 0;
+        $adminNotification->title = 'Payment proof submitted — ' . ($deposit->full_name ?? $deposit->email ?? 'Guest') . ' — ' . ($deposit->campaign->name ?? 'Campaign');
+        $adminNotification->click_url = urlPath('admin.donations.pending');
+        $adminNotification->save();
+
+        return response()->json([
+            'Result' => 'true',
+            'ResponseCode' => '200',
+            'ResponseMsg' => 'Payment proof submitted successfully',
+            'trx' => $deposit->trx,
+            'status' => 'pending_approval',
+        ]);
+    }
+
+    protected function hasPaymentProof(Deposit $deposit): bool
+    {
+        $details = $deposit->details;
+        if (is_string($details)) {
+            $decoded = json_decode($details, true);
+            $details = is_array($decoded) ? $decoded : [];
+        } elseif (is_object($details)) {
+            $details = (array) $details;
+        }
+
+        if (!is_array($details)) {
+            return false;
+        }
+
+        foreach ($details as $entry) {
+            $row = is_object($entry) ? (array) $entry : (array) $entry;
+            $name = strtolower(trim((string) ($row['name'] ?? '')));
+            $type = strtolower(trim((string) ($row['type'] ?? '')));
+            $value = trim((string) ($row['value'] ?? ''));
+            if (($name === 'payment proof' || $type === 'file') && $value !== '') {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
 

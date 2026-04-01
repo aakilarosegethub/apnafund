@@ -474,23 +474,45 @@ class WebsiteController extends Controller
             }
         }
         
-        // Filter gateways based on detected country
-        $gatewayCurrencies = GatewayCurrency::whereHas('method', function ($gateway) use ($userCountry) {
-                                            $gateway->active();
-                                            if ($userCountry) {
-                                                $gateway->forCountry($userCountry);
-                                            }
-                                        })
-                                        ->with('method')
-                                        ->orderby('method_code')
-                                        ->get();
+        // Currency (e.g. PKR) → canonical country (Pakistan); phir sirf gateways jinke `countries` mein woh allow ho.
+        $countryFallback            = resolveCountryForGatewayFiltering();
+        $localCurrencyCode          = getLocalCurrencyCode();
+        $countryFromDisplayCurrency = resolveCountryForGatewayCurrencyList($countryFallback);
+        $effectiveCountry           = $countryFromDisplayCurrency ?? $countryFallback;
+        $localCurrencyUpper         = strtoupper(trim($localCurrencyCode));
+        $gatewayContextCountry      = $effectiveCountry ?? $countryFallback;
 
-        // Debug: Log gateway currencies count
-        // \Log::info('Gateway Currencies Count: ' . $gatewayCurrencies->count());
-        // \Log::info('User Country: ' . ($userCountry ?? 'NULL'));
+        $gatewayCurrencies = GatewayCurrency::query()
+            ->where('status', ManageStatus::ACTIVE)
+            ->whereHas('method', function ($gateway) use ($effectiveCountry, $localCurrencyUpper) {
+                $gateway->active();
+                if ($effectiveCountry) {
+                    $gateway->forGatewayRegion($effectiveCountry, $localCurrencyUpper);
+                }
+            })
+            ->with('method')
+            ->orderBy('method_code')
+            ->get();
 
+        $gatewayContextCurrencyCode = $gatewayContextCountry !== null && $gatewayContextCountry !== ''
+            ? (resolveStrictCurrencyCodeForCountryName($gatewayContextCountry) ?? $gatewayContextCountry)
+            : null;
 
-        return view($this->activeTheme . 'page.campaignDonate', compact('pageTitle', 'campaignData', 'seoContents', 'authUser', 'countries', 'gatewayCurrencies'));
+        if (is_string($effectiveCountry) && $effectiveCountry !== '' && !countryHasActiveGatewayForRegion($effectiveCountry, null)) {
+            return redirect()->route('payments.unavailable.region');
+        }
+
+        return view($this->activeTheme . 'page.campaignDonate', compact('pageTitle', 'campaignData', 'seoContents', 'authUser', 'countries', 'gatewayCurrencies', 'gatewayContextCountry', 'gatewayContextCurrencyCode'));
+    }
+
+    /**
+     * Shown when no active payment gateway supports the visitor’s currency for their region.
+     */
+    public function paymentsUnavailableInRegion()
+    {
+        $pageTitle = __('Payments unavailable in your region');
+
+        return view($this->activeTheme . 'page.paymentsUnavailableRegion', compact('pageTitle'));
     }
 
     function storeCampaignComment($slug) {
@@ -504,13 +526,15 @@ class WebsiteController extends Controller
         ]);
         
         try {
-            $this->validate(request(), [
-                'name'    => 'required|string|max:40',
-                'email'   => 'required|string|max:40',
+            $rules = [
                 'comment' => 'required|string',
-                'rating'  => 'nullable|integer|min:1|max:5',
                 'title'   => 'nullable|string|max:255',
-            ]);
+            ];
+            if (! auth()->check()) {
+                $rules['name'] = 'required|string|max:40';
+                $rules['email'] = 'required|string|max:40';
+            }
+            $this->validate(request(), $rules);
         } catch (\Illuminate\Validation\ValidationException $e) {
             if (request()->ajax() || request()->wantsJson()) {
                 return response()->json([
@@ -590,7 +614,7 @@ class WebsiteController extends Controller
 
         $comment->campaign_id = $campaign->id;
         $comment->comment     = request('comment');
-        $comment->rating      = request('rating') ?: null;
+        $comment->rating      = null;
         $comment->title       = request('title');
         $comment->save();
         
@@ -661,12 +685,35 @@ class WebsiteController extends Controller
         $remainingComments = $commentsCount - ($skip + $comments->count());
 
         if (count($comments)) {
-            $view = view($this->activeTheme . 'partials.basicComment', compact('comments'))->render();
+            $commentsPayload = $comments->map(function ($comment) {
+                $displayName = $comment->user ? $comment->user->fullname : $comment->name;
 
-            return response()->json([
-                'html'               => $view,
-                'remaining_comments' => $remainingComments,
-            ]);
+                return [
+                    'id'           => $comment->id,
+                    'name'         => $displayName,
+                    'title'        => $comment->title,
+                    'comment'      => $comment->comment,
+                    'rating'       => $comment->rating,
+                    'created_at'   => $comment->created_at?->toIso8601String(),
+                    'display_date' => showDateTime($comment->created_at, 'd M, Y'),
+                    'is_guest'     => !$comment->user_id,
+                    'avatar_url'   => ($comment->user && $comment->user->image)
+                        ? getImage(getFilePath('userProfile') . '/' . $comment->user->image)
+                        : null,
+                    'initials'     => strtoupper(substr($displayName, 0, 2)),
+                ];
+            })->values()->all();
+
+            $payload = [
+                'comments'             => $commentsPayload,
+                'remaining_comments'   => $remainingComments,
+            ];
+
+            if (! request()->wantsJson()) {
+                $payload['html'] = view($this->activeTheme . 'partials.basicComment', compact('comments'))->render();
+            }
+
+            return response()->json($payload);
         } else {
             return response()->json([
                 'message' => 'No more comments found'
@@ -1402,6 +1449,7 @@ class WebsiteController extends Controller
         session()->put('user_detected_currency', $currencyCode);
         session()->put('user_detected_symbol', $symbol);
         session()->put('user_detected_country', $request->country);
+        session()->put('user_country', $request->country);
         session()->put('user_currency_manual', true);
         session()->save();
 
@@ -1725,6 +1773,19 @@ class WebsiteController extends Controller
     }
 
     /**
+     * Single update URL segment: numeric = {@see CampaignUpdate} id, otherwise slug (backwards compatible).
+     */
+    private function campaignUpdateShowQuery(Campaign $campaign, string $segment)
+    {
+        $q = \App\Models\CampaignUpdate::where('campaign_id', $campaign->id)->where('is_published', true);
+        if (ctype_digit((string) $segment)) {
+            return $q->where('id', (int) $segment);
+        }
+
+        return $q->where('slug', $segment);
+    }
+
+    /**
      * Show campaign updates list
      */
     function campaignUpdates($slug) {
@@ -1740,26 +1801,87 @@ class WebsiteController extends Controller
     }
 
     /**
-     * Show single campaign update
+     * JSON: Accept application/json, ?format=json, ?json=1, ya curl default Accept (wildcard) / missing Accept.
+     * Sirf Accept: text/html (browser) par HTML; JSON ke liye ?json=1, ?format=json ya Accept: application/json.
      */
-    function campaignUpdateShow($slug, $updateSlug) {
+    private function wantsCampaignUpdateJsonResponse(Request $request): bool
+    {
+        if ($request->query('format') === 'json' || $request->boolean('json')) {
+            return true;
+        }
+        if ($request->wantsJson()) {
+            return true;
+        }
+        $accept = strtolower(trim((string) $request->header('Accept', '')));
+        if ($accept === '' || str_contains($accept, '*/*')) {
+            return true;
+        }
+        if (str_contains($accept, 'application/json')) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Show single campaign update (HTML, or JSON with `comments` array).
+     */
+    function campaignUpdateShow(Request $request, $slug, $updateSlug) {
         $pageTitle = 'Campaign Update';
         $campaign = Campaign::where('slug', $slug)->approve()->firstOrFail();
-        
-        $update = \App\Models\CampaignUpdate::where('slug', $updateSlug)
-            ->where('campaign_id', $campaign->id)
-            ->where('is_published', true)
-            ->firstOrFail();
-        
+
+        $update = $this->campaignUpdateShowQuery($campaign, (string) $updateSlug)->firstOrFail();
+
         // Get comments for this update
         $comments = Comment::with('user')
             ->where('update_id', $update->id)
             ->approve()
             ->latest()
             ->get();
-        
+
         $commentCount = $comments->count();
-        
+
+        if ($this->wantsCampaignUpdateJsonResponse($request)) {
+            $imageUrl = $update->image
+                ? getImage(getFilePath('campaign') . '/' . $update->image, getFileSize('campaign'))
+                : null;
+
+            return response()->json([
+                'success' => true,
+                'campaign' => [
+                    'id' => $campaign->id,
+                    'slug' => $campaign->slug,
+                    'name' => $campaign->name,
+                ],
+                'update' => [
+                    'id' => $update->id,
+                    'campaign_id' => $update->campaign_id,
+                    'title' => $update->title,
+                    'slug' => $update->slug,
+                    'content' => $update->content,
+                    'image' => $update->image,
+                    'image_url' => $imageUrl,
+                    'created_at' => $update->created_at?->toDateTimeString(),
+                    'updated_at' => $update->updated_at?->toDateTimeString(),
+                ],
+                'comments' => $comments->map(function (Comment $c) {
+                    return [
+                        'id' => $c->id,
+                        'name' => $c->name,
+                        'comment' => $c->comment,
+                        'title' => $c->title,
+                        'created_at' => $c->created_at?->toDateTimeString(),
+                        'user' => $c->user ? [
+                            'id' => $c->user->id,
+                            'username' => $c->user->username,
+                            'fullname' => $c->user->fullname ?? null,
+                        ] : null,
+                    ];
+                })->values()->all(),
+                'comment_count' => $commentCount,
+            ]);
+        }
+
         return view($this->activeTheme . 'page.campaignUpdateShow', compact('pageTitle', 'campaign', 'update', 'comments', 'commentCount'));
     }
 
@@ -1768,33 +1890,50 @@ class WebsiteController extends Controller
      */
     function storeUpdateComment($slug, $updateSlug) {
         $campaign = Campaign::where('slug', $slug)->approve()->firstOrFail();
-        
-        $update = \App\Models\CampaignUpdate::where('slug', $updateSlug)
-            ->where('campaign_id', $campaign->id)
-            ->where('is_published', true)
-            ->firstOrFail();
-        
+
+        $update = $this->campaignUpdateShowQuery($campaign, (string) $updateSlug)->firstOrFail();
+
+        if (! auth()->check()) {
+            $toast[] = ['error', __('Please login to comment')];
+
+            return back()->withToasts($toast);
+        }
+
+        if (! auth()->user()->status) {
+            $toast[] = ['error', __('Your account is not active.')];
+
+            return back()->withToasts($toast);
+        }
+
         $this->validate(request(), [
             'comment' => 'required|string|max:1000',
-            'rating' => 'nullable|integer|min:1|max:5',
-            'title' => 'nullable|string|max:200'
+            'title' => 'nullable|string|max:200',
         ]);
-        
-        if (!auth()->check()) {
-            return back()->with('error', 'Please login to comment');
-        }
-        
+
+        $user = auth()->user();
+
         $comment = new Comment();
-        $comment->user_id = auth()->id();
+        $comment->user_id = $user->id;
         $comment->campaign_id = $campaign->id;
         $comment->update_id = $update->id;
+        $comment->name = $user->fullname ?? $user->username;
+        $comment->email = $user->email;
         $comment->comment = request('comment');
-        $comment->rating = request('rating', 5);
+        $comment->rating = null;
         $comment->title = request('title');
-        $comment->status = \App\Constants\ManageStatus::CAMPAIGN_COMMENT_PENDING;
+        // Approved so the comment appears immediately on this page (list uses scopeApprove)
+        $comment->status = ManageStatus::CAMPAIGN_COMMENT_APPROVED;
         $comment->save();
-        
-        return back()->with('success', 'Comment submitted successfully. It will be visible after approval.');
+
+        $adminNotification = new AdminNotification();
+        $adminNotification->user_id = $user->id;
+        $adminNotification->title = ($user->fullname ?? $user->username) . ' commented on a campaign update.';
+        $adminNotification->click_url = urlPath('admin.comments.index');
+        $adminNotification->save();
+
+        $toast[] = ['success', __('Your comment has been posted.')];
+
+        return back()->withToasts($toast);
     }
 
     /**

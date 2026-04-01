@@ -7,7 +7,6 @@
     padding:10px 0 8px;
     border-top:1px solid #e5e5e5;
     justify-content:center;
-    flex-wrap:wrap;
 }
 
 .navbar-categories a{

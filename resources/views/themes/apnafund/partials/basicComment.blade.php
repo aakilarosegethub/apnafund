@@ -1,5 +1,5 @@
 @foreach ($comments as $comment)
-    <div class="review-item" data-rating="{{ $comment->rating ?? 0 }}">
+    <div class="review-item">
         <div class="review-header">
             <div class="reviewer-info">
                 <div class="reviewer-avatar">
@@ -11,20 +11,6 @@
                 </div>
                 <div class="reviewer-details">
                     <h5 class="reviewer-name">{{ $comment->user ? $comment->user->fullname : $comment->name }}</h5>
-                    <div class="review-rating">
-                        @if($comment->rating)
-                            <span class="stars">
-                                @for($i = 1; $i <= 5; $i++)
-                                    @if($i <= $comment->rating)
-                                        ★
-                                    @else
-                                        ☆
-                                    @endif
-                                @endfor
-                            </span>
-                            <span class="rating-text">{{ $comment->rating }}.0</span>
-                        @endif
-                    </div>
                 </div>
             </div>
             <div class="review-date">{{ showDateTime($comment->created_at, 'd M, Y') }}</div>

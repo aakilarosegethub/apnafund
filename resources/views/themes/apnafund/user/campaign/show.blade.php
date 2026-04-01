@@ -1240,11 +1240,6 @@
                             <div class="review-header">
                                 <div class="reviewer-info">
                                     <span class="reviewer-name">{{ is_string($comment->user->username) ? $comment->user->username : 'Anonymous' }}</span>
-                                    <div class="review-rating">
-                                        @for($i = 1; $i <= 5; $i++)
-                                            <span class="star {{ $i <= ($comment->rating ?? 5) ? 'filled' : '' }}">★</span>
-                                        @endfor
-                                    </div>
                                 </div>
                                 <span class="review-date">{{ $comment->created_at->diffForHumans() }}</span>
                             </div>

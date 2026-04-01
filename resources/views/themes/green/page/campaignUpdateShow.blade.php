@@ -179,10 +179,6 @@
         color: #999;
         font-size: 0.9rem;
     }
-    .comment-rating {
-        color: #ffc107;
-        margin-bottom: 5px;
-    }
     .comment-text {
         color: #666;
         line-height: 1.6;
@@ -248,7 +244,7 @@
         @auth
         <div class="comment-form">
             <h3>Leave a Comment</h3>
-            <form action="{{ route('campaign.update.comment', [$campaign->slug, $update->slug]) }}" method="POST">
+            <form action="{{ route('campaign.update.comment', [$campaign->slug, $update->id]) }}" method="POST">
                 @csrf
                 <div class="form-group">
                     <label for="comment">Your Comment *</label>
@@ -269,13 +265,6 @@
                 <span class="comment-author">{{ $comment->user->username ?? 'Anonymous' }}</span>
                 <span class="comment-date">{{ $comment->created_at->diffForHumans() }}</span>
             </div>
-            @if($comment->rating)
-            <div class="comment-rating">
-                @for($i = 1; $i <= 5; $i++)
-                    <i class="fas fa-star {{ $i <= $comment->rating ? 'text-warning' : 'text-muted' }}"></i>
-                @endfor
-            </div>
-            @endif
             <div class="comment-text">{{ $comment->comment }}</div>
         </div>
         @empty

@@ -2551,6 +2551,12 @@
                     @endif
                     <form class="review-form" id="reviewForm" method="POST" action="{{ route('campaign.comment', $campaignData->slug) }}">
                         @csrf
+                        @auth
+                            <p style="color: #666; font-size: 0.9rem; margin-bottom: 15px;">
+                                <i class="fas fa-user-check" style="color:#05ce78;"></i>
+                                Commenting as <strong>{{ auth()->user()->fullname ?? auth()->user()->username }}</strong>
+                            </p>
+                        @endauth
 
                         <div class="form-group">
                             <label for="reviewTitle">Comment Title:</label>
@@ -2563,6 +2569,7 @@
                                 placeholder="Share your thoughts about this campaign..." required></textarea>
                         </div>
 
+                        @guest
                         <div class="form-group">
                             <label for="reviewerName">Your Name:</label>
                             <input type="text" id="reviewerName" name="name" placeholder="Enter your name" required>
@@ -2572,6 +2579,7 @@
                             <label for="reviewerEmail">Your Email:</label>
                             <input type="email" id="reviewerEmail" name="email" placeholder="Enter your email" required>
                         </div>
+                        @endguest
 
                         <button type="submit" class="btn-submit-review">Submit Comment</button>
                         <button type="button" class="btn-submit-review" onclick="submitFormDirectly()" style="margin-left: 10px; background: #007bff;">Submit Directly (Test)</button>
@@ -2583,33 +2591,12 @@
                     <div class="reviews-header">
                         <div>
                             <h4>Recent Comments</h4>
-                            @php
-                                $avgRating = $comments->whereNotNull('rating')->avg('rating');
-                                $totalReviews = $comments->whereNotNull('rating')->count();
-                            @endphp
-                            @if($avgRating)
-                            <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9rem;">
-                                    <span style="color: #ffd700;">★★★★★</span> 
-                                    {{ number_format($avgRating, 1) }} average rating 
-                                    ({{ $totalReviews }} {{ $totalReviews == 1 ? 'review' : 'reviews' }})
-                                </p>
-                            @endif
-                        </div>
-                        <div class="reviews-filter">
-                            <select id="filterReviews">
-                                <option value="all">All Reviews</option>
-                                <option value="5">5 Stars</option>
-                                <option value="4">4 Stars</option>
-                                <option value="3">3 Stars</option>
-                                <option value="2">2 Stars</option>
-                                <option value="1">1 Star</option>
-                            </select>
                         </div>
                     </div>
 
                     <div class="reviews-list" id="reviewsList">
                         @forelse ($comments as $comment)
-                            <div class="review-item" data-rating="{{ $comment->rating ?? 0 }}">
+                            <div class="review-item">
                                 <div class="review-header">
                                     <div class="reviewer-info">
                                         <div class="reviewer-avatar">
@@ -2621,20 +2608,6 @@
                                         </div>
                                         <div class="reviewer-details">
                                             <h5 class="reviewer-name">{{ $comment->user ? $comment->user->fullname : $comment->name }}</h5>
-                                            <div class="review-rating">
-                                                @if($comment->rating)
-                                                    <span class="stars">
-                                                        @for($i = 1; $i <= 5; $i++)
-                                                            @if($i <= $comment->rating)
-                                                                ★
-                                                            @else
-                                                                ☆
-                                                            @endif
-                                                        @endfor
-                                                    </span>
-                                                    <span class="rating-text">{{ $comment->rating }}.0</span>
-                                                @endif
-                                            </div>
                                         </div>
                                     </div>
                                     <div class="review-date">{{ showDateTime($comment->created_at, 'd M, Y') }}</div>
@@ -3545,36 +3518,28 @@
                 $('[name=gateway]').change()
             })
 
-            // Pre-fill form with user data if logged in
-            @if(auth()->check())
-                $(document).ready(function() {
-                    $('#reviewerName').val('{{ auth()->user()->fullname }}');
-                    $('#reviewerEmail').val('{{ auth()->user()->email }}');
-                    $('#reviewerName, #reviewerEmail').prop('readonly', true);
-                });
-            @endif
-
             // Review Form Submission
             $('#reviewForm').on('submit', function(e) {
                 e.preventDefault();
                 
                 console.log('Form submission started...');
                 
-                // Basic validation
-                var name = $('#reviewerName').val().trim();
-                var email = $('#reviewerEmail').val().trim();
+                var isLoggedIn = {{ auth()->check() ? 'true' : 'false' }};
+                var name = $('#reviewerName').length ? $('#reviewerName').val().trim() : '';
+                var email = $('#reviewerEmail').length ? $('#reviewerEmail').val().trim() : '';
                 var comment = $('#reviewContent').val().trim();
                 
-                console.log('Form data:', {name: name, email: email, comment: comment});
+                console.log('Form data:', {name: name, email: email, comment: comment, isLoggedIn: isLoggedIn});
                 
-                if (!name) {
-                    showToast('error', 'Please enter your name.');
-                    return false;
-                }
-                
-                if (!email) {
-                    showToast('error', 'Please enter your email.');
-                    return false;
+                if (!isLoggedIn) {
+                    if (!name) {
+                        showToast('error', 'Please enter your name.');
+                        return false;
+                    }
+                    if (!email) {
+                        showToast('error', 'Please enter your email.');
+                        return false;
+                    }
                 }
                 
                 if (!comment) {
@@ -3582,11 +3547,12 @@
                     return false;
                 }
                 
-                // Basic email validation
-                var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(email)) {
-                    showToast('error', 'Please enter a valid email address.');
-                    return false;
+                if (!isLoggedIn) {
+                    var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(email)) {
+                        showToast('error', 'Please enter a valid email address.');
+                        return false;
+                    }
                 }
                 
                 var formData = new FormData(this);
@@ -3666,19 +3632,6 @@
                         submitBtn.prop('disabled', false).text(originalText);
                     }
                 });
-            });
-
-            // Review Filtering
-            $('#filterReviews').on('change', function() {
-                var selectedRating = $(this).val();
-                var reviewItems = $('.review-item');
-                
-                if (selectedRating === 'all') {
-                    reviewItems.show();
-                } else {
-                    reviewItems.hide();
-                    reviewItems.filter('[data-rating="' + selectedRating + '"]').show();
-                }
             });
 
             // Toast Notification Function (Enhanced)
@@ -3953,20 +3906,28 @@
 
         // Direct form submission function (for testing)
         function submitFormDirectly() {
-            var name = document.getElementById('reviewerName').value.trim();
-            var email = document.getElementById('reviewerEmail').value.trim();
             var comment = document.getElementById('reviewContent').value.trim();
+            var nameEl = document.getElementById('reviewerName');
+            var emailEl = document.getElementById('reviewerEmail');
+            var isLoggedIn = {{ auth()->check() ? 'true' : 'false' }};
             
-            if (!name || !email || !comment) {
-                showToast('error', 'Please fill in all required fields.');
+            if (!comment) {
+                showToast('error', 'Please enter your comment.');
                 return;
             }
             
-            // Basic email validation
-            var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                showToast('error', 'Please enter a valid email address.');
-                return;
+            if (!isLoggedIn && nameEl && emailEl) {
+                var name = nameEl.value.trim();
+                var email = emailEl.value.trim();
+                if (!name || !email) {
+                    showToast('error', 'Please fill in all required fields.');
+                    return;
+                }
+                var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    showToast('error', 'Please enter a valid email address.');
+                    return;
+                }
             }
             
             console.log('Submitting form directly...');
@@ -3975,30 +3936,32 @@
 
         // Form validation function
         function validateCommentForm() {
-            var name = document.getElementById('reviewerName').value.trim();
-            var email = document.getElementById('reviewerEmail').value.trim();
             var comment = document.getElementById('reviewContent').value.trim();
-            
-            if (!name) {
-                showToast('error', 'Please enter your name.');
-                return false;
-            }
-            
-            if (!email) {
-                showToast('error', 'Please enter your email.');
-                return false;
-            }
+            var nameEl = document.getElementById('reviewerName');
+            var emailEl = document.getElementById('reviewerEmail');
+            var isLoggedIn = {{ auth()->check() ? 'true' : 'false' }};
             
             if (!comment) {
                 showToast('error', 'Please enter your comment.');
                 return false;
             }
             
-            // Basic email validation
-            var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                showToast('error', 'Please enter a valid email address.');
-                return false;
+            if (!isLoggedIn && nameEl && emailEl) {
+                var name = nameEl.value.trim();
+                var email = emailEl.value.trim();
+                if (!name) {
+                    showToast('error', 'Please enter your name.');
+                    return false;
+                }
+                if (!email) {
+                    showToast('error', 'Please enter your email.');
+                    return false;
+                }
+                var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    showToast('error', 'Please enter a valid email address.');
+                    return false;
+                }
             }
             
             return true;

@@ -67,9 +67,25 @@ class Deposit extends Model
         return $this->belongsTo(Reward::class, 'reward_id', 'id');
     }
 
-    public function gatewayCurrency()
+    /**
+     * Gateway currency row for this deposit. Exact match on method_currency first;
+     * if missing (e.g. local display USD but gateway only has PKR), first active row for method_code.
+     */
+    public function gatewayCurrency(): ?GatewayCurrency
     {
-        return GatewayCurrency::where('method_code', $this->method_code)->where('currency', $this->method_currency)->first();
+        $methodCode = $this->method_code;
+        $currency   = strtoupper(trim((string) $this->method_currency));
+
+        $base = GatewayCurrency::query()
+            ->where('method_code', $methodCode)
+            ->where('status', ManageStatus::ACTIVE);
+
+        $exact = (clone $base)->whereRaw('UPPER(TRIM(currency)) = ?', [$currency])->first();
+        if ($exact) {
+            return $exact;
+        }
+
+        return $base->orderBy('id')->first();
     }
 
     public function scopeBaseCurrency()

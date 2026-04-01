@@ -367,16 +367,19 @@ class BaseApiController extends Controller
     }
 
     /**
-     * Get authenticated user ID
-     * For protected routes, token is required (no fallback to request uid)
+     * Get authenticated user ID (Sanctum bearer and/or default guard).
+     * Works on routes without auth:sanctum middleware when a valid Bearer token is sent.
      */
     protected function getUserId(Request $request)
     {
+        $sanctumUser = auth('sanctum')->user();
+        if ($sanctumUser) {
+            return $sanctumUser->id;
+        }
         if (auth()->check()) {
             return auth()->user()->id;
         }
-        
-        // No fallback - token is required for protected APIs
+
         return null;
     }
 

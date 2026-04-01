@@ -1,6 +1,10 @@
 @php
     $activeTheme = activeTheme();
-    $activeThemeTrue = activeTheme();
+    // Blade views use "themes.green."; public assets live under assets/themes/{name}/
+    $themeAssetBase = activeTheme(true);
+    if (! is_file(public_path(rtrim($themeAssetBase, '/') . '/css/dropzone.min.css'))) {
+        $themeAssetBase = 'assets/themes/apnafund/';
+    }
     
     // Check if campaign belongs to current user or user is a collaborator
     if (isset($campaign) && !$campaign->canBeEditedBy(auth()->id())) {
@@ -433,7 +437,7 @@
             }
         }
     </style>
-    <link rel="stylesheet" href="{{ asset($activeThemeTrue . 'css/dropzone.min.css') }}">
+    <link rel="stylesheet" href="{{ asset($themeAssetBase . 'css/dropzone.min.css') }}">
     @if($currentSection == 'story')
     <!-- include libraries(jQuery, bootstrap) -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" rel="stylesheet">
@@ -910,22 +914,28 @@
                         method: 'POST',
                         body: formData,
                         headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
                         }
                     })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            location.reload();
+                    .then(async function(response) {
+                        const data = await response.json().catch(function() { return {}; });
+                        if (response.ok && data.success) {
+                            var rewardMsg = data.message || (action === 'create' ? 'Reward created successfully.' : 'Reward updated successfully.');
+                            campaignAjaxNotifyThenReload(rewardMsg, 'success');
+                            return;
+                        }
+                        if (response.status === 422 && data.errors) {
+                            campaignAjaxNotifyValidation(data);
                         } else {
-                            alert(data.message || 'An error occurred');
-                            saveBtn.disabled = false;
-                            saveBtn.textContent = originalText;
+                            campaignAjaxNotify('error', data.message || 'An error occurred');
                         }
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = originalText;
                     })
-                    .catch(error => {
+                    .catch(function(error) {
                         console.error('Error:', error);
-                        alert('An error occurred. Please try again.');
+                        campaignAjaxNotify('error', 'An error occurred. Please try again.');
                         saveBtn.disabled = false;
                         saveBtn.textContent = originalText;
                     });
@@ -970,7 +980,7 @@
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        alert('Failed to load reward data');
+                        campaignAjaxNotify('error', 'Failed to load reward data');
                     });
                 }
 
@@ -990,14 +1000,14 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            location.reload();
+                            campaignAjaxNotifyThenReload(data.message || 'Reward deleted successfully.', 'success');
                         } else {
-                            alert(data.message || 'Failed to delete reward');
+                            campaignAjaxNotify('error', data.message || 'Failed to delete reward');
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        alert('An error occurred. Please try again.');
+                        campaignAjaxNotify('error', 'An error occurred. Please try again.');
                     });
                 }
             </script>
@@ -1214,7 +1224,7 @@
                 // Add collaborator
                 document.getElementById('saveCollaboratorBtn')?.addEventListener('click', function() {
                     if (!selectedUserId) {
-                        alert('Please select a user');
+                        campaignAjaxNotify('error', 'Please select a user');
                         return;
                     }
 
@@ -1227,25 +1237,30 @@
                         headers: {
                             'Content-Type': 'application/json',
                             'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || document.querySelector('input[name="_token"]').value
                         },
                         body: JSON.stringify({
                             user_id: selectedUserId
                         })
                     })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            location.reload();
-                        } else {
-                            alert(data.message || 'Error adding collaborator');
-                            btn.disabled = false;
-                            btn.textContent = 'Add Selected User';
+                    .then(async function(response) {
+                        const data = await response.json().catch(function() { return {}; });
+                        if (response.ok && data.success) {
+                            campaignAjaxNotifyThenReload(data.message || 'Collaborator added successfully.', 'success');
+                            return;
                         }
+                        if (response.status === 422 && data.errors) {
+                            campaignAjaxNotifyValidation(data);
+                        } else {
+                            campaignAjaxNotify('error', data.message || 'Error adding collaborator');
+                        }
+                        btn.disabled = false;
+                        btn.textContent = 'Add Selected User';
                     })
-                    .catch(error => {
+                    .catch(function(error) {
                         console.error('Error:', error);
-                        alert('An error occurred. Please try again.');
+                        campaignAjaxNotify('error', 'An error occurred. Please try again.');
                         btn.disabled = false;
                         btn.textContent = 'Add Selected User';
                     });
@@ -1264,17 +1279,21 @@
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || document.querySelector('input[name="_token"]').value
                         }
                     })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            location.reload();
+                    .then(async function(response) {
+                        const data = await response.json().catch(function() { return {}; });
+                        if (response.ok && data.success) {
+                            campaignAjaxNotifyThenReload(data.message || 'Collaborator removed successfully.', 'success');
+                            return;
+                        }
+                        if (response.status === 422 && data.errors) {
+                            campaignAjaxNotifyValidation(data);
                         } else {
-                            alert(data.message || 'Error removing collaborator');
+                            campaignAjaxNotify('error', data.message || 'Error removing collaborator');
                         }
                     })
-                    .catch(error => {
+                    .catch(function(error) {
                         console.error('Error:', error);
-                        alert('An error occurred. Please try again.');
+                        campaignAjaxNotify('error', 'An error occurred. Please try again.');
                     });
                 }
                 @endif
@@ -1559,7 +1578,7 @@
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        alert('Failed to load FAQ data');
+                        campaignAjaxNotify('error', 'Failed to load FAQ data');
                     });
                 }
 
@@ -1572,20 +1591,25 @@
                         method: 'DELETE',
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || document.querySelector('input[name="_token"]').value
                         }
                     })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            location.reload();
+                    .then(async function(response) {
+                        const data = await response.json().catch(function() { return {}; });
+                        if (response.ok && data.success) {
+                            campaignAjaxNotifyThenReload(data.message || 'FAQ deleted successfully.', 'success');
+                            return;
+                        }
+                        if (response.status === 422 && data.errors) {
+                            campaignAjaxNotifyValidation(data);
                         } else {
-                            alert(data.message || 'Failed to delete FAQ');
+                            campaignAjaxNotify('error', data.message || 'Failed to delete FAQ');
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        alert('An error occurred. Please try again.');
+                        campaignAjaxNotify('error', 'An error occurred. Please try again.');
                     });
                 }
 
@@ -1612,22 +1636,28 @@
                         method: 'POST',
                         body: formData,
                         headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
                         }
                     })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            location.reload();
-                        } else {
-                            alert(data.message || 'An error occurred');
-                            saveBtn.disabled = false;
-                            saveBtn.textContent = originalText;
+                    .then(async function(response) {
+                        const data = await response.json().catch(function() { return {}; });
+                        if (response.ok && data.success) {
+                            var faqMsg = data.message || (faqId ? 'FAQ updated successfully.' : 'FAQ added successfully.');
+                            campaignAjaxNotifyThenReload(faqMsg, 'success');
+                            return;
                         }
+                        if (response.status === 422 && data.errors) {
+                            campaignAjaxNotifyValidation(data);
+                        } else {
+                            campaignAjaxNotify('error', data.message || 'An error occurred');
+                        }
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = originalText;
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        alert('An error occurred. Please try again.');
+                        campaignAjaxNotify('error', 'An error occurred. Please try again.');
                         saveBtn.disabled = false;
                         saveBtn.textContent = originalText;
                     });
@@ -1700,7 +1730,8 @@
 
                     <div style="margin-bottom: 20px;">
                         <label>Content *</label>
-                        <textarea id="updateContent" name="content" placeholder="Write your update content..." required style="width: 100%; min-height: 200px;"></textarea>
+                        {{-- no HTML5 required: Summernote keeps textarea empty until JS sync; validation runs in submit handler --}}
+                        <textarea id="updateContent" name="content" placeholder="Write your update content..." style="width: 100%; min-height: 200px;"></textarea>
                         <p class="note">Share your progress, milestones, or any news with your backers.</p>
                     </div>
 
@@ -1878,7 +1909,7 @@
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        alert('Failed to load update data');
+                        campaignAjaxNotify('error', 'Failed to load update data');
                     });
                 }
 
@@ -1891,20 +1922,25 @@
                         method: 'DELETE',
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || document.querySelector('input[name="_token"]').value
                         }
                     })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            location.reload();
+                    .then(async function(response) {
+                        const data = await response.json().catch(function() { return {}; });
+                        if (response.ok && data.success) {
+                            campaignAjaxNotifyThenReload(data.message || 'Update deleted successfully.', 'success');
+                            return;
+                        }
+                        if (response.status === 422 && data.errors) {
+                            campaignAjaxNotifyValidation(data);
                         } else {
-                            alert(data.message || 'Failed to delete update');
+                            campaignAjaxNotify('error', data.message || 'Failed to delete update');
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        alert('An error occurred. Please try again.');
+                        campaignAjaxNotify('error', 'An error occurred. Please try again.');
                     });
                 }
 
@@ -1913,15 +1949,30 @@
                     e.preventDefault();
                     
                     // Sync Summernote content to textarea before submission
+                    let summernoteContent = '';
                     if (typeof jQuery !== 'undefined' && typeof jQuery.fn.summernote !== 'undefined') {
-                        const summernoteContent = jQuery('#updateContent').summernote('code');
+                        summernoteContent = jQuery('#updateContent').summernote('code') || '';
                         document.getElementById('updateContent').value = summernoteContent;
+                    } else {
+                        summernoteContent = document.getElementById('updateContent').value || '';
+                    }
+
+                    const plainText = summernoteContent.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
+                    if (plainText.length < 1) {
+                        campaignAjaxNotify('error', 'Please enter update content.');
+                        return;
+                    }
+                    if (plainText.length < 30) {
+                        campaignAjaxNotify('error', 'Write at least 30 characters of text in your update (you have ' + plainText.length + ').');
+                        return;
                     }
                     
                     const formData = new FormData(this);
                     const updateId = document.getElementById('updateId').value;
                     const saveBtn = document.getElementById('updateSaveBtn');
                     const originalText = saveBtn.textContent;
+                    const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                        || document.querySelector('input[name="_token"]')?.value || '';
                     
                     saveBtn.disabled = true;
                     saveBtn.textContent = "Saving...";
@@ -1937,22 +1988,29 @@
                         method: 'POST',
                         body: formData,
                         headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrf
                         }
                     })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            location.reload();
+                    .then(async function(response) {
+                        const data = await response.json().catch(function() { return {}; });
+                        if (response.ok && data.success) {
+                            var updMsg = data.message || (updateId ? 'Update saved successfully.' : 'Update published successfully.');
+                            campaignAjaxNotifyThenReload(updMsg, 'success');
+                            return;
+                        }
+                        if (data.errors && typeof data.errors === 'object') {
+                            campaignAjaxNotifyValidation(data);
                         } else {
-                            alert(data.message || 'An error occurred');
-                            saveBtn.disabled = false;
-                            saveBtn.textContent = originalText;
+                            campaignAjaxNotify('error', data.message || 'An error occurred');
                         }
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = originalText;
                     })
-                    .catch(error => {
+                    .catch(function(error) {
                         console.error('Error:', error);
-                        alert('An error occurred. Please try again.');
+                        campaignAjaxNotify('error', 'An error occurred. Please try again.');
                         saveBtn.disabled = false;
                         saveBtn.textContent = originalText;
                     });
@@ -2474,10 +2532,10 @@
                                             if (data && data.type === 'video' && data.location) {
                                                 insertVideo(data.location, data.mime);
                                             } else {
-                                                alert(data?.message || 'Video upload failed');
+                                                campaignAjaxNotify('error', data && data.message ? data.message : 'Video upload failed');
                                             }
                                         })
-                                        .catch(() => alert('Video upload failed'));
+                                        .catch(function() { campaignAjaxNotify('error', 'Video upload failed'); });
                                 };
                                 input.click();
                             }
@@ -2507,10 +2565,10 @@
                                             if (data && data.type === 'image' && data.location) {
                                                 jQuery('#summernote').summernote('insertImage', data.location);
                                             } else {
-                                                alert(data?.message || 'Image upload failed');
+                                                campaignAjaxNotify('error', data && data.message ? data.message : 'Image upload failed');
                                             }
                                         })
-                                        .catch(() => alert('Image upload failed'));
+                                        .catch(function() { campaignAjaxNotify('error', 'Image upload failed'); });
                                 });
                             },
                             onChange: function(contents, $editable) {
@@ -2567,10 +2625,7 @@
                         errorElement.textContent = `Story must be at least 30 characters. You have ${charCount} characters (${30 - charCount} more needed).`;
                         errorElement.style.display = 'block';
                     }
-                    
-                    // Show alert
-                    alert(`Error: Story must be at least 30 characters.\n\nYou have ${charCount} characters.\nYou need ${30 - charCount} more characters.`);
-                    
+                    campaignAjaxNotify('error', 'Story must be at least 30 characters. You have ' + charCount + ' characters (' + (30 - charCount) + ' more needed).');
                     return false;
                 }
                 
@@ -2666,7 +2721,7 @@
 @endsection
 
 @section('script')
-    <script src="{{ asset($activeThemeTrue . 'js/dropzone.min.js') }}"></script>
+    <script src="{{ asset($themeAssetBase . 'js/dropzone.min.js') }}"></script>
     @if($currentSection == 'story')
     <!-- include libraries(jQuery, bootstrap) -->
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>

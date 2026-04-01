@@ -69,4 +69,35 @@ class Gateway extends Model
               ->orWhereJsonContains('countries', $country);
         });
     }
+
+    /**
+     * Contribute / availability: `countries` JSON may list country names (e.g. Pakistan) and/or ISO codes (e.g. PKR).
+     */
+    public function scopeForGatewayRegion($query, ?string $country, ?string $localCurrencyCode = null)
+    {
+        if ($country === null || $country === '') {
+            return $query;
+        }
+
+        $strictCode = resolveStrictCurrencyCodeForCountryName($country);
+        $local      = $localCurrencyCode !== null && $localCurrencyCode !== ''
+            ? strtoupper(trim($localCurrencyCode))
+            : '';
+        $alpha2     = \App\Services\CurrencyService::resolveIsoAlpha2FromCountryLabel($country);
+
+        return $query->where(function ($q) use ($country, $strictCode, $local, $alpha2) {
+            $q->whereNull('countries')
+                ->orWhereRaw('COALESCE(JSON_LENGTH(countries), 0) = 0')
+                ->orWhereJsonContains('countries', $country);
+            if ($strictCode !== null && $strictCode !== '') {
+                $q->orWhereJsonContains('countries', $strictCode);
+            }
+            if ($local !== '') {
+                $q->orWhereJsonContains('countries', $local);
+            }
+            if ($alpha2 !== null && $alpha2 !== '') {
+                $q->orWhereJsonContains('countries', $alpha2);
+            }
+        });
+    }
 }

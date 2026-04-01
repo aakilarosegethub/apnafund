@@ -277,12 +277,12 @@
             
             <div class="update-content">
                 <h2>
-                    <a href="{{ route('campaign.update.show', [$campaign->slug, $update->slug]) }}">{{ $update->title }}</a>
+                    <a href="{{ route('campaign.update.show', [$campaign->slug, $update->id]) }}">{{ $update->title }}</a>
                 </h2>
                 <div class="update-excerpt">
                     {!! strLimit(strip_tags($update->content), 150) !!}
                 </div>
-                <a href="{{ route('campaign.update.show', [$campaign->slug, $update->slug]) }}" class="read-more">
+                <a href="{{ route('campaign.update.show', [$campaign->slug, $update->id]) }}" class="read-more">
                     Read More <i class="fas fa-arrow-right"></i>
                 </a>
             </div>

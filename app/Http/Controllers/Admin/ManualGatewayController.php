@@ -108,7 +108,7 @@ class ManualGatewayController extends Controller
     private function validation($request, $formProcessor) {
         $validation = [
             'name'           => 'required|max:40',
-            'min_amount'     => 'required|numeric|gt:0',
+            'min_amount'     => 'required|numeric|gte:0.1',
             'max_amount'     => 'required|numeric|gt:min_amount',
             'fixed_charge'   => 'required|numeric|gte:0',
         ];

@@ -142,7 +142,7 @@ class AutomatedGatewayController extends Controller
                 $validationRule['currency.' . $key . '.currency']       = 'required|string|in:' . $supportedCurrencies;
                 $validationRule['currency.' . $key . '.symbol']         = 'required|string';
                 $validationRule['currency.' . $key . '.name']           = 'required';
-                $validationRule['currency.' . $key . '.min_amount']     = 'required|numeric|gt:0|lte:currency.' . $key . '.max_amount';
+                $validationRule['currency.' . $key . '.min_amount']     = 'required|numeric|gte:0.1|lte:currency.' . $key . '.max_amount';
                 $validationRule['currency.' . $key . '.max_amount']     = 'required|numeric|gt:0|gte:currency.' . $key . '.min_amount';
                 $validationRule['currency.' . $key . '.fixed_charge']   = 'required|numeric|gte:0';
                 $validationRule['currency.' . $key . '.percent_charge'] = 'required|numeric|gte:0|regex:/^\d+(\.\d{1,2})?$/';

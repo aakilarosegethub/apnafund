@@ -12,13 +12,13 @@
                         <div class="card-body">
                             <ul class="text-center fw-semibold mb-3">
                                 <li>
-                                    <i class="ti ti-currency text--info"></i> @lang('Currency') : {{ __($method->singleCurrency->currency) }}
+                                    <i class="ti ti-currency text--info"></i> @lang('System currency') : {{ getPlatformCurrency() }}
                                 </li>
                                 <li>
-                                    <i class="ti ti-lock-access text--primary"></i> @lang('Limit') : {{ $method->singleCurrency->min_amount + 0 }} - {{ $method->singleCurrency->max_amount + 0 }} {{__($setting->site_cur) }}
+                                    <i class="ti ti-lock-access text--primary"></i> @lang('Limit') : {{ $method->singleCurrency->min_amount + 0 }} - {{ $method->singleCurrency->max_amount + 0 }} {{ getPlatformCurrency() }}
                                 </li>
                                 <li>
-                                    <i class="ti ti-coins text--warning"></i> @lang('Charge') : {{ showAmount($method->singleCurrency->fixed_charge)}} {{__($setting->site_cur) }} {{ (0 < $method->singleCurrency->percent_charge) ? ' + '. showAmount($method->singleCurrency->percent_charge) .' %' : '' }}
+                                    <i class="ti ti-coins text--warning"></i> @lang('Charge') : {{ showAmount($method->singleCurrency->fixed_charge)}} {{ getPlatformCurrency() }} {{ (0 < $method->singleCurrency->percent_charge) ? ' + '. showAmount($method->singleCurrency->percent_charge) .' %' : '' }}
                                 </li>
                             </ul>
                             <div class="text-center">

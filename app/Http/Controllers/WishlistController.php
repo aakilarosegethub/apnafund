@@ -233,23 +233,26 @@ class WishlistController extends Controller
             }
         }
         
-        // Filter gateways based on detected country
-        $gatewayCurrencies = GatewayCurrency::whereHas('method', function ($gateway) use ($userCountry) {
-                                            $gateway->active();
-                                            if ($userCountry) {
-                                                $gateway->forCountry($userCountry);
-                                            }
-                                        })
-                                        ->with('method')
-                                        ->orderby('method_code')
-                                        ->get();
+        $countryFallback            = resolveCountryForGatewayFiltering();
+        $localCurrencyCode          = getLocalCurrencyCode();
+        $countryFromDisplayCurrency = resolveCountryForGatewayCurrencyList($countryFallback);
+        $effectiveCountry           = $countryFromDisplayCurrency ?? $countryFallback;
+        $localCurrencyUpper         = strtoupper(trim($localCurrencyCode));
+        $gatewayContextCountry      = $effectiveCountry ?? $countryFallback;
 
-        // Debug: Log gateway currencies count
-        // \Log::info('Gateway Currencies Count: ' . $gatewayCurrencies->count());
-        // \Log::info('User Country: ' . ($userCountry ?? 'NULL'));
+        $gatewayCurrencies = GatewayCurrency::query()
+            ->where('status', ManageStatus::ACTIVE)
+            ->whereHas('method', function ($gateway) use ($effectiveCountry, $localCurrencyUpper) {
+                $gateway->active();
+                if ($effectiveCountry) {
+                    $gateway->forGatewayRegion($effectiveCountry, $localCurrencyUpper);
+                }
+            })
+            ->with('method')
+            ->orderBy('method_code')
+            ->get();
 
-
-        return view($this->activeTheme . 'page.campaignDonate', compact('pageTitle', 'campaignData', 'seoContents', 'authUser', 'countries', 'gatewayCurrencies'));
+        return view($this->activeTheme . 'page.campaignDonate', compact('pageTitle', 'campaignData', 'seoContents', 'authUser', 'countries', 'gatewayCurrencies', 'gatewayContextCountry'));
     }
 
     function storeCampaignComment($slug) {

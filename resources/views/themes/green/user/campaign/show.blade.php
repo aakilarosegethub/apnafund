@@ -1371,7 +1371,7 @@
             @foreach($recentUpdates as $update)
             <div style="border-bottom: 1px solid #f0f0f0; padding-bottom: 20px; margin-bottom: 20px;">
                 <h3 style="font-size: 1.3rem; font-weight: 600; margin-bottom: 10px;">
-                    <a href="{{ route('campaign.update.show', [$campaign->slug, $update->slug]) }}" style="color: #333; text-decoration: none;">
+                    <a href="{{ route('campaign.update.show', [$campaign->slug, $update->id]) }}" style="color: #333; text-decoration: none;">
                         {{ $update->title }}
                     </a>
                 </h3>
@@ -1386,7 +1386,7 @@
                 <p style="color: #666; line-height: 1.6; margin-bottom: 10px;">
                     {!! strLimit(strip_tags($update->content), 200) !!}
                 </p>
-                <a href="{{ route('campaign.update.show', [$campaign->slug, $update->slug]) }}" 
+                <a href="{{ route('campaign.update.show', [$campaign->slug, $update->id]) }}" 
                    style="color: #028858; text-decoration: none; font-weight: 600;">
                     Read more →
                 </a>

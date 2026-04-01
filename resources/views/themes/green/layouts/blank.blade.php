@@ -208,6 +208,73 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+@include('partials.toasts')
+<script>
+(function () {
+    window.campaignAjaxNotify = function (type, message) {
+        type = type || 'error';
+        var text = message != null ? String(message) : '';
+        if (typeof iziToast !== 'undefined') {
+            var colors = { error: 'red', success: 'green', warning: 'yellow', info: 'blue' };
+            var color = colors[type] || 'red';
+            var timeout = type === 'error' ? 7000 : (type === 'success' ? 5000 : 4000);
+            if (typeof iziToast.show === 'function') {
+                iziToast.show({
+                    message: text,
+                    position: 'topRight',
+                    timeout: timeout,
+                    color: color,
+                    transitionIn: 'fadeInDown',
+                    transitionOut: 'fadeOutUp'
+                });
+            } else if (typeof iziToast[type] === 'function') {
+                iziToast[type]({ message: text, position: 'topRight', timeout: timeout });
+            } else if (typeof iziToast.error === 'function') {
+                iziToast.error({ message: text, position: 'topRight', timeout: timeout });
+            } else if (typeof window.showToasts === 'function') {
+                showToasts(type, text);
+            } else {
+                console.error(text);
+            }
+        } else if (typeof window.showToasts === 'function') {
+            showToasts(type, text);
+        } else {
+            console.error(text);
+        }
+    };
+    window.campaignAjaxNotifyValidation = function (data) {
+        if (!data) {
+            campaignAjaxNotify('error', 'Something went wrong.');
+            return;
+        }
+        if (data.errors && typeof data.errors === 'object') {
+            var keys = Object.keys(data.errors);
+            var any = false;
+            keys.forEach(function (k) {
+                var arr = data.errors[k];
+                if (Array.isArray(arr)) {
+                    arr.forEach(function (m) {
+                        campaignAjaxNotify('error', m);
+                        any = true;
+                    });
+                }
+            });
+            if (any) {
+                return;
+            }
+        }
+        campaignAjaxNotify('error', data.message || 'An error occurred');
+    };
+    /** Success (or info) toast, then full page reload — so user briefly sees confirmation */
+    window.campaignAjaxNotifyThenReload = function (message, type) {
+        type = type || 'success';
+        campaignAjaxNotify(type, message);
+        setTimeout(function () {
+            location.reload();
+        }, 1200);
+    };
+})();
+</script>
 
 @yield('script')
 </body>

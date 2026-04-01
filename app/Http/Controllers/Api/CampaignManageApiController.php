@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Constants\ManageStatus;
+use App\Models\AdminNotification;
 use App\Models\Campaign;
 use App\Models\CampaignFaq;
 use App\Models\CampaignUpdate;
+use App\Models\Comment;
 use App\Models\Reward;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -15,7 +19,8 @@ use Illuminate\Validation\Rules\File;
  * Mobile/API CRUD for campaign story (description), rewards, FAQs, and backer updates.
  * Mirrors web: User\CampaignController (story, FAQ, updates) and User\RewardController.
  *
- * All endpoints expect Bearer token (auth:sanctum) and query/body param {@see op}.
+ * Most endpoints expect Bearer token (auth:sanctum) and query/body param {@see op}.
+ * campaign_faq.php: op=list|get is public (approved campaigns); GET without op defaults to list; POST without op infers list/get from slug/campaign_id + faq_id. Mutations require Bearer.
  * Identify campaign with {@see campaign_id} or {@see fund_id} or {@see slug}.
  */
 class CampaignManageApiController extends BaseApiController
@@ -67,6 +72,39 @@ class CampaignManageApiController extends BaseApiController
         }
 
         return ['campaign' => $campaign];
+    }
+
+    /**
+     * Resolve campaign for public FAQ read (list/get): approved campaigns, or draft/pending when caller may edit.
+     *
+     * @return array{campaign: Campaign}|array{response: JsonResponse}
+     */
+    protected function resolveCampaignForPublicFaqRead(Request $request): array
+    {
+        $data = $this->getRequestData($request);
+        $rawId = $data['campaign_id'] ?? $data['fund_id'] ?? $request->input('campaign_id') ?? $request->input('fund_id');
+        $slug = $data['slug'] ?? $request->input('slug') ?? $request->query('slug');
+
+        $campaign = null;
+        if ($rawId !== null && $rawId !== '') {
+            $campaign = Campaign::where('id', (int) $rawId)->first();
+        } elseif (! empty($slug)) {
+            $campaign = Campaign::where('slug', $slug)->first();
+        }
+
+        if (! $campaign) {
+            return ['response' => $this->jsonLegacy(404, '404', false, 'Campaign not found. Provide campaign_id, fund_id, or slug.')];
+        }
+
+        $uid = $this->getUserId($request);
+        if ((int) $campaign->status === ManageStatus::CAMPAIGN_APPROVED) {
+            return ['campaign' => $campaign];
+        }
+        if (! empty($uid) && $campaign->canBeEditedBy($uid)) {
+            return ['campaign' => $campaign];
+        }
+
+        return ['response' => $this->jsonLegacy(404, '404', false, 'Campaign not found.')];
     }
 
     protected function op(Request $request): string
@@ -320,11 +358,31 @@ class CampaignManageApiController extends BaseApiController
     public function faqs(Request $request): JsonResponse
     {
         $op = $this->op($request);
+        if ($op === '' && $request->isMethod('GET')) {
+            $op = 'list';
+        }
+        // Public read without `op` (mobile POST JSON): infer list vs get from campaign + faq_id
+        if ($op === '' && $request->isMethod('post')) {
+            $data = $this->getRequestData($request);
+            $rawId = $data['campaign_id'] ?? $data['fund_id'] ?? $request->input('campaign_id') ?? $request->input('fund_id');
+            $slug = $data['slug'] ?? $request->input('slug');
+            $hasCampaign = ($rawId !== null && $rawId !== '') || (! empty($slug));
+            $faqId = (int) ($data['faq_id'] ?? $request->input('faq_id') ?? 0);
+            if ($hasCampaign && $faqId < 1) {
+                $op = 'list';
+            } elseif ($hasCampaign && $faqId >= 1) {
+                $op = 'get';
+            }
+        }
         if ($op === '') {
             return $this->jsonLegacy(400, '400', false, 'Parameter op is required: list, get, create, update, delete.');
         }
 
-        $resolved = $this->resolveEditableCampaign($request, $op !== 'list' && $op !== 'get');
+        if ($op === 'list' || $op === 'get') {
+            $resolved = $this->resolveCampaignForPublicFaqRead($request);
+        } else {
+            $resolved = $this->resolveEditableCampaign($request, true);
+        }
         if (isset($resolved['response'])) {
             return $resolved['response'];
         }
@@ -418,8 +476,56 @@ class CampaignManageApiController extends BaseApiController
     }
 
     /**
+     * Public GET: campaign backer updates (no token). Same visibility rules as campaign_faq list/get.
+     * Query: campaign_id | fund_id | slug; op=list (default) or op=get; get requires update_id.
+     * Optional Bearer: owner/collaborator may see unpublished updates.
+     */
+    public function postUpdatesPublicRead(Request $request): JsonResponse
+    {
+        $op = $this->op($request);
+        if ($op === '') {
+            $op = 'list';
+        }
+        if ($op !== 'list' && $op !== 'get') {
+            return $this->jsonLegacy(400, '400', false, 'Public read supports only op=list or op=get. Use POST with Bearer for create/update/delete.');
+        }
+
+        $resolved = $this->resolveCampaignForPublicFaqRead($request);
+        if (isset($resolved['response'])) {
+            return $resolved['response'];
+        }
+        $campaign = $resolved['campaign'];
+
+        $uid = $this->getUserId($request);
+        $canManage = ! empty($uid) && $campaign->canBeEditedBy($uid);
+
+        if ($op === 'list') {
+            $baseQuery = $canManage ? $campaign->allUpdates() : $campaign->updates();
+            $rows = $baseQuery->get()->map(function (CampaignUpdate $u) {
+                return $this->formatCampaignUpdate($u);
+            });
+
+            return $this->jsonLegacy(200, '200', true, 'Updates list.', ['updates' => $rows->values()->all()]);
+        }
+
+        $updateId = (int) ($request->input('update_id') ?? $this->getRequestData($request)['update_id'] ?? 0);
+        if ($updateId < 1) {
+            return $this->jsonLegacy(400, '400', false, 'update_id is required.');
+        }
+        $update = CampaignUpdate::where('id', $updateId)->where('campaign_id', $campaign->id)->first();
+        if (! $update) {
+            return $this->jsonLegacy(404, '404', false, 'Update not found.');
+        }
+        if (! $update->is_published && ! $canManage) {
+            return $this->jsonLegacy(404, '404', false, 'Update not found.');
+        }
+
+        return $this->jsonLegacy(200, '200', true, 'Update loaded.', ['update' => $this->formatCampaignUpdate($update)]);
+    }
+
+    /**
      * Backer-facing updates (campaign_updates table / CampaignUpdate model).
-     * op=list|get|create|update|delete
+     * op=list|get|create|update|delete — requires Bearer (auth:sanctum). Prefer GET {@see postUpdatesPublicRead} for list/get without token.
      */
     public function postUpdates(Request $request): JsonResponse
     {
@@ -662,6 +768,259 @@ class CampaignManageApiController extends BaseApiController
             'campaign_id' => $campaign->id,
             'slug' => $campaign->slug,
             'verification_documents' => $updatedDocs,
+        ]);
+    }
+
+    /**
+     * POST /api/campaign_update_comment.php — comment on a published update (Bearer Sanctum; no CSRF).
+     * JSON/form: slug | campaign_id | fund_id, update_id, comment, optional title. user_id from token.
+     */
+    public function storeUpdateCommentApi(Request $request): JsonResponse
+    {
+        $uid = $this->getUserId($request);
+        if (! $uid) {
+            return $this->jsonLegacy(401, '401', false, 'Unauthenticated! Please provide a valid token.');
+        }
+
+        $user = User::find($uid);
+        if (! $user || ! $user->status) {
+            return $this->jsonLegacy(403, '403', false, 'Your account is not active.');
+        }
+
+        $data = array_merge($this->getRequestData($request), $request->all());
+        $slug = isset($data['slug']) ? trim((string) $data['slug']) : null;
+        $campaignId = (int) ($data['campaign_id'] ?? $data['fund_id'] ?? 0);
+        $updateId = (int) ($data['update_id'] ?? 0);
+
+        if ($updateId < 1) {
+            return $this->jsonLegacy(400, '400', false, 'update_id is required.');
+        }
+
+        $campaign = null;
+        if ($slug !== null && $slug !== '') {
+            $campaign = Campaign::where('slug', $slug)->approve()->first();
+        } elseif ($campaignId > 0) {
+            $campaign = Campaign::where('id', $campaignId)->approve()->first();
+        }
+
+        if (! $campaign) {
+            return $this->jsonLegacy(404, '404', false, 'Campaign not found. Provide slug or campaign_id.');
+        }
+
+        $update = CampaignUpdate::where('id', $updateId)
+            ->where('campaign_id', $campaign->id)
+            ->where('is_published', true)
+            ->first();
+
+        if (! $update) {
+            return $this->jsonLegacy(404, '404', false, 'Update not found.');
+        }
+
+        $v = Validator::make($data, [
+            'comment' => 'required|string|max:1000',
+            'title' => 'nullable|string|max:200',
+        ]);
+
+        if ($v->fails()) {
+            return $this->jsonLegacy(422, '422', false, $v->errors()->first(), ['errors' => $v->errors()]);
+        }
+
+        $comment = new Comment();
+        $comment->user_id = $user->id;
+        $comment->campaign_id = $campaign->id;
+        $comment->update_id = $update->id;
+        $comment->name = $user->fullname ?? $user->username;
+        $comment->email = $user->email;
+        $comment->comment = $data['comment'];
+        $comment->rating = null;
+        $comment->title = $data['title'] ?? null;
+        $comment->status = ManageStatus::CAMPAIGN_COMMENT_APPROVED;
+        $comment->save();
+
+        $adminNotification = new AdminNotification();
+        $adminNotification->user_id = $user->id;
+        $adminNotification->title = ($user->fullname ?? $user->username) . ' commented on a campaign update.';
+        $adminNotification->click_url = urlPath('admin.comments.index');
+        $adminNotification->save();
+
+        return $this->jsonLegacy(200, '200', true, 'Your comment has been posted.', [
+            'user_id' => $user->id,
+            'comment' => [
+                'id' => $comment->id,
+                'campaign_id' => $comment->campaign_id,
+                'update_id' => $comment->update_id,
+                'name' => $comment->name,
+                'comment' => $comment->comment,
+                'title' => $comment->title,
+                'created_at' => $comment->created_at?->toDateTimeString(),
+            ],
+        ]);
+    }
+
+    /**
+     * POST /api/campaign_comment.php — add campaign comment.
+     * If Bearer token/user_id exists: use user table name/email.
+     * If guest: name + email required.
+     */
+    public function storeCampaignCommentApi(Request $request): JsonResponse
+    {
+        $data = array_merge($this->getRequestData($request), $request->all());
+        $slug = isset($data['slug']) ? trim((string) $data['slug']) : null;
+        $campaignId = (int) ($data['campaign_id'] ?? $data['fund_id'] ?? 0);
+        $requestUserId = (int) ($data['user_id'] ?? 0);
+
+        $campaign = null;
+        if ($slug !== null && $slug !== '') {
+            $campaign = Campaign::where('slug', $slug)->approve()->first();
+        } elseif ($campaignId > 0) {
+            $campaign = Campaign::where('id', $campaignId)->approve()->first();
+        }
+
+        if (! $campaign) {
+            return $this->jsonLegacy(404, '404', false, 'Campaign not found. Provide slug or campaign_id.');
+        }
+
+        $authUserId = (int) ($this->getUserId($request) ?? 0);
+        $resolvedUserId = $authUserId > 0 ? $authUserId : $requestUserId;
+        $user = null;
+        if ($resolvedUserId > 0) {
+            $user = User::find($resolvedUserId);
+            if (! $user || ! $user->status) {
+                return $this->jsonLegacy(403, '403', false, 'User not found or inactive.');
+            }
+        }
+
+        if ($user && (int) $campaign->user_id === (int) $user->id) {
+            return $this->jsonLegacy(403, '403', false, 'You cannot comment on your own campaign.');
+        }
+
+        $rules = [
+            'comment' => 'required|string|max:1000',
+            'title' => 'nullable|string|max:200',
+        ];
+
+        if (! $user) {
+            $rules['name'] = 'required|string|max:80';
+            $rules['email'] = 'required|email|max:120';
+        }
+
+        $v = Validator::make($data, $rules);
+        if ($v->fails()) {
+            return $this->jsonLegacy(422, '422', false, $v->errors()->first(), ['errors' => $v->errors()]);
+        }
+
+        $comment = new Comment();
+        $comment->user_id = $user?->id;
+        $comment->campaign_id = $campaign->id;
+        $comment->update_id = null;
+        $comment->name = $user ? ($user->fullname ?? $user->username) : trim((string) $data['name']);
+        $comment->email = $user ? (string) $user->email : trim((string) $data['email']);
+        $comment->comment = trim((string) $data['comment']);
+        $comment->rating = null;
+        $comment->title = isset($data['title']) ? trim((string) $data['title']) : null;
+        $comment->status = ManageStatus::CAMPAIGN_COMMENT_APPROVED;
+        $comment->save();
+
+        $adminNotification = new AdminNotification();
+        $adminNotification->user_id = $user?->id ?? 0;
+        $adminNotification->title = ($comment->name ?: 'Guest') . ' has commented on a campaign.';
+        $adminNotification->click_url = urlPath('admin.comments.index');
+        $adminNotification->save();
+
+        return $this->jsonLegacy(200, '200', true, 'Your comment has been posted.', [
+            'user_id' => $comment->user_id,
+            'comment' => [
+                'id' => $comment->id,
+                'campaign_id' => $comment->campaign_id,
+                'name' => $comment->name,
+                'email' => $comment->email,
+                'comment' => $comment->comment,
+                'title' => $comment->title,
+                'created_at' => $comment->created_at?->toDateTimeString(),
+            ],
+        ]);
+    }
+
+    /**
+     * GET/POST /api/campaign_update_comments.php — list comments of a campaign update.
+     * Public read for approved campaigns + published updates.
+     */
+    public function listUpdateCommentsApi(Request $request): JsonResponse
+    {
+        $data = array_merge($this->getRequestData($request), $request->all());
+        $slug = isset($data['slug']) ? trim((string) $data['slug']) : null;
+        $campaignId = (int) ($data['campaign_id'] ?? $data['fund_id'] ?? 0);
+        $updateId = (int) ($data['update_id'] ?? 0);
+        $skip = max(0, (int) ($data['skip'] ?? 0));
+        $limit = (int) ($data['limit'] ?? 10);
+        if ($limit < 1) {
+            $limit = 10;
+        }
+        if ($limit > 50) {
+            $limit = 50;
+        }
+
+        if ($updateId < 1) {
+            return $this->jsonLegacy(400, '400', false, 'update_id is required.');
+        }
+
+        $campaign = null;
+        if ($slug !== null && $slug !== '') {
+            $campaign = Campaign::where('slug', $slug)->approve()->first();
+        } elseif ($campaignId > 0) {
+            $campaign = Campaign::where('id', $campaignId)->approve()->first();
+        }
+        if (! $campaign) {
+            return $this->jsonLegacy(404, '404', false, 'Campaign not found. Provide slug or campaign_id.');
+        }
+
+        $update = CampaignUpdate::where('id', $updateId)
+            ->where('campaign_id', $campaign->id)
+            ->where('is_published', true)
+            ->first();
+        if (! $update) {
+            return $this->jsonLegacy(404, '404', false, 'Update not found.');
+        }
+
+        $baseQuery = Comment::with('user')
+            ->where('campaign_id', $campaign->id)
+            ->where('update_id', $update->id)
+            ->approve()
+            ->latest();
+
+        $total = (clone $baseQuery)->count();
+        $rows = $baseQuery->skip($skip)->limit($limit)->get();
+
+        $comments = $rows->map(function (Comment $comment) {
+            $displayName = $comment->user ? ($comment->user->fullname ?? $comment->user->username) : $comment->name;
+
+            return [
+                'id' => $comment->id,
+                'campaign_id' => $comment->campaign_id,
+                'update_id' => $comment->update_id,
+                'name' => $displayName,
+                'email' => $comment->email,
+                'title' => $comment->title,
+                'comment' => $comment->comment,
+                'rating' => $comment->rating,
+                'created_at' => $comment->created_at?->toDateTimeString(),
+                'is_guest' => ! $comment->user_id,
+                'user' => $comment->user ? [
+                    'id' => $comment->user->id,
+                    'name' => $comment->user->fullname ?? $comment->user->username,
+                    'username' => $comment->user->username,
+                ] : null,
+            ];
+        })->values()->all();
+
+        return $this->jsonLegacy(200, '200', true, 'Update comments list.', [
+            'campaign_id' => $campaign->id,
+            'update_id' => $update->id,
+            'skip' => $skip,
+            'limit' => $limit,
+            'total_comments' => $total,
+            'remaining_comments' => max(0, $total - ($skip + count($comments))),
+            'comments' => $comments,
         ]);
     }
 }

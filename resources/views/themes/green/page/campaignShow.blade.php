@@ -281,6 +281,17 @@
     }
 @endphp
 
+@php
+    $campaignImagePath = getFilePath('campaign') . '/' . (@$campaignData->image ?? '');
+    $isLocalHost = in_array(request()->getHost(), ['localhost', '127.0.0.1', '0.0.0.0'], true);
+    $assetBase = $isLocalHost ? rtrim(url('/'), '/') : rtrim((string) env('ASSETS_URL', url('/')), '/');
+    $campaignImageUrl = $assetBase . '/' . ltrim($campaignImagePath, '/');
+
+    $campaignVideoPath = getFilePath('campaign') . '/' . (@$campaignData->video ?? '');
+    $hasCampaignVideoFile = !empty($campaignData->video)
+        && (file_exists(public_path($campaignVideoPath)) || file_exists(base_path('public/' . $campaignVideoPath)));
+@endphp
+
 <!-- ================= MAIN ================= -->
 <main class="container main-wrapper">
     <div class="row">
@@ -310,7 +321,7 @@
                     <div class="campaign-video-wrapper" style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; border-radius: 14px; overflow: hidden; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
                         <!-- Cover Image with Play Button (Initially Visible) -->
                         <div id="video-cover-{{ $videoId }}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer; z-index: 10;">
-                            <img src="{{ getImage(getFilePath('campaign') . '/' . @$campaignData->image, getFileSize('campaign')) }}" 
+                            <img src="{{ $campaignImageUrl }}" 
                                  alt="{{ @$campaignData->name }}"
                                  style="width: 100%; height: 100%; object-fit: cover; border-radius: 14px;">
                             
@@ -349,13 +360,13 @@
                         });
                     </script>
                 @endif
-            @elseif(@$campaignData->video)
+            @elseif(@$campaignData->video && $hasCampaignVideoFile)
                 <div class="campaign-video-wrapper" style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; border-radius: 14px; overflow: hidden; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
                     <video 
                         style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;"
                         controls
                         poster="{{ getImage(getFilePath('campaign') . '/' . @$campaignData->image, getFileSize('campaign')) }}">
-                        <source src="{{ asset(getFilePath('campaign') . '/' . $campaignData->video) }}" type="video/mp4">
+                        <source src="{{ getImage(getFilePath('campaign') . '/' . $campaignData->video) }}" type="video/mp4">
                         Your browser does not support the video tag.
                     </video>
                 </div>
@@ -521,6 +532,12 @@
                         @endif
                         <form class="review-form" id="reviewForm" method="POST" action="{{ route('campaign.comment', $campaignData->slug) }}">
                             @csrf
+                            @auth
+                                <p class="text-muted small mb-3">
+                                    <i class="fas fa-user-check text-success"></i>
+                                    Commenting as <strong>{{ auth()->user()->fullname ?? auth()->user()->username }}</strong>
+                                </p>
+                            @endauth
                             <div class="mb-3">
                                 <label for="reviewTitle" class="form-label">Comment Title:</label>
                                 <input type="text" class="form-control" id="reviewTitle" name="title" placeholder="Give your comment a title">
@@ -529,6 +546,7 @@
                                 <label for="reviewContent" class="form-label">Your Comment:</label>
                                 <textarea class="form-control" id="reviewContent" name="comment" rows="4" placeholder="Share your thoughts about this campaign..." required></textarea>
                             </div>
+                            @guest
                             <div class="mb-3">
                                 <label for="reviewerName" class="form-label">Your Name:</label>
                                 <input type="text" class="form-control" id="reviewerName" name="name" placeholder="Enter your name" required>
@@ -537,6 +555,7 @@
                                 <label for="reviewerEmail" class="form-label">Your Email:</label>
                                 <input type="email" class="form-control" id="reviewerEmail" name="email" placeholder="Enter your email" required>
                             </div>
+                            @endguest
                             <button type="submit" class="btn btn-success">Submit Comment</button>
                         </form>
                     </div>
@@ -546,17 +565,6 @@
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <div>
                                 <h4>Recent Comments</h4>
-                                @php
-                                    $avgRating = $comments->whereNotNull('rating')->avg('rating');
-                                    $totalReviews = $comments->whereNotNull('rating')->count();
-                                @endphp
-                                @if($avgRating)
-                                    <p class="text-muted mb-0">
-                                        <span style="color: #ffd700;">★★★★★</span> 
-                                        {{ number_format($avgRating, 1) }} average rating 
-                                        ({{ $totalReviews }} {{ $totalReviews == 1 ? 'review' : 'reviews' }})
-                                    </p>
-                                @endif
                             </div>
                         </div>
 
@@ -575,16 +583,6 @@
                                         </div>
                                         <div class="flex-grow-1">
                                             <h5 class="mb-1">{{ $comment->user ? $comment->user->fullname : $comment->name }}</h5>
-                                            @if($comment->rating)
-                                                <div class="mb-2">
-                                                    <span style="color: #ffd700;">
-                                                        @for($i = 1; $i <= 5; $i++)
-                                                            @if($i <= $comment->rating)★@else☆@endif
-                                                        @endfor
-                                                    </span>
-                                                    <span class="ms-2">{{ $comment->rating }}.0</span>
-                                                </div>
-                                            @endif
                                             <small class="text-muted">{{ showDateTime($comment->created_at, 'd M, Y') }}</small>
                                         </div>
                                     </div>
@@ -665,7 +663,7 @@
                                             @endif
                                             <div class="card-body">
                                                 <h5 class="card-title">
-                                                    <a href="{{ route('campaign.update.show', [$campaignData->slug, $update->slug]) }}" 
+                                                    <a href="{{ route('campaign.update.show', [$campaignData->slug, $update->id]) }}" 
                                                        class="text-decoration-none text-dark">
                                                         {{ $update->title }}
                                                     </a>
@@ -677,7 +675,7 @@
                                                 <p class="card-text text-muted">
                                                     {{ Str::limit(strip_tags($update->content), 120) }}
                                                 </p>
-                                                <a href="{{ route('campaign.update.show', [$campaignData->slug, $update->slug]) }}" 
+                                                <a href="{{ route('campaign.update.show', [$campaignData->slug, $update->id]) }}" 
                                                    class="btn btn-success btn-sm">
                                                     Read Update <i class="fas fa-arrow-right"></i>
                                                 </a>

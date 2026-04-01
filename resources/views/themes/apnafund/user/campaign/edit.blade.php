@@ -1154,8 +1154,242 @@
             <p class="subtitle">Manage team members and collaborators.</p>
             
             <div class="box">
-                <p>People section content will be here. You can manage team members for your campaign.</p>
+                <h2 style="margin-top: 0; font-size: 22px; margin-bottom: 15px;">Campaign Creator</h2>
+                <div style="display: flex; align-items: center; gap: 15px; padding: 15px; background: #f9f9f9; border-radius: 8px; margin-bottom: 25px;">
+                    @php
+                        $creator = $campaign->user;
+                    @endphp
+                    <div style="width: 50px; height: 50px; border-radius: 50%; overflow: hidden; background: #ddd; display: flex; align-items: center; justify-content: center;">
+                        @if($creator->image)
+                            <img src="{{ getImage(getFilePath('userProfile') . '/' . $creator->image, getFileSize('userProfile')) }}" alt="{{ $creator->fullname ?? $creator->username }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        @else
+                            <span style="font-size: 20px; color: #666;">{{ strtoupper(substr($creator->fullname ?? $creator->username, 0, 1)) }}</span>
+                        @endif
+                    </div>
+                    <div style="flex: 1;">
+                        <h3 style="margin: 0; font-size: 16px; font-weight: 600;">{{ $creator->fullname ?? $creator->username }}</h3>
+                        <p style="margin: 5px 0 0; font-size: 14px; color: #666;">{{ $creator->email }}</p>
+                    </div>
+                    <span style="padding: 5px 12px; background: #028858; color: white; border-radius: 20px; font-size: 12px; font-weight: 600;">Creator</span>
+                </div>
             </div>
+
+            <div class="box">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0; font-size: 22px;">Collaborators</h2>
+                    @if($campaign->user_id == auth()->id())
+                        <button type="button" id="addCollaboratorBtn" style="padding: 10px 20px; background: #028858; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: 600;">+ Add Collaborator</button>
+                    @endif
+                </div>
+
+                <div id="collaboratorsList">
+                    @forelse($collaborators ?? [] as $collaborator)
+                        @if($collaborator->user)
+                            <div class="collaborator-item" data-user-id="{{ $collaborator->user_id }}" style="display: flex; align-items: center; gap: 15px; padding: 15px; background: #f9f9f9; border-radius: 8px; margin-bottom: 10px;">
+                                <div style="width: 50px; height: 50px; border-radius: 50%; overflow: hidden; background: #ddd; display: flex; align-items: center; justify-content: center;">
+                                    @if($collaborator->user->image)
+                                        <img src="{{ getImage(getFilePath('userProfile') . '/' . $collaborator->user->image, getFileSize('userProfile')) }}" alt="{{ $collaborator->user->fullname ?? $collaborator->user->username }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                    @else
+                                        <span style="font-size: 20px; color: #666;">{{ strtoupper(substr($collaborator->user->fullname ?? $collaborator->user->username, 0, 1)) }}</span>
+                                    @endif
+                                </div>
+                                <div style="flex: 1;">
+                                    <h3 style="margin: 0; font-size: 16px; font-weight: 600;">{{ $collaborator->user->fullname ?? $collaborator->user->username }}</h3>
+                                    <p style="margin: 5px 0 0; font-size: 14px; color: #666;">{{ $collaborator->user->email }}</p>
+                                </div>
+                                @if($campaign->user_id == auth()->id())
+                                    <button type="button" onclick="removeCollaborator({{ $collaborator->user_id }})" style="padding: 8px 16px; background: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">Remove</button>
+                                @endif
+                            </div>
+                        @endif
+                    @empty
+                        <div style="text-align: center; padding: 40px; color: #888;">
+                            <p>No collaborators added yet.</p>
+                            @if($campaign->user_id == auth()->id())
+                                <p style="font-size: 14px; margin-top: 10px;">Click "Add Collaborator" to invite team members.</p>
+                            @endif
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+
+            @if($campaign->user_id == auth()->id())
+            <div class="box" id="addCollaboratorForm" style="display: none; margin-top: 25px;">
+                <h2 style="margin-top: 0; font-size: 22px; margin-bottom: 20px;">Add Collaborator</h2>
+                
+                <div style="margin-bottom: 20px;">
+                    <label>Search User</label>
+                    <input type="text" id="userSearchInput" placeholder="Search by name, email, or username..." style="width: 100%; padding: 12px; font-size: 15px; border: 1px solid #d9d9d9; border-radius: 8px;">
+                    <p class="note">Start typing to search for users in the system.</p>
+                </div>
+
+                <div id="userSearchResults" style="max-height: 300px; overflow-y: auto; border: 1px solid #e3e3e3; border-radius: 8px; display: none;">
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="button" id="saveCollaboratorBtn" style="padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; font-size: 15px; background: #028858; color: white; display: none;">Add Selected User</button>
+                    <button type="button" onclick="cancelAddCollaborator()" style="padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; font-size: 15px; background: #666; color: white;">Cancel</button>
+                </div>
+            </div>
+            @endif
+
+            <script>
+                let selectedUserId = null;
+                let searchTimeout = null;
+
+                @if($campaign->user_id == auth()->id())
+                document.getElementById('addCollaboratorBtn')?.addEventListener('click', function() {
+                    document.getElementById('addCollaboratorForm').style.display = 'block';
+                    document.getElementById('addCollaboratorBtn').style.display = 'none';
+                    document.getElementById('userSearchInput').focus();
+                });
+
+                document.getElementById('userSearchInput')?.addEventListener('input', function() {
+                    const query = this.value.trim();
+                    const resultsDiv = document.getElementById('userSearchResults');
+                    const saveBtn = document.getElementById('saveCollaboratorBtn');
+
+                    if (searchTimeout) {
+                        clearTimeout(searchTimeout);
+                    }
+
+                    if (query.length < 2) {
+                        resultsDiv.style.display = 'none';
+                        saveBtn.style.display = 'none';
+                        selectedUserId = null;
+                        return;
+                    }
+
+                    searchTimeout = setTimeout(() => {
+                        fetch("{{ route('user.campaign.collaborators.search') }}?q=" + encodeURIComponent(query), {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success && data.users.length > 0) {
+                                let html = '';
+                                data.users.forEach(user => {
+                                    html += `
+                                        <div class="user-result-item" data-user-id="${user.id}" style="padding: 15px; cursor: pointer; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 15px;" onclick="selectUser(${user.id}, '${user.name.replace(/'/g, "\\'")}', '${user.email.replace(/'/g, "\\'")}')">
+                                            <div style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background: #ddd; display: flex; align-items: center; justify-content: center;">
+                                                ${user.image ? `<img src="${user.image}" alt="${user.name}" style="width: 100%; height: 100%; object-fit: cover;">` : `<span style="font-size: 16px; color: #666;">${user.name.charAt(0).toUpperCase()}</span>`}
+                                            </div>
+                                            <div style="flex: 1;">
+                                                <h4 style="margin: 0; font-size: 15px; font-weight: 600;">${user.name}</h4>
+                                                <p style="margin: 3px 0 0; font-size: 13px; color: #666;">${user.email}</p>
+                                            </div>
+                                        </div>
+                                    `;
+                                });
+                                resultsDiv.innerHTML = html;
+                                resultsDiv.style.display = 'block';
+                            } else {
+                                resultsDiv.innerHTML = '<div style="padding: 20px; text-align: center; color: #888;">No users found</div>';
+                                resultsDiv.style.display = 'block';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            resultsDiv.innerHTML = '<div style="padding: 20px; text-align: center; color: #dc3545;">Error searching users</div>';
+                            resultsDiv.style.display = 'block';
+                        });
+                    }, 300);
+                });
+
+                function selectUser(userId, userName, userEmail) {
+                    selectedUserId = userId;
+                    document.getElementById('userSearchResults').innerHTML = `
+                        <div style="padding: 15px; background: #d1f5d8; border-radius: 8px; display: flex; align-items: center; gap: 15px;">
+                            <div style="flex: 1;">
+                                <h4 style="margin: 0; font-size: 15px; font-weight: 600;">${userName}</h4>
+                                <p style="margin: 3px 0 0; font-size: 13px; color: #666;">${userEmail}</p>
+                            </div>
+                            <span style="color: #028858; font-size: 14px;">Selected</span>
+                        </div>
+                    `;
+                    document.getElementById('saveCollaboratorBtn').style.display = 'block';
+                }
+
+                function cancelAddCollaborator() {
+                    document.getElementById('addCollaboratorForm').style.display = 'none';
+                    document.getElementById('addCollaboratorBtn').style.display = 'block';
+                    document.getElementById('userSearchInput').value = '';
+                    document.getElementById('userSearchResults').innerHTML = '';
+                    document.getElementById('userSearchResults').style.display = 'none';
+                    document.getElementById('saveCollaboratorBtn').style.display = 'none';
+                    selectedUserId = null;
+                }
+
+                document.getElementById('saveCollaboratorBtn')?.addEventListener('click', function() {
+                    if (!selectedUserId) {
+                        alert('Please select a user');
+                        return;
+                    }
+
+                    const btn = this;
+                    btn.disabled = true;
+                    btn.textContent = 'Adding...';
+
+                    fetch("{{ route('user.campaign.collaborators.add', $campaign->slug) }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || document.querySelector('input[name="_token"]')?.value
+                        },
+                        body: JSON.stringify({
+                            user_id: selectedUserId
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert(data.message || 'Error adding collaborator');
+                            btn.disabled = false;
+                            btn.textContent = 'Add Selected User';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred. Please try again.');
+                        btn.disabled = false;
+                        btn.textContent = 'Add Selected User';
+                    });
+                });
+
+                function removeCollaborator(userId) {
+                    if (!confirm('Are you sure you want to remove this collaborator?')) {
+                        return;
+                    }
+
+                    fetch("{{ route('user.campaign.collaborators.remove', [$campaign->slug, ':userId']) }}".replace(':userId', userId), {
+                        method: 'DELETE',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || document.querySelector('input[name="_token"]')?.value
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert(data.message || 'Error removing collaborator');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred. Please try again.');
+                    });
+                }
+                @endif
+            </script>
             @endif
 
             @if($currentSection == 'documents')

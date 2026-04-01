@@ -49,12 +49,12 @@ class PaymentController extends Controller
             return back()->withToasts($toast);
         }
 
-        $userCountry = auth()->check() ? auth()->user()->country_name : request('country');
-        
-        $gatewayData = GatewayCurrency::whereHas('method', function ($gateway) use ($userCountry) {
+        $gatewayFilterCountry = resolveCountryForGatewayFiltering();
+
+        $gatewayData = GatewayCurrency::whereHas('method', function ($gateway) use ($gatewayFilterCountry) {
                         $gateway->active();
-                        if ($userCountry) {
-                            $gateway->forCountry($userCountry);
+                        if ($gatewayFilterCountry) {
+                            $gateway->forCountry($gatewayFilterCountry);
                         }
                     })->where('method_code', request('gateway'))
                     ->where('currency', request('currency'))
@@ -179,14 +179,14 @@ class PaymentController extends Controller
         $new     = __NAMESPACE__ . '\\' . $dirName . '\\ProcessController';
         $currencyService = app(\App\Services\CurrencyService::class);
         $hasCountryGatewayCurrency = GatewayCurrency::where('method_code', $deposit->method_code)
-            ->where('currency', $currencyFromCountry)
+            ->where('status', ManageStatus::ACTIVE)
+            ->whereRaw('UPPER(TRIM(currency)) = ?', [strtoupper(trim($currencyFromCountry))])
             ->exists();
         try {
             if ($hasCountryGatewayCurrency) {
                 // Only switch currency when gateway has configuration for that currency.
                 $convertedFinalAmount = $currencyService->convertFromPlatform((float) $deposit->amount, $currencyFromCountry);
                 $deposit->final_amount = round((float) $convertedFinalAmount, 2);
-                dd($deposit->final_amount);
                 $deposit->method_currency = $currencyFromCountry;
             } else {
                 $deposit->final_amount = round((float) $deposit->final_amount, 2);

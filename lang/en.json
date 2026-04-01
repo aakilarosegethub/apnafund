@@ -1,7 +1,15 @@
 {
+    "System currency": "System currency",
+    "Not functional in your region.": "Not functional in your region.",
+    "Payments unavailable in your region": "Payments unavailable in your region",
+    "Contributions are not available for your current currency and region. You can try changing country or display currency from the site footer, or return to the homepage.": "Contributions are not available for your current currency and region. You can try changing country or display currency from the site footer, or return to the homepage.",
+    "Back to home": "Back to home",
     "The :attribute must contain at least one letter.": "The :attribute must contain at least one letter.",
     "The :attribute must contain at least one number.": "The :attribute must contain at least one number.",
     "The :attribute must contain at least one symbol.": "The :attribute must contain at least one symbol.",
     "The :attribute must contain at least one uppercase and one lowercase letter.": "The :attribute must contain at least one uppercase and one lowercase letter.",
-    "The given :attribute has appeared in a data leak. Please choose a different :attribute.": "The given :attribute has appeared in a data leak. Please choose a different :attribute."
+    "The given :attribute has appeared in a data leak. Please choose a different :attribute.": "The given :attribute has appeared in a data leak. Please choose a different :attribute.",
+    "Please login to comment": "Please login to comment",
+    "Your account is not active.": "Your account is not active.",
+    "Your comment has been posted.": "Your comment has been posted."
 }

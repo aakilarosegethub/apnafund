@@ -49,12 +49,13 @@
                         <tbody>
                             @if(is_object($template->shortcodes) || is_array($template->shortcodes))
                                 @foreach($template->shortcodes as $shortcode => $key)
+                                    @php $shortcodeTag = '{{' . $shortcode . '}}'; @endphp
                                     <tr>
                                         <td>
                                             <code class="text-primary cursor-pointer shortcode-item" 
-                                                  data-shortcode="{{{{ $shortcode }}}}" 
+                                                  data-shortcode="{{ $shortcodeTag }}" 
                                                   title="@lang('Click to copy')">
-                                                @php echo "{{". $shortcode ."}}" @endphp
+                                                {{ $shortcodeTag }}
                                             </code>
                                             <i class="las la-copy text-muted ms-1"></i>
                                         </td>
@@ -70,12 +71,13 @@
                                     </td>
                                 </tr>
                                 @foreach($setting->universal_shortcodes as $shortCode => $codeDetails)
+                                    @php $universalShortcodeTag = '{{' . $shortCode . '}}'; @endphp
                                     <tr>
                                         <td>
                                             <code class="text-success cursor-pointer shortcode-item" 
-                                                  data-shortcode="@{{{{ $shortCode }}}}" 
+                                                  data-shortcode="{{ $universalShortcodeTag }}" 
                                                   title="@lang('Click to copy')">
-                                                @{{@php echo $shortCode @endphp}}
+                                                {{ $universalShortcodeTag }}
                                             </code>
                                             <i class="las la-copy text-muted ms-1"></i>
                                         </td>
@@ -223,7 +225,7 @@
                                     @foreach(array_slice((array)$template->shortcodes, 0, 4, true) as $shortcode => $key)
                                         <button type="button" 
                                                 class="btn btn-sm btn-outline-primary insert-shortcode mb-1 me-1" 
-                                                data-shortcode="{{{{ $shortcode }}}}">
+                                                data-shortcode="{{ $shortcode }}">
                                             <i class="las la-plus"></i> {{ $shortcode }}
                                         </button>
                                     @endforeach

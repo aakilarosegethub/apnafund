@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "apnafund-api-collection-2026",
     "name": "ApnaFund API Collection",
-    "description": "Saari mobile/web APIs. POST bodies: `Content-Type: application/json` + raw JSON (Laravel `getRequestData` compatible). File uploads: folders `1m` / `2m` multipart only.",
+    "description": "Saari mobile/web APIs. **Root JSON:** legacy `*.php` responses are **objects** (`ResponseCode`, `Result`, `ResponseMsg`, …); arrays live under keys like `faqs`, `updates`, `comments`. POST bodies: `Content-Type: application/json` + raw JSON where noted. Multipart: folders `1m` / `2m`. **Modules:** `Campaign — detail, FAQ, updates, comments (web)…` (root: detail + FAQ/update **get**; subfolders **Update page — comments**, **Campaign page — comments**), `Public APIs`, `Protected APIs (Bearer)`, `Admin APIs`, `IPN Webhooks`.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -77,11 +77,875 @@
     {
       "key": "type",
       "value": "payment"
+    },
+    {
+      "key": "update_slug",
+      "value": "your-update-slug"
+    },
+    {
+      "key": "csrf_token",
+      "value": ""
     }
   ],
   "item": [
     {
-      "name": "1. Non-Protected (Public)",
+      "name": "Campaign — detail, FAQ, updates, comments (web), story, collaborators, payment",
+      "description": "**Pehle read APIs (root):** campaign detail (GET), FAQ get, backer updates get. **Phir web (session + CSRF):** `Update page — comments` (list/get JSON + submit), `Campaign page — comments` (list fetch + submit). **Neeche:** protected fund lists, story, collaborators, payment; FAQ/update **mutations** (Bearer). Legacy `*.php` root = JSON **object** (`ResponseCode`, `faqs`, `updates`, …).",
+      "item": [
+        {
+          "name": "1. Campaign detail (GET /api/campaigns)",
+          "description": "List, featured, single campaign by `{{campaign_slug}}`. Har item mein **kitni funding mili**: `raised_amount` (goal ke mutabiq), `goal_amount`, `progress_percentage`, `donors_count`. Response root par `meta.currency` + `meta.currency_symbol` (site currency). Cookie zaroori nahi — sirf `Accept: application/json`.",
+          "item": [
+            {
+              "name": "GET /api/campaigns (list)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{base_url}}/api/campaigns?limit=10&offset=0&search=&category="
+              }
+            },
+            {
+              "name": "GET /api/campaigns/featured",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{base_url}}/api/campaigns/featured?limit=5"
+              }
+            },
+            {
+              "name": "GET /api/campaigns/:slug (campaign detail)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{base_url}}/api/campaigns/{{campaign_slug}}"
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. FAQ — get (public, campaign_faq.php)",
+          "description": "Bina Bearer: GET ya legacy POST `op=list|get`. Mutations alag folder.",
+          "item": [
+            {
+              "name": "GET — FAQ list (public, campaign_id)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{base_url}}/api/campaign_faq.php?campaign_id={{campaign_id}}"
+              }
+            },
+            {
+              "name": "GET — FAQ list (public, slug)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{base_url}}/api/campaign_faq.php?slug={{campaign_slug}}"
+              }
+            },
+            {
+              "name": "GET — single FAQ (public)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{base_url}}/api/campaign_faq.php?op=get&campaign_id={{campaign_id}}&faq_id={{faq_id}}"
+              }
+            },
+            {
+              "name": "POST — FAQ list (legacy JSON)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"op\": \"list\",\n  \"campaign_id\": \"{{campaign_id}}\"\n}"
+                },
+                "url": "{{base_url}}/api/campaign_faq.php"
+              }
+            },
+            {
+              "name": "POST — FAQ get (legacy JSON)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"op\": \"get\",\n  \"campaign_id\": \"{{campaign_id}}\",\n  \"faq_id\": \"{{faq_id}}\"\n}"
+                },
+                "url": "{{base_url}}/api/campaign_faq.php"
+              }
+            }
+          ]
+            },
+        {
+          "name": "3. FAQ — create / update / delete (Bearer)",
+          "item": [
+            {
+              "name": "FAQ create",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{bearer_token}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"op\": \"create\",\n  \"campaign_id\": \"{{campaign_id}}\",\n  \"question\": \"When will rewards ship?\",\n  \"answer\": \"Within 4 weeks after the campaign ends.\",\n  \"order\": 0\n}"
+                },
+                "url": "{{base_url}}/api/campaign_faq.php"
+              }
+            },
+            {
+              "name": "FAQ update",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{bearer_token}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"op\": \"update\",\n  \"campaign_id\": \"{{campaign_id}}\",\n  \"faq_id\": \"{{faq_id}}\",\n  \"question\": \"When will rewards ship?\",\n  \"answer\": \"Within 6 weeks after the campaign ends.\",\n  \"order\": 1\n}"
+                },
+                "url": "{{base_url}}/api/campaign_faq.php"
+              }
+            },
+            {
+              "name": "FAQ delete",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{bearer_token}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"op\": \"delete\",\n  \"campaign_id\": \"{{campaign_id}}\",\n  \"faq_id\": \"{{faq_id}}\"\n}"
+                },
+                "url": "{{base_url}}/api/campaign_faq.php"
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. Backer updates — get (public, campaign_post_updates.php)",
+          "description": "GET `op=list|get`; legacy POST + Bearer editor ke liye.",
+          "item": [
+            {
+              "name": "GET — updates list (public, no Bearer)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{base_url}}/api/campaign_post_updates.php?op=list&campaign_id={{campaign_id}}"
+              }
+            },
+            {
+              "name": "GET — single update (public, no Bearer)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{base_url}}/api/campaign_post_updates.php?op=get&campaign_id={{campaign_id}}&update_id={{update_id}}"
+              }
+            },
+            {
+              "name": "POST — updates list (Bearer, legacy / editor)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{bearer_token}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"op\": \"list\",\n  \"campaign_id\": \"{{campaign_id}}\"\n}"
+                },
+                "url": "{{base_url}}/api/campaign_post_updates.php"
+              }
+            },
+            {
+              "name": "POST — single update (Bearer, legacy / editor)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{bearer_token}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"op\": \"get\",\n  \"campaign_id\": \"{{campaign_id}}\",\n  \"update_id\": \"{{update_id}}\"\n}"
+                },
+                "url": "{{base_url}}/api/campaign_post_updates.php"
+              }
+            }
+          ]
+            },
+        {
+          "name": "5. Backer updates — create / update / delete (Bearer)",
+          "item": [
+            {
+              "name": "Updates delete (JSON)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{bearer_token}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"op\": \"delete\",\n  \"campaign_id\": \"{{campaign_id}}\",\n  \"update_id\": \"{{update_id}}\"\n}"
+                },
+                "url": "{{base_url}}/api/campaign_post_updates.php"
+              }
+            },
+            {
+              "name": "Updates create (multipart) — campaign_post_updates.php",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{bearer_token}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "op",
+                      "value": "create",
+                      "type": "text"
+                    },
+                    {
+                      "key": "campaign_id",
+                      "value": "{{campaign_id}}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "title",
+                      "value": "Milestone reached",
+                      "type": "text"
+                    },
+                    {
+                      "key": "content",
+                      "value": "We reached 50% funding — thank you everyone for supporting this campaign!",
+                      "type": "text"
+                    },
+                    {
+                      "key": "is_published",
+                      "value": "true",
+                      "type": "text"
+                    },
+                    {
+                      "key": "image",
+                      "type": "file",
+                      "src": []
+                    }
+                  ]
+                },
+                "url": "{{base_url}}/api/campaign_post_updates.php"
+              }
+            },
+            {
+              "name": "Updates update (multipart) — campaign_post_updates.php",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{bearer_token}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "op",
+                      "value": "update",
+                      "type": "text"
+                    },
+                    {
+                      "key": "campaign_id",
+                      "value": "{{campaign_id}}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "update_id",
+                      "value": "{{update_id}}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "title",
+                      "value": "Milestone reached",
+                      "type": "text"
+                    },
+                    {
+                      "key": "content",
+                      "value": "Updated content at least thirty characters long here.",
+                      "type": "text"
+                    },
+                    {
+                      "key": "is_published",
+                      "value": "true",
+                      "type": "text"
+                    },
+                    {
+                      "key": "image",
+                      "type": "file",
+                      "src": []
+                    }
+                  ]
+                },
+                "url": "{{base_url}}/api/campaign_post_updates.php"
+              }
+            }
+          ]
+        },
+        {
+          "name": "6. Update page — comments (web + API)",
+          "description": "**GET** JSON page: `?format=json` — `comments`, `update`, `campaign`. **Web POST** `/updates/{id}/comment`: session + CSRF + login. **API POST** `/api/campaign_update_comment.php`: **Bearer only** (no CSRF); body `slug` or `campaign_id`, `update_id`, `comment`; `user_id` token se.",
+          "item": [
+            {
+              "name": "GET — update + `comments` JSON (`?format=json` or Accept: application/json)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{base_url}}/campaign/{{campaign_slug}}/updates/{{update_id}}?format=json"
+              }
+            },
+            {
+              "name": "GET — update page (HTML)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "text/html"
+                  }
+                ],
+                "url": "{{base_url}}/campaign/{{campaign_slug}}/updates/{{update_id}}"
+              }
+            },
+            {
+              "name": "POST — submit comment on update",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Requested-With",
+                    "value": "XMLHttpRequest"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/x-www-form-urlencoded"
+                  }
+                ],
+                "body": {
+                  "mode": "urlencoded",
+                  "urlencoded": [
+                    {
+                      "key": "_token",
+                      "value": "{{csrf_token}}"
+                    },
+                    {
+                      "key": "comment",
+                      "value": "Thanks for this update!"
+                    }
+                  ]
+                },
+                "url": "{{base_url}}/campaign/{{campaign_slug}}/updates/{{update_id}}/comment"
+              }
+            },
+            {
+              "name": "POST — campaign_update_comment.php (Bearer, no CSRF)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{bearer_token}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"slug\": \"{{campaign_slug}}\",\n  \"update_id\": {{update_id}},\n  \"comment\": \"Thanks for this update!\"\n}"
+                },
+                "url": "{{base_url}}/api/campaign_update_comment.php"
+              }
+            }
+      ]
+    },
+    {
+          "name": "7. Campaign page — comments (web)",
+          "description": "Campaign **main page** comments: `fetch-comment` = list; `POST .../comment` = submit (guest fields). CSRF zaroori.",
+      "item": [
+        {
+              "name": "GET /csrf-token",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{base_url}}/csrf-token"
+              }
+        },
+        {
+              "name": "GET — list comments (AJAX) — fetch-comment",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{base_url}}/campaign/{{campaign_slug}}/fetch-comment?skip=1"
+              }
+            },
+            {
+              "name": "POST — submit comment on campaign",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Requested-With",
+                    "value": "XMLHttpRequest"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/x-www-form-urlencoded"
+                  }
+                ],
+                "body": {
+                  "mode": "urlencoded",
+                  "urlencoded": [
+                    {
+                      "key": "_token",
+                      "value": "{{csrf_token}}"
+                    },
+                    {
+                      "key": "title",
+                      "value": "Nice campaign"
+                    },
+                    {
+                      "key": "comment",
+                      "value": "Supporting this project!"
+                    },
+                    {
+                      "key": "name",
+                      "value": "Guest Name"
+                    },
+                    {
+                      "key": "email",
+                      "value": "guest@example.com"
+                    }
+                  ]
+                },
+                "url": "{{base_url}}/campaign/{{campaign_slug}}/comment"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Protected — fund lists (creator / donor)",
+          "item": [
+            {
+              "name": "POST fundlist.php — my campaigns",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{bearer_token}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"Pending\"\n}"
+                },
+                "url": "{{base_url}}/api/fundlist.php"
+              }
+            },
+            {
+              "name": "POST my_donate_fundlist.php — campaigns I donated to",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{bearer_token}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": "{{base_url}}/api/my_donate_fundlist.php"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Protected — story (campaign_story.php)",
+          "item": [
+            {
+              "name": "Story read (op=read)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{bearer_token}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"op\": \"read\",\n  \"campaign_id\": \"{{campaign_id}}\"\n}"
+                },
+                "url": "{{base_url}}/api/campaign_story.php"
+              }
+            },
+            {
+              "name": "Story save (op=save)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{bearer_token}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"op\": \"save\",\n  \"campaign_id\": \"{{campaign_id}}\",\n  \"description\": \"Long story text minimum thirty characters required here for save.\"\n}"
+                },
+                "url": "{{base_url}}/api/campaign_story.php"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Protected — People / collaborators (campaign_collaborators.php)",
+          "description": "Web: `/user/campaign/edit/{slug}/people` — user search (add se pehle), collaborators list, add, remove. **Bearer** (Sanctum). Add/remove sirf **campaign owner**; list owner + collaborators. Campaign: `campaign_id` | `fund_id` | `slug`.",
+          "item": [
+            {
+              "name": "GET — search users (op=search, q min 2 chars)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{bearer_token}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{base_url}}/api/campaign_collaborators.php?op=search&q=ali"
+              }
+            },
+            {
+              "name": "GET — collaborators list (slug ya campaign_id)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{bearer_token}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{base_url}}/api/campaign_collaborators.php?slug={{campaign_slug}}"
+              }
+            },
+            {
+              "name": "POST — add collaborator (owner only)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{bearer_token}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"op\": \"add\",\n  \"slug\": \"{{campaign_slug}}\",\n  \"user_id\": \"{{user_id}}\"\n}"
+                },
+                "url": "{{base_url}}/api/campaign_collaborators.php"
+              }
+            },
+            {
+              "name": "POST — remove collaborator (owner only)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{bearer_token}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"op\": \"remove\",\n  \"slug\": \"{{campaign_slug}}\",\n  \"user_id\": \"{{user_id}}\"\n}"
+                },
+                "url": "{{base_url}}/api/campaign_collaborators.php"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Protected — Payment / payout banks (campaign_payment.php)",
+          "description": "Web: `/user/campaign/edit/{slug}/payment` — `payout_banks[]` (active) + `campaign_payment` (saved bank + account). **op=save** sirf **campaign owner**; list dekh sakte hain owner + collaborators.",
+          "item": [
+            {
+              "name": "GET — payout banks + current campaign payment (op=list)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{bearer_token}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{base_url}}/api/campaign_payment.php?slug={{campaign_slug}}"
+              }
+            },
+            {
+              "name": "POST — save payout bank + account (op=save, owner only)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{bearer_token}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"op\": \"save\",\n  \"slug\": \"{{campaign_slug}}\",\n  \"payout_bank_id\": \"1\",\n  \"bank_account_number\": \"PK00XXXX0000000000000\"\n}"
+                },
+                "url": "{{base_url}}/api/campaign_payment.php"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Public APIs",
       "item": [
         {
           "name": "1. Utility",
@@ -281,6 +1145,53 @@
                   "raw": "{\n  \"currency\": \"{{local_currency_code}}\"\n}"
                 },
                 "url": "{{base_url}}/api/currency_info.php"
+              }
+            },
+            {
+              "name": "allowed_location_countries.php GET",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{base_url}}/api/allowed_location_countries.php"
+              }
+            },
+            {
+              "name": "currency_info_by_country.php GET ?country_id",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{base_url}}/api/currency_info_by_country.php?country_id=1"
+              }
+            },
+            {
+              "name": "currency_info_by_country.php POST JSON",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"country_id\": 1\n}"
+                },
+                "url": "{{base_url}}/api/currency_info_by_country.php"
               }
             }
           ]
@@ -777,47 +1688,8 @@
           ]
         },
         {
-          "name": "8. REST campaigns (GET)",
+          "name": "8. REST — categories & subcategories (GET)",
           "item": [
-            {
-              "name": "GET /api/campaigns",
-              "request": {
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "url": "{{base_url}}/api/campaigns?limit=10&offset=0&search=&category="
-              }
-            },
-            {
-              "name": "GET /api/campaigns/featured",
-              "request": {
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "url": "{{base_url}}/api/campaigns/featured?limit=5"
-              }
-            },
-            {
-              "name": "GET /api/campaigns/:slug",
-              "request": {
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "url": "{{base_url}}/api/campaigns/{campaign_slug}"
-              }
-            },
             {
               "name": "GET /api/categories",
               "request": {
@@ -844,12 +1716,13 @@
                 "url": "{{base_url}}/api/subcategories/{category_id}"
               }
             }
-          ]
+          ],
+          "description": "Campaign list/detail/featured: **Campaign** module. Yahan sirf `/api/categories` aur `/api/subcategories/:id`."
         }
       ]
     },
     {
-      "name": "2. Protected (Bearer)",
+      "name": "Protected APIs (Bearer)",
       "item": [
         {
           "name": "1. Fund Management — JSON",
@@ -1289,56 +2162,6 @@
               }
             },
             {
-              "name": "FAQ list — campaign_faq.php",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{bearer_token}}"
-                  },
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  },
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"op\": \"list\",\n  \"campaign_id\": \"{{campaign_id}}\"\n}"
-                },
-                "url": "{{base_url}}/api/campaign_faq.php"
-              }
-            },
-            {
-              "name": "FAQ get — campaign_faq.php",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{bearer_token}}"
-                  },
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  },
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"op\": \"get\",\n  \"campaign_id\": \"{{campaign_id}}\",\n  \"faq_id\": \"{{faq_id}}\"\n}"
-                },
-                "url": "{{base_url}}/api/campaign_faq.php"
-              }
-            },
-            {
               "name": "FAQ create — campaign_faq.php",
               "request": {
                 "method": "POST",
@@ -1411,56 +2234,6 @@
                   "raw": "{\n  \"op\": \"delete\",\n  \"campaign_id\": \"{{campaign_id}}\",\n  \"faq_id\": \"{{faq_id}}\"\n}"
                 },
                 "url": "{{base_url}}/api/campaign_faq.php"
-              }
-            },
-            {
-              "name": "Updates list — campaign_post_updates.php",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{bearer_token}}"
-                  },
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  },
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"op\": \"list\",\n  \"campaign_id\": \"{{campaign_id}}\"\n}"
-                },
-                "url": "{{base_url}}/api/campaign_post_updates.php"
-              }
-            },
-            {
-              "name": "Updates get — campaign_post_updates.php",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{bearer_token}}"
-                  },
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  },
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"op\": \"get\",\n  \"campaign_id\": \"{{campaign_id}}\",\n  \"update_id\": \"{{update_id}}\"\n}"
-                },
-                "url": "{{base_url}}/api/campaign_post_updates.php"
               }
             },
             {
@@ -1551,7 +2324,8 @@
                 "url": "{{base_url}}/api/campaign_required_documents_submit.php"
               }
             }
-          ]
+          ],
+          "description": "Story, rewards, **FAQ/update mutations** (Bearer). Public FAQ/update **GET** + list reads: **Campaign** module — duplicate yahan nahi."
         },
         {
           "name": "2m. Campaign content — multipart (reward image / update image)",
@@ -2109,7 +2883,7 @@
       ]
     },
     {
-      "name": "3. Admin APIs",
+      "name": "Admin APIs",
       "item": [
         {
           "name": "Admin Login",
@@ -2232,1845 +3006,7 @@
       ]
     },
     {
-      "name": "5. Campaigns APIs (Reference)",
-      "item": [
-        {
-          "name": "0. Login (token)",
-          "item": [
-            {
-              "name": "user_login.php",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "urlencoded",
-                  "urlencoded": [
-                    {
-                      "key": "mobile",
-                      "value": "{{user_email}}",
-                      "description": "Email ya mobile number"
-                    },
-                    {
-                      "key": "password",
-                      "value": "{{user_password}}"
-                    },
-                    {
-                      "key": "ccode",
-                      "value": "{{ccode}}",
-                      "description": "Sirf mobile login par zaroori"
-                    }
-                  ]
-                },
-                "url": "{{base_url}}/api/user_login.php"
-              }
-            }
-          ]
-        },
-        {
-          "name": "Public — list & detail",
-          "item": [
-            {
-              "name": "Category-wise funds (legacy)",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "urlencoded",
-                  "urlencoded": [
-                    {
-                      "key": "cat_id",
-                      "value": "{{category_id}}"
-                    }
-                  ]
-                },
-                "url": "{{base_url}}/api/catwisefund.php"
-              }
-            },
-            {
-              "name": "Search funds (legacy)",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "urlencoded",
-                  "urlencoded": [
-                    {
-                      "key": "keyword",
-                      "value": "medical"
-                    }
-                  ]
-                },
-                "url": "{{base_url}}/api/search_fund.php"
-              }
-            },
-            {
-              "name": "Fund by id or slug (legacy fundidwise)",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "urlencoded",
-                  "urlencoded": [
-                    {
-                      "key": "slug",
-                      "value": "{{campaign_slug}}"
-                    }
-                  ]
-                },
-                "url": "{{base_url}}/api/fundidwise.php"
-              }
-            },
-            {
-              "name": "Category list (legacy catlist)",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "url": "{{base_url}}/api/catlist.php"
-              }
-            },
-            {
-              "name": "REST — GET campaigns (query: limit, offset, category, search)",
-              "request": {
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "url": "{{base_url}}/api/campaigns?limit=10&offset=0"
-              }
-            },
-            {
-              "name": "REST — GET campaigns/featured",
-              "request": {
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "url": "{{base_url}}/api/campaigns/featured?limit=5"
-              }
-            },
-            {
-              "name": "REST — GET campaign by slug",
-              "request": {
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "url": "{{base_url}}/api/campaigns/{{campaign_slug}}"
-              }
-            },
-            {
-              "name": "REST — GET categories",
-              "request": {
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "url": "{{base_url}}/api/categories"
-              }
-            },
-            {
-              "name": "REST — GET subcategories by category",
-              "request": {
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "url": "{{base_url}}/api/subcategories/{{category_id}}"
-              }
-            }
-          ]
-        },
-        {
-          "name": "Protected — Bearer token (Sanctum)",
-          "auth": {
-            "type": "bearer",
-            "bearer": [
-              {
-                "key": "token",
-                "value": "{{bearer_token}}",
-                "type": "string"
-              }
-            ]
-          },
-          "item": [
-            {
-              "name": "My campaigns list (fundlist)",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{bearer_token}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "urlencoded",
-                  "urlencoded": [
-                    {
-                      "key": "status",
-                      "value": "Pending"
-                    }
-                  ]
-                },
-                "url": "{{base_url}}/api/fundlist.php"
-              }
-            },
-            {
-              "name": "Create campaign (fundraise)",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{bearer_token}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "formdata",
-                  "formdata": [
-                    {
-                      "key": "category_id",
-                      "value": "1",
-                      "type": "text"
-                    },
-                    {
-                      "key": "name",
-                      "value": "My Campaign",
-                      "type": "text"
-                    },
-                    {
-                      "key": "description",
-                      "value": "Full description at least thirty characters long here.",
-                      "type": "text"
-                    },
-                    {
-                      "key": "short_description",
-                      "value": "Short summary",
-                      "type": "text"
-                    },
-                    {
-                      "key": "goal_amount",
-                      "value": "50000",
-                      "type": "text"
-                    },
-                    {
-                      "key": "location",
-                      "value": "Lahore",
-                      "type": "text"
-                    },
-                    {
-                      "key": "start_date",
-                      "value": "",
-                      "type": "text"
-                    },
-                    {
-                      "key": "end_date",
-                      "value": "",
-                      "type": "text"
-                    },
-                    {
-                      "key": "image",
-                      "type": "file",
-                      "src": []
-                    }
-                  ]
-                },
-                "url": "{{base_url}}/api/fundraise.php"
-              }
-            },
-            {
-              "name": "Edit campaign (edit_fund)",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{bearer_token}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "urlencoded",
-                  "urlencoded": [
-                    {
-                      "key": "fund_id",
-                      "value": "{{campaign_id}}"
-                    }
-                  ]
-                },
-                "url": "{{base_url}}/api/edit_fund.php",
-                "description": "Body mein wohi fields bhejo jo app/edit_fund expect karta hai (fund_id + updated fields)."
-              }
-            },
-            {
-              "name": "Cancel / Complete / Delete fund",
-              "item": [
-                {
-                  "name": "fund_cancle.php",
-                  "request": {
-                    "auth": {
-                      "type": "bearer",
-                      "bearer": [
-                        {
-                          "key": "token",
-                          "value": "{{bearer_token}}",
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "method": "POST",
-                    "header": [
-                      {
-                        "key": "Accept",
-                        "value": "application/json"
-                      }
-                    ],
-                    "body": {
-                      "mode": "urlencoded",
-                      "urlencoded": [
-                        {
-                          "key": "fund_id",
-                          "value": "{{campaign_id}}"
-                        }
-                      ]
-                    },
-                    "url": "{{base_url}}/api/fund_cancle.php"
-                  }
-                },
-                {
-                  "name": "fund_complete.php",
-                  "request": {
-                    "auth": {
-                      "type": "bearer",
-                      "bearer": [
-                        {
-                          "key": "token",
-                          "value": "{{bearer_token}}",
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "method": "POST",
-                    "header": [
-                      {
-                        "key": "Accept",
-                        "value": "application/json"
-                      }
-                    ],
-                    "body": {
-                      "mode": "urlencoded",
-                      "urlencoded": [
-                        {
-                          "key": "fund_id",
-                          "value": "{{campaign_id}}"
-                        }
-                      ]
-                    },
-                    "url": "{{base_url}}/api/fund_complete.php"
-                  }
-                },
-                {
-                  "name": "fund_delete.php",
-                  "request": {
-                    "auth": {
-                      "type": "bearer",
-                      "bearer": [
-                        {
-                          "key": "token",
-                          "value": "{{bearer_token}}",
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "method": "POST",
-                    "header": [
-                      {
-                        "key": "Accept",
-                        "value": "application/json"
-                      }
-                    ],
-                    "body": {
-                      "mode": "urlencoded",
-                      "urlencoded": [
-                        {
-                          "key": "fund_id",
-                          "value": "{{campaign_id}}"
-                        }
-                      ]
-                    },
-                    "url": "{{base_url}}/api/fund_delete.php"
-                  }
-                }
-              ]
-            },
-            {
-              "name": "Story — campaign_story.php (op=read)",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{bearer_token}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "urlencoded",
-                  "urlencoded": [
-                    {
-                      "key": "op",
-                      "value": "read"
-                    },
-                    {
-                      "key": "campaign_id",
-                      "value": "{{campaign_id}}"
-                    }
-                  ]
-                },
-                "url": "{{base_url}}/api/campaign_story.php"
-              }
-            },
-            {
-              "name": "Story — campaign_story.php (op=save)",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{bearer_token}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "urlencoded",
-                  "urlencoded": [
-                    {
-                      "key": "op",
-                      "value": "save"
-                    },
-                    {
-                      "key": "campaign_id",
-                      "value": "{{campaign_id}}"
-                    },
-                    {
-                      "key": "description",
-                      "value": "Story text — minimum thirty characters required for save."
-                    }
-                  ]
-                },
-                "url": "{{base_url}}/api/campaign_story.php"
-              }
-            },
-            {
-              "name": "Rewards — campaign_rewards.php",
-              "item": [
-                {
-                  "name": "op=list",
-                  "request": {
-                    "auth": {
-                      "type": "bearer",
-                      "bearer": [
-                        {
-                          "key": "token",
-                          "value": "{{bearer_token}}",
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "method": "POST",
-                    "body": {
-                      "mode": "urlencoded",
-                      "urlencoded": [
-                        {
-                          "key": "op",
-                          "value": "list"
-                        },
-                        {
-                          "key": "campaign_id",
-                          "value": "{{campaign_id}}"
-                        }
-                      ]
-                    },
-                    "url": "{{base_url}}/api/campaign_rewards.php"
-                  }
-                },
-                {
-                  "name": "op=get",
-                  "request": {
-                    "auth": {
-                      "type": "bearer",
-                      "bearer": [
-                        {
-                          "key": "token",
-                          "value": "{{bearer_token}}",
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "method": "POST",
-                    "body": {
-                      "mode": "urlencoded",
-                      "urlencoded": [
-                        {
-                          "key": "op",
-                          "value": "get"
-                        },
-                        {
-                          "key": "campaign_id",
-                          "value": "{{campaign_id}}"
-                        },
-                        {
-                          "key": "reward_id",
-                          "value": "{{reward_id}}"
-                        }
-                      ]
-                    },
-                    "url": "{{base_url}}/api/campaign_rewards.php"
-                  }
-                },
-                {
-                  "name": "op=create (multipart)",
-                  "request": {
-                    "auth": {
-                      "type": "bearer",
-                      "bearer": [
-                        {
-                          "key": "token",
-                          "value": "{{bearer_token}}",
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "method": "POST",
-                    "body": {
-                      "mode": "formdata",
-                      "formdata": [
-                        {
-                          "key": "op",
-                          "value": "create",
-                          "type": "text"
-                        },
-                        {
-                          "key": "campaign_id",
-                          "value": "{{campaign_id}}",
-                          "type": "text"
-                        },
-                        {
-                          "key": "title",
-                          "value": "Reward title",
-                          "type": "text"
-                        },
-                        {
-                          "key": "description",
-                          "value": "Reward description",
-                          "type": "text"
-                        },
-                        {
-                          "key": "minimum_amount",
-                          "value": "10",
-                          "type": "text"
-                        },
-                        {
-                          "key": "type",
-                          "value": "physical",
-                          "type": "text"
-                        },
-                        {
-                          "key": "image",
-                          "type": "file",
-                          "src": []
-                        }
-                      ]
-                    },
-                    "url": "{{base_url}}/api/campaign_rewards.php"
-                  }
-                },
-                {
-                  "name": "op=update (multipart)",
-                  "request": {
-                    "auth": {
-                      "type": "bearer",
-                      "bearer": [
-                        {
-                          "key": "token",
-                          "value": "{{bearer_token}}",
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "method": "POST",
-                    "body": {
-                      "mode": "formdata",
-                      "formdata": [
-                        {
-                          "key": "op",
-                          "value": "update",
-                          "type": "text"
-                        },
-                        {
-                          "key": "campaign_id",
-                          "value": "{{campaign_id}}",
-                          "type": "text"
-                        },
-                        {
-                          "key": "reward_id",
-                          "value": "{{reward_id}}",
-                          "type": "text"
-                        },
-                        {
-                          "key": "title",
-                          "value": "Reward title",
-                          "type": "text"
-                        },
-                        {
-                          "key": "description",
-                          "value": "Reward description",
-                          "type": "text"
-                        },
-                        {
-                          "key": "minimum_amount",
-                          "value": "10",
-                          "type": "text"
-                        },
-                        {
-                          "key": "image",
-                          "type": "file",
-                          "src": []
-                        }
-                      ]
-                    },
-                    "url": "{{base_url}}/api/campaign_rewards.php"
-                  }
-                },
-                {
-                  "name": "op=delete",
-                  "request": {
-                    "auth": {
-                      "type": "bearer",
-                      "bearer": [
-                        {
-                          "key": "token",
-                          "value": "{{bearer_token}}",
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "method": "POST",
-                    "body": {
-                      "mode": "urlencoded",
-                      "urlencoded": [
-                        {
-                          "key": "op",
-                          "value": "delete"
-                        },
-                        {
-                          "key": "campaign_id",
-                          "value": "{{campaign_id}}"
-                        },
-                        {
-                          "key": "reward_id",
-                          "value": "{{reward_id}}"
-                        }
-                      ]
-                    },
-                    "url": "{{base_url}}/api/campaign_rewards.php"
-                  }
-                },
-                {
-                  "name": "op=toggle_active",
-                  "request": {
-                    "auth": {
-                      "type": "bearer",
-                      "bearer": [
-                        {
-                          "key": "token",
-                          "value": "{{bearer_token}}",
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "method": "POST",
-                    "body": {
-                      "mode": "urlencoded",
-                      "urlencoded": [
-                        {
-                          "key": "op",
-                          "value": "toggle_active"
-                        },
-                        {
-                          "key": "campaign_id",
-                          "value": "{{campaign_id}}"
-                        },
-                        {
-                          "key": "reward_id",
-                          "value": "{{reward_id}}"
-                        }
-                      ]
-                    },
-                    "url": "{{base_url}}/api/campaign_rewards.php"
-                  }
-                }
-              ]
-            },
-            {
-              "name": "FAQ — campaign_faq.php (op=list|get|create|update|delete)",
-              "item": [
-                {
-                  "name": "op=list",
-                  "request": {
-                    "auth": {
-                      "type": "bearer",
-                      "bearer": [
-                        {
-                          "key": "token",
-                          "value": "{{bearer_token}}",
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "method": "POST",
-                    "body": {
-                      "mode": "urlencoded",
-                      "urlencoded": [
-                        {
-                          "key": "op",
-                          "value": "list"
-                        },
-                        {
-                          "key": "campaign_id",
-                          "value": "{{campaign_id}}"
-                        }
-                      ]
-                    },
-                    "url": "{{base_url}}/api/campaign_faq.php"
-                  }
-                },
-                {
-                  "name": "op=get",
-                  "request": {
-                    "auth": {
-                      "type": "bearer",
-                      "bearer": [
-                        {
-                          "key": "token",
-                          "value": "{{bearer_token}}",
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "method": "POST",
-                    "body": {
-                      "mode": "urlencoded",
-                      "urlencoded": [
-                        {
-                          "key": "op",
-                          "value": "get"
-                        },
-                        {
-                          "key": "campaign_id",
-                          "value": "{{campaign_id}}"
-                        },
-                        {
-                          "key": "faq_id",
-                          "value": "{{faq_id}}"
-                        }
-                      ]
-                    },
-                    "url": "{{base_url}}/api/campaign_faq.php"
-                  }
-                },
-                {
-                  "name": "op=create",
-                  "request": {
-                    "auth": {
-                      "type": "bearer",
-                      "bearer": [
-                        {
-                          "key": "token",
-                          "value": "{{bearer_token}}",
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "method": "POST",
-                    "body": {
-                      "mode": "urlencoded",
-                      "urlencoded": [
-                        {
-                          "key": "op",
-                          "value": "create"
-                        },
-                        {
-                          "key": "campaign_id",
-                          "value": "{{campaign_id}}"
-                        },
-                        {
-                          "key": "question",
-                          "value": "Your question?"
-                        },
-                        {
-                          "key": "answer",
-                          "value": "Answer text here."
-                        },
-                        {
-                          "key": "order",
-                          "value": "0"
-                        }
-                      ]
-                    },
-                    "url": "{{base_url}}/api/campaign_faq.php"
-                  }
-                },
-                {
-                  "name": "op=update",
-                  "request": {
-                    "auth": {
-                      "type": "bearer",
-                      "bearer": [
-                        {
-                          "key": "token",
-                          "value": "{{bearer_token}}",
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "method": "POST",
-                    "body": {
-                      "mode": "urlencoded",
-                      "urlencoded": [
-                        {
-                          "key": "op",
-                          "value": "update"
-                        },
-                        {
-                          "key": "campaign_id",
-                          "value": "{{campaign_id}}"
-                        },
-                        {
-                          "key": "faq_id",
-                          "value": "{{faq_id}}"
-                        },
-                        {
-                          "key": "question",
-                          "value": "Your question?"
-                        },
-                        {
-                          "key": "answer",
-                          "value": "Updated answer."
-                        },
-                        {
-                          "key": "order",
-                          "value": "1"
-                        }
-                      ]
-                    },
-                    "url": "{{base_url}}/api/campaign_faq.php"
-                  }
-                },
-                {
-                  "name": "op=delete",
-                  "request": {
-                    "auth": {
-                      "type": "bearer",
-                      "bearer": [
-                        {
-                          "key": "token",
-                          "value": "{{bearer_token}}",
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "method": "POST",
-                    "body": {
-                      "mode": "urlencoded",
-                      "urlencoded": [
-                        {
-                          "key": "op",
-                          "value": "delete"
-                        },
-                        {
-                          "key": "campaign_id",
-                          "value": "{{campaign_id}}"
-                        },
-                        {
-                          "key": "faq_id",
-                          "value": "{{faq_id}}"
-                        }
-                      ]
-                    },
-                    "url": "{{base_url}}/api/campaign_faq.php"
-                  }
-                }
-              ]
-            },
-            {
-              "name": "Backer updates — campaign_post_updates.php",
-              "item": [
-                {
-                  "name": "op=list",
-                  "request": {
-                    "auth": {
-                      "type": "bearer",
-                      "bearer": [
-                        {
-                          "key": "token",
-                          "value": "{{bearer_token}}",
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "method": "POST",
-                    "body": {
-                      "mode": "urlencoded",
-                      "urlencoded": [
-                        {
-                          "key": "op",
-                          "value": "list"
-                        },
-                        {
-                          "key": "campaign_id",
-                          "value": "{{campaign_id}}"
-                        }
-                      ]
-                    },
-                    "url": "{{base_url}}/api/campaign_post_updates.php"
-                  }
-                },
-                {
-                  "name": "op=get",
-                  "request": {
-                    "auth": {
-                      "type": "bearer",
-                      "bearer": [
-                        {
-                          "key": "token",
-                          "value": "{{bearer_token}}",
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "method": "POST",
-                    "body": {
-                      "mode": "urlencoded",
-                      "urlencoded": [
-                        {
-                          "key": "op",
-                          "value": "get"
-                        },
-                        {
-                          "key": "campaign_id",
-                          "value": "{{campaign_id}}"
-                        },
-                        {
-                          "key": "update_id",
-                          "value": "{{update_id}}"
-                        }
-                      ]
-                    },
-                    "url": "{{base_url}}/api/campaign_post_updates.php"
-                  }
-                },
-                {
-                  "name": "op=create",
-                  "request": {
-                    "auth": {
-                      "type": "bearer",
-                      "bearer": [
-                        {
-                          "key": "token",
-                          "value": "{{bearer_token}}",
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "method": "POST",
-                    "body": {
-                      "mode": "formdata",
-                      "formdata": [
-                        {
-                          "key": "op",
-                          "value": "create",
-                          "type": "text"
-                        },
-                        {
-                          "key": "campaign_id",
-                          "value": "{{campaign_id}}",
-                          "type": "text"
-                        },
-                        {
-                          "key": "title",
-                          "value": "Update title",
-                          "type": "text"
-                        },
-                        {
-                          "key": "content",
-                          "value": "Update body text at least thirty characters long.",
-                          "type": "text"
-                        },
-                        {
-                          "key": "is_published",
-                          "value": "1",
-                          "type": "text"
-                        },
-                        {
-                          "key": "image",
-                          "type": "file",
-                          "src": []
-                        }
-                      ]
-                    },
-                    "url": "{{base_url}}/api/campaign_post_updates.php"
-                  }
-                },
-                {
-                  "name": "op=update",
-                  "request": {
-                    "auth": {
-                      "type": "bearer",
-                      "bearer": [
-                        {
-                          "key": "token",
-                          "value": "{{bearer_token}}",
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "method": "POST",
-                    "body": {
-                      "mode": "formdata",
-                      "formdata": [
-                        {
-                          "key": "op",
-                          "value": "update",
-                          "type": "text"
-                        },
-                        {
-                          "key": "campaign_id",
-                          "value": "{{campaign_id}}",
-                          "type": "text"
-                        },
-                        {
-                          "key": "update_id",
-                          "value": "{{update_id}}",
-                          "type": "text"
-                        },
-                        {
-                          "key": "title",
-                          "value": "Update title",
-                          "type": "text"
-                        },
-                        {
-                          "key": "content",
-                          "value": "Updated body at least thirty characters long here.",
-                          "type": "text"
-                        },
-                        {
-                          "key": "is_published",
-                          "value": "1",
-                          "type": "text"
-                        },
-                        {
-                          "key": "image",
-                          "type": "file",
-                          "src": []
-                        }
-                      ]
-                    },
-                    "url": "{{base_url}}/api/campaign_post_updates.php"
-                  }
-                },
-                {
-                  "name": "op=delete",
-                  "request": {
-                    "auth": {
-                      "type": "bearer",
-                      "bearer": [
-                        {
-                          "key": "token",
-                          "value": "{{bearer_token}}",
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "method": "POST",
-                    "body": {
-                      "mode": "urlencoded",
-                      "urlencoded": [
-                        {
-                          "key": "op",
-                          "value": "delete"
-                        },
-                        {
-                          "key": "campaign_id",
-                          "value": "{{campaign_id}}"
-                        },
-                        {
-                          "key": "update_id",
-                          "value": "{{update_id}}"
-                        }
-                      ]
-                    },
-                    "url": "{{base_url}}/api/campaign_post_updates.php"
-                  }
-                }
-              ]
-            },
-            {
-              "name": "Legacy — fund_update.php (single backer post)",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{bearer_token}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "POST",
-                "body": {
-                  "mode": "formdata",
-                  "formdata": [
-                    {
-                      "key": "campaign_id",
-                      "value": "{{campaign_id}}",
-                      "type": "text"
-                    },
-                    {
-                      "key": "title",
-                      "value": "Quick update",
-                      "type": "text"
-                    },
-                    {
-                      "key": "description",
-                      "value": "Legacy endpoint — content min 30 characters for this update.",
-                      "type": "text"
-                    },
-                    {
-                      "key": "image",
-                      "type": "file",
-                      "src": []
-                    }
-                  ]
-                },
-                "url": "{{base_url}}/api/fund_update.php"
-              }
-            },
-            {
-              "name": "11. Documents",
-              "item": [
-                {
-                  "name": "Required documents list — campaign_required_documents.php",
-                  "request": {
-                    "method": "GET",
-                    "header": [
-                      {
-                        "key": "Authorization",
-                        "value": "Bearer {{bearer_token}}"
-                      },
-                      {
-                        "key": "Accept",
-                        "value": "application/json"
-                      },
-                      {
-                        "key": "Content-Type",
-                        "value": "application/json"
-                      }
-                    ],
-                    "url": "{{base_url}}/api/campaign_required_documents.php?campaign_id={{campaign_id}}"
-                  }
-                },
-                {
-                  "name": "Submit required documents — campaign_required_documents_submit.php (multipart)",
-                  "request": {
-                    "method": "POST",
-                    "header": [
-                      {
-                        "key": "Authorization",
-                        "value": "Bearer {{bearer_token}}"
-                      },
-                      {
-                        "key": "Accept",
-                        "value": "application/json"
-                      }
-                    ],
-                    "body": {
-                      "mode": "formdata",
-                      "formdata": [
-                        {
-                          "key": "campaign_id",
-                          "value": "{{campaign_id}}",
-                          "type": "text"
-                        },
-                        {
-                          "key": "documents[cnic_front_image]",
-                          "type": "file",
-                          "src": []
-                        },
-                        {
-                          "key": "documents[cnic_back_image]",
-                          "type": "file",
-                          "src": []
-                        },
-                        {
-                          "key": "documents[document]",
-                          "type": "file",
-                          "src": []
-                        }
-                      ]
-                    },
-                    "url": "{{base_url}}/api/campaign_required_documents_submit.php"
-                  }
-                }
-              ]
-            },
-            {
-              "name": "12. Campaign Creation APIs",
-              "item": [
-                {
-                  "name": "1. Basic",
-                  "item": [
-                    {
-                      "name": "Create campaign (fundraise)",
-                      "request": {
-                        "auth": {
-                          "type": "bearer",
-                          "bearer": [
-                            {
-                              "key": "token",
-                              "value": "{{bearer_token}}",
-                              "type": "string"
-                            }
-                          ]
-                        },
-                        "method": "POST",
-                        "header": [
-                          {
-                            "key": "Accept",
-                            "value": "application/json"
-                          }
-                        ],
-                        "body": {
-                          "mode": "formdata",
-                          "formdata": [
-                            {
-                              "key": "category_id",
-                              "value": "1",
-                              "type": "text"
-                            },
-                            {
-                              "key": "name",
-                              "value": "My Campaign",
-                              "type": "text"
-                            },
-                            {
-                              "key": "description",
-                              "value": "Full description at least thirty characters long here.",
-                              "type": "text"
-                            },
-                            {
-                              "key": "short_description",
-                              "value": "Short summary",
-                              "type": "text"
-                            },
-                            {
-                              "key": "goal_amount",
-                              "value": "50000",
-                              "type": "text"
-                            },
-                            {
-                              "key": "location",
-                              "value": "Lahore",
-                              "type": "text"
-                            },
-                            {
-                              "key": "start_date",
-                              "value": "",
-                              "type": "text"
-                            },
-                            {
-                              "key": "end_date",
-                              "value": "",
-                              "type": "text"
-                            },
-                            {
-                              "key": "image",
-                              "type": "file",
-                              "src": []
-                            }
-                          ]
-                        },
-                        "url": "{{base_url}}/api/fundraise.php"
-                      }
-                    },
-                    {
-                      "name": "Edit campaign (edit_fund)",
-                      "request": {
-                        "auth": {
-                          "type": "bearer",
-                          "bearer": [
-                            {
-                              "key": "token",
-                              "value": "{{bearer_token}}",
-                              "type": "string"
-                            }
-                          ]
-                        },
-                        "method": "POST",
-                        "header": [
-                          {
-                            "key": "Accept",
-                            "value": "application/json"
-                          }
-                        ],
-                        "body": {
-                          "mode": "urlencoded",
-                          "urlencoded": [
-                            {
-                              "key": "fund_id",
-                              "value": "{{campaign_id}}"
-                            }
-                          ]
-                        },
-                        "url": "{{base_url}}/api/edit_fund.php",
-                        "description": "Body mein wohi fields bhejo jo app/edit_fund expect karta hai (fund_id + updated fields)."
-                      }
-                    },
-                    {
-                      "name": "My campaigns list (fundlist)",
-                      "request": {
-                        "auth": {
-                          "type": "bearer",
-                          "bearer": [
-                            {
-                              "key": "token",
-                              "value": "{{bearer_token}}",
-                              "type": "string"
-                            }
-                          ]
-                        },
-                        "method": "POST",
-                        "header": [
-                          {
-                            "key": "Accept",
-                            "value": "application/json"
-                          }
-                        ],
-                        "body": {
-                          "mode": "urlencoded",
-                          "urlencoded": [
-                            {
-                              "key": "status",
-                              "value": "Pending"
-                            }
-                          ]
-                        },
-                        "url": "{{base_url}}/api/fundlist.php"
-                      }
-                    }
-                  ]
-                },
-                {
-                  "name": "2. Reward",
-                  "item": [
-                    {
-                      "name": "Rewards — campaign_rewards.php",
-                      "item": [
-                        {
-                          "name": "op=list",
-                          "request": {
-                            "auth": {
-                              "type": "bearer",
-                              "bearer": [
-                                {
-                                  "key": "token",
-                                  "value": "{{bearer_token}}",
-                                  "type": "string"
-                                }
-                              ]
-                            },
-                            "method": "POST",
-                            "body": {
-                              "mode": "urlencoded",
-                              "urlencoded": [
-                                {
-                                  "key": "op",
-                                  "value": "list"
-                                },
-                                {
-                                  "key": "campaign_id",
-                                  "value": "{{campaign_id}}"
-                                }
-                              ]
-                            },
-                            "url": "{{base_url}}/api/campaign_rewards.php"
-                          }
-                        },
-                        {
-                          "name": "op=get",
-                          "request": {
-                            "auth": {
-                              "type": "bearer",
-                              "bearer": [
-                                {
-                                  "key": "token",
-                                  "value": "{{bearer_token}}",
-                                  "type": "string"
-                                }
-                              ]
-                            },
-                            "method": "POST",
-                            "body": {
-                              "mode": "urlencoded",
-                              "urlencoded": [
-                                {
-                                  "key": "op",
-                                  "value": "get"
-                                },
-                                {
-                                  "key": "campaign_id",
-                                  "value": "{{campaign_id}}"
-                                },
-                                {
-                                  "key": "reward_id",
-                                  "value": "{{reward_id}}"
-                                }
-                              ]
-                            },
-                            "url": "{{base_url}}/api/campaign_rewards.php"
-                          }
-                        },
-                        {
-                          "name": "op=create (multipart)",
-                          "request": {
-                            "auth": {
-                              "type": "bearer",
-                              "bearer": [
-                                {
-                                  "key": "token",
-                                  "value": "{{bearer_token}}",
-                                  "type": "string"
-                                }
-                              ]
-                            },
-                            "method": "POST",
-                            "body": {
-                              "mode": "formdata",
-                              "formdata": [
-                                {
-                                  "key": "op",
-                                  "value": "create",
-                                  "type": "text"
-                                },
-                                {
-                                  "key": "campaign_id",
-                                  "value": "{{campaign_id}}",
-                                  "type": "text"
-                                },
-                                {
-                                  "key": "title",
-                                  "value": "Reward title",
-                                  "type": "text"
-                                },
-                                {
-                                  "key": "description",
-                                  "value": "Reward description",
-                                  "type": "text"
-                                },
-                                {
-                                  "key": "minimum_amount",
-                                  "value": "10",
-                                  "type": "text"
-                                },
-                                {
-                                  "key": "type",
-                                  "value": "physical",
-                                  "type": "text"
-                                },
-                                {
-                                  "key": "image",
-                                  "type": "file",
-                                  "src": []
-                                }
-                              ]
-                            },
-                            "url": "{{base_url}}/api/campaign_rewards.php"
-                          }
-                        },
-                        {
-                          "name": "op=update (multipart)",
-                          "request": {
-                            "auth": {
-                              "type": "bearer",
-                              "bearer": [
-                                {
-                                  "key": "token",
-                                  "value": "{{bearer_token}}",
-                                  "type": "string"
-                                }
-                              ]
-                            },
-                            "method": "POST",
-                            "body": {
-                              "mode": "formdata",
-                              "formdata": [
-                                {
-                                  "key": "op",
-                                  "value": "update",
-                                  "type": "text"
-                                },
-                                {
-                                  "key": "campaign_id",
-                                  "value": "{{campaign_id}}",
-                                  "type": "text"
-                                },
-                                {
-                                  "key": "reward_id",
-                                  "value": "{{reward_id}}",
-                                  "type": "text"
-                                },
-                                {
-                                  "key": "title",
-                                  "value": "Reward title",
-                                  "type": "text"
-                                },
-                                {
-                                  "key": "description",
-                                  "value": "Reward description",
-                                  "type": "text"
-                                },
-                                {
-                                  "key": "minimum_amount",
-                                  "value": "10",
-                                  "type": "text"
-                                },
-                                {
-                                  "key": "image",
-                                  "type": "file",
-                                  "src": []
-                                }
-                              ]
-                            },
-                            "url": "{{base_url}}/api/campaign_rewards.php"
-                          }
-                        },
-                        {
-                          "name": "op=delete",
-                          "request": {
-                            "auth": {
-                              "type": "bearer",
-                              "bearer": [
-                                {
-                                  "key": "token",
-                                  "value": "{{bearer_token}}",
-                                  "type": "string"
-                                }
-                              ]
-                            },
-                            "method": "POST",
-                            "body": {
-                              "mode": "urlencoded",
-                              "urlencoded": [
-                                {
-                                  "key": "op",
-                                  "value": "delete"
-                                },
-                                {
-                                  "key": "campaign_id",
-                                  "value": "{{campaign_id}}"
-                                },
-                                {
-                                  "key": "reward_id",
-                                  "value": "{{reward_id}}"
-                                }
-                              ]
-                            },
-                            "url": "{{base_url}}/api/campaign_rewards.php"
-                          }
-                        },
-                        {
-                          "name": "op=toggle_active",
-                          "request": {
-                            "auth": {
-                              "type": "bearer",
-                              "bearer": [
-                                {
-                                  "key": "token",
-                                  "value": "{{bearer_token}}",
-                                  "type": "string"
-                                }
-                              ]
-                            },
-                            "method": "POST",
-                            "body": {
-                              "mode": "urlencoded",
-                              "urlencoded": [
-                                {
-                                  "key": "op",
-                                  "value": "toggle_active"
-                                },
-                                {
-                                  "key": "campaign_id",
-                                  "value": "{{campaign_id}}"
-                                },
-                                {
-                                  "key": "reward_id",
-                                  "value": "{{reward_id}}"
-                                }
-                              ]
-                            },
-                            "url": "{{base_url}}/api/campaign_rewards.php"
-                          }
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "name": "3. Story",
-                  "item": [
-                    {
-                      "name": "Story — campaign_story.php (op=read)",
-                      "request": {
-                        "auth": {
-                          "type": "bearer",
-                          "bearer": [
-                            {
-                              "key": "token",
-                              "value": "{{bearer_token}}",
-                              "type": "string"
-                            }
-                          ]
-                        },
-                        "method": "POST",
-                        "header": [
-                          {
-                            "key": "Accept",
-                            "value": "application/json"
-                          }
-                        ],
-                        "body": {
-                          "mode": "urlencoded",
-                          "urlencoded": [
-                            {
-                              "key": "op",
-                              "value": "read"
-                            },
-                            {
-                              "key": "campaign_id",
-                              "value": "{{campaign_id}}"
-                            }
-                          ]
-                        },
-                        "url": "{{base_url}}/api/campaign_story.php"
-                      }
-                    },
-                    {
-                      "name": "Story — campaign_story.php (op=save)",
-                      "request": {
-                        "auth": {
-                          "type": "bearer",
-                          "bearer": [
-                            {
-                              "key": "token",
-                              "value": "{{bearer_token}}",
-                              "type": "string"
-                            }
-                          ]
-                        },
-                        "method": "POST",
-                        "header": [
-                          {
-                            "key": "Accept",
-                            "value": "application/json"
-                          }
-                        ],
-                        "body": {
-                          "mode": "urlencoded",
-                          "urlencoded": [
-                            {
-                              "key": "op",
-                              "value": "save"
-                            },
-                            {
-                              "key": "campaign_id",
-                              "value": "{{campaign_id}}"
-                            },
-                            {
-                              "key": "description",
-                              "value": "Story text — minimum thirty characters required for save."
-                            }
-                          ]
-                        },
-                        "url": "{{base_url}}/api/campaign_story.php"
-                      }
-                    }
-                  ]
-                },
-                {
-                  "name": "4. Documents",
-                  "item": [
-                    {
-                      "name": "Required documents list — campaign_required_documents.php",
-                      "request": {
-                        "method": "GET",
-                        "header": [
-                          {
-                            "key": "Authorization",
-                            "value": "Bearer {{bearer_token}}"
-                          },
-                          {
-                            "key": "Accept",
-                            "value": "application/json"
-                          },
-                          {
-                            "key": "Content-Type",
-                            "value": "application/json"
-                          }
-                        ],
-                        "url": "{{base_url}}/api/campaign_required_documents.php?campaign_id={{campaign_id}}"
-                      }
-                    },
-                    {
-                      "name": "Submit required documents — campaign_required_documents_submit.php (multipart)",
-                      "request": {
-                        "method": "POST",
-                        "header": [
-                          {
-                            "key": "Authorization",
-                            "value": "Bearer {{bearer_token}}"
-                          },
-                          {
-                            "key": "Accept",
-                            "value": "application/json"
-                          }
-                        ],
-                        "body": {
-                          "mode": "formdata",
-                          "formdata": [
-                            {
-                              "key": "campaign_id",
-                              "value": "{{campaign_id}}",
-                              "type": "text"
-                            },
-                            {
-                              "key": "documents[cnic_front_image]",
-                              "type": "file",
-                              "src": []
-                            },
-                            {
-                              "key": "documents[cnic_back_image]",
-                              "type": "file",
-                              "src": []
-                            },
-                            {
-                              "key": "documents[document]",
-                              "type": "file",
-                              "src": []
-                            }
-                          ]
-                        },
-                        "url": "{{base_url}}/api/campaign_required_documents_submit.php"
-                      }
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "6. IPN Webhooks (sample JSON body)",
+      "name": "IPN Webhooks (sample JSON body)",
       "description": "Gateways apna payload bhejte hain — yahan sirf sample.",
       "item": [
         {

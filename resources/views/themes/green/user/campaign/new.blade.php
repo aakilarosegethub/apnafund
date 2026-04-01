@@ -1,6 +1,9 @@
 @php
     $activeTheme = activeTheme();
-    $activeThemeTrue = activeTheme();
+    $themeAssetBase = activeTheme(true);
+    if (! is_file(public_path(rtrim($themeAssetBase, '/') . '/css/dropzone.min.css'))) {
+        $themeAssetBase = 'assets/themes/apnafund/';
+    }
 @endphp
 @extends($activeTheme . 'layouts.dashboard')
 @section('style')
@@ -737,14 +740,14 @@
 @endsection
 
 @push('page-style-lib')
-    <link rel="stylesheet" href="{{ asset($activeThemeTrue . 'css/dropzone.min.css') }}">
+    <link rel="stylesheet" href="{{ asset($themeAssetBase . 'css/dropzone.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/universal/css/datepicker.css') }}">
     <!-- Quill.js CSS -->
     <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet" />
 @endpush
 
 @push('page-script-lib')
-    <script src="{{ asset($activeThemeTrue . 'js/dropzone.min.js') }}"></script>
+    <script src="{{ asset($themeAssetBase . 'js/dropzone.min.js') }}"></script>
 <script src="{{ asset('assets/universal/js/datepicker.js') }}"></script>
 <script src="{{ asset('assets/universal/js/datepicker.en.js') }}"></script>
     <!-- Quill.js JS - Use stable version -->

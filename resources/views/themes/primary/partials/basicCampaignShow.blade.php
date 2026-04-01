@@ -53,7 +53,7 @@
                 style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;"
                 controls
                 poster="{{ getImage(getFilePath('campaign') . '/' . @$campaignData->image, getFileSize('campaign')) }}">
-                <source src="{{ asset(getFilePath('campaign') . '/' . $campaignData->video) }}" type="video/mp4">
+                <source src="{{ getImage(getFilePath('campaign') . '/' . $campaignData->video) }}" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
         </div>
