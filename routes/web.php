@@ -83,6 +83,9 @@ Route::get('/debug-currency', function () {
     ], 200, ['Content-Type' => 'application/json'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 })->name('debug.currency');
 
+// Cron: sync currency rates (public GET; protect with server firewall / scheduler if needed)
+Route::get('/cron/currencies-sync', [\App\Http\Controllers\Admin\CurrencyController::class, 'syncRatesPublic'])->name('cron.currencies-sync');
+
 // API routes for email verification (no CSRF required)
 Route::post('/api/verify-email', 'App\Http\Controllers\User\AuthorizationController@emailVerificationApi')->name('api.verify.email');
 
@@ -268,6 +271,11 @@ Route::get('{slug}', [App\Http\Controllers\WebsiteController::class, 'dynamicPag
     ->where('slug', '[a-z0-9-]+');
 });
 
+// Logged-in payments hub (explicit URI so /user/payments always resolves; same name as before for route() / menus)
+Route::middleware(['auth', 'authorize.status'])->group(function () {
+    Route::get('user/payments', [\App\Http\Controllers\User\UserController::class, 'payments'])->name('user.payments');
+});
+
 // Backward compatible redirect from old /contact to /contact-us
 Route::get('contact', function () {
     return redirect('/contact-us');
@@ -432,6 +440,7 @@ Route::prefix('api')->group(function () {
         Route::match(['get', 'post'], '/user_payment_list.php', [PaymentController::class, 'userPaymentList']);
         Route::match(['get', 'post'], '/donation_list.php', [PaymentController::class, 'donationList']);
         Route::post('/user_payment_proof_submit.php', [PaymentController::class, 'userPaymentProofSubmit']);
+        Route::match(['get', 'post'], '/user_contributions_proof_list.php', [PaymentController::class, 'contributionsProofList']);
 
         // Withdraw APIs
         Route::match(['get', 'post'], '/request_withdraw.php', [WithdrawController::class, 'requestWithdraw']);

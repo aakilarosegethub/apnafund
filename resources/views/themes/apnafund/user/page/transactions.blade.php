@@ -22,7 +22,7 @@
 
                                     @foreach ($remarks as $remark)
                                         <option value="{{ $remark->remark }}" @selected(request('remark') == $remark->remark)>
-                                            {{ __(keyToTitle($remark->remark)) }}
+                                            {{ transactionRemarkDisplay($remark->remark) }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -61,28 +61,23 @@
                                     </td>
                                     <td>
                                         <span class="@if ($transaction->trx_type == '+') text--success @else text--danger @endif">
-                                            {{ showAmount(@$transaction->amount) . ' ' . __($setting->site_cur) }}
+                                            {{ formatPlatformForDisplay(@$transaction->amount, 2) }}
                                         </span>
                                     </td>
-                                    <td>{{ showAmount(@$transaction->post_balance) . ' ' . __($setting->site_cur) }}</td>
+                                    <td>{{ formatPlatformForDisplay(@$transaction->post_balance, 2) }}</td>
                                     <td>
                                         <div class="text-wrap" style="max-width: 320px;">
-                                            {{ __(@$transaction->details) }}
+                                            {{ __(contributionLabelDisplay((string) (@$transaction->details ?? ''))) }}
                                         </div>
                                         @if(@$transaction->remark)
-                                            <small class="text-muted d-block mt-1">{{ __(keyToTitle(@$transaction->remark)) }}</small>
+                                            <small class="text-muted d-block mt-1">{{ transactionRemarkDisplay((string) $transaction->remark) }}</small>
                                         @endif
                                     </td>
                                     <td>
-                                        @php
-                                            $canAttachProof = @$transaction->deposit
-                                                && (int) @$transaction->deposit->method_code >= 1000
-                                                && (int) @$transaction->deposit->status === \App\Constants\ManageStatus::PAYMENT_INITIATE;
-                                        @endphp
-                                        @if($canAttachProof)
-                                            <a href="{{ route('user.deposit.manual.instructions', ['trx' => $transaction->trx]) }}" class="btn btn--sm btn--base">
-                                                <i class="ti ti-upload"></i> @lang('Attach Proof')
-                                            </a>
+                                        @if(@$transaction->deposit && $transaction->deposit->needsProofUpload())
+                                            <button type="button" class="btn btn--sm btn--base openManualProofModalBtn" data-trx="{{ $transaction->trx }}">
+                                                <i class="ti ti-upload"></i> @lang('Submit proof')
+                                            </button>
                                         @else
                                             <span class="text-muted">-</span>
                                         @endif
@@ -105,4 +100,27 @@
             </div>
         </div>
     </div>
+
+    @include('partials.user-manual-proof-modal')
 @endsection
+
+@push('page-script')
+    <script>
+        (function ($) {
+            'use strict';
+            $(document).on('click', '.openManualProofModalBtn', function () {
+                var trx = $(this).data('trx') || '';
+                $('#manualProofModalTrx').val(trx);
+                $('#manualProofModalTrxLabel').text(trx || '—');
+                $('#manualProofModalFile').val('');
+                $('#manualProofModalNote').val('');
+                var el = document.getElementById('manualProofUploadModal');
+                if (el && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                    bootstrap.Modal.getOrCreateInstance(el).show();
+                } else if (el && $.fn.modal) {
+                    $(el).modal('show');
+                }
+            });
+        })(jQuery);
+    </script>
+@endpush

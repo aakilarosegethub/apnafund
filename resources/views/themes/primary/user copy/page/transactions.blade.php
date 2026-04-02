@@ -18,7 +18,7 @@
 
                                     @foreach ($remarks as $remark)
                                         <option value="{{ $remark->remark }}" @selected(request('remark') == $remark->remark)>
-                                            {{ __(keyToTitle($remark->remark)) }}
+                                            {{ transactionRemarkDisplay($remark->remark) }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -54,11 +54,11 @@
                                     </td>
                                     <td>
                                         <span class="@if ($transaction->trx_type == '+') text--success @else text--danger @endif">
-                                            {{ showAmount(@$transaction->amount) . ' ' . __($setting->site_cur) }}
+                                            {{ formatPlatformForDisplay(@$transaction->amount, 2) }}
                                         </span>
                                     </td>
-                                    <td>{{ showAmount(@$transaction->post_balance) . ' ' . __($setting->site_cur) }}</td>
-                                    <td>{{ __(@$transaction->details) }}</td>
+                                    <td>{{ formatPlatformForDisplay(@$transaction->post_balance, 2) }}</td>
+                                    <td>{{ __(contributionLabelDisplay((string) (@$transaction->details ?? ''))) }}</td>
                                 </tr>
                             @empty
                                 <tr>

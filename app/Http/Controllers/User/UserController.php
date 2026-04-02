@@ -322,6 +322,34 @@ class UserController extends Controller
         return view($this->activeTheme . 'user.page.transactions', compact('pageTitle', 'transactions', 'remarks', 'emptyMessage'));
     }
 
+    /**
+     * All contributions for this user (including manual gateway awaiting proof). Not filtered by user.deposits() initiate exclusion.
+     */
+    function payments() {
+        $pageTitle = __('Payments');
+        $uid = (int) auth()->id();
+        $emailNorm = strtolower(trim((string) (auth()->user()->email ?? '')));
+
+        $deposits = Deposit::query()
+            ->where(function ($q) use ($uid, $emailNorm) {
+                $q->where('user_id', $uid);
+                if ($emailNorm !== '') {
+                    $q->orWhere(function ($q2) use ($emailNorm) {
+                        $q2->where('user_id', 0)
+                            ->whereRaw('LOWER(TRIM(COALESCE(email, \'\'))) = ?', [$emailNorm]);
+                    });
+                }
+            })
+            ->with(['gateway', 'campaign', 'reward'])
+            ->orderByDesc('id')
+            ->searchable(['trx'])
+            ->paginate(getPaginate());
+
+        $emptyMessage = __('No payments found');
+
+        return view($this->activeTheme . 'user.page.payments', compact('pageTitle', 'deposits', 'emptyMessage'));
+    }
+
     function rewardsTracking() {
         $pageTitle = 'Rewards Tracking';
         $filter = request('filter', 'received'); // received or paid

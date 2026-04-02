@@ -22,37 +22,63 @@ class DepositController extends Controller
         $cancelled   = $summary['cancelled'];
         $charge      = $summary['charge'];
         $campaigns   = \App\Models\Campaign::select('id', 'name')->orderBy('name')->get();
+        $donorUsers  = $this->donorUsersForFilter();
 
-        return view('admin.page.donations', compact('pageTitle', 'deposits', 'done', 'pending', 'cancelled', 'charge', 'campaigns'));
+        return view('admin.page.donations', compact('pageTitle', 'deposits', 'done', 'pending', 'cancelled', 'charge', 'campaigns', 'donorUsers'));
     }
 
     function pending() {
         $pageTitle = 'Pending Donations';
-        $deposits  = $this->donationData('pending');
+        $deposits  = $this->donationData('adminPending');
         $campaigns = \App\Models\Campaign::select('id', 'name')->orderBy('name')->get();
+        $donorUsers = $this->donorUsersForFilter();
 
-        return view('admin.page.donations', compact('pageTitle', 'deposits', 'campaigns'));
+        return view('admin.page.donations', compact('pageTitle', 'deposits', 'campaigns', 'donorUsers'));
     }
 
     function done() {
         $pageTitle = 'Done Donations';
         $deposits  = $this->donationData('done');
         $campaigns = \App\Models\Campaign::select('id', 'name')->orderBy('name')->get();
+        $donorUsers = $this->donorUsersForFilter();
 
-        return view('admin.page.donations', compact('pageTitle', 'deposits', 'campaigns'));
+        return view('admin.page.donations', compact('pageTitle', 'deposits', 'campaigns', 'donorUsers'));
     }
 
     function cancelled() {
         $pageTitle = 'Cancelled Donations';
         $deposits  = $this->donationData('cancelled');
         $campaigns = \App\Models\Campaign::select('id', 'name')->orderBy('name')->get();
+        $donorUsers = $this->donorUsersForFilter();
 
-        return view('admin.page.donations', compact('pageTitle', 'deposits', 'campaigns'));
+        return view('admin.page.donations', compact('pageTitle', 'deposits', 'campaigns', 'donorUsers'));
+    }
+
+    /**
+     * Registered users who have at least one deposit (for admin donation filters).
+     */
+    protected function donorUsersForFilter()
+    {
+        return User::query()
+            ->whereIn('id', function ($q) {
+                $q->select('user_id')
+                    ->from('deposits')
+                    ->whereNotNull('user_id')
+                    ->groupBy('user_id');
+            })
+            ->orderBy('username')
+            ->get(['id', 'username', 'email']);
     }
 
     protected function donationData($scope = null, $summary = false) {
         if ($scope) {
-            $deposits = Deposit::with(['gateway', 'user', 'campaign', 'reward'])->$scope();
+            if ($scope === 'index') {
+                $deposits = Deposit::with(['gateway', 'user', 'campaign', 'reward'])->adminIndex();
+            } elseif ($scope === 'adminPending') {
+                $deposits = Deposit::with(['gateway', 'user', 'campaign', 'reward'])->adminPending();
+            } else {
+                $deposits = Deposit::with(['gateway', 'user', 'campaign', 'reward'])->$scope();
+            }
         } else {
             $deposits = Deposit::with(['gateway', 'user', 'campaign', 'reward']);
         }
@@ -70,11 +96,26 @@ class DepositController extends Controller
             $deposits = $deposits->where('campaign_id', request('campaign'));
         }
 
+        // Filter by registered donor user
+        if (request()->filled('user_id')) {
+            $uid = (int) request('user_id');
+            if ($uid > 0) {
+                $deposits = $deposits->where('user_id', $uid);
+            }
+        }
+
         if (!$summary) {
             return $deposits->latest()->paginate(getPaginate());
         } else {
             $doneSummary      = (clone $deposits)->done()->sum('amount');
-            $pendingSummary   = (clone $deposits)->pending()->sum('amount');
+            // Pending: gateway processing (any method) + manual initiated (proof not submitted yet)
+            $pendingSummary = (clone $deposits)->where(function ($q) {
+                $q->where('status', ManageStatus::PAYMENT_PENDING)
+                    ->orWhere(function ($q2) {
+                        $q2->where('status', ManageStatus::PAYMENT_INITIATE)
+                            ->where('method_code', '>=', 1000);
+                    });
+            })->sum('amount');
             $cancelledSummary = (clone $deposits)->cancelled()->sum('amount');
             $chargeSummary    = (clone $deposits)->done()->sum('charge');
 

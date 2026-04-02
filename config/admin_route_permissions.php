@@ -104,6 +104,12 @@ return [
     'admin.gateway.manual.new'        => 'gateways.manage',
     'admin.gateway'                   => 'gateways.view',
 
+    // === CURRENCIES (FX rates) ===
+    'admin.currencies.sync'           => 'gateways.manage',
+    'admin.currencies.store'        => 'gateways.manage',
+    'admin.currencies.update'       => 'gateways.manage',
+    'admin.currencies'              => 'gateways.view',
+
     // === PAYOUT BANKS ===
     'admin.payout-banks.store'        => 'payout_banks.manage',
     'admin.payout-banks.status'       => 'payout_banks.manage',

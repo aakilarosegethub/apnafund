@@ -21,12 +21,11 @@
         </form>
         <div class="d-flex flex-wrap gap-2 align-items-center">
             @php
-                $cronToken = env('CRON_TOKEN');
-                $cronUrl = url('/cron/currencies-sync') . ($cronToken ? ('?token=' . $cronToken) : '');
+                $cronUrl = url('/cron/currencies-sync');
             @endphp
             <div class="input-group input-group-sm w-auto">
                 <input type="text" class="form--control form-control-sm cron-link-input" value="{{ $cronUrl }}" readonly>
-                <button type="button" class="btn btn--sm btn--secondary copyCronLink" data-link="{{ $cronUrl }}" @disabled(!$cronToken)>
+                <button type="button" class="btn btn--sm btn--secondary copyCronLink" data-link="{{ $cronUrl }}">
                     <i class="ti ti-copy"></i> @lang('Copy Cron Link')
                 </button>
             </div>

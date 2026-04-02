@@ -6,10 +6,14 @@
         $adminDisplayCur = 'USD';
     @endphp
     @if(request()->routeIs('admin.donations.index'))
+        @php
+            $donationFilterQuery = http_build_query(array_filter(request()->only(['search', 'date', 'campaign', 'user_id', 'method'])));
+            $donationFilterSuffix = $donationFilterQuery !== '' ? '?' . $donationFilterQuery : '';
+        @endphp
         <div class="col-12">
             <div class="row g-lg-4 g-3">
                 <div class="col-xl-3 col-sm-6">
-                    <a href="{{ route('admin.donations.done') }}" class="dashboard-widget-3 dashboard-widget-3__success bg-img" data-background-image="{{ asset('assets/admin/images/widget-bg.png') }}">
+                    <a href="{{ route('admin.donations.done') }}{{ $donationFilterSuffix }}" class="dashboard-widget-3 dashboard-widget-3__success bg-img" data-background-image="{{ asset('assets/admin/images/widget-bg.png') }}">
                         <div class="dashboard-widget-3__top">
                             <h3 class="dashboard-widget-3__number">{{ $adminDisplayCurSym }}{{ showAmount($done) }}</h3>
                             <div class="dashboard-widget-3__icon">
@@ -20,7 +24,7 @@
                     </a>
                 </div>
                 <div class="col-xl-3 col-sm-6">
-                    <a href="{{ route('admin.donations.index') }}" class="dashboard-widget-3 dashboard-widget-3__info bg-img" data-background-image="{{ asset('assets/admin/images/widget-bg.png') }}">
+                    <a href="{{ route('admin.donations.index') }}{{ $donationFilterSuffix }}" class="dashboard-widget-3 dashboard-widget-3__info bg-img" data-background-image="{{ asset('assets/admin/images/widget-bg.png') }}">
                         <div class="dashboard-widget-3__top">
                             <h3 class="dashboard-widget-3__number">{{ $adminDisplayCurSym }}{{ showAmount($charge) }}</h3>
                             <div class="dashboard-widget-3__icon">
@@ -31,7 +35,7 @@
                     </a>
                 </div>
                 <div class="col-xl-3 col-sm-6">
-                    <a href="{{ route('admin.donations.pending') }}" class="dashboard-widget-3 dashboard-widget-3__warning bg-img" data-background-image="{{ asset('assets/admin/images/widget-bg.png') }}">
+                    <a href="{{ route('admin.donations.pending') }}{{ $donationFilterSuffix }}" class="dashboard-widget-3 dashboard-widget-3__warning bg-img" data-background-image="{{ asset('assets/admin/images/widget-bg.png') }}">
                         <div class="dashboard-widget-3__top">
                             <h3 class="dashboard-widget-3__number">{{ $adminDisplayCurSym }}{{ showAmount($pending) }}</h3>
                             <div class="dashboard-widget-3__icon">
@@ -42,7 +46,7 @@
                     </a>
                 </div>
                 <div class="col-xl-3 col-sm-6">
-                    <a href="{{ route('admin.donations.cancelled') }}" class="dashboard-widget-3 dashboard-widget-3__danger bg-img" data-background-image="{{ asset('assets/admin/images/widget-bg.png') }}">
+                    <a href="{{ route('admin.donations.cancelled') }}{{ $donationFilterSuffix }}" class="dashboard-widget-3 dashboard-widget-3__danger bg-img" data-background-image="{{ asset('assets/admin/images/widget-bg.png') }}">
                         <div class="dashboard-widget-3__top">
                             <h3 class="dashboard-widget-3__number">{{ $adminDisplayCurSym }}{{ showAmount($cancelled) }}</h3>
                             <div class="dashboard-widget-3__icon">
@@ -104,7 +108,7 @@
 
                                     @if($deposit->user && $deposit->donor_type)
                                         <p class="fw-semibold">
-                                            <a href="{{ appendQuery('search', $deposit->user->username) }}"> <small>@</small>{{ $deposit->user->username }}</a>
+                                            <a href="{{ appendQuery('user_id', $deposit->user->id) }}"><small>@</small>{{ $deposit->user->username }}</a>
                                         </p>
                                     @endif
                                 </div>
@@ -169,7 +173,7 @@
                             </div>
                         </td>
                         <td>
-                            @if ($deposit->status == ManageStatus::PAYMENT_PENDING)
+                            @if ($deposit->status == ManageStatus::PAYMENT_PENDING || $deposit->status == ManageStatus::PAYMENT_INITIATE)
                                 <span class="badge badge--warning">@lang('Pending')</span>
                             @elseif ($deposit->status == ManageStatus::PAYMENT_SUCCESS)
                                 <span class="badge badge--success">@lang('Succeeded')</span>
@@ -292,7 +296,7 @@
 @endsection
 
 @push('breadcrumb')
-    <x-searchForm placeholder="TRX / Username" dateSearch="yes" campaignSearch="yes" :campaigns="$campaigns" />
+    <x-searchForm placeholder="TRX / Username" dateSearch="yes" campaignSearch="yes" userSearch="yes" :campaigns="$campaigns" :donorUsers="$donorUsers" />
 @endpush
 
 @push('page-script')
@@ -318,11 +322,11 @@
                 let statusHtml = ``;
                 let donationStatus = $(this).data('status');
 
-                if (donationStatus === 2) {
+                if (donationStatus === 2 || donationStatus === 0 || donationStatus === '2' || donationStatus === '0') {
                     statusHtml += `<span class="badge badge--warning">@lang('Pending')</span>`;
-                } else if (donationStatus === 1) {
+                } else if (donationStatus === 1 || donationStatus === '1') {
                     statusHtml += `<span class="badge badge--success">@lang('Succeeded')</span>`;
-                } else if (donationStatus === 3) {
+                } else if (donationStatus === 3 || donationStatus === '3') {
                     statusHtml += `<span class="badge badge--danger">@lang('Cancelled')</span>`;
                 } else {
                     statusHtml += `<span class="badge badge--secondary">@lang('Initiated')</span>`;

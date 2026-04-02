@@ -223,6 +223,14 @@ Route::middleware(['admin', 'admin.permission'])->group(function () {
         });
     });
 
+    // Currencies (FX rates: Admin sync + manual overrides)
+    Route::controller('CurrencyController')->prefix('currencies')->name('currencies.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('sync', 'syncRates')->name('sync');
+        Route::post('store', 'store')->name('store');
+        Route::post('update/{id}', 'update')->name('update');
+    });
+
     // Creator Payout Management (Creator Campaign Fee)
     Route::controller('CreatorPayoutSettingController')->prefix('creator-payout-settings')->name('creator-payout.settings.')->group(function () {
         Route::get('/', 'edit')->name('edit');

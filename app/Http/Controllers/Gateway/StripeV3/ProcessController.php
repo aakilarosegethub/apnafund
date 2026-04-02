@@ -97,8 +97,6 @@ class ProcessController extends Controller
 
     public function ipn()
     {
-        dd(request()->all(), request()->getContent());
-
         $stripeAcc         = GatewayCurrency::where('gateway_alias', 'StripeV3')->first();
         $gateway_parameter = json_decode($stripeAcc->gateway_parameter);
 

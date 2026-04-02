@@ -92,15 +92,8 @@ class CurrencyController extends Controller
         return $this->syncRates();
     }
 
-    public function syncRatesPublic(Request $request)
+    public function syncRatesPublic()
     {
-        $token = (string) env('CRON_TOKEN', '');
-        $provided = (string) $request->query('token', '');
-
-        if ($token === '' || !hash_equals($token, $provided)) {
-            return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
-        }
-
         [$ok, $message] = $this->updateRates();
 
         return response()->json(['status' => $ok ? 'success' : 'error', 'message' => $message], $ok ? 200 : 500);

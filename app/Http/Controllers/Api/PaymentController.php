@@ -18,11 +18,18 @@ class PaymentController extends BaseApiController
     /**
      * Get Gateways List (min/max & charges on each gateway root; primary currency row)
      * GET /api/gateways
-     * Query: ?country=Pakistan (optional)
+     * Query: ?country_id=1 (1-based index in getAdminDefaultAllCountryNames(), same ids as mobile list) or ?country=Pakistan (legacy).
+     * If neither is set, local_currency_code / exchange_rate follow visitor IP (getLocalCurrencyCode).
      */
     public function gateways(Request $request): JsonResponse
     {
-        $country = $request->query('country', '');
+        $country = '';
+        $fromId = resolveCountryNameFromAdminCountryId($request->query('country_id'));
+        if ($fromId !== null) {
+            $country = $fromId;
+        } else {
+            $country = (string) $request->query('country', '');
+        }
 
         $query = Gateway::active()
             ->with(['currencies' => function ($q) {
@@ -122,11 +129,13 @@ class PaymentController extends BaseApiController
     /**
      * Get Payment Webview URL for mobile apps
      * POST /api/payment/webview-url
-     * Body: gateway_id (int) OR gateway (string code), amount, campaign_id (int), full_name, email, country, phone (optional)
+     * Body: gateway_id (int) OR gateway (string code), amount, campaign_id (int), full_name, email, phone (optional).
+     * Location: country_id (allowed list, same as /api/gateways) preferred; else country name; else IP for currency.
      */
     public function webviewUrl(Request $request): JsonResponse
     {
         $data = $this->getRequestData($request);
+        // dd();  
 
         // Normalize: campaign_id can be string "118", int, or decimal (298.8) – round to int
         if (isset($data['campaign_id'])) {
@@ -191,10 +200,19 @@ class PaymentController extends BaseApiController
                 'ResponseMsg' => 'This campaign has expired',
             ], 400);
         }
-        $data['country'] = getUserCountryByIP();
 
-        // API currency is auto-detected from request country/IP; client-sent currency is ignored.
-        $country = !empty($data['country']) ? trim((string) $data['country']) : (getUserCountryByIP() ?? 'Pakistan');
+        // country_id (admin list index) > explicit country name > IP — deposit.country must match app selection.
+        $countryFromId = resolveCountryNameFromAdminCountryId($data['country_id'] ?? null);
+        if ($countryFromId !== null) {
+            $country = $countryFromId;
+        } elseif (! empty($data['country']) && is_string($data['country']) && trim($data['country']) !== '') {
+            $country = trim((string) $data['country']);
+        } else {
+            $country = getUserCountryByIP() ?? 'Pakistan';
+        }
+        $data['country'] = $country;
+
+        // Currency from resolved country; client-sent currency is ignored (exchange UI uses country/location).
         $userCurrency = strtoupper((string) getCurrencyCodeForCountryName($country));
         // Fallback: strict country map miss — align with visitor local currency, then gateway default.
         if ($userCurrency === '' || resolveStrictCurrencyCodeForCountryName($country) === null) {
@@ -292,7 +310,7 @@ class PaymentController extends BaseApiController
 
         $deposit = new Deposit();
         $deposit->campaign_id = $campaign->id;
-        $deposit->user_id = 0;
+        $deposit->user_id = $data['user_id'];
         $deposit->donor_type = ManageStatus::KNOWN_DONOR;
         $deposit->full_name = $data['full_name'];
         $deposit->email = $data['email'];
@@ -302,7 +320,7 @@ class PaymentController extends BaseApiController
         $deposit->reward_id = null;
         $deposit->method_code = $gatewayData->method_code;
         $deposit->amount = $amount;
-        $deposit->method_currency = strtoupper(getLocalCurrencyCode());
+        $deposit->method_currency = $userCurrency;
         $deposit->charge = $charge;
         $deposit->rate = $gatewayData->rate;
         $deposit->final_amount = $finalAmount;
@@ -570,6 +588,72 @@ class PaymentController extends BaseApiController
     }
 
     /**
+     * List current user's contributions (deposits) with proof flag for manual gateways.
+     * GET/POST /api/user_contributions_proof_list.php (Bearer)
+     */
+    public function contributionsProofList(Request $request): JsonResponse
+    {
+        $uid = $this->getUserId($request);
+        if (empty($uid)) {
+            return response()->json([
+                'Result' => 'false',
+                'ResponseCode' => '401',
+                'ResponseMsg' => 'Unauthenticated! Please provide a valid token.',
+            ], 401);
+        }
+
+        $limit = max(1, min((int) $request->input('limit', 20), 100));
+
+        $user = $request->user();
+        $emailNorm = strtolower(trim((string) ($user->email ?? '')));
+
+        $deposits = Deposit::query()
+            ->where(function ($q) use ($uid, $emailNorm) {
+                $q->where('user_id', $uid);
+                if ($emailNorm !== '') {
+                    $q->orWhere(function ($q2) use ($emailNorm) {
+                        $q2->where('user_id', 0)
+                            ->whereRaw('LOWER(TRIM(COALESCE(email, \'\'))) = ?', [$emailNorm]);
+                    });
+                }
+            })
+            ->with(['campaign:id,name,slug', 'gateway:id,code,name'])
+            ->orderByDesc('id')
+            ->paginate($limit);
+
+        $items = $deposits->getCollection()->map(function (Deposit $d) {
+            $isManual = (int) $d->method_code >= 1000;
+
+            return [
+                'id' => (int) $d->id,
+                'trx' => (string) ($d->trx ?? ''),
+                'campaign_name' => $d->campaign->name ?? null,
+                'campaign_slug' => $d->campaign->slug ?? null,
+                'gateway_type' => $isManual ? 'manual' : 'automated',
+                'gateway_name' => $d->gateway->name ?? null,
+                'amount' => (float) $d->amount,
+                'platform_currency' => strtoupper((string) getPlatformCurrency()),
+                'status' => (int) $d->status,
+                'proof' => $d->proofSubmittedFlag(),
+                'can_upload_proof' => $d->needsProofUpload(),
+            ];
+        })->values();
+
+        return response()->json([
+            'Result' => 'true',
+            'ResponseCode' => '200',
+            'ResponseMsg' => 'Contributions list',
+            'contributions' => $items,
+            'pagination' => [
+                'current_page' => $deposits->currentPage(),
+                'last_page' => $deposits->lastPage(),
+                'per_page' => $deposits->perPage(),
+                'total' => $deposits->total(),
+            ],
+        ]);
+    }
+
+    /**
      * Submit manual payment proof for authenticated user's own transaction.
      * POST /api/user_payment_proof_submit.php
      */
@@ -590,10 +674,21 @@ class PaymentController extends BaseApiController
             'note' => 'nullable|string|max:1000',
         ]);
 
+        $userRow = $request->user();
+        $emailNorm = strtolower(trim((string) ($userRow->email ?? '')));
+
         $deposit = Deposit::with(['gateway', 'campaign', 'user'])
             ->where('trx', $request->trx)
-            ->where('user_id', $uid)
             ->where('status', ManageStatus::PAYMENT_INITIATE)
+            ->where(function ($q) use ($uid, $emailNorm) {
+                $q->where('user_id', $uid);
+                if ($emailNorm !== '') {
+                    $q->orWhere(function ($q2) use ($emailNorm) {
+                        $q2->where('user_id', 0)
+                            ->whereRaw('LOWER(TRIM(COALESCE(email, \'\'))) = ?', [$emailNorm]);
+                    });
+                }
+            })
             ->first();
 
         if (!$deposit) {
@@ -634,6 +729,9 @@ class PaymentController extends BaseApiController
 
         $deposit->details = $details;
         $deposit->status = ManageStatus::PAYMENT_PENDING;
+        if ((int) $deposit->user_id === 0 && $uid > 0) {
+            $deposit->user_id = $uid;
+        }
         $deposit->save();
 
         $adminNotification = new AdminNotification();

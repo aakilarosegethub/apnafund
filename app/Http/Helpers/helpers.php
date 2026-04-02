@@ -492,6 +492,68 @@ function keyToTitle($text): string {
     return ucwords(preg_replace("/[^A-Za-z0-9 ]/", ' ', $text));
 }
 
+/**
+ * User-facing transaction remark: keep DB keys (donation_given) but show "Contribution" wording.
+ */
+function transactionRemarkDisplay(?string $remark): string
+{
+    if ($remark === null || $remark === '') {
+        return '';
+    }
+
+    return match ($remark) {
+        'donation_given' => __('Contribution Given'),
+        'donation_received' => __('Contribution Received'),
+        default => __(keyToTitle($remark)),
+    };
+}
+
+/**
+ * Replace whole-word "Donation" with "Contribution" in stored transaction details (legacy rows).
+ */
+function contributionLabelDisplay(?string $text): string
+{
+    if ($text === null || $text === '') {
+        return '';
+    }
+
+    return (string) preg_replace('/\bDonation\b/i', 'Contribution', $text);
+}
+
+/**
+ * Whether a deposit's details JSON already contains an uploaded payment proof file.
+ */
+function depositHasPaymentProofUpload($deposit): bool
+{
+    if ($deposit === null) {
+        return false;
+    }
+
+    $details = $deposit->details ?? null;
+    if (is_string($details)) {
+        $decoded = json_decode($details, true);
+        $details = is_array($decoded) ? $decoded : [];
+    } elseif (is_object($details)) {
+        $details = (array) $details;
+    }
+
+    if (! is_array($details)) {
+        return false;
+    }
+
+    foreach ($details as $entry) {
+        $row = is_object($entry) ? (array) $entry : (array) $entry;
+        $name = strtolower(trim((string) ($row['name'] ?? '')));
+        $type = strtolower(trim((string) ($row['type'] ?? '')));
+        $value = trim((string) ($row['value'] ?? ''));
+        if (($name === 'payment proof' || $type === 'file') && $value !== '') {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 function titleToKey($text): string {
     return strtolower(str_replace(' ', '_', $text));
 }
@@ -1040,6 +1102,54 @@ function getSiteAllowedCountryNames(): array
 }
 
 /**
+ * Resolve allowed country name from mobile/API country_id (1-based index in getAdminDefaultAllCountryNames()).
+ * Same semantics as AllowedLocationCountriesController; returns null if id is missing or not allowed.
+ */
+function resolveAllowedCountryNameFromCountryId($countryId): ?string
+{
+    if ($countryId === null || $countryId === '') {
+        return null;
+    }
+    $id = (int) $countryId;
+    if ($id < 1) {
+        return null;
+    }
+    $all = getAdminDefaultAllCountryNames();
+    if ($id > count($all)) {
+        return null;
+    }
+    $countryName = $all[$id - 1];
+    $allowed = getSiteAllowedCountryNames();
+    if (! in_array($countryName, $allowed, true)) {
+        return null;
+    }
+
+    return $countryName;
+}
+
+/**
+ * Map country_id (1-based index in getAdminDefaultAllCountryNames()) to country name for payment/checkout.
+ * Unlike resolveAllowedCountryNameFromCountryId(), does not filter by site allowed-location list — donor country
+ * must match the id the app sent so deposits.country stores the correct label.
+ */
+function resolveCountryNameFromAdminCountryId($countryId): ?string
+{
+    if ($countryId === null || $countryId === '') {
+        return null;
+    }
+    $id = (int) $countryId;
+    if ($id < 1) {
+        return null;
+    }
+    $all = getAdminDefaultAllCountryNames();
+    if ($id > count($all)) {
+        return null;
+    }
+
+    return $all[$id - 1];
+}
+
+/**
  * Currency ISO code for a full country name (Admin list / project location).
  */
 function getCurrencyCodeForCountryName(string $countryName): string
@@ -1206,6 +1316,27 @@ function countryHasActiveGatewayForRegion(?string $gatewayContextCountry, ?strin
 function localCurrencyHasGatewayForRegion(?string $gatewayContextCountry, string $localCurrencyCode): bool
 {
     return countryHasActiveGatewayForRegion($gatewayContextCountry, null);
+}
+
+/**
+ * Align footer / getLocalCurrencyCode() session with a country name (e.g. from deposits.country after opening payment link).
+ * Sets the same keys as WebsiteController::updateUserCurrency so DetectCurrencyByIP does not overwrite until user changes footer.
+ */
+function syncVisitorCurrencySessionFromCountryName(?string $countryName): void
+{
+    $country = is_string($countryName) ? trim($countryName) : '';
+    if ($country === '') {
+        return;
+    }
+
+    $currencyCode = strtoupper((string) getCurrencyCodeForCountryName($country));
+    $symbol = \App\Services\CurrencyService::getSymbolForCode($currencyCode);
+
+    session()->put('user_detected_currency', $currencyCode);
+    session()->put('user_detected_symbol', $symbol);
+    session()->put('user_detected_country', $country);
+    session()->put('user_country', $country);
+    session()->put('user_currency_manual', true);
 }
 
 /**
@@ -1567,6 +1698,12 @@ function getDashboardNavigation(): array {
             'title' => __('Inbox'),
             'icon' => 'fas fa-inbox',
             'route' => 'user.inbox.index'
+        ],
+        [
+            'id' => 'payments',
+            'title' => __('Payments'),
+            'icon' => 'ti ti-credit-card',
+            'route' => 'user.payments'
         ],
         [
             'id' => 'analytics',

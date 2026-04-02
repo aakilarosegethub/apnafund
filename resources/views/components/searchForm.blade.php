@@ -3,7 +3,9 @@
     'dateSearch'  => 'no',
     'keySearch'   => 'yes',
     'campaignSearch' => 'no',
+    'userSearch' => 'no',
     'campaigns' => [],
+    'donorUsers' => [],
 ])
 
 <form action="" method="GET" class="d-flex flex-wrap gap-2 justify-content-center">
@@ -17,5 +19,9 @@
 
     @if ($campaignSearch == 'yes' && count($campaigns) > 0)
         <x-searchCampaignField :campaigns="$campaigns"/>
+    @endif
+
+    @if ($userSearch == 'yes')
+        <x-searchUserField :donorUsers="$donorUsers"/>
     @endif
 </form>

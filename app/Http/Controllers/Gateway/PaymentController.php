@@ -14,6 +14,26 @@ use App\Http\Controllers\Controller;
 
 class PaymentController extends Controller
 {
+    /**
+     * Logged-in contributor can open proof upload without re-visiting manual instructions (e.g. closed webview early).
+     */
+    protected function contributorMaySkipManualGuide(Deposit $deposit): bool
+    {
+        if (! auth()->check()) {
+            return false;
+        }
+        if ((int) $deposit->user_id === (int) auth()->id()) {
+            return true;
+        }
+        if ((int) $deposit->user_id !== 0) {
+            return false;
+        }
+        $authEmail = strtolower(trim((string) (auth()->user()->email ?? '')));
+        $depEmail = strtolower(trim((string) ($deposit->email ?? '')));
+
+        return $authEmail !== '' && $authEmail === $depEmail;
+    }
+
     function depositInserts($slug) {
         
         $countryData = (array) json_decode(file_get_contents(resource_path('views/partials/country.json')));
@@ -166,6 +186,7 @@ class PaymentController extends Controller
         $deposit = Deposit::with('gateway')->where('trx', $track)->initiate()->firstOrFail();
         // Set session for webview/mobile flow (trx from query param)
         session()->put('Track', $deposit->trx);
+        syncVisitorCurrencySessionFromCountryName($deposit->country ? (string) $deposit->country : null);
 
         if ($deposit->method_code >= 1000) {
             return to_route('user.deposit.manual.instructions');
@@ -415,7 +436,7 @@ class PaymentController extends Controller
             abort(404);
         }
 
-        if (session('manual_guide_seen') !== $deposit->trx) {
+        if (session('manual_guide_seen') !== $deposit->trx && ! $this->contributorMaySkipManualGuide($deposit)) {
             return redirect()->route('user.deposit.manual.instructions');
         }
 
@@ -456,7 +477,7 @@ class PaymentController extends Controller
             abort(404);
         }
 
-        if (session('manual_guide_seen') !== $deposit->trx) {
+        if (session('manual_guide_seen') !== $deposit->trx && ! $this->contributorMaySkipManualGuide($deposit)) {
             return redirect()->route('user.deposit.manual.instructions');
         }
 
@@ -488,6 +509,13 @@ class PaymentController extends Controller
 
         $deposit->details = $details;
         $deposit->status  = ManageStatus::PAYMENT_PENDING;
+        if ((int) $deposit->user_id === 0 && auth()->check()) {
+            $ae = strtolower(trim((string) (auth()->user()->email ?? '')));
+            $de = strtolower(trim((string) ($deposit->email ?? '')));
+            if ($ae !== '' && $ae === $de) {
+                $deposit->user_id = (int) auth()->id();
+            }
+        }
         $deposit->save();
 
         $adminNotification          = new AdminNotification();
@@ -529,10 +557,13 @@ class PaymentController extends Controller
             'campaign_name'   => $deposit->campaign->name,
         ]);
 
-        $toast[]   = ['success', 'Your donation request has been taken. Please wait for admin response'];
-        $routeName = auth()->check() ? 'user.donation.history' : 'campaign';
+        $toast[] = ['success', 'Your donation request has been taken. Please wait for admin response'];
 
-        return to_route($routeName)->withToasts($toast);
+        if (auth()->check()) {
+            return back()->withToasts($toast);
+        }
+
+        return to_route('campaign')->withToasts($toast);
     }
 
     function manualDepositConfirm() {
@@ -549,7 +580,7 @@ class PaymentController extends Controller
         }
 
         if ($deposit->method_code > 999) {
-            if (session('manual_guide_seen') !== $deposit->trx) {
+            if (session('manual_guide_seen') !== $deposit->trx && ! $this->contributorMaySkipManualGuide($deposit)) {
                 return redirect()->route('user.deposit.manual.instructions');
             }
 
@@ -632,10 +663,13 @@ class PaymentController extends Controller
             'campaign_name'   => $deposit->campaign->name,
         ]);
 
-        $toast[]   = ['success', 'Your donation request has been taken. Please wait for admin response'];
-        $routeName = auth()->check() ? 'user.donation.history' : 'campaign';
+        $toast[] = ['success', 'Your donation request has been taken. Please wait for admin response'];
 
-        return to_route($routeName)->withToasts($toast);
+        if (auth()->check()) {
+            return back()->withToasts($toast);
+        }
+
+        return to_route('campaign')->withToasts($toast);
     }
 
     function success() {

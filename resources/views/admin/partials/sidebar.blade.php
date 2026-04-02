@@ -179,6 +179,11 @@
                         @lang('Manual')
                     </a>
                 </li>
+                <li class="sidebar-dropdown-item">
+                    <a href="{{ route('admin.currencies.index') }}" class="sidebar-link {{ navigationActive('admin.currencies*', 1) }}">
+                        @lang('Currencies')
+                    </a>
+                </li>
             </ul>
         </li>
         @endif

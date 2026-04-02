@@ -23,7 +23,7 @@
                             <option value="">@lang('Any')</option>
 
                             @foreach($remarks as $remark)
-                                <option value="{{ $remark->remark }}" @selected(request()->remark == $remark->remark)>{{ __(keyToTitle($remark->remark)) }}</option>
+                                <option value="{{ $remark->remark }}" @selected(request()->remark == $remark->remark)>{{ transactionRemarkDisplay($remark->remark) }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -86,7 +86,7 @@
                         </td>
                         <td><span class="text--danger">{{ showAmount($transaction->charge) }} {{ __($setting->site_cur) }}</span></td>
                         <td>{{ showAmount($transaction->post_balance) }} {{ __($setting->site_cur) }}</td>
-                        <td><span title="{{ $transaction->details }}">{{ strLimit($transaction->details, 25) }}</span></td>
+                        <td><span title="{{ contributionLabelDisplay($transaction->details) }}">{{ strLimit(contributionLabelDisplay($transaction->details), 25) }}</span></td>
                     </tr>
                 @empty
                     @include('admin.partials.noData')

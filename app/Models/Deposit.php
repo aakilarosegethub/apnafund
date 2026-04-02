@@ -113,6 +113,29 @@ class Deposit extends Model
         return $query->where('status', '!=', ManageStatus::PAYMENT_INITIATE);
     }
 
+    /**
+     * Admin "all donations" list: include PAYMENT_INITIATE rows (user expects status 0 visible).
+     */
+    public function scopeAdminIndex($query)
+    {
+        return $query;
+    }
+
+    /**
+     * Admin pending queue: gateway PENDING (any method) + manual donations still at INITIATE (awaiting proof).
+     * Matches summary logic in Admin\DepositController::donationData.
+     */
+    public function scopeAdminPending($query)
+    {
+        return $query->where(function ($q) {
+            $q->where('status', ManageStatus::PAYMENT_PENDING)
+                ->orWhere(function ($q2) {
+                    $q2->where('status', ManageStatus::PAYMENT_INITIATE)
+                        ->where('method_code', '>=', 1000);
+                });
+        });
+    }
+
     public function scopeInitiate($query)
     {
         return $query->where('status', ManageStatus::PAYMENT_INITIATE);
@@ -156,5 +179,32 @@ class Deposit extends Model
         return Attribute::make(
             get: fn () => $this->donor_type ? ($this->user_id ? $this->user->country_name : $this->country) : '-',
         );
+    }
+
+    public function isManualGateway(): bool
+    {
+        return (int) $this->method_code >= 1000;
+    }
+
+    /**
+     * API / UI: 1 = proof on file or automated gateway; 0 = manual flow still needs proof upload.
+     */
+    public function proofSubmittedFlag(): int
+    {
+        if (! $this->isManualGateway()) {
+            return 1;
+        }
+        if ((int) $this->status === ManageStatus::PAYMENT_INITIATE) {
+            return depositHasPaymentProofUpload($this) ? 1 : 0;
+        }
+
+        return 1;
+    }
+
+    public function needsProofUpload(): bool
+    {
+        return $this->isManualGateway()
+            && (int) $this->status === ManageStatus::PAYMENT_INITIATE
+            && ! depositHasPaymentProofUpload($this);
     }
 }
