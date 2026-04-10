@@ -4,7 +4,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>@yield('title', (bs('site_name') ?? 'FundGreen') . ' – Crowdfunding')</title>
+<title>@yield('title', (bs('site_name') ?? 'Apnacrowdfunding') . ' – Crowdfunding')</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
@@ -277,5 +277,6 @@
 </script>
 
 @yield('script')
+@include('partials.brand-name-emphasize')
 </body>
 </html>

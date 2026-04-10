@@ -312,16 +312,6 @@
                     <input type="password" name="password" id="password" placeholder="Password" required>
                 </div>
 
-                <div class="ks-form-group">
-                    <label for="cnic_front_image" style="font-size: 14px; color: #444; margin-bottom: 6px; display: block;">CNIC Front (optional)</label>
-                    <input type="file" name="cnic_front_image" id="cnic_front_image" accept="image/*" style="padding: 8px;">
-                </div>
-
-                <div class="ks-form-group">
-                    <label for="cnic_back_image" style="font-size: 14px; color: #444; margin-bottom: 6px; display: block;">CNIC Back (optional)</label>
-                    <input type="file" name="cnic_back_image" id="cnic_back_image" accept="image/*" style="padding: 8px;">
-                </div>
-
                 <div class="ks-checkbox">
                     <input type="checkbox" id="news">
                     <label for="news">
@@ -503,10 +493,6 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append('mobile', '03000000000');
         formData.append('mobile_code', '92');
         formData.append('country_code', 'PK');
-        const cnicFront = document.getElementById('cnic_front_image');
-        const cnicBack = document.getElementById('cnic_back_image');
-        if (cnicFront && cnicFront.files[0]) formData.append('cnic_front_image', cnicFront.files[0]);
-        if (cnicBack && cnicBack.files[0]) formData.append('cnic_back_image', cnicBack.files[0]);
 
         // Send OTP request
         fetch('{{ route("user.otp.send") }}', {

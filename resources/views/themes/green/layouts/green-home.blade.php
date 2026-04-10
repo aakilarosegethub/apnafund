@@ -629,5 +629,7 @@ body{
 @if(getCustomCode('footer'))
 {!! getCustomCode('footer') !!}
 @endif
+
+@include('partials.brand-name-emphasize')
 </body>
 </html>

@@ -128,6 +128,7 @@
     };
     const tokenUrl = @json(route('user.inbox.firebase.token'));
     const creatorNamesUrl = @json(route('user.inbox.creator.names'));
+    const notifyMessageUrl = @json(route('user.inbox.notify.message'));
 
     if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
         var convLoad = document.getElementById('convLoading');
@@ -153,6 +154,7 @@
     let selectedConvId = null;
     let selectedOtherId = null;
     let selectedCampaignId = null;
+    let selectedCampaignTitle = null;
     let selectedOtherImageUrl = null;
     let selectedOtherName = null;
     let unsubMsg = null;
@@ -192,7 +194,8 @@
         var otherName = item.dataset.otherName || '';
         var otherImageUrl = item.dataset.otherImageUrl || null;
         var campaignId = item.dataset.campaignId || null;
-        if (convId) selectConversation(convId, otherId, otherName, true, otherImageUrl, campaignId);
+        var campaignTitle = item.dataset.campaignTitle || '';
+        if (convId) selectConversation(convId, otherId, otherName, true, otherImageUrl, campaignId, campaignTitle);
     });
 
     document.getElementById('chatMessages')?.addEventListener('click', function(e) {
@@ -313,6 +316,7 @@
                     el.dataset.otherName = otherName || '';
                     el.dataset.otherImageUrl = otherImageUrl || '';
                     el.dataset.campaignId = d.campaign_id || '';
+                    el.dataset.campaignTitle = d.campaign_title || '';
                     el.innerHTML = '<div class="inbox-conv-avatar">' + avatarHtml + '</div><div class="inbox-conv-body"><div class="inbox-conv-name"></div><div class="inbox-conv-preview"></div></div><div class="inbox-conv-time"></div>' + (unread ? '<span class="inbox-conv-unread">New</span>' : '') + '<button type="button" class="inbox-conv-delete" title="Delete conversation"><i class="fas fa-trash-alt"></i></button>';
                     el.querySelector('.inbox-conv-name').textContent = otherName;
                     el.querySelector('.inbox-conv-preview').textContent = last;
@@ -323,6 +327,7 @@
                     el.dataset.otherName = otherName || '';
                     el.dataset.otherImageUrl = otherImageUrl || '';
                     el.dataset.campaignId = d.campaign_id || '';
+                    el.dataset.campaignTitle = d.campaign_title || '';
                     var av = el.querySelector('.inbox-conv-avatar');
                     if (av) av.innerHTML = avatarHtml;
                     el.querySelector('.inbox-conv-name').textContent = otherName;
@@ -396,7 +401,7 @@
                     [fLastSenderId]: null,
                     created_at: firebase.firestore.FieldValue.serverTimestamp(),
                 };
-                    ref.set(convData).then(function() { selectConversation(cid, otherId, otherName, true, creatorImg, startParams.campaignId); });
+                    ref.set(convData).then(function() { selectConversation(cid, otherId, otherName, true, creatorImg, startParams.campaignId, startParams.campaignTitle); });
             } else {
                 var d = doc.data();
                 var storedName = (d.participant_names && d.participant_names[otherId]) || '';
@@ -405,16 +410,17 @@
                 if (otherName && (!storedName || storedName === 'Creator')) {
                     ref.update({ ['participant_names.' + otherId]: otherName }).catch(function() {});
                 }
-                selectConversation(cid, otherId, displayName, true, otherImg, d.campaign_id || null);
+                selectConversation(cid, otherId, displayName, true, otherImg, d.campaign_id || null, d.campaign_title || null);
             }
         });
     }
 
-    function selectConversation(convId, otherId, otherName, focusInput, otherImageUrl, campaignId) {
+    function selectConversation(convId, otherId, otherName, focusInput, otherImageUrl, campaignId, campaignTitle) {
         if (unsubMsg) unsubMsg();
         selectedConvId = convId;
         selectedOtherId = otherId || null;
         selectedCampaignId = campaignId || null;
+        selectedCampaignTitle = (campaignTitle != null && String(campaignTitle).trim() !== '') ? String(campaignTitle).trim() : null;
         selectedOtherImageUrl = otherImageUrl || null;
         selectedOtherName = otherName || null;
         document.querySelectorAll('.inbox-conv-item').forEach(function(n) { n.classList.toggle('active', n.dataset.convId === convId); });
@@ -473,6 +479,32 @@
         setTimeout(function() { if (el.parentNode) el.remove(); }, 4000);
     }
 
+    function postInboxNotifyServer(recipientId, text, campaignId, campaignTitle) {
+        if (!notifyMessageUrl || recipientId == null || recipientId === '') return;
+        var rid = parseInt(String(recipientId), 10);
+        if (!rid || String(currentUser.id) === String(rid)) return;
+        var meta = document.querySelector('meta[name="csrf-token"]');
+        var ct = (campaignTitle != null && String(campaignTitle).trim() !== '') ? String(campaignTitle).trim().substring(0, 255) : null;
+        var cid = campaignId != null && String(campaignId) !== '' ? parseInt(String(campaignId), 10) : null;
+        var payload = {
+            recipient_id: rid,
+            message_preview: (text || '').substring(0, 500),
+            campaign_id: (cid && !isNaN(cid)) ? cid : null,
+            campaign_title: ct
+        };
+        fetch(notifyMessageUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': meta ? meta.getAttribute('content') : '',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify(payload)
+        }).catch(function() {});
+    }
+
     function sendMessage() {
         var input = document.getElementById('messageInput');
         if (!input) return;
@@ -496,6 +528,7 @@
             input.value = '';
             var up = {}; up[fLastMsg] = text; up[fLastMsgAt] = firebase.firestore.Timestamp.now(); up[fLastSenderId] = currentUser.id; up['read_by.' + currentUser.id] = true;
             ref.update(up).catch(function() {});
+            postInboxNotifyServer(selectedOtherId, text, selectedCampaignId, selectedCampaignTitle);
         }).catch(function(err) {
             console.error(err);
             showInboxMsg('Failed to send. Enable Firestore API in Google Cloud Console and check your connection.', true);

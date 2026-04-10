@@ -131,17 +131,36 @@ class DepositController extends Controller
         }
     }
 
+    /**
+     * GET: open in browser (e.g. bookmarked link). Actual approve is POST only (CSRF).
+     */
+    function approveForm($id)
+    {
+        if (!admin_can('donations.approve')) {
+            abort(403);
+        }
+
+        $deposit = Deposit::with(['gateway', 'user', 'campaign'])
+            ->where('id', $id)
+            ->adminPending()
+            ->firstOrFail();
+
+        $pageTitle = __('Approve contribution');
+
+        return view('admin.page.donation_approve_confirm', compact('pageTitle', 'deposit'));
+    }
+
     function approve($id) {
         if (!admin_can('donations.approve')) {
             $toast[] = ['error', 'You do not have permission to approve donations.'];
             return back()->withToasts($toast);
         }
-        $deposit = Deposit::where('id', $id)->pending()->firstOrFail();
+        $deposit = Deposit::where('id', $id)->adminPending()->firstOrFail();
         PaymentController::campaignDataUpdate($deposit, true);
 
         $toast[] = ['success', 'Donation approval success'];
 
-        return back()->withToasts($toast);
+        return redirect()->route('admin.donations.pending')->withToasts($toast);
     }
 
     function reject($id) {
@@ -153,7 +172,7 @@ class DepositController extends Controller
             'admin_feedback' => 'required|max:255',
         ]);
 
-        $deposit                 = Deposit::where('id', $id)->pending()->firstOrFail();
+        $deposit                 = Deposit::where('id', $id)->adminPending()->firstOrFail();
         $deposit->status         = ManageStatus::PAYMENT_CANCEL;
         $deposit->admin_feedback = request('admin_feedback');
         $deposit->save();

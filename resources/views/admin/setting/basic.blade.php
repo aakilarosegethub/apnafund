@@ -13,6 +13,13 @@
                         <label class="form--label required">@lang('Site Name')</label>
                         <input type="text" class="form--control" name="site_name" value="{{ $setting->site_name }}" placeholder="@lang('Phinix Admin Template')" required>
                     </div>
+                    @if(\Illuminate\Support\Facades\Schema::hasColumn('settings', 'site_email'))
+                    <div class="col-lg-4 col-sm-6">
+                        <label class="form--label">@lang('Site / admin notification email')</label>
+                        <input type="email" class="form--control" name="site_email" value="{{ old('site_email', $setting->site_email ?? '') }}" placeholder="admin@example.com">
+                        <small class="form-text text-muted">@lang('System emails to admins (new campaign review, payment success alerts, etc.) go here when set. If empty, each admin account email is used instead.')</small>
+                    </div>
+                    @endif
                     <div class="col-lg-4 col-sm-6">
                         <label class="form--label required">@lang('Platform Currency')</label>
                         <input type="text" class="form--control" name="site_cur" value="{{ $setting->site_cur }}" placeholder="@lang('USD')" required>

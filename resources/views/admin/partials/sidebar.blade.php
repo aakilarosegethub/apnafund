@@ -410,6 +410,11 @@
                         @lang('Firebase OTP')
                     </a>
                 </li>
+                <li class="sidebar-dropdown-item">
+                    <a href="{{ route('admin.fcm.push.index') }}" class="sidebar-link {{ navigationActive('admin.fcm.push*', 1) }}">
+                        @lang('Push notifications (FCM)')
+                    </a>
+                </li>
                 @endif
                 @if(admin_can('settings.gemini'))
                 <li class="sidebar-dropdown-item">

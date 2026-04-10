@@ -845,6 +845,8 @@
         })();
         </script>
         @endif
+
+        @include('partials.brand-name-emphasize')
         
 </body>
 

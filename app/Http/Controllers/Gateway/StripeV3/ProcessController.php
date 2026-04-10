@@ -173,22 +173,20 @@ class ProcessController extends Controller
                     ]);
                 }
                 
-                // Send email to admin
+                // Send email to admin(s): Basic settings → site_email, else all admin accounts
                 try {
-                    $adminEmail = bs('site_email');
-                    if ($adminEmail) {
-                        $adminTemplate = \App\Models\NotificationTemplate::where('act', 'ADMIN_PAYMENT_SUCCESS')
-                            ->where('email_status', ManageStatus::ACTIVE)
-                            ->first();
-                        
-                        if ($adminTemplate) {
-                            $adminUser = (object) [
-                                'fullname' => 'Admin',
-                                'username' => 'admin',
-                                'email' => $adminEmail,
-                            ];
-                            
-                            notify($adminUser, 'ADMIN_PAYMENT_SUCCESS', [
+                    $adminTemplate = \App\Models\NotificationTemplate::where('act', 'ADMIN_PAYMENT_SUCCESS')
+                        ->where('email_status', ManageStatus::ACTIVE)
+                        ->first();
+
+                    if (!$adminTemplate) {
+                        \Log::warning('ADMIN_PAYMENT_SUCCESS template not found or inactive. Email not sent to admin (StripeV3).');
+                    } else {
+                        $adminRecipients = adminMailNotifyRecipients();
+                        if ($adminRecipients === []) {
+                            \Log::warning('No admin email recipients (set Site email in Basic settings or add admin user emails). StripeV3.');
+                        } else {
+                            $shortCodes = [
                                 'full_name' => $deposit->full_name,
                                 'email' => $deposit->email,
                                 'campaign_name' => $campaign->name,
@@ -198,17 +196,16 @@ class ProcessController extends Controller
                                 'date' => showDateTime($deposit->updated_at, 'd M, Y h:i A'),
                                 'campaign_url' => route('campaign.show', $campaign->slug),
                                 'admin_url' => urlPath('admin.donations.done'),
-                            ], ['email']);
-                            \Log::info('Payment success email sent to admin (StripeV3): ' . $adminEmail);
-                        } else {
-                            \Log::warning('ADMIN_PAYMENT_SUCCESS template not found or inactive. Email not sent to admin.');
+                            ];
+                            foreach ($adminRecipients as $adminUser) {
+                                notify($adminUser, 'ADMIN_PAYMENT_SUCCESS', $shortCodes, ['email']);
+                            }
+                            $toList = implode(', ', array_map(static fn ($r) => $r->email, $adminRecipients));
+                            \Log::info('Payment success email sent to admin(s) (StripeV3): ' . $toList);
                         }
-                    } else {
-                        \Log::warning('Admin email (site_email) not configured. Admin email not sent (StripeV3).');
                     }
                 } catch (\Exception $e) {
                     \Log::error('Failed to send payment success email to admin (StripeV3): ' . $e->getMessage(), [
-                        'admin_email' => $adminEmail ?? 'not set',
                         'deposit_id' => $deposit->id
                     ]);
                 }

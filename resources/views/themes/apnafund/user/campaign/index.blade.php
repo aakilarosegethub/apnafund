@@ -66,9 +66,15 @@
                                         <a href="{{ route('user.campaign.edit', $campaign->slug) }}" class="btn btn-sm btn-primary">
                                             <i class="fas fa-edit me-1"></i>@lang('Edit')
                                         </a>
+                                        @if($campaign->status == \App\Constants\ManageStatus::CAMPAIGN_APPROVED)
                                         <a href="{{ route('user.campaign.show', $campaign->slug) }}" class="btn btn-sm btn-secondary">
                                             <i class="fas fa-eye me-1"></i>@lang('View')
                                         </a>
+                                        @else
+                                        <a href="javascript:void(0)" role="button" class="btn btn-sm btn-secondary" onclick='if (typeof showToasts === "function") { showToasts("warning", @json(__('Campaign not approved yet.'))); } else if (typeof iziToast !== "undefined" && iziToast.warning) { iziToast.warning({ message: @json(__('Campaign not approved yet.')), position: "topRight", timeout: 6000 }); } return false;'>
+                                            <i class="fas fa-eye me-1"></i>@lang('View')
+                                        </a>
+                                        @endif
                                         <a href="{{ route('user.rewards.index', $campaign->slug) }}" class="btn btn-sm btn-warning">
                                             <i class="fas fa-gift me-1"></i>@lang('Rewards')
                                         </a>

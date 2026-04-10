@@ -146,6 +146,17 @@ Route::middleware('auth')->name('user.')->namespace('User')->group(function () {
             Route::get('firebase-token', 'getFirebaseToken')->name('firebase.token');
             Route::get('unread-count', 'unreadCount')->name('unread.count');
             Route::get('creator-names', 'getCreatorNames')->name('creator.names');
+            Route::post('notify-message', 'notifyMessageRecipient')
+                ->middleware('throttle:120,1')
+                ->name('notify.message');
+        });
+
+        // Creator in-app notifications (header bell)
+        Route::controller('UserNotificationController')->prefix('notifications')->name('notifications.')->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('unread-count', 'unreadCount')->name('unread-count');
+            Route::post('mark-all-read', 'markAllRead')->name('mark-all-read');
+            Route::get('{notification}/open', 'open')->name('open');
         });
 
         // User Operation

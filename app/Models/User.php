@@ -89,6 +89,19 @@ class User extends Authenticatable
         return $this->hasMany(Comment::class);
     }
 
+    /**
+     * In-app notifications for creators (header bell). Not Laravel's database notifications.
+     */
+    public function appNotifications()
+    {
+        return $this->hasMany(UserNotification::class)->latest();
+    }
+
+    public function pushDevices()
+    {
+        return $this->hasMany(UserPushDevice::class);
+    }
+
     // SCOPES
     public function scopeActive($query)
     {

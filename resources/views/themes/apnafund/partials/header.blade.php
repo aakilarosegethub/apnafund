@@ -436,8 +436,9 @@
             </div>
 
             <!-- Right: Buttons -->
-            <div class="col-12 col-md-2 text-center text-md-end">
+            <div class="col-12 col-md-2 text-center text-md-end d-flex align-items-center justify-content-center justify-content-md-end gap-2 flex-wrap">
                 @if(auth()->check())
+                    <x-creator-notification-bell variant="on-dark" />
                     <div class="dropdown d-inline-block">
                         <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-user-circle me-1"></i>

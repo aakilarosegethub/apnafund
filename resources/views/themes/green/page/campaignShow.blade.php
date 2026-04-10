@@ -1,6 +1,6 @@
 @extends(activeTheme() . 'layouts.green-home')
 
-@section('title', __(@$campaignData->name ?? 'Campaign') . ' - FundGreen')
+@section('title', __(@$campaignData->name ?? 'Campaign') . ' - Apnacrowdfunding')
 
 @push('styles')
 <style>

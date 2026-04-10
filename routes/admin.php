@@ -174,6 +174,9 @@ Route::middleware(['admin', 'admin.permission'])->group(function () {
 
         // User Details Operation
         Route::get('details/{id}', 'details')->name('details');
+        Route::post('{id}/push-device', 'storePushDevice')->name('push.device.store');
+        Route::post('{id}/push-device/{device}/delete', 'destroyPushDevice')->name('push.device.delete');
+        Route::post('{id}/push-device/{device}', 'updatePushDevice')->name('push.device.update');
         Route::post('update/{id}', 'update')->name('update');
         Route::post('password-change/{id}', 'changePassword')->name('password.change');
         Route::get('login/{id}', 'login')->name('login');
@@ -250,6 +253,7 @@ Route::middleware(['admin', 'admin.permission'])->group(function () {
         Route::get('pending', 'pending')->name('pending');
         Route::get('done', 'done')->name('done');
         Route::get('cancelled', 'cancelled')->name('cancelled');
+        Route::get('approve/{id}', 'approveForm')->name('approve.form');
         Route::post('approve/{id}', 'approve')->name('approve');
         Route::post('reject/{id}', 'reject')->name('reject');
     });
@@ -458,6 +462,12 @@ Route::middleware(['admin', 'admin.permission'])->group(function () {
 
     // Firebase OTP Settings
     Route::controller('FirebaseOTPSettingController')->prefix('firebase-otp')->name('firebase.otp.')->group(function() {
+        Route::get('/', 'index')->name('index');
+        Route::post('/update', 'update')->name('update');
+    });
+
+    // FCM / mobile push (Firebase Cloud Messaging)
+    Route::controller('FcmPushSettingController')->prefix('setting/fcm-push')->name('fcm.push.')->group(function () {
         Route::get('/', 'index')->name('index');
         Route::post('/update', 'update')->name('update');
     });

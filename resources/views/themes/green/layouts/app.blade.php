@@ -697,6 +697,8 @@ span{
         <!-- Custom Footer Code -->
         {!! getCustomCode('footer') !!}
 
+        @include('partials.brand-name-emphasize')
+
 </body>
 
 </html>

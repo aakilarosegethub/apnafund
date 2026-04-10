@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\User;
+use App\Models\UserPushDevice;
 use App\Constants\ManageStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -133,7 +134,8 @@ class AuthController extends BaseApiController
                     
                     // Create token
                     $token = $user->createToken('auth_token')->plainTextToken;
-                    
+                    $this->syncUserPushDevice($user, $data);
+
                     $c = $this->h->queryfire("select id, firstname, lastname, email, mobile, password, country_code as ccode, status, created_at as rdate, balance as wallet, image as profile_pic, ec from users where id=" . $check . "");
                     if ($c && $c->num_rows > 0) {
                         $userData = $c->fetch_assoc();
@@ -304,6 +306,7 @@ class AuthController extends BaseApiController
 
         // Create token
         $token = $user->createToken('auth_token')->plainTextToken;
+        $this->syncUserPushDevice($user, $data);
 
         // Get user data in the expected format
         $c = $this->h->queryfire("select id, firstname, lastname, email, mobile, country_code as ccode, status, created_at as rdate, balance as wallet, image as profile_pic, ec from users where id=" . $user->id . "");
@@ -679,6 +682,7 @@ class AuthController extends BaseApiController
 
         // Create token
         $token = $user->createToken('auth_token')->plainTextToken;
+        $this->syncUserPushDevice($user, $data);
 
         // Get user data
         $c = $this->h->queryfire("select id, firstname, lastname, email, mobile, country_code as ccode, status, created_at as rdate, balance as wallet, image as profile_pic, ec from users where email='" . $email . "'");
@@ -1137,6 +1141,36 @@ class AuthController extends BaseApiController
                 "Result" => "false",
                 "ResponseMsg" => "An error occurred during verification. Please try again."
             ], 500);
+        }
+    }
+
+    /**
+     * Optional mobile fields: fcm_token or device_token, device_type (android|ios|web; default android).
+     */
+    protected function syncUserPushDevice(User $user, array $data): void
+    {
+        $token = trim((string) ($data['fcm_token'] ?? $data['device_token'] ?? ''));
+        if ($token === '') {
+            return;
+        }
+
+        $type = strtolower(trim((string) ($data['device_type'] ?? 'android')));
+        if (!in_array($type, ['android', 'ios', 'web'], true)) {
+            $type = 'android';
+        }
+
+        try {
+            UserPushDevice::query()->updateOrCreate(
+                ['token_hash' => hash('sha256', $token)],
+                [
+                    'user_id' => $user->id,
+                    'fcm_token' => $token,
+                    'device_type' => $type,
+                    'last_used_at' => now(),
+                ]
+            );
+        } catch (\Throwable $e) {
+            \Log::warning('syncUserPushDevice: ' . $e->getMessage());
         }
     }
 }

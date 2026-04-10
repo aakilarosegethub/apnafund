@@ -171,17 +171,6 @@ class OTPController extends Controller
                     'code' => $otpCode
                 ], ['email']);
 
-                // Handle CNIC front/back uploads if provided
-                if ($request->hasFile('cnic_front_image')) {
-                    $user->cnic_front_image = fileUploader($request->file('cnic_front_image'), getFilePath('cnic'));
-                }
-                if ($request->hasFile('cnic_back_image')) {
-                    $user->cnic_back_image = fileUploader($request->file('cnic_back_image'), getFilePath('cnic'));
-                }
-                if ($user->cnic_front_image || $user->cnic_back_image) {
-                    $user->save();
-                }
-
                 Log::info('Email OTP sent to: ' . $email . ' for registration (user ID: ' . $user->id . ')');
 
                 return response()->json([

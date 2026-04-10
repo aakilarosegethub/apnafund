@@ -133,6 +133,22 @@ class CampaignController extends Controller
             ]);
         }
 
+        $typeNorm = strtolower((string) $type);
+        if ($typeNorm === 'approve' && $campaign->user_id) {
+            try {
+                \App\Models\UserNotification::notifyCampaignApproved((int) $campaign->user_id, $campaign);
+            } catch (\Throwable $e) {
+                \Log::warning('Campaign approved UserNotification failed', ['error' => $e->getMessage()]);
+            }
+        }
+        if ($typeNorm === 'reject' && $campaign->user_id) {
+            try {
+                \App\Models\UserNotification::notifyCampaignRejected((int) $campaign->user_id, $campaign);
+            } catch (\Throwable $e) {
+                \Log::warning('Campaign rejected UserNotification failed', ['error' => $e->getMessage()]);
+            }
+        }
+
         $toast[] = ['success', $toastMsg];
 
         return back()->withToasts($toast);

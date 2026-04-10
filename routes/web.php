@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\WithdrawController;
 use App\Http\Controllers\Api\WalletController;
 use App\Http\Controllers\Api\CurrencyInfoController;
 use App\Http\Controllers\Api\AllowedLocationCountriesController;
+use App\Http\Controllers\Api\UserNotificationApiController;
 use App\Models\Campaign;
 use Illuminate\Support\Facades\Cookie;
 
@@ -454,6 +455,8 @@ Route::prefix('api')->group(function () {
 
         // Notification APIs
         Route::match(['get', 'post'], '/notification.php', [HomeController::class, 'notification']);
+        /** In-app notifications (user_notifications); legacy notification.php uses tbl_notification */
+        Route::match(['get', 'post'], '/user_notifications.php', [UserNotificationApiController::class, 'list']);
 
         // Account APIs
         Route::match(['get', 'post'], '/acc_delete.php', [AccountController::class, 'deleteAccount']);

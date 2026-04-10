@@ -67,17 +67,14 @@ class NotificationController extends Controller
 
     function templateUpdate($id){
         $this->validate(request(), [
-            'subject'    => 'required|string|max:255',
+            'subject'    => 'required|string',
             'email_body' => 'required',
-            'sms_body'   => 'required',
         ]);
 
         $template               = NotificationTemplate::findOrFail($id);
         $template->subj         = request('subject');
         $template->email_body   = request('email_body');
         $template->email_status = request('email_status') ? ManageStatus::ACTIVE : ManageStatus::INACTIVE;
-        $template->sms_body     = request('sms_body');
-        $template->sms_status   = request('sms_status') ? ManageStatus::ACTIVE : ManageStatus::INACTIVE;
         $template->save();
 
         $toast[] = ['success','Notification template updated successfully'];
@@ -177,8 +174,8 @@ class NotificationController extends Controller
 
     function welcomeUpdate() {
         $this->validate(request(), [
-            'email_subject' => 'required|string|max:255',
-            'email_body'    => 'required|string',
+            'email_subject' => 'required|string',
+            'email_body'    => 'required',
         ]);
 
         try {

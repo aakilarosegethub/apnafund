@@ -15,7 +15,6 @@ use App\Models\SiteData;
 use App\Constants\ManageStatus;
 use App\Models\GatewayCurrency;
 use App\Models\AdminNotification;
-use App\Models\Admin;
 use App\Models\Subscriber;
 use App\Models\User;
 use Illuminate\Support\Facades\Cookie;
@@ -640,6 +639,18 @@ class WebsiteController extends Controller
         $adminNotification->click_url = urlPath('admin.comments.index');
         $adminNotification->save();
 
+        try {
+            if ((int) $campaign->user_id > 0 && (int) $campaign->user_id !== (int) ($comment->user_id ?? 0)) {
+                \App\Models\UserNotification::notifyCreatorReviewPending(
+                    (int) $campaign->user_id,
+                    $campaign,
+                    (string) ($comment->name ?? '')
+                );
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('Creator comment-pending UserNotification failed', ['error' => $e->getMessage()]);
+        }
+
         $message = 'Your review has been submitted successfully! Please wait for admin approval.';
         
         if (request()->ajax() || request()->wantsJson()) {
@@ -860,6 +871,9 @@ class WebsiteController extends Controller
         $categories = Category::active()->get();
         
         $pageSEO = getPageSEO('business_resources');
+
+        $wordpressPostsApiUrl = config('services.wordpress.posts_api_url');
+        $wordpressBlogHomeUrl  = config('services.wordpress.blog_home_url');
         
         return view($this->activeTheme . 'page.businessResources', compact(
             'pageTitle', 
@@ -868,7 +882,9 @@ class WebsiteController extends Controller
             'successElements', 
             'featuredCampaigns',
             'categories',
-            'pageSEO'
+            'pageSEO',
+            'wordpressPostsApiUrl',
+            'wordpressBlogHomeUrl'
         ));
     }
 
@@ -1133,35 +1149,32 @@ class WebsiteController extends Controller
             $adminNotification->click_url = urlPath('admin.campaigns.index');
             $adminNotification->save();
 
-            // Send email notification to all admins
+            // Send email to site admin address (Basic settings → site_email), else all admins
             try {
-                $admins = Admin::all();
                 $user = auth()->user();
                 $campaignName = $campaign->name;
                 $campaignLink = route('admin.campaigns.details', $campaign->id);
                 $userName = $user->fullname ?? $user->username;
                 $userEmail = $user->email ?? 'N/A';
-                
-                foreach ($admins as $admin) {
-                    $emailMessage = "Dear Admin,\n\n";
-                    $emailMessage .= "A new campaign has been created and requires your review.\n\n";
-                    $emailMessage .= "Campaign Details:\n";
-                    $emailMessage .= "- Campaign Name: {$campaignName}\n";
-                    $emailMessage .= "- Campaign ID: {$campaign->id}\n";
-                    $emailMessage .= "- Created By: {$userName}\n";
-                    $emailMessage .= "- Creator Email: {$userEmail}\n";
-                    $emailMessage .= "- Goal Amount: " . showAmount($campaign->goal_amount) . "\n";
-                    $emailMessage .= "- Start Date: " . showDateTime($campaign->start_date) . "\n";
-                    $emailMessage .= "- End Date: " . showDateTime($campaign->end_date) . "\n\n";
-                    $emailMessage .= "Please review and approve/reject the campaign.\n\n";
-                    $emailMessage .= "View Campaign: {$campaignLink}\n\n";
-                    $emailMessage .= "Thank you.";
-                    
-                    notify($admin, 'DEFAULT', [
-                        'message' => $emailMessage,
-                        'subject' => 'New Campaign Created - ' . $campaignName,
-                    ], ['email']);
-                }
+
+                $emailMessage = "Dear Admin,\n\n";
+                $emailMessage .= "A new campaign has been created and requires your review.\n\n";
+                $emailMessage .= "Campaign Details:\n";
+                $emailMessage .= "- Campaign Name: {$campaignName}\n";
+                $emailMessage .= "- Campaign ID: {$campaign->id}\n";
+                $emailMessage .= "- Created By: {$userName}\n";
+                $emailMessage .= "- Creator Email: {$userEmail}\n";
+                $emailMessage .= "- Goal Amount: " . showAmount($campaign->goal_amount) . "\n";
+                $emailMessage .= "- Start Date: " . showDateTime($campaign->start_date) . "\n";
+                $emailMessage .= "- End Date: " . showDateTime($campaign->end_date) . "\n\n";
+                $emailMessage .= "Please review and approve/reject the campaign.\n\n";
+                $emailMessage .= "View Campaign: {$campaignLink}\n\n";
+                $emailMessage .= "Thank you.";
+
+                notifySiteAdmins('DEFAULT', [
+                    'message' => $emailMessage,
+                    'subject' => 'New Campaign Created - ' . $campaignName,
+                ], ['email']);
             } catch (\Exception $e) {
                 \Log::error('Failed to send admin email notification: ' . $e->getMessage());
             }

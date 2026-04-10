@@ -843,6 +843,19 @@ class CampaignManageApiController extends BaseApiController
         $adminNotification->click_url = urlPath('admin.comments.index');
         $adminNotification->save();
 
+        try {
+            if ((int) $campaign->user_id > 0 && (int) $campaign->user_id !== (int) $user->id) {
+                \App\Models\UserNotification::notifyCreatorUpdateCommentPublished(
+                    (int) $campaign->user_id,
+                    $campaign,
+                    (string) ($comment->name ?? ''),
+                    (string) ($update->title ?? '')
+                );
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('Creator update-comment UserNotification failed', ['error' => $e->getMessage()]);
+        }
+
         return $this->jsonLegacy(200, '200', true, 'Your comment has been posted.', [
             'user_id' => $user->id,
             'comment' => [
@@ -926,6 +939,18 @@ class CampaignManageApiController extends BaseApiController
         $adminNotification->title = ($comment->name ?: 'Guest') . ' has commented on a campaign.';
         $adminNotification->click_url = urlPath('admin.comments.index');
         $adminNotification->save();
+
+        try {
+            if ((int) $campaign->user_id > 0 && (int) $campaign->user_id !== (int) ($comment->user_id ?? 0)) {
+                \App\Models\UserNotification::notifyCreatorReviewPublished(
+                    (int) $campaign->user_id,
+                    $campaign,
+                    (string) ($comment->name ?? '')
+                );
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('Creator comment-published (API) UserNotification failed', ['error' => $e->getMessage()]);
+        }
 
         return $this->jsonLegacy(200, '200', true, 'Your comment has been posted.', [
             'user_id' => $comment->user_id,

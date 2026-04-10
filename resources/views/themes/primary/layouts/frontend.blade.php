@@ -66,6 +66,11 @@
                             <li class="nav-item">
                                 <a href="{{ route('contact') }}" class="nav-link">@lang('Contact')</a>
                             </li>
+                            @auth
+                                <li class="nav-item d-flex align-items-center">
+                                    <x-creator-notification-bell />
+                                </li>
+                            @endauth
                         @else
                             @auth
                                 <li class="nav-item dropdown">
@@ -121,6 +126,10 @@
 
                                 <li class="nav-item">
                                     <a href="{{ route('user.transactions') }}" class="nav-link">@lang('Transactions')</a>
+                                </li>
+
+                                <li class="nav-item d-flex align-items-center">
+                                    <x-creator-notification-bell />
                                 </li>
 
                                 <li class="nav-item dropdown">

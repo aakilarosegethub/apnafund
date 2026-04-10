@@ -312,6 +312,84 @@
         </div>
     </div>
 
+    <div class="col-12">
+        <div class="custom--card">
+            <div class="card-header">
+                <h3 class="title">@lang('Push notifications (FCM)')</h3>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-3">@lang('Device tokens for Firebase push. The mobile app can register tokens on login; you can view, edit, or add tokens here.')</p>
+
+                @forelse($user->pushDevices as $dev)
+                    <div class="border rounded p-3 mb-3">
+                        <form action="{{ route('admin.user.push.device.update', [$user->id, $dev->id]) }}" method="POST">
+                            @csrf
+                            <div class="row g-3 align-items-end">
+                                <div class="col-lg-2 col-md-3">
+                                    <label class="form--label">@lang('Device ID')</label>
+                                    <p class="form--control mb-0 bg-light py-2 px-2 rounded small">{{ $dev->id }}</p>
+                                </div>
+                                <div class="col-lg-2 col-md-3">
+                                    <label class="form--label">@lang('Device type')</label>
+                                    <select name="device_type" class="form--control form-select">
+                                        @foreach(['android', 'ios', 'web'] as $t)
+                                            <option value="{{ $t }}" @selected(strtolower((string) $dev->device_type) === $t)>{{ ucfirst($t) }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-lg-8 col-md-12">
+                                    <label class="form--label">@lang('FCM device token')</label>
+                                    <textarea name="fcm_token" class="form--control font-monospace small" rows="3" required>{{ $dev->fcm_token }}</textarea>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mt-3">
+                                <span class="small text-muted">
+                                    @lang('Last used'):
+                                    @if($dev->last_used_at)
+                                        {{ $dev->last_used_at->format('Y-m-d H:i') }}
+                                        <span class="text-secondary">({{ $dev->last_used_at->diffForHumans() }})</span>
+                                    @else
+                                        —
+                                    @endif
+                                </span>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button type="submit" class="btn btn--sm btn--base">@lang('Update')</button>
+                                </div>
+                            </div>
+                        </form>
+                        <form action="{{ route('admin.user.push.device.delete', [$user->id, $dev->id]) }}" method="POST" class="mt-2" onsubmit="return confirm(@json(__('Remove this push device?')))">
+                            @csrf
+                            <button type="submit" class="btn btn--sm btn-outline--danger">@lang('Remove this device')</button>
+                        </form>
+                    </div>
+                @empty
+                    <p class="text-muted mb-0">@lang('No push devices registered for this user yet.')</p>
+                @endforelse
+
+                <hr class="my-4">
+                <h6 class="mb-3">@lang('Add device token')</h6>
+                <form action="{{ route('admin.user.push.device.store', $user->id) }}" method="POST" class="row g-3 align-items-end">
+                    @csrf
+                    <div class="col-lg-2 col-md-4">
+                        <label class="form--label">@lang('Device type')</label>
+                        <select name="device_type" class="form--control form-select">
+                            <option value="android">Android</option>
+                            <option value="ios">iOS</option>
+                            <option value="web">Web</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-8 col-md-12">
+                        <label class="form--label">@lang('FCM device token')</label>
+                        <textarea name="fcm_token" class="form--control font-monospace small" rows="3" placeholder="@lang('Paste FCM registration token')" required>{{ old('fcm_token') }}</textarea>
+                    </div>
+                    <div class="col-lg-2 col-md-4">
+                        <button type="submit" class="btn btn--base w-100">@lang('Add')</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Business Information Section -->
     @if($user->business_type || $user->business_name || $user->industry)
     <div class="col-12">

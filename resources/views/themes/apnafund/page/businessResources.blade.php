@@ -545,12 +545,15 @@
 
     <script>
         // Configuration variables
-        const API_BASE_URL = 'https://apnacrowdfunding.com/blog/wp-json/custom/posts';
+        const API_BASE_URL = {!! json_encode(config('services.wordpress.posts_api_url', '')) !!};
         const POSTS_COUNT = 4; // Variable to easily change the number of posts
 
         // Function to fetch success stories from API
         async function fetchSuccessStories() {
             try {
+                if (!API_BASE_URL) {
+                    return [];
+                }
                 const response = await fetch(`${API_BASE_URL}?count=${POSTS_COUNT}`);
                 
                 if (!response.ok) {
@@ -558,7 +561,13 @@
                 }
                 
                 const data = await response.json();
-                return data;
+                if (Array.isArray(data)) {
+                    return data;
+                }
+                if (data && Array.isArray(data.data)) {
+                    return data.data;
+                }
+                return [];
             } catch (error) {
                 console.error('Error fetching success stories:', error);
                 return null;
@@ -598,12 +607,16 @@
                 // yhn ajax ka code likho
                 // Example AJAX call using jQuery to fetch fallback data (if jQuery is available)
                 
+                if (!API_BASE_URL) {
+                    resolve('<div class="col-12 text-center"><p>No blog API URL configured.</p></div>');
+                    return;
+                }
                 $.ajax({
-                    url: 'https://apnacrowdfunding.com/blog/wp-json/custom/posts?count=4',
+                    url: API_BASE_URL + '?count=4',
                     method: 'GET',
                     dataType: 'json',
                     success: function(data) {
-                        fallbackData = data.data;
+                        var fallbackData = Array.isArray(data) ? data : (data && Array.isArray(data.data) ? data.data : []);
                         // Generate HTML for each fallback post and append to #success-stories-container
                         var html = '';
                         if (Array.isArray(fallbackData) && fallbackData.length > 0) {
@@ -634,7 +647,7 @@
                             // Add "View All" button below the posts
                             html += `
                                 <div class="col-12 text-center mt-3">
-                                    <a href="https://apnacrowdfunding.com/blog/" class="btn btn-theme">
+                                    <a href="{{ ($wordpressBlogHomeUrl ?? '') ? rtrim($wordpressBlogHomeUrl, '/') . '/' : '#' }}" class="btn btn-theme" target="_blank" rel="noopener noreferrer">
                                         View All
                                     </a>
                                 </div>

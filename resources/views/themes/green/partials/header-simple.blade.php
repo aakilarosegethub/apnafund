@@ -37,6 +37,8 @@
             @endphp
 
             @if($user)
+                <div class="d-flex align-items-center gap-2">
+                <x-creator-notification-bell />
                 <div class="user-wrapper">
                     <div class="user-avatar" id="userAvatar">
                         @if(!empty($user->image))
@@ -54,6 +56,7 @@
                         <a href="{{ route('user.profile') }}">Profile</a>
                         <a href="{{ route('user.logout') }}">Logout</a>
                     </div>
+                </div>
                 </div>
             @else
                 <div class="user-wrapper">

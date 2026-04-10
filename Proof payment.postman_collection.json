@@ -1,0 +1,108 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-proof-payment-001",
+    "name": "Proof payment",
+    "description": "Bearer (Sanctum) APIs: list contributions with proof flag (0 = manual proof still needed, 1 = not required or submitted); submit proof by trx (multipart).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "List contributions (proof 0/1)",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/user_contributions_proof_list.php?limit=20",
+          "host": ["{{base_url}}"],
+          "path": ["api", "user_contributions_proof_list.php"],
+          "query": [
+            {
+              "key": "limit",
+              "value": "20"
+            }
+          ]
+        },
+        "description": "Returns `contributions[]` with `proof` (0|1), `can_upload_proof`, `gateway_type` manual|automated, `trx`, amounts in platform currency."
+      },
+      "response": []
+    },
+    {
+      "name": "Submit payment proof (by trx)",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "trx",
+              "value": "{{trx}}",
+              "type": "text"
+            },
+            {
+              "key": "payment_proof",
+              "type": "file",
+              "src": []
+            },
+            {
+              "key": "note",
+              "value": "Optional note",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/api/user_payment_proof_submit.php",
+          "host": ["{{base_url}}"],
+          "path": ["api", "user_payment_proof_submit.php"]
+        },
+        "description": "Use when `can_upload_proof` is true. Same user must own the deposit; manual gateway only; status must be initiate."
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "trx",
+      "value": ""
+    }
+  ]
+}

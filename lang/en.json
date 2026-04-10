@@ -11,5 +11,6 @@
     "The given :attribute has appeared in a data leak. Please choose a different :attribute.": "The given :attribute has appeared in a data leak. Please choose a different :attribute.",
     "Please login to comment": "Please login to comment",
     "Your account is not active.": "Your account is not active.",
-    "Your comment has been posted.": "Your comment has been posted."
+    "Your comment has been posted.": "Your comment has been posted.",
+    "Campaign not approved yet.": "Campaign not approved yet."
 }

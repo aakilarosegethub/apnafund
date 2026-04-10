@@ -5,10 +5,12 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Campaign;
+use App\Models\UserNotification;
 use App\Services\FirebaseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class ChatController extends Controller
 {
@@ -126,6 +128,55 @@ class ChatController extends Controller
             Log::debug('Chat unread count: ' . $e->getMessage());
             return response()->json(['count' => 0]);
         }
+    }
+
+    /**
+     * After a Firestore message is sent from the inbox UI, create an in-app (+ FCM) notification for the recipient.
+     */
+    public function notifyMessageRecipient(Request $request): JsonResponse
+    {
+        $sender = auth()->user();
+        if (!$sender) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $validated = $request->validate([
+            'recipient_id' => ['required', 'integer', 'min:1', Rule::notIn([(int) $sender->id])],
+            'message_preview' => 'nullable|string|max:500',
+            'campaign_id' => 'nullable|integer|min:1',
+            'campaign_title' => 'nullable|string|max:255',
+        ]);
+
+        $recipient = User::query()
+            ->whereKey((int) $validated['recipient_id'])
+            ->where('status', 1)
+            ->first();
+
+        if (!$recipient) {
+            return response()->json(['success' => false, 'message' => 'Recipient not found'], 422);
+        }
+
+        $senderName = trim(implode(' ', array_filter([$sender->firstname ?? '', $sender->lastname ?? ''])));
+        if ($senderName === '') {
+            $senderName = (string) ($sender->username ?? $sender->name ?? $sender->email ?? '');
+        }
+
+        try {
+            UserNotification::notifyInboxMessage(
+                (int) $recipient->id,
+                (int) $sender->id,
+                $senderName,
+                (string) ($validated['message_preview'] ?? ''),
+                isset($validated['campaign_id']) ? (int) $validated['campaign_id'] : null,
+                isset($validated['campaign_title']) ? (string) $validated['campaign_title'] : null
+            );
+        } catch (\Throwable $e) {
+            Log::warning('Inbox notifyMessageRecipient: ' . $e->getMessage(), ['sender' => $sender->id]);
+
+            return response()->json(['success' => false, 'message' => 'Could not create notification'], 500);
+        }
+
+        return response()->json(['success' => true]);
     }
 
     /**

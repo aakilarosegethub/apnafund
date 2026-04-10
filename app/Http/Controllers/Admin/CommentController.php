@@ -26,6 +26,19 @@ class CommentController extends Controller
 
         $this->sendNotification($comment, 'COMMENT_APPROVE');
 
+        try {
+            $camp = $comment->campaign;
+            if ($camp && (int) $camp->user_id > 0) {
+                \App\Models\UserNotification::notifyCreatorReviewPublished(
+                    (int) $camp->user_id,
+                    $camp,
+                    (string) ($comment->name ?? '')
+                );
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('Creator comment-approved UserNotification failed', ['error' => $e->getMessage()]);
+        }
+
         $toast[] = ['success', 'Comment successfully approved'];
 
         return back()->withToasts($toast);

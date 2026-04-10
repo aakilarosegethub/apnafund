@@ -7,6 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Deposit;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Models\UserPushDevice;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
@@ -79,7 +81,94 @@ class UserController extends Controller
         $totalRejectedCampaigns = $user->rejected_campaigns;
         $countries              = json_decode(file_get_contents(resource_path('views/partials/country.json')));
 
+        $user->load(['pushDevices' => function ($q) {
+            $q->orderByDesc('last_used_at')->orderByDesc('id');
+        }]);
+
         return view('admin.user.details', compact('pageTitle', 'user', 'totalReceivedDonation', 'totalWithdrawal', 'totalGivenDonation', 'totalTransactions', 'totalPendingCampaigns', 'totalApprovedCampaigns', 'totalRejectedCampaigns', 'countries'));
+    }
+
+    public function storePushDevice($id)
+    {
+        $user = User::findOrFail($id);
+
+        $data = request()->validate([
+            'fcm_token'   => 'required|string|max:5000',
+            'device_type' => 'nullable|in:android,ios,web',
+        ]);
+
+        $type = strtolower((string) ($data['device_type'] ?? 'android'));
+        if (!in_array($type, ['android', 'ios', 'web'], true)) {
+            $type = 'android';
+        }
+
+        try {
+            UserPushDevice::query()->updateOrCreate(
+                ['token_hash' => hash('sha256', $data['fcm_token'])],
+                [
+                    'user_id'       => $user->id,
+                    'fcm_token'     => $data['fcm_token'],
+                    'device_type'   => $type,
+                    'last_used_at'  => now(),
+                ]
+            );
+        } catch (QueryException $e) {
+            $toast[] = ['error', __('Could not save push device. Token may already be registered for another user.')];
+
+            return back()->withToasts($toast);
+        }
+
+        $toast[] = ['success', __('Push device saved.')];
+
+        return back()->withToasts($toast);
+    }
+
+    public function updatePushDevice($id, $device)
+    {
+        $user = User::findOrFail($id);
+        $pushDevice = UserPushDevice::query()
+            ->where('user_id', $user->id)
+            ->where('id', $device)
+            ->firstOrFail();
+
+        $data = request()->validate([
+            'fcm_token'   => 'required|string|max:5000',
+            'device_type' => 'nullable|in:android,ios,web',
+        ]);
+
+        $type = strtolower((string) ($data['device_type'] ?? 'android'));
+        if (!in_array($type, ['android', 'ios', 'web'], true)) {
+            $type = 'android';
+        }
+
+        $pushDevice->fcm_token = $data['fcm_token'];
+        $pushDevice->device_type = $type;
+        $pushDevice->last_used_at = now();
+
+        try {
+            $pushDevice->save();
+        } catch (QueryException $e) {
+            $toast[] = ['error', __('Could not update push device. This token may already exist on another device.')];
+
+            return back()->withToasts($toast);
+        }
+
+        $toast[] = ['success', __('Push device updated.')];
+
+        return back()->withToasts($toast);
+    }
+
+    public function destroyPushDevice($id, $device)
+    {
+        $user = User::findOrFail($id);
+        UserPushDevice::query()
+            ->where('user_id', $user->id)
+            ->where('id', $device)
+            ->delete();
+
+        $toast[] = ['success', __('Push device removed.')];
+
+        return back()->withToasts($toast);
     }
 
     function update($id) {

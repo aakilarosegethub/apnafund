@@ -1,5 +1,15 @@
 <?php
 
+// Empty .env value (WORDPRESS_POSTS_API_URL=) overrides env(..., 'default') in Laravel — fall back to built-in URLs.
+$wpPostsApiUrl = trim((string) env('WORDPRESS_POSTS_API_URL', ''));
+$wpBlogHomeUrl = trim((string) env('WORDPRESS_BLOG_HOME_URL', ''));
+if ($wpPostsApiUrl === '') {
+    $wpPostsApiUrl = 'https://apnacrowdfunding.com/blog/wp-json/custom/posts';
+}
+if ($wpBlogHomeUrl === '') {
+    $wpBlogHomeUrl = 'https://apnacrowdfunding.com/blog';
+}
+
 return [
 
     /*
@@ -61,6 +71,16 @@ return [
         'client_id' => env('LINKEDIN_CLIENT_ID'),
         'client_secret' => env('LINKEDIN_CLIENT_SECRET'),
         'redirect' => env('LINKEDIN_REDIRECT_URI', env('APP_URL') . '/user/auth/linkedin/callback'),
+    ],
+
+    /*
+    | WordPress (business-resources success stories). Install wp-plugin-apnafund-crowdfunding-posts on WP.
+    | WORDPRESS_POSTS_API_URL = full base e.g. https://yourblog.com/wp-json/custom/posts (no query string)
+    | WORDPRESS_BLOG_HOME_URL = public blog home for "View All" link (no trailing slash required)
+    */
+    'wordpress' => [
+        'posts_api_url' => rtrim($wpPostsApiUrl, '/'),
+        'blog_home_url' => rtrim($wpBlogHomeUrl, '/'),
     ],
 
 ];

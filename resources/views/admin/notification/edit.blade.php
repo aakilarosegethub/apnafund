@@ -97,8 +97,8 @@
         <form class="row g-4" action="{{ route('admin.notification.template.update', $template->id) }}" method="POST" id="templateForm">
             @csrf
             
-            <!-- Email Template Section -->
-            <div class="col-lg-6">
+            <!-- Email Template Section (SMS is managed separately; not edited here) -->
+            <div class="col-12">
                 <div class="custom--card h-100 shadow-sm">
                     <div class="card-header bg-primary">
                         <div class="d-flex justify-content-between align-items-center">
@@ -130,101 +130,34 @@
                                 <input type="text" class="form--control" name="subject" 
                                        value="{{ $template->subj }}" 
                                        placeholder="@lang('Enter email subject')" 
-                                       required
-                                       maxlength="255">
+                                       required>
                             </div>
                             <small class="text-muted">
                                 <i class="las la-lightbulb"></i> @lang('Use shortcodes to personalize the subject')
                             </small>
                         </div>
                         
-                        <div class="form-group mb-0 editor-wrapper">
+                        <div class="form-group mb-3 editor-wrapper">
                             <label class="form--label required">
                                 <i class="las la-file-alt"></i> @lang('Email Body')
                             </label>
                             <textarea class="form--control trumEdit" 
                                       name="email_body" 
-                                      rows="10">{{ $template->email_body }}</textarea>
+                                      rows="14">{{ $template->email_body }}</textarea>
                             <small class="text-muted mt-2 d-block">
-                                <i class="las la-magic"></i> @lang('Rich text editor enabled - Format your email with HTML')
+                                <i class="las la-magic"></i> @lang('Rich text editor — no character limit')
                             </small>
                         </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- SMS Template Section -->
-            <div class="col-lg-6">
-                <div class="custom--card h-100 shadow-sm">
-                    <div class="card-header bg-success">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h3 class="title text-white mb-0">
-                                <i class="las la-sms"></i> @lang('SMS Template')
-                            </h3>
-                            <div class="form-check form--switch">
-                                <input class="form-check-input" id="smsStatus" type="checkbox" 
-                                       name="sms_status" @if($template->sms_status) checked @endif>
-                                <label for="smsStatus" class="text-white ms-2 small">
-                                    @lang('Active')
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                            <i class="las la-exclamation-triangle"></i>
-                            <small>@lang('SMS notifications are sent via configured SMS gateway. Keep messages concise.')</small>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                        
-                        <div class="form-group mb-3">
-                            <label class="form--label required">
-                                <i class="las la-comment-dots"></i> @lang('SMS Body')
-                            </label>
-                            <textarea class="form--control" 
-                                      name="sms_body" 
-                                      id="smsBody"
-                                      rows="8" 
-                                      placeholder="@lang('Enter SMS message content...')" 
-                                      required
-                                      maxlength="500">{{ $template->sms_body }}</textarea>
-                            
-                            <!-- Character Counter -->
-                            <div class="d-flex justify-content-between mt-2">
-                                <small class="text-muted">
-                                    <i class="las la-keyboard"></i> @lang('Characters'): 
-                                    <span id="charCount" class="fw-bold text-primary">{{ strlen($template->sms_body) }}</span>
-                                    <span class="text-muted">/ 500</span>
-                                </small>
-                                <small class="text-muted">
-                                    <i class="las la-file"></i> @lang('Messages'): 
-                                    <span id="smsCount" class="fw-bold text-success">{{ ceil(strlen($template->sms_body) / 160) }}</span>
-                                    <span class="text-muted">(160 chars each)</span>
-                                </small>
-                            </div>
-                            
-                            <!-- SMS Preview Box -->
-                            <div class="mt-3 p-3 bg-light border rounded">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="las la-mobile-alt text-success fs-4 me-2"></i>
-                                    <strong class="text-muted small">@lang('SMS Preview')</strong>
-                                </div>
-                                <div class="sms-preview bg-white p-3 rounded border" style="min-height: 80px; font-family: monospace; font-size: 0.9rem; white-space: pre-wrap;">
-                                    {{ $template->sms_body }}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Quick Insert Shortcodes -->
+
                         <div class="form-group mb-0">
                             <label class="form--label">
-                                <i class="las la-plus-circle"></i> @lang('Quick Insert')
+                                <i class="las la-plus-circle"></i> @lang('Quick insert shortcodes into email')
                             </label>
                             <div class="btn-group-sm" role="group">
                                 @if(is_object($template->shortcodes) || is_array($template->shortcodes))
-                                    @foreach(array_slice((array)$template->shortcodes, 0, 4, true) as $shortcode => $key)
-                                        <button type="button" 
-                                                class="btn btn-sm btn-outline-primary insert-shortcode mb-1 me-1" 
+                                    @foreach((array) $template->shortcodes as $shortcode => $key)
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-primary insert-shortcode-email mb-1 me-1"
                                                 data-shortcode="{{ $shortcode }}">
                                             <i class="las la-plus"></i> {{ $shortcode }}
                                         </button>
@@ -303,10 +236,6 @@
         background: #e3f2fd !important;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    .sms-preview {
-        background: linear-gradient(135deg, #667eea11 0%, #764ba211 100%);
-        word-wrap: break-word;
-    }
     .custom--card {
         border-radius: 10px;
         overflow: hidden;
@@ -352,7 +281,6 @@
         (function ($) {
             "use strict";
 
-            // Initialize CKEditor
             if ($(".trumEdit")[0]) {
                 $('.editor-wrapper').find('.ck-editor').remove();
                 window.editors = {};
@@ -370,44 +298,11 @@
                 });
             }
 
-            // Character counter for SMS
-            const smsBody = document.getElementById('smsBody');
-            const charCount = document.getElementById('charCount');
-            const smsCount = document.getElementById('smsCount');
-            const smsPreview = document.querySelector('.sms-preview');
-
-            function updateSmsStats() {
-                const length = smsBody.value.length;
-                charCount.textContent = length;
-                smsCount.textContent = Math.ceil(length / 160) || 1;
-                smsPreview.textContent = smsBody.value || 'Your SMS preview will appear here...';
-
-                // Color coding
-                if (length > 480) {
-                    charCount.className = 'fw-bold text-danger';
-                } else if (length > 320) {
-                    charCount.className = 'fw-bold text-warning';
-                } else {
-                    charCount.className = 'fw-bold text-primary';
-                }
-            }
-
-            if (smsBody) {
-                smsBody.addEventListener('input', updateSmsStats);
-                updateSmsStats(); // Initial update
-            }
-
-            // Copy shortcode on click
             document.querySelectorAll('.shortcode-item').forEach(item => {
                 item.addEventListener('click', function() {
                     const shortcode = this.getAttribute('data-shortcode');
-                    
-                    // Copy to clipboard
                     navigator.clipboard.writeText(shortcode).then(() => {
-                        // Show success notification
                         showNotification('Shortcode copied: ' + shortcode, 'success');
-                        
-                        // Visual feedback
                         this.style.background = '#4caf50';
                         this.style.color = 'white';
                         setTimeout(() => {
@@ -421,36 +316,32 @@
                 });
             });
 
-            // Insert shortcode into SMS body
-            document.querySelectorAll('.insert-shortcode').forEach(btn => {
+            document.querySelectorAll('.insert-shortcode-email').forEach(btn => {
                 btn.addEventListener('click', function() {
-                    const shortcode = this.getAttribute('data-shortcode');
-                    const textarea = document.getElementById('smsBody');
-                    const start = textarea.selectionStart;
-                    const end = textarea.selectionEnd;
-                    const text = textarea.value;
-                    
-                    // Insert at cursor position
-                    textarea.value = text.substring(0, start) + shortcode + text.substring(end);
-                    textarea.focus();
-                    textarea.selectionStart = textarea.selectionEnd = start + shortcode.length;
-                    
-                    // Update stats
-                    updateSmsStats();
+                    const code = this.getAttribute('data-shortcode');
+                    const tag = '{{' + code + '}}';
+                    const ed = window.editors[0];
+                    if (!ed) return;
+                    ed.model.change(writer => {
+                        const pos = ed.model.document.selection.getFirstPosition();
+                        writer.insertText(tag, pos);
+                    });
                     showNotification('Shortcode inserted', 'success');
                 });
             });
 
-            // Reset form function
             window.resetForm = function() {
                 if (confirm('Are you sure you want to reset all changes?')) {
                     document.getElementById('templateForm').reset();
-                    updateSmsStats();
-                    showNotification('Form reset successfully', 'info');
+                    showNotification('Form reset — reload page to restore editor content', 'info');
                 }
             };
 
-            // Export template as JSON
+            const templateSmsSnapshot = {
+                status: @json((bool) $template->sms_status),
+                body: @json($template->sms_body)
+            };
+
             window.exportTemplate = function() {
                 const template = {
                     id: {{ $template->id }},
@@ -461,14 +352,10 @@
                         subject: document.querySelector('input[name="subject"]').value,
                         body: window.editors[0] ? window.editors[0].getData() : ''
                     },
-                    sms: {
-                        status: document.getElementById('smsStatus').checked,
-                        body: document.getElementById('smsBody').value
-                    },
+                    sms: templateSmsSnapshot,
                     shortcodes: @json($template->shortcodes),
                     exported_at: new Date().toISOString()
                 };
-
                 const dataStr = JSON.stringify(template, null, 2);
                 const dataBlob = new Blob([dataStr], {type: 'application/json'});
                 const url = URL.createObjectURL(dataBlob);
@@ -477,33 +364,18 @@
                 link.download = 'template_{{ $template->id }}_' + Date.now() + '.json';
                 link.click();
                 URL.revokeObjectURL(url);
-                
                 showNotification('Template exported successfully', 'success');
             };
 
-            // Copy settings to clipboard
             window.copySettings = function() {
-                const settings = {
-                    email_subject: document.querySelector('input[name="subject"]').value,
-                    email_status: document.getElementById('emailStatus').checked ? 'Active' : 'Inactive',
-                    sms_body: document.getElementById('smsBody').value,
-                    sms_status: document.getElementById('smsStatus').checked ? 'Active' : 'Inactive',
-                    sms_length: document.getElementById('smsBody').value.length,
-                    sms_parts: Math.ceil(document.getElementById('smsBody').value.length / 160)
-                };
-
-                const text = `Template Settings (ID: {{ $template->id }})\n` +
-                            `Name: {{ $template->name }}\n` +
-                            `Action: {{ $template->act }}\n\n` +
-                            `EMAIL:\n` +
-                            `- Status: ${settings.email_status}\n` +
-                            `- Subject: ${settings.email_subject}\n\n` +
-                            `SMS:\n` +
-                            `- Status: ${settings.sms_status}\n` +
-                            `- Length: ${settings.sms_length} characters\n` +
-                            `- Parts: ${settings.sms_parts} message(s)\n` +
-                            `- Body:\n${settings.sms_body}`;
-
+                const emailBody = window.editors[0] ? window.editors[0].getData() : '';
+                const text = `Template (ID: {{ $template->id }})\n` +
+                    `Name: {{ $template->name }}\n` +
+                    `Action: {{ $template->act }}\n\n` +
+                    `EMAIL:\n` +
+                    `- Status: ${document.getElementById('emailStatus').checked ? 'Active' : 'Inactive'}\n` +
+                    `- Subject: ${document.querySelector('input[name="subject"]').value}\n` +
+                    `- Body:\n${emailBody}`;
                 navigator.clipboard.writeText(text).then(() => {
                     showNotification('Settings copied to clipboard', 'success');
                 }).catch(err => {
@@ -512,74 +384,42 @@
                 });
             };
 
-            // Show notification helper
             function showNotification(message, type) {
-                const colors = {
-                    success: '#4caf50',
-                    error: '#f44336',
-                    info: '#2196f3',
-                    warning: '#ff9800'
-                };
-
+                const colors = { success: '#4caf50', error: '#f44336', info: '#2196f3', warning: '#ff9800' };
                 const notification = document.createElement('div');
                 notification.style.cssText = `
-                    position: fixed;
-                    top: 20px;
-                    right: 20px;
-                    background: ${colors[type] || colors.info};
-                    color: white;
-                    padding: 15px 25px;
-                    border-radius: 5px;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-                    z-index: 9999;
+                    position: fixed; top: 20px; right: 20px;
+                    background: ${colors[type] || colors.info}; color: white;
+                    padding: 15px 25px; border-radius: 5px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 9999;
                     animation: slideIn 0.3s ease;
                 `;
                 notification.innerHTML = `<i class="las la-check-circle"></i> ${message}`;
                 document.body.appendChild(notification);
-
                 setTimeout(() => {
                     notification.style.animation = 'slideOut 0.3s ease';
                     setTimeout(() => notification.remove(), 300);
                 }, 3000);
             }
 
-            // Add CSS animations
-            const style = document.createElement('style');
-            style.textContent = `
-                @keyframes slideIn {
-                    from { transform: translateX(400px); opacity: 0; }
-                    to { transform: translateX(0); opacity: 1; }
-                }
-                @keyframes slideOut {
-                    from { transform: translateX(0); opacity: 1; }
-                    to { transform: translateX(400px); opacity: 0; }
-                }
+            const anim = document.createElement('style');
+            anim.textContent = `
+                @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+                @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(400px); opacity: 0; } }
             `;
-            document.head.appendChild(style);
+            document.head.appendChild(anim);
 
-            // Form validation
             document.getElementById('templateForm').addEventListener('submit', function(e) {
                 const emailBody = window.editors[0] ? window.editors[0].getData() : '';
-                const smsBody = document.getElementById('smsBody').value;
-
                 if (!emailBody.trim()) {
                     e.preventDefault();
                     showNotification('Email body cannot be empty', 'error');
                     return false;
                 }
-
-                if (!smsBody.trim()) {
-                    e.preventDefault();
-                    showNotification('SMS body cannot be empty', 'error');
-                    return false;
+                const ta = document.querySelector('textarea[name="email_body"]');
+                if (ta && window.editors[0]) {
+                    ta.value = emailBody;
                 }
-
-                if (smsBody.length > 500) {
-                    e.preventDefault();
-                    showNotification('SMS body exceeds 500 characters limit', 'error');
-                    return false;
-                }
-
                 showNotification('Saving template...', 'info');
             });
 

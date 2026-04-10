@@ -22,6 +22,9 @@ return [
     // === USERS ===
     'admin.user.kyc.approve'          => 'users.kyc_approve',
     'admin.user.kyc.cancel'           => 'users.kyc_approve',
+    'admin.user.push.device.store'    => 'users.update',
+    'admin.user.push.device.update'   => 'users.update',
+    'admin.user.push.device.delete'   => 'users.update',
     'admin.user.update'               => 'users.update',
     'admin.user.password.change'      => 'users.update',
     'admin.user.add.sub.balance'      => 'users.update',
@@ -36,6 +39,7 @@ return [
 
     // === DONATIONS ===
     'admin.donations.approve'         => 'donations.approve',
+    'admin.donations.approve.form'    => 'donations.approve',
     'admin.donations.reject'          => 'donations.approve',
     'admin.donations'                 => 'donations.view',
 
@@ -150,6 +154,7 @@ return [
     'admin.home'                      => 'settings.home',
     'admin.social.login'              => 'settings.social_login',
     'admin.firebase.otp'              => 'settings.firebase_otp',
+    'admin.fcm.push'                  => 'settings.firebase_otp',
     'admin.gemini'                    => 'settings.gemini',
     'admin.plugin.setting'            => 'settings.plugins',
     'admin.plugin.status'             => 'settings.plugins',

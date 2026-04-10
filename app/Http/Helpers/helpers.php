@@ -627,6 +627,49 @@ function notify($user, $templateName, $shortCodes = null, $sendVia = null): void
     $notify->send();
 }
 
+/**
+ * Email recipients for system → admin notifications.
+ * Uses settings.site_email when valid; otherwise every admin with a valid email.
+ *
+ * @return array<int, object{email: string, fullname: string, username: string}>
+ */
+function adminMailNotifyRecipients(): array
+{
+    $setting = bs();
+    $email = isset($setting->site_email) ? trim((string) $setting->site_email) : '';
+    if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return [(object) [
+            'email'    => strtolower($email),
+            'fullname' => ($setting->site_name ?? 'Site') . ' Admin',
+            'username' => 'admin',
+        ]];
+    }
+
+    $recipients = [];
+    foreach (\App\Models\Admin::query()->orderBy('id')->get() as $admin) {
+        if (empty($admin->email) || !filter_var($admin->email, FILTER_VALIDATE_EMAIL)) {
+            continue;
+        }
+        $recipients[] = (object) [
+            'email'    => $admin->email,
+            'fullname' => $admin->name ?? $admin->username ?? 'Admin',
+            'username' => $admin->username ?? 'admin',
+        ];
+    }
+
+    return $recipients;
+}
+
+/**
+ * Send the same notification email to each adminMailNotifyRecipients() address.
+ */
+function notifySiteAdmins(string $templateName, array $shortCodes, ?array $sendVia = null): void
+{
+    foreach (adminMailNotifyRecipients() as $recipient) {
+        notify($recipient, $templateName, $shortCodes, $sendVia);
+    }
+}
+
 function showDateTime($date, $format = null): string {
     $lang = session()->get('lang');
     Carbon::setlocale($lang);

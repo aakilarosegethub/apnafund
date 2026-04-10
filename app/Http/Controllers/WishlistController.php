@@ -353,6 +353,18 @@ class WishlistController extends Controller
         $adminNotification->click_url = urlPath('admin.comments.index');
         $adminNotification->save();
 
+        try {
+            if ((int) $campaign->user_id > 0 && (int) $campaign->user_id !== (int) ($comment->user_id ?? 0)) {
+                \App\Models\UserNotification::notifyCreatorReviewPending(
+                    (int) $campaign->user_id,
+                    $campaign,
+                    (string) ($comment->name ?? '')
+                );
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('Creator comment-pending UserNotification failed', ['error' => $e->getMessage()]);
+        }
+
         $toast[] = ['success', 'Your review has been submitted successfully! Please wait for admin approval.'];
 
         return back()->withToasts($toast);
@@ -510,6 +522,9 @@ class WishlistController extends Controller
         $categories = Category::active()->get();
         
         $pageSEO = getPageSEO('business_resources');
+
+        $wordpressPostsApiUrl = config('services.wordpress.posts_api_url');
+        $wordpressBlogHomeUrl  = config('services.wordpress.blog_home_url');
         
         return view($this->activeTheme . 'page.businessResources', compact(
             'pageTitle', 
@@ -518,7 +533,9 @@ class WishlistController extends Controller
             'successElements', 
             'featuredCampaigns',
             'categories',
-            'pageSEO'
+            'pageSEO',
+            'wordpressPostsApiUrl',
+            'wordpressBlogHomeUrl'
         ));
     }
 

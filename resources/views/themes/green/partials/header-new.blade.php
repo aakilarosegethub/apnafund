@@ -258,6 +258,8 @@
               Start a Campaign
             </a>
 
+            <x-creator-notification-bell />
+
             <div class="user-wrapper">
               <div class="user-avatar" id="userAvatar">
                 @if(!empty($user->image))

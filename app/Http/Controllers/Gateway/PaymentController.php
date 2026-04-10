@@ -357,6 +357,14 @@ class PaymentController extends Controller
                 $adminNotification->save();
             }
 
+            try {
+                if ($campaignAuthor && $campaignAuthor->id) {
+                    \App\Models\UserNotification::notifyCreatorNewDonation((int) $campaignAuthor->id, $deposit, $campaign);
+                }
+            } catch (\Throwable $e) {
+                \Log::warning('Creator UserNotification failed', ['error' => $e->getMessage()]);
+            }
+
             notify($user, $isManual ? 'DONATION_APPROVE' : 'DONATION_COMPLETE', [
                 'method_name'     => $deposit->gatewayCurrency()->name,
                 'method_currency' => $deposit->method_currency,

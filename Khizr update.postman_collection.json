@@ -1,0 +1,1056 @@
+{
+  "info": {
+    "_postman_id": "16cf8e3b-3ff7-47d1-95b3-2400df46ed40",
+    "name": "Khizr update",
+    "description": "Front campaign APIs collection.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "1136625",
+    "_collection_link": "https://go.postman.co/collection/1136625-16cf8e3b-3ff7-47d1-95b3-2400df46ed40?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "front campaign",
+      "item": [
+        {
+          "name": "GET campaign detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/campaigns/{{campaign_slug}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "campaigns",
+                "{{campaign_slug}}"
+              ]
+            },
+            "description": "Fetch single campaign detail by slug."
+          },
+          "response": []
+        },
+        {
+          "name": "POST campaign comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slug\": \"{{campaign_slug}}\",\n  \"name\": \"Guest Demo\",\n  \"email\": \"guest.demo@example.com\",\n  \"comment\": \"Great campaign! Posting comment from Postman collection.\",\n  \"title\": \"Guest feedback\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/campaign_comment.php",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "campaign_comment.php"
+              ]
+            },
+            "description": "Submit campaign comment. For guest: name/email required. For logged user: send user_id or Bearer token."
+          },
+          "response": []
+        },
+        {
+          "name": "POST campaign comment (with user_id)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slug\": \"{{campaign_slug}}\",\n  \"user_id\": {{user_id}},\n  \"comment\": \"Great campaign! Posting comment with user_id.\",\n  \"title\": \"User feedback\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/campaign_comment.php",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "campaign_comment.php"
+              ]
+            },
+            "description": "Submit campaign comment using user_id. If user_id is provided, name/email are not required and will be fetched from users table."
+          },
+          "response": []
+        },
+        {
+          "name": "POST campaign update comment",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slug\": \"{{campaign_slug}}\",\n  \"update_id\": {{update_id}},\n  \"comment\": \"This is update comment from Postman.\",\n  \"title\": \"Update feedback\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/campaign_update_comment.php",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "campaign_update_comment.php"
+              ]
+            },
+            "description": "Post comment on campaign update. Requires Bearer token."
+          },
+          "response": []
+        },
+        {
+          "name": "GET campaign update comments list",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/campaign_update_comments.php?slug={{campaign_slug}}&update_id={{update_id}}&skip=0&limit=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "campaign_update_comments.php"
+              ],
+              "query": [
+                {
+                  "key": "slug",
+                  "value": "{{campaign_slug}}"
+                },
+                {
+                  "key": "update_id",
+                  "value": "{{update_id}}"
+                },
+                {
+                  "key": "skip",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "List approved comments for a published campaign update."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "campaign creator APIs",
+      "item": [
+        {
+          "name": "people (collaborators)",
+          "item": [
+            {
+              "name": "GET search users",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/campaign_collaborators.php?op=search&q={{search_q}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "campaign_collaborators.php"
+                  ],
+                  "query": [
+                    {
+                      "key": "op",
+                      "value": "search"
+                    },
+                    {
+                      "key": "q",
+                      "value": "{{search_q}}"
+                    }
+                  ]
+                },
+                "description": "Search users for People tab (minimum 2 chars). Bearer token required."
+              },
+              "response": []
+            },
+            {
+              "name": "GET list collaborators",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/campaign_collaborators.php?op=list&slug={{campaign_slug}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "campaign_collaborators.php"
+                  ],
+                  "query": [
+                    {
+                      "key": "op",
+                      "value": "list"
+                    },
+                    {
+                      "key": "slug",
+                      "value": "{{campaign_slug}}"
+                    }
+                  ]
+                },
+                "description": "List current collaborators for campaign People tab."
+              },
+              "response": []
+            },
+            {
+              "name": "POST select/add collaborator",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"op\": \"add\",\n  \"slug\": \"{{campaign_slug}}\",\n  \"user_id\": {{collaborator_user_id}}\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/campaign_collaborators.php",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "campaign_collaborators.php"
+                  ]
+                },
+                "description": "Select user and add as collaborator to campaign (owner token required)."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "payments",
+          "item": [
+            {
+              "name": "GET payout gateway list (allowed)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/campaign_payment.php?op=list&slug={{campaign_slug}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "campaign_payment.php"
+                  ],
+                  "query": [
+                    {
+                      "key": "op",
+                      "value": "list"
+                    },
+                    {
+                      "key": "slug",
+                      "value": "{{campaign_slug}}"
+                    }
+                  ]
+                },
+                "description": "Get payout gateways/banks available for campaign payment settings."
+              },
+              "response": []
+            },
+            {
+              "name": "POST submit payment details",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"op\": \"save\",\n  \"slug\": \"{{campaign_slug}}\",\n  \"payout_bank_id\": {{payout_bank_id}},\n  \"bank_account_number\": \"{{bank_account_number}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/campaign_payment.php",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "campaign_payment.php"
+                  ]
+                },
+                "description": "Submit/save campaign payout payment details (owner token required)."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Documents",
+          "item": [
+            {
+              "name": "List ",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{bearer_token}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/campaign_required_documents.php?campaign_id={{campaign_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "campaign_required_documents.php"
+                  ],
+                  "query": [
+                    {
+                      "key": "campaign_id",
+                      "value": "{{campaign_id}}"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Submit",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{bearer_token}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "campaign_id",
+                      "value": "{{campaign_id}}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "documents[cnic_front_image]",
+                      "type": "file",
+                      "value": null
+                    },
+                    {
+                      "key": "documents[cnic_back_image]",
+                      "type": "file",
+                      "value": null
+                    },
+                    {
+                      "key": "documents[document]",
+                      "type": "file",
+                      "value": null
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/campaign_required_documents_submit.php",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "campaign_required_documents_submit.php"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Multi currency",
+      "item": [
+        {
+          "name": "currency_info.php GET",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/currency_info.php",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "currency_info.php"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Allowd countries list",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/allowed_location_countries.php",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "allowed_location_countries.php"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Info by country",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/currency_info_by_country.php?country_id=9",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "currency_info_by_country.php"
+              ],
+              "query": [
+                {
+                  "key": "country_id",
+                  "value": "9"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Paynment process",
+      "item": [
+        {
+          "name": "Gsteway List",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/paymentgateway.php",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "paymentgateway.php"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET web view link",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gateway_id\": \"{{gateway_id}}\",\n  \"amount\": \"100\",\n  \"campaign_id\": \"{{campaign_id}}\",\n  \"full_name\": \"Demo User\",\n  \"email\": \"{{user_email}}\",\n  \"currency\": \"PKR\",\n  \"country\": \"Pakistan\",\n  \"phone\": \"{{user_mobile}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/payment/webview-url",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "payment",
+                "webview-url"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "payment/manual-proof (manual gateway proof upload)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "trx",
+                  "value": "{{trx_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "payment_proof",
+                  "type": "file",
+                  "value": null
+                },
+                {
+                  "key": "note",
+                  "value": "Manual transfer screenshot attached from mobile app",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/payment/manual-proof",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "payment",
+                "manual-proof"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Updated payment APIs",
+      "item": [
+        {
+          "name": "Gateways list",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8000/api/gateways?country_id=186",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "api",
+                "gateways"
+              ],
+              "query": [
+                {
+                  "key": "country_id",
+                  "value": "186"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "web view",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "XSRF-TOKEN=eyJpdiI6IlFld0h6MGc5QlN3VEliZGRRNW9yRFE9PSIsInZhbHVlIjoiVVhSckJVejhSSGx3N21vbWRvcGN4YTZiUHJSeFVnV3g2M0xXWFBlMGdJRTRuVjhFRnhFa0lxUlA2bTdIMm5yd0pWYUZTZ3JzdGhkZGQ4SGZDZ1N2M2hwR2FFaWJyMkJVWWRCQjYrdm9XRlBENTB3bjNzeUxiaElGWlFWWk83aWsiLCJtYWMiOiJkZTlhMzg5OWJmNmZjZTYzYzdjNTFjNDAzNGMwZjY0ZWE2YTdlZmM5ZmU4N2UwYzZiM2VmZjhkNThiYjA3ZTk2IiwidGFnIjoiIn0%3D; laravel_session=eyJpdiI6IlE5bFdvMnk4dEwyRVBXMmF0UjM5aHc9PSIsInZhbHVlIjoiV1FtUkxKODZmakpWQW5pSEFGUm9nUkY4aHZYZVl6NHAwcnZ4WjVSbTFpWit2VDBlK2pPcHkyNDZpbkVQcnVnNkRWM0RMMnkweXRySzFFck01Z0phd2hpRG1KVEhBb1hWK0hlbFo2bU91UktZanpKdDlTMDVxc2RJdFE3UWtSc20iLCJtYWMiOiJhMjY1ZGYyZWZlOTU0MjEzMjkyMGUyNzU1YTFlNmM2MTY2MjE3MTYyZjFlMmQ3MTNjNTg3ZTUwMjEyODhkODc5IiwidGFnIjoiIn0%3D"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gateway_id\": \"23\",\n  \"amount\": \"100\",\n  \"campaign_id\": \"129\",\n  \"full_name\": \"Demo User\",\n  \"email\": \"raheelshehzad188@gmail.com\",\n  \"country_id\": 130,\n  \"phone\": \"3001234567\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/payment/webview-url",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "api",
+                "payment",
+                "webview-url"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Paymrnnt proof",
+      "item": [
+        {
+          "name": "List contributions (proof 0|1)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/user_contributions_proof_list.php?limit=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "user_contributions_proof_list.php"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"mobile\": \"{{user_email}}\",\n  \"password\": \"{{user_password}}\",\n  \"ccode\": \"{{ccode}}\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/user_login.php",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "user_login.php"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Gateways list",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8000/api/gateways?country_id=130",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "gateways"
+          ],
+          "query": [
+            {
+              "key": "country_id",
+              "value": "130"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "https://www.apnacrowdfunding.com/api/user_notifications.php",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "https://www.apnacrowdfunding.com/api/user_notifications.php",
+          "protocol": "https",
+          "host": [
+            "www",
+            "apnacrowdfunding",
+            "com"
+          ],
+          "path": [
+            "api",
+            "user_notifications.php"
+          ]
+        },
+        "description": "Generated from cURL: curl -s -i \"https://www.apnacrowdfunding.com/api/user_notifications.php\" \\\n  -H \"Accept: application/json\""
+      },
+      "response": []
+    },
+    {
+      "name": "User notiifications",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}api/user_notifications.php",
+          "host": [
+            "{{base_url}}api"
+          ],
+          "path": [
+            "user_notifications.php"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Login with tojken",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"mobile\": \"raheelshehzad188@gmail.com\",\n    \"password\": \"admin123\",\n    \"device_token\": \"YOUR_FCM_REGISTRATION_TOKEN_HERE\",\n    \"device_type\": \"android\"\n  }",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8000/api/user_login.php",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "user_login.php"
+          ]
+        },
+        "description": "Generated from cURL: curl --location 'http://localhost:8000/api/user_login.php' \\\n  --header 'Accept: application/json' \\\n  --header 'Content-Type: application/json' \\\n  --data-raw '{\n    \"mobile\": \"raheelshehzad188@gmail.com\",\n    \"password\": \"admin123\",\n    \"device_token\": \"YOUR_FCM_REGISTRATION_TOKEN_HERE\",\n    \"device_type\": \"android\"\n  }'"
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "campaign_slug",
+      "value": "animedge-studio-creative-motion-design-studio-for-modern-brands"
+    },
+    {
+      "key": "update_id",
+      "value": "6"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "user_id",
+      "value": "49"
+    },
+    {
+      "key": "collaborator_user_id",
+      "value": "50"
+    },
+    {
+      "key": "search_q",
+      "value": "ra"
+    },
+    {
+      "key": "payout_bank_id",
+      "value": "1"
+    },
+    {
+      "key": "bank_account_number",
+      "value": "03001234567"
+    },
+    {
+      "key": "payment_trx",
+      "value": ""
+    },
+    {
+      "key": "proof_note",
+      "value": "Manual payment proof from app"
+    }
+  ]
+}

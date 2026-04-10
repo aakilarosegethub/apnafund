@@ -24,7 +24,7 @@
                     </div>
 
                     <!-- Category Filter -->
-                    <div class="col-12 col-md-3 col-lg-3">
+                    <div class="col-12 col-md-4 col-lg-4">
                         <select class="form-select" id="filter-category">
                             <option value="">All Categories</option>
                             @foreach ($categories as $category)
@@ -36,7 +36,7 @@
                     </div>
 
                     <!-- Sort Filter -->
-                    <div class="col-12 col-md-3 col-lg-3">
+                    <div class="col-12 col-md-4 col-lg-4">
                         <select class="form-select" id="sort-campaigns">
                             <option value="latest" {{ request('sort') == 'latest' ? 'selected' : '' }}>Latest First</option>
                             <option value="oldest" {{ request('sort') == 'oldest' ? 'selected' : '' }}>Oldest First</option>
@@ -48,16 +48,7 @@
                     </div>
 
                     <!-- View Toggle -->
-                    <div class="col-12 col-md-2 col-lg-2">
-                        <div class="view-options d-flex gap-2">
-                            <button class="btn btn-outline-secondary w-100 active" data-view="grid" title="Grid View">
-                                <i class="fas fa-th"></i>
-                            </button>
-                            <button class="btn btn-outline-secondary w-100" data-view="list" title="List View">
-                                <i class="fas fa-list"></i>
-                            </button>
-                        </div>
-                    </div>
+                    
                 </div>
             </div>
 

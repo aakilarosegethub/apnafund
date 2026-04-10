@@ -99,16 +99,6 @@
                                         <span class="password-show-hide ti ti-eye toggle-password" id="#confirm-password"></span>
                                     </div>
                                 </div>
-                                <div class="col-sm-6">
-                                    <label class="form--label">@lang('CNIC Front')</label>
-                                    <input type="file" class="form--control" name="cnic_front_image" accept="image/jpeg,image/jpg,image/png">
-                                    <small class="text-muted">@lang('Upload front side of your CNIC')</small>
-                                </div>
-                                <div class="col-sm-6">
-                                    <label class="form--label">@lang('CNIC Back')</label>
-                                    <input type="file" class="form--control" name="cnic_back_image" accept="image/jpeg,image/jpg,image/png">
-                                    <small class="text-muted">@lang('Upload back side of your CNIC')</small>
-                                </div>
 
                                 @if ($setting->agree_policy)
                                     <div class="col-sm-12">

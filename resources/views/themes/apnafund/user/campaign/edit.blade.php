@@ -427,10 +427,16 @@
             <a href="{{ route('user.campaign.edit.faq', $campaign->slug) }}" class="{{ ($section ?? 'basics') == 'faq' ? 'active' : '' }}">FAQ</a>
         </div>
         <div style="display: flex; gap: 10px; align-items: center;">
-            <!-- Preview Button -->
+            <!-- Preview Button (public preview only after admin approval) -->
+            @if($campaign->status == \App\Constants\ManageStatus::CAMPAIGN_APPROVED)
             <a href="{{ route('user.campaign.show', $campaign->slug) }}" target="_blank" class="btn" style="padding: 8px 20px; font-size: 14px; background: #fff; border: 1px solid #ddd; color: #333; text-decoration: none; border-radius: 5px; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;">
                 <i class="fas fa-eye"></i> Preview
             </a>
+            @else
+            <a href="javascript:void(0)" role="button" class="btn" style="padding: 8px 20px; font-size: 14px; background: #fff; border: 1px solid #ddd; color: #333; text-decoration: none; border-radius: 5px; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; cursor: pointer;" onclick='if (typeof showToasts === "function") { showToasts("warning", @json(__('Campaign not approved yet.'))); } else if (typeof iziToast !== "undefined" && iziToast.warning) { iziToast.warning({ message: @json(__('Campaign not approved yet.')), position: "topRight", timeout: 6000 }); } return false;'>
+                <i class="fas fa-eye"></i> Preview
+            </a>
+            @endif
             
             <!-- Action Buttons (Save/Exit - shown when editing) -->
             <div id="topActionButtons" style="display: none; gap: 10px; align-items: center;">

@@ -86,7 +86,7 @@ class SettingController extends Controller
     }
 
     function basicUpdate() {
-        $this->validate(request(), [
+        $rules = [
             'site_name'      => 'required|string|max:40',
             'site_cur'       => 'required|string|max:40',
             'cur_sym'        => 'required|string|max:40',
@@ -96,7 +96,11 @@ class SettingController extends Controller
             'fraction_digit' => 'required|int|gte:0|max:9',
             'date_format'    => 'required|in:m-d-Y,d-m-Y,Y-m-d',
             'time_region'    => 'required',
-        ]);
+        ];
+        if (Schema::hasColumn('settings', 'site_email')) {
+            $rules['site_email'] = 'nullable|email|max:255';
+        }
+        $this->validate(request(), $rules);
 
         // This function is called in the basicUpdate() method of SettingController
         $setting = bs();
@@ -108,6 +112,10 @@ class SettingController extends Controller
         $setting->date_format    = request('date_format');
         $setting->first_color    = str_replace('#', '', request('first_color'));
         $setting->second_color   = str_replace('#', '', request('second_color'));
+
+        if (Schema::hasColumn('settings', 'site_email')) {
+            $setting->site_email = request('site_email') ? strtolower(trim((string) request('site_email'))) : null;
+        }
 
         // Campaign Registration Fee
         if (Schema::hasColumn('settings', 'registration_fee_enabled')) {
@@ -525,7 +533,16 @@ class SettingController extends Controller
 
     function cookie() {
         $pageTitle = 'Cookie Policy';
-        $cookie    = SiteData::where('data_key', 'cookie.data')->first();
+        $cookie    = SiteData::firstOrCreate(
+            ['data_key' => 'cookie.data'],
+            [
+                'data_info' => [
+                    'short_details' => '',
+                    'details'       => '',
+                    'status'        => ManageStatus::INACTIVE,
+                ],
+            ]
+        );
 
         return view('admin.site.cookie', compact('pageTitle', 'cookie'));
     }
@@ -536,11 +553,11 @@ class SettingController extends Controller
             'details'       => 'required',
         ]);
 
-        $cookie = SiteData::where('data_key', 'cookie.data')->first();
+        $cookie = SiteData::firstOrNew(['data_key' => 'cookie.data']);
         $cookie->data_info = [
             'short_details' => request('short_details'),
             'details'       => request('details'),
-            'status'        => request('status') ? ManageStatus::ACTIVE : ManageStatus::INACTIVE,
+            'status'        => request()->boolean('status') ? ManageStatus::ACTIVE : ManageStatus::INACTIVE,
         ];
         $cookie->save();
 
