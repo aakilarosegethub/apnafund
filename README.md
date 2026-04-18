@@ -1,66 +1,134 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# ApnaCrowdFunding
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel 11 application for running a **rewards-based crowdfunding** platform: creators launch campaigns, backers contribute through multiple payment gateways, and admins manage content, payouts, and settings. The project ships with a **theme-based public site**, an **admin panel**, and **mobile-oriented JSON APIs** (legacy `.php` endpoints) registered under the `/api` prefix in `routes/web.php`.
 
-## About Laravel
+## Requirements
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- PHP **8.2+** with common extensions (`mbstring`, `openssl`, `pdo_mysql`, `json`, `curl`, `fileinfo`, `gd` or `imagick` as needed)
+- Composer 2.x
+- MySQL 8 (or compatible) — or adjust `DB_*` in `.env`
+- Node/npm **optional** (only if you build front-end assets from source)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Installation
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+1. **Clone** the repository and enter the project directory.
 
-## Learning Laravel
+2. **Install PHP dependencies**
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+   ```bash
+   composer install
+   ```
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+3. **Environment file**
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
 
-## Laravel Sponsors
+   Edit `.env` and set at minimum:
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+   - `APP_URL` — your public base URL  
+   - `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` — database credentials  
+   - Mail, storage, and any payment gateway keys you enable  
 
-### Premium Partners
+   Optional: `DEBUG_CURRENCY_KEY` for the `/debug-currency` diagnostic route (see `routes/web.php`).
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+4. **Database**
 
-## Contributing
+   ```bash
+   php artisan migrate
+   ```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+   Seeders (if you use demo data or templates):
 
-## Code of Conduct
+   ```bash
+   php artisan db:seed
+   ```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+5. **Storage link** (if the app serves user uploads from `storage/app/public`)
 
-## Security Vulnerabilities
+   ```bash
+   php artisan storage:link
+   ```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+6. **Run the application**
+
+   ```bash
+   php artisan serve
+   ```
+
+   Or use the Composer script (raises upload limits for local dev):
+
+   ```bash
+   composer run serve
+   ```
+
+   The app will be available at `http://127.0.0.1:8000` (or the host/port you configure).
+
+## Configuration notes
+
+- **Queue**: Default in `.env.example` is `database`. For production, configure a real queue worker (`php artisan queue:work`) if you dispatch jobs.
+- **Sanctum**: Mobile/API routes use `auth:sanctum` where noted in `routes/web.php`; ensure `SANCTUM_STATEFUL_DOMAINS` and SPA cookie settings match your deployment if you use session-based SPA auth.
+- **Firebase / FCM**: Optional; see `.env.example` for `FIREBASE_*` variables and `config/firebase.php` if present.
+- **Currency / IP**: Visitor currency detection uses helpers and optional `ip_currency_cache` — see `App\Http\Middleware\DetectCurrencyByIP` and `docs/DATABASE.md`.
+
+## Folder structure (high level)
+
+| Path | Purpose |
+|------|--------|
+| `app/Http/Controllers` | Web, admin, API, and payment gateway controllers |
+| `app/Http/Middleware` | HTTP middleware (auth, beta gate, currency, admin RBAC, etc.) |
+| `app/Models` | Eloquent models (`Campaign`, `User`, `Deposit`, …) |
+| `app/Services` | Domain services (payouts, currency, notifications, webhooks, FCM, …) |
+| `app/Http/Helpers/helpers.php` | Globally loaded helper functions (settings, uploads, notifications) |
+| `config/` | Laravel and package configuration |
+| `database/migrations` | Schema history (see `docs/DATABASE.md` for a conceptual overview) |
+| `database/seeders` | Seed data (e.g. notification templates) |
+| `resources/views` | Blade views organized by **theme** (e.g. `themes/green`, `themes/primary`) |
+| `public/` | Web root (assets, uploads, `index.php`) |
+| `routes/web.php` | **Primary route file** — public site, user area, admin, and `/api` JSON endpoints |
+| `routes/api.php` | Unused placeholder (APIs live in `web.php`) |
+| `docs/` | Project documentation (e.g. database overview) |
+
+## Key features / modules
+
+- **Campaigns**: Create, approve, feature, and display campaigns; goals, rewards, FAQs, updates, comments, collaborators.
+- **Payments**: Many gateways under `app/Http/Controllers/Gateway/*` with a shared `Gateway\PaymentController` for deposit initiation and manual proof upload.
+- **Creator payouts**: Admin workflow for campaign success, fees, and withholdings (`CreatorCampaignPayoutService`, related models).
+- **Admin**: Settings, categories, users, campaigns, RBAC (`roles` / `permissions`), activity logs, email logs.
+- **Mobile / legacy API**: JSON responses with legacy field names (`ResponseCode`, `fundlist`, …) via `Api\*` controllers extending `BaseApiController`.
+- **Notifications**: Email templates, optional FCM push, goal-reached emails (`CampaignGoalReachedNotificationService`).
+
+## API routing
+
+REST-style routes under `Route::prefix('api')` in `routes/web.php` include both:
+
+- **Legacy-style** `.php` endpoints (e.g. `home_api.php`, `fundlist.php`) for mobile clients.
+- **Modern JSON** routes such as `GET /api/campaigns` and `GET /api/campaigns/{slugOrId}`.
+
+See inline comments in `routes/web.php` for authentication (`auth:sanctum`) and purpose of each group.
+
+## Validation and form requests
+
+The codebase does **not** use dedicated `FormRequest` classes in `app/Http/Requests`; validation is typically applied in controllers with `$this->validate()` or `Validator::make()`. When extending behavior, prefer extracting rules into FormRequest classes following Laravel conventions.
+
+## Jobs
+
+There are **no** custom queued job classes under `app/Jobs` in this repository; queue configuration is still relevant if you add jobs later.
+
+## Testing
+
+```bash
+php artisan test
+```
+
+## Documentation in code
+
+PHPDoc blocks describe controllers, models, services, and middleware where maintained. For **database tables and important columns**, see:
+
+- `docs/DATABASE.md`
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Project `composer.json` declares **MIT** for the Laravel skeleton; verify third-party assets and themes for their respective licenses.

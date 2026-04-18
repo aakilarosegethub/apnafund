@@ -235,6 +235,8 @@ class Email extends NotifyProcess implements Notifiable
 				'ADMIN_PAYMENT_SUCCESS' => 'payment_success',
 				'DONATION_COMPLETE' => 'payment_success',
 				'DONATION_APPROVE' => 'payment_success',
+				'CAMPAIGN_GOAL_REACHED_ADMIN' => 'notification',
+				'CAMPAIGN_GOAL_REACHED_CREATOR' => 'notification',
 				default => 'notification'
 			};
 		}

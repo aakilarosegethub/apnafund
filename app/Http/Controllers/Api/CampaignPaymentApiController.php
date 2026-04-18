@@ -17,6 +17,11 @@ use Illuminate\Support\Facades\Validator;
  */
 class CampaignPaymentApiController extends BaseApiController
 {
+    /**
+     * Legacy JSON envelope used by mobile clients.
+     *
+     * @param  array<string, mixed>  $extra  Merged into JSON body (e.g. `payout_banks`, `campaign_payment`)
+     */
     protected function jsonLegacy(int $http, string $code, bool $ok, string $msg, array $extra = []): JsonResponse
     {
         $payload = array_merge([
@@ -28,6 +33,12 @@ class CampaignPaymentApiController extends BaseApiController
         return response()->json($payload, $http);
     }
 
+    /**
+     * **POST/GET** `/api/campaign_payment.php` — `op=list|save` (Bearer). Lists payout banks + current campaign payment fields, or saves bank/account details.
+     *
+     * @param  \Illuminate\Http\Request  $request  JSON/form: `op`, `campaign_id`|`fund_id`|`slug`, save fields when `op=save`
+     * @return \Illuminate\Http\JsonResponse Legacy envelope; 401/403/400 on auth/validation errors
+     */
     public function payment(Request $request): JsonResponse
     {
         $uid = $this->getUserId($request);
@@ -250,13 +261,16 @@ class CampaignPaymentApiController extends BaseApiController
     {
         $data = $this->getRequestData($request);
         $rawId = $data['campaign_id'] ?? $data['fund_id'] ?? $request->input('campaign_id') ?? $request->input('fund_id');
-        $slug = $data['slug'] ?? $request->input('slug');
+        $slug = trim((string) ($data['slug'] ?? $request->input('slug', '')));
 
         $campaign = null;
         if ($rawId !== null && $rawId !== '') {
             $campaign = Campaign::where('id', (int) $rawId)->first();
-        } elseif (!empty($slug)) {
+        } elseif ($slug !== '') {
             $campaign = Campaign::where('slug', $slug)->first();
+            if (!$campaign && ctype_digit($slug)) {
+                $campaign = Campaign::where('id', (int) $slug)->first();
+            }
         }
 
         if (!$campaign) {

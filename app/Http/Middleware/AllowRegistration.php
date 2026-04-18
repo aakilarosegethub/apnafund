@@ -6,6 +6,9 @@ use App\Constants\ManageStatus;
 use Closure;
 use Illuminate\Http\Request;
 
+/**
+ * When site setting `signup` is inactive, blocks registration routes with a toast message.
+ */
 class AllowRegistration
 {
     /**

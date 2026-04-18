@@ -6,10 +6,13 @@ use App\Models\EmailLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Persists outbound email metadata and bodies to {@see EmailLog} for admin reporting and debugging.
+ */
 class EmailLoggingService
 {
     /**
-     * Log an email that was sent
+     * @param  array<string, mixed>  $emailData  Keys: to/from, subject, body, status, provider, etc.
      */
     public static function logEmail(array $emailData): EmailLog
     {

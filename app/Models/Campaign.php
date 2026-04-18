@@ -10,7 +10,19 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
+/**
+ * Crowdfunding campaign owned by a {@see User}, categorized via {@see Category}.
+ *
+ * **Mass assignment:** see `$fillable` (title/slug, story, media, goal/dates, status, payout fields, `goal_reached_notified_at`).
+ *
+ * **Relationships:** `user`, `category`, `comments`, `deposits`, `rewards`, `faqs`, `updates` / `allUpdates`,
+ * `payoutBank`, `creatorPayout`, `collaborators`.
+ *
+ * **Scopes:** `pending`, `approve`, `reject`, `running`, `upcoming`, `expired`, `runningOrUpcoming`, `featured`,
+ * `commonQuery` (active category+user), `campaignCheck`, `upcomingCheck`.
+ */
 class Campaign extends Model
 {
     use Searchable, UniversalStatus;
@@ -44,6 +56,7 @@ class Campaign extends Model
         'bank_account_number',
         'bank_account_email',
         'verification_documents',
+        'goal_reached_notified_at',
     ];
 
     /**
@@ -59,6 +72,7 @@ class Campaign extends Model
         'raised_amount'     => 'decimal:2',
         'start_date'        => 'date',
         'end_date'          => 'date',
+        'goal_reached_notified_at' => 'datetime',
     ];
 
     /**
@@ -131,6 +145,14 @@ class Campaign extends Model
     public function payoutBank(): BelongsTo
     {
         return $this->belongsTo(PayoutBank::class);
+    }
+
+    /**
+     * Admin creator payout ledger row (fees, net payable, fulfillment hold).
+     */
+    public function creatorPayout(): HasOne
+    {
+        return $this->hasOne(CreatorCampaignPayout::class);
     }
 
     /**

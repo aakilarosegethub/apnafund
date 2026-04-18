@@ -6,6 +6,9 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 
+/**
+ * Legacy session check: if `admin` session exists, redirect away from login to `admin/dashboard`.
+ */
 class AdminNotLogedIn
 {
     /**

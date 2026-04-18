@@ -2,14 +2,17 @@
 
 @section('master')
     @php
-        $setting = bs();
-        $currency = $setting->cur_sym ?? '';
+        $currency = getPlatformCurrencySymbol();
+        $platformCurrencyCode = getPlatformCurrency();
     @endphp
     <div class="col-12">
         <div class="custom--card">
             <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
                 <div class="d-flex flex-wrap gap-2 align-items-center">
-                    <h3 class="title mb-0">@lang('Creator Payout Management')</h3>
+                    <h3 class="title mb-0">
+                        @lang('Creator Payout Management')
+                        <span class="badge badge--base ms-1">{{ $platformCurrencyCode }}</span>
+                    </h3>
                     <form method="GET" action="{{ route('admin.creator-payouts.index') }}" class="d-flex align-items-center gap-2">
                         <select name="scope" class="form--control form-select form-select-sm" onchange="this.form.submit()">
                             <option value="successful" @selected(($scope ?? 'successful') === 'successful')>@lang('Successful Only')</option>

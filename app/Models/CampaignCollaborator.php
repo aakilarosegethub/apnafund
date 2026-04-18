@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Grants a non-owner {@see User} permission to edit a {@see Campaign}.
+ */
 class CampaignCollaborator extends Model
 {
     protected $fillable = [

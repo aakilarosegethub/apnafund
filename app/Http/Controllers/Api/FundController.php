@@ -2,15 +2,30 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Constants\ManageStatus;
+use App\Models\CampaignFaq;
+use App\Models\CampaignUpdate;
+use App\Models\Comment;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Mobile/legacy API: campaigns as “funds” (list, detail, search, category, create/update flows).
+ *
+ * Routes (see `routes/web.php`, prefix `/api`): e.g. `fundlist.php`, `fundraise.php`, `fundidwise.php`,
+ * `search_fund.php`, `catwisefund.php`. Most mutating routes require **Bearer token** (`auth:sanctum`).
+ *
+ * Response shape uses legacy keys: `ResponseCode`, `Result`, `ResponseMsg`, plus payload keys like `fundlist`.
+ */
 class FundController extends BaseApiController
 {
     /**
-     * Get Fund List
+     * **POST/GET** `fundlist.php` — Authenticated user's campaigns filtered by legacy `status` (Pending|Cancelled|Completed).
+     *
+     * @param  \Illuminate\Http\Request  $request  Body/query: `status` (optional)
+     * @return \Illuminate\Http\JsonResponse 401 if no token; 200 with `fundlist` array
      */
     public function fundList(Request $request): JsonResponse
     {
@@ -105,8 +120,8 @@ class FundController extends BaseApiController
             $uid = auth()->user()->id;
         }
 
-        $fund_id = $data['fund_id'] ?? null;
-        $slug = $data['slug'] ?? null;
+        $fund_id = $data['fund_id'] ?? ($data['campaign_id'] ?? null);
+        $slug = isset($data['slug']) ? trim((string) $data['slug']) : null;
 
         if (empty($fund_id) && empty($slug)) {
             return response()->json([
@@ -130,10 +145,19 @@ class FundController extends BaseApiController
         // Build WHERE clause: by slug or by id
         if (!empty($slug)) {
             $slugEscaped = $this->h->real_string($slug);
+            $slugIsNumeric = ctype_digit($slugEscaped);
             if ($status == 'Home') {
-                $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE slug='" . $slugEscaped . "'");
+                if ($slugIsNumeric) {
+                    $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE slug='" . $slugEscaped . "' OR id=" . (int) $slugEscaped);
+                } else {
+                    $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE slug='" . $slugEscaped . "'");
+                }
             } else {
-                $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE user_id=" . (int)$uid . " AND slug='" . $slugEscaped . "'");
+                if ($slugIsNumeric) {
+                    $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE user_id=" . (int)$uid . " AND (slug='" . $slugEscaped . "' OR id=" . (int) $slugEscaped . ")");
+                } else {
+                    $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE user_id=" . (int)$uid . " AND slug='" . $slugEscaped . "'");
+                }
             }
         } else {
             $fund_id = (int) round((float) $fund_id);
@@ -150,8 +174,7 @@ class FundController extends BaseApiController
                 "ResponseCode" => "200",
                 "Result" => "true",
                 "ResponseMsg" => "fund Data Get Successfully!!!",
-                "funddata" => [],
-                "fundupdate" => []
+                "fund" => null,
             ]);
         }
 
@@ -192,7 +215,6 @@ class FundController extends BaseApiController
             $pol['remain_amt'] = sprintf("%.2f", $pol['remain_amt']);
             unset($pol['fund_photos']);
 
-            // Add author/creator details (id, name, whatsapp, email, mobile, avatar, etc.)
             $pol['author'] = $this->getAuthorData($row['user_id'] ?? null);
 
             // Add slug to campaign detail response
@@ -201,36 +223,176 @@ class FundController extends BaseApiController
             $c[] = $pol;
         }
 
-        // Get fund updates from campaigns.updates (JSON) – no campaign_updates table
-        $lop = [];
-        $campaignRow = $c[0] ?? null;
-        $campaignId = $campaignRow['id'] ?? $fund_id ?? null;
-        if ($campaignRow && isset($campaignRow['id'])) {
-            $camp = DB::table('campaigns')->where('id', $campaignId)->first();
-            if ($camp && !empty($camp->updates)) {
-                $updatesData = is_string($camp->updates) ? json_decode($camp->updates, true) : (array) $camp->updates;
-                if (is_array($updatesData)) {
-                    $lop = array_map(function ($u) {
-                        $photoArr = $u['photo'] ?? (isset($u['main_img']) ? [$u['main_img']] : []);
-                        return [
-                            'id' => $u['id'] ?? 0,
-                            'photo' => is_array($photoArr) ? $photoArr : [$photoArr],
-                            'main_img' => $u['main_img'] ?? (is_array($photoArr) ? ($photoArr[0] ?? '') : $photoArr),
-                            'update_desc' => $u['update_desc'] ?? $u['content'] ?? '',
-                            'update_date' => $u['update_date'] ?? '',
-                        ];
-                    }, array_reverse($updatesData));
-                }
-            }
+        if ($c === []) {
+            return response()->json([
+                "ResponseCode" => "200",
+                "Result" => "true",
+                "ResponseMsg" => "fund Data Get Successfully!!!",
+                "fund" => null,
+            ]);
         }
+
+        // Single campaign object: id/slug query returns one row; extras nested here (not separate root keys).
+        $fund = $c[0];
+        $campaignId = (int) ($fund['id'] ?? $fund_id ?? 0);
+        $fund['updates'] = $campaignId > 0 ? $this->getCampaignUpdatesList($campaignId) : [];
+        $fund['faqs'] = $campaignId > 0 ? $this->getCampaignFaqList($campaignId) : [];
+        $fund['comments'] = $campaignId > 0 ? $this->getCampaignCommentsList($campaignId, 20) : [];
+        $fund['comments_total'] = $campaignId > 0
+            ? (int) Comment::where('campaign_id', $campaignId)
+                ->where('status', ManageStatus::CAMPAIGN_COMMENT_APPROVED)
+                ->whereNull('update_id')
+                ->count()
+            : 0;
 
         return response()->json([
             "ResponseCode" => "200",
             "Result" => "true",
             "ResponseMsg" => "fund Data Get Successfully!!!",
-            "funddata" => $c,
-            "fundupdate" => $lop
+            "fund" => $fund,
         ]);
+    }
+
+    private function getCampaignFaqList(int $campaignId): array
+    {
+        if ($campaignId < 1) {
+            return [];
+        }
+
+        return CampaignFaq::where('campaign_id', $campaignId)
+            ->orderBy('order')
+            ->orderBy('id')
+            ->get()
+            ->map(function (CampaignFaq $faq) {
+                return [
+                    'id' => (int) $faq->id,
+                    'campaign_id' => (int) $faq->campaign_id,
+                    'question' => (string) ($faq->question ?? ''),
+                    'answer' => (string) ($faq->answer ?? ''),
+                    'order' => (int) ($faq->order ?? 0),
+                ];
+            })->values()->all();
+    }
+
+    private function getCampaignCommentsList(int $campaignId, int $limit = 20): array
+    {
+        if ($campaignId < 1) {
+            return [];
+        }
+
+        $rows = Comment::with('user')
+            ->where('campaign_id', $campaignId)
+            ->where('status', ManageStatus::CAMPAIGN_COMMENT_APPROVED)
+            ->whereNull('update_id')
+            ->latest()
+            ->limit(max(1, $limit))
+            ->get();
+
+        return $rows->map(fn (Comment $comment) => $this->formatCommentForApi($comment))->values()->all();
+    }
+
+    /**
+     * Single comment shape for API (campaign wall or update thread).
+     */
+    private function formatCommentForApi(Comment $comment): array
+    {
+        $displayName = $comment->user ? ($comment->user->fullname ?? $comment->user->username) : $comment->name;
+
+        return [
+            'id' => (int) $comment->id,
+            'campaign_id' => (int) $comment->campaign_id,
+            'update_id' => $comment->update_id !== null ? (int) $comment->update_id : null,
+            'name' => (string) ($displayName ?? ''),
+            'email' => (string) ($comment->email ?? ''),
+            'title' => (string) ($comment->title ?? ''),
+            'comment' => (string) ($comment->comment ?? ''),
+            'rating' => $comment->rating,
+            'created_at' => optional($comment->created_at)->toDateTimeString(),
+            'is_guest' => empty($comment->user_id),
+            'user' => $comment->user ? [
+                'id' => (int) $comment->user->id,
+                'name' => (string) ($comment->user->fullname ?? $comment->user->username ?? ''),
+                'username' => (string) ($comment->user->username ?? ''),
+            ] : null,
+        ];
+    }
+
+    private function getCampaignUpdatesList(int $campaignId): array
+    {
+        if ($campaignId < 1) {
+            return [];
+        }
+
+        $updates = [];
+
+        $tableUpdates = CampaignUpdate::where('campaign_id', $campaignId)
+            ->where('is_published', true)
+            ->latest()
+            ->get();
+
+        foreach ($tableUpdates as $u) {
+            $updates[] = [
+                'id' => (int) $u->id,
+                'title' => (string) ($u->title ?? ''),
+                'update_desc' => (string) ($u->content ?? ''),
+                'slug' => (string) ($u->slug ?? ''),
+                'photo' => !empty($u->image) ? [$u->image] : [],
+                'main_img' => (string) ($u->image ?? ''),
+                'update_date' => optional($u->created_at)->toDateTimeString(),
+                'source' => 'campaign_updates',
+            ];
+        }
+
+        $camp = DB::table('campaigns')->where('id', $campaignId)->first();
+        if ($camp && !empty($camp->updates)) {
+            $legacy = is_string($camp->updates) ? json_decode($camp->updates, true) : (array) $camp->updates;
+            if (is_array($legacy)) {
+                foreach (array_reverse($legacy) as $u) {
+                    $photoArr = $u['photo'] ?? (isset($u['main_img']) ? [$u['main_img']] : []);
+                    $updates[] = [
+                        'id' => (int) ($u['id'] ?? 0),
+                        'title' => (string) ($u['title'] ?? ''),
+                        'update_desc' => (string) ($u['update_desc'] ?? $u['content'] ?? ''),
+                        'slug' => (string) ($u['slug'] ?? ''),
+                        'photo' => is_array($photoArr) ? $photoArr : [$photoArr],
+                        'main_img' => (string) ($u['main_img'] ?? (is_array($photoArr) ? ($photoArr[0] ?? '') : $photoArr)),
+                        'update_date' => (string) ($u['update_date'] ?? ''),
+                        'source' => 'campaigns_json',
+                    ];
+                }
+            }
+        }
+
+        $dbUpdateIds = $tableUpdates->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $commentsByUpdate = [];
+        if ($dbUpdateIds !== []) {
+            $allUpdateComments = Comment::with('user')
+                ->where('campaign_id', $campaignId)
+                ->whereIn('update_id', $dbUpdateIds)
+                ->where('status', ManageStatus::CAMPAIGN_COMMENT_APPROVED)
+                ->orderByDesc('id')
+                ->get();
+
+            foreach ($allUpdateComments as $comment) {
+                $oid = (int) $comment->update_id;
+                $commentsByUpdate[$oid][] = $this->formatCommentForApi($comment);
+            }
+        }
+
+        foreach ($updates as $i => $upd) {
+            $src = $upd['source'] ?? '';
+            $sid = (int) ($upd['id'] ?? 0);
+            if ($src === 'campaign_updates' && $sid > 0) {
+                $list = $commentsByUpdate[$sid] ?? [];
+                $updates[$i]['comments'] = $list;
+                $updates[$i]['comments_count'] = count($list);
+            } else {
+                $updates[$i]['comments'] = [];
+                $updates[$i]['comments_count'] = 0;
+            }
+        }
+
+        return $updates;
     }
 
     /**

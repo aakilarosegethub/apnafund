@@ -7,6 +7,9 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Ensures the authenticated user has verified their phone (`phone_verified_at`) before continuing.
+ */
 class RequirePhoneVerification
 {
     /**

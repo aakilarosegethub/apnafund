@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 
+/**
+ * Pledge tier / perk row belonging to a {@see Campaign}.
+ */
 class Reward extends Model
 {
     protected $fillable = [

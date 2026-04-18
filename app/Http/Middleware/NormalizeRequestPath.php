@@ -6,6 +6,9 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Normalizes duplicate slashes in `REQUEST_URI` so route matching works for malformed client URLs.
+ */
 class NormalizeRequestPath
 {
     /**

@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * CMS key/value content blocks (`data_key`, JSON `data_info`) for editable page sections.
+ */
 class SiteData extends Model
 {
     protected $fillable = [

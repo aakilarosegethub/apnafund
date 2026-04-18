@@ -6,6 +6,9 @@ use App\Constants\ManageStatus;
 use Closure;
 use Illuminate\Http\Request;
 
+/**
+ * Blocks creators until KYC state is approved (uses user `kc` vs {@see ManageStatus}).
+ */
 class KycCheck
 {
     /**

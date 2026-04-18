@@ -8,6 +8,12 @@ use App\Traits\UniversalStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 
+/**
+ * Payment record for a {@see Campaign} (and optional {@see Reward}), linked to a {@see User} when not guest.
+ *
+ * **Mass assignment:** see `$fillable` — amounts, gateway codes, `trx`, donor contact fields, `status`, `reward_id`.
+ * **Relationships:** `user`, `gateway`, `campaign`, `reward`. Use {@see Deposit::gatewayCurrency()} for display resolution.
+ */
 class Deposit extends Model
 {
     use UniversalStatus, Searchable;
@@ -147,7 +153,13 @@ class Deposit extends Model
     protected function donorName(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->donor_type ? ($this->user_id ? $this->user->fullname : $this->full_name) : 'Anonymous User',
+            get: function () {
+                if ($this->donor_type !== null && (int) $this->donor_type === ManageStatus::ANONYMOUS_DONOR) {
+                    return __('Anonymous');
+                }
+
+                return $this->user_id ? $this->user->fullname : $this->full_name;
+            },
         );
     }
 
@@ -157,7 +169,13 @@ class Deposit extends Model
     protected function donorEmail(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->donor_type ? ($this->user_id ? $this->user->email : $this->email) : '-',
+            get: function () {
+                if ($this->donor_type !== null && (int) $this->donor_type === ManageStatus::ANONYMOUS_DONOR) {
+                    return '-';
+                }
+
+                return $this->user_id ? $this->user->email : $this->email;
+            },
         );
     }
 
@@ -167,7 +185,13 @@ class Deposit extends Model
     protected function donorPhone(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->donor_type ? ($this->user_id ? $this->user->mobile : $this->phone) : '-',
+            get: function () {
+                if ($this->donor_type !== null && (int) $this->donor_type === ManageStatus::ANONYMOUS_DONOR) {
+                    return '-';
+                }
+
+                return $this->user_id ? $this->user->mobile : $this->phone;
+            },
         );
     }
 
@@ -177,7 +201,13 @@ class Deposit extends Model
     protected function donorCountry(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->donor_type ? ($this->user_id ? $this->user->country_name : $this->country) : '-',
+            get: function () {
+                if ($this->donor_type !== null && (int) $this->donor_type === ManageStatus::ANONYMOUS_DONOR) {
+                    return '-';
+                }
+
+                return $this->user_id ? $this->user->country_name : $this->country;
+            },
         );
     }
 

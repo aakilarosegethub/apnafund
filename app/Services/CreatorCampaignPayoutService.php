@@ -8,6 +8,9 @@ use App\Models\CreatorCampaignFeeSetting;
 use App\Models\CreatorCampaignPayout;
 use App\Models\Deposit;
 
+/**
+ * When a campaign succeeds, creates a {@see CreatorCampaignPayout} row with platform fees and withholdings.
+ */
 class CreatorCampaignPayoutService
 {
     public function getSettings(): CreatorCampaignFeeSetting

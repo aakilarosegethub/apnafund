@@ -6,6 +6,9 @@ use App\Constants\ManageStatus;
 use App\Traits\UniversalStatus;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Supported currency/min/max for a {@see Gateway}; scoped per country in queries (`forCountry`).
+ */
 class GatewayCurrency extends Model
 {   
     use UniversalStatus;

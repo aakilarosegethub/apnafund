@@ -5,6 +5,11 @@ namespace App\Services;
 use App\Models\Currency;
 use App\Models\User;
 
+/**
+ * Currency normalization, FX rates (via {@see Currency} model), and visitor currency detection from country hints.
+ *
+ * Used for display and conversion relative to platform base currency; pairs with IP/geo helpers in `helpers.php`.
+ */
 class CurrencyService
 {
     public const BASE_CURRENCY = 'USD';
@@ -369,7 +374,19 @@ class CurrencyService
             $currency->save();
         }
 
-        return (float) $currency->rate_to_usd ?? 1;
+        $code = $this->normalizeCode($currency->code ?? '');
+        $rate = (float) $currency->rate_to_usd;
+
+        if ($code === self::BASE_CURRENCY) {
+            return 1.0;
+        }
+
+        // Match convertUsdTo(): placeholder DB rate 1.0 would break cross-rates (e.g. platform PKR → Oman OMR).
+        if ($rate >= 0.999 && $rate <= 1.001 && isset(self::FALLBACK_RATE_TO_USD[$code])) {
+            return self::FALLBACK_RATE_TO_USD[$code];
+        }
+
+        return $rate;
     }
 
     public function convertToUsd(float $amount, Currency $currency): float
@@ -389,6 +406,8 @@ class CurrencyService
         'AED' => 0.27,    'SAR' => 0.27,   'CAD' => 0.72,
         'AUD' => 0.65,    'JPY' => 0.0067, 'CNY' => 0.14,
         'KWD' => 3.25,
+        /** GCC: approximate USD per 1 unit; Admin → Currencies sync overrides. */
+        'OMR' => 2.60,    'BHD' => 2.65,   'QAR' => 0.275,
     ];
 
     /**
@@ -500,7 +519,8 @@ class CurrencyService
     {
         $map = [
             'USD' => '$', 'PKR' => 'Rs', 'EUR' => '€', 'GBP' => '£',
-            'INR' => '₹', 'SAR' => '﷼', 'AED' => 'د.إ', 'QAR' => 'QR', 'KWD' => 'د.ك', 'TRY' => '₺',
+            'INR' => '₹', 'SAR' => '﷼', 'AED' => 'د.إ', 'QAR' => 'QR', 'KWD' => 'د.ك',
+            'OMR' => 'ر.ع.', 'BHD' => 'د.ب', 'TRY' => '₺',
             'CAD' => 'C$', 'AUD' => 'A$', 'NZD' => 'NZ$', 'SEK' => 'kr',
             'NOK' => 'kr', 'DKK' => 'kr', 'CHF' => 'CHF', 'JPY' => '¥',
             'CNY' => '¥', 'HKD' => 'HK$', 'SGD' => 'S$', 'MYR' => 'RM',

@@ -8,6 +8,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Exception;
 
+/**
+ * Dual logging for payment callbacks: {@see DataLog} (raw request) + {@see WebhookLog} (processing lifecycle).
+ */
 class UnifiedWebhookLoggerService
 {
     /**

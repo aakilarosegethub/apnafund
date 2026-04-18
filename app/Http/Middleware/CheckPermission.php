@@ -7,6 +7,9 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Route middleware: grants access if the admin has any of the given permission keys (or is super admin).
+ */
 class CheckPermission
 {
     public function handle(Request $request, Closure $next, string ...$permissions): Response

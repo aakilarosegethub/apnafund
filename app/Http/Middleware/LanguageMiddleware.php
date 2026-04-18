@@ -5,6 +5,9 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 
+/**
+ * Sets the application locale from session (`lang`, default `en`).
+ */
 class LanguageMiddleware
 {
     /**

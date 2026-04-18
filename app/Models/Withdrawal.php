@@ -8,6 +8,9 @@ use App\Traits\UniversalStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * User withdrawal / payout request with status and payout details JSON.
+ */
 class Withdrawal extends Model
 {
     use UniversalStatus, Searchable;

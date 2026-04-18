@@ -5,11 +5,16 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 
+/**
+ * Sets session currency/country/symbol from IP when `config('app.currency')` is not fixed and the user has not chosen manual currency.
+ */
 class DetectCurrencyByIP
 {
     /**
      * When TCUR is not set in .env: detect currency from visitor IP, store in DB (ip_currency_cache),
      * refresh every hour. Session stores currency, country, symbol for current request.
+     *
+     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
     public function handle(Request $request, Closure $next)
     {

@@ -6,6 +6,9 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Laravel\Sanctum\HasApiTokens;
 
+/**
+ * Staff account for the admin panel; may have `role_id` and JSON `permissions` or use RBAC relations.
+ */
 class Admin extends Authenticatable
 {
     use HasApiTokens;

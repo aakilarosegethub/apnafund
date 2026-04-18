@@ -10,6 +10,9 @@ use Google_Service_YouTube_VideoStatus;
 use Illuminate\Support\Facades\Log;
 use Exception;
 
+/**
+ * Admin OAuth + YouTube Data API upload helper (credentials from `config/services.php` / env).
+ */
 class YouTubeUploadService
 {
     private $client;

@@ -12,8 +12,18 @@ use App\Models\GatewayCurrency;
 use App\Models\AdminNotification;
 use App\Http\Controllers\Controller;
 
+/**
+ * Web payment flow: validate donor input, create {@see Deposit} rows, redirect to gateway manual instructions,
+ * and handle manual proof upload for offline/bank gateways.
+ *
+ * Entry routes are defined in `routes/web.php` (e.g. deposit insert per campaign slug). Responses use
+ * session toasts, redirects, or themed Blade views — not the legacy JSON API shape.
+ */
 class PaymentController extends Controller
 {
+    /** Laravel `max` rule for files is kilobytes — 5120 KB = 5 MB. */
+    private const MANUAL_PAYMENT_PROOF_MAX_KB = 5120;
+
     /**
      * Logged-in contributor can open proof upload without re-visiting manual instructions (e.g. closed webview early).
      */
@@ -32,6 +42,20 @@ class PaymentController extends Controller
         $depEmail = strtolower(trim((string) ($deposit->email ?? '')));
 
         return $authEmail !== '' && $authEmail === $depEmail;
+    }
+
+    /**
+     * Green / apnafund themes POST anonymous_donation=1; classic checkbox name anonymousDonation with value on.
+     */
+    private static function depositRequestIsAnonymousDonation(): bool
+    {
+        if (request()->has('anonymous_donation')) {
+            $v = request('anonymous_donation');
+
+            return $v !== '0' && $v !== '' && $v !== false && strtolower((string) $v) !== 'false';
+        }
+
+        return request('anonymousDonation') === 'on' || request('anonymousDonation') === '1';
     }
 
     function depositInserts($slug) {
@@ -140,7 +164,7 @@ class PaymentController extends Controller
         $deposit                  = new Deposit();
         $deposit->campaign_id     = $campaign->id;
         $deposit->user_id         = auth()->check() ? auth()->id() : 0;
-        $deposit->donor_type      = request('anonymousDonation') == 'on' ? ManageStatus::ANONYMOUS_DONOR : ManageStatus::KNOWN_DONOR;
+        $deposit->donor_type      = self::depositRequestIsAnonymousDonation() ? ManageStatus::ANONYMOUS_DONOR : ManageStatus::KNOWN_DONOR;
         $deposit->full_name       = $userFullName;
         $deposit->email           = $userEmail;
         $deposit->phone           = $userPhone;
@@ -308,7 +332,12 @@ class PaymentController extends Controller
             $campaign->start_date = $oldStartDate;
             $campaign->end_date   = $oldEndDate;
             $campaign->save();
-            
+
+            try {
+                app(\App\Services\CampaignGoalReachedNotificationService::class)->handleAfterCampaignUpdate($campaign);
+            } catch (\Throwable $e) {
+                \Log::warning('Campaign goal reached notification failed', ['error' => $e->getMessage(), 'campaign_id' => $campaign->id]);
+            }
 
             // Update reward claimed count if reward was selected
             if ($deposit->reward_id) {
@@ -465,8 +494,10 @@ class PaymentController extends Controller
 
         $request->validate([
             'trx'           => 'required|string',
-            'payment_proof' => 'required|file|mimes:jpeg,jpg,png,pdf,webp|max:5120',
+            'payment_proof' => 'required|file|mimes:jpeg,jpg,png,pdf,webp|max:' . self::MANUAL_PAYMENT_PROOF_MAX_KB,
             'note'          => 'nullable|string|max:1000',
+        ], [
+            'payment_proof.max' => __('The payment proof file must not be larger than 5 MB.'),
         ]);
 
         $track = $request->string('trx')->toString();

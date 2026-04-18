@@ -425,7 +425,8 @@
             // Infinite scroll - load more on scroll to bottom
             var loadMorePage = 2;
             var isLoading = false;
-            var hasMore = $('#campaign-container').data('has-more') === 1;
+            var hm = $('#campaign-container').data('has-more');
+            var hasMore = hm === 1 || hm === '1' || hm === true;
 
             function loadMoreCampaigns() {
                 if (!hasMore || isLoading) return;
@@ -463,8 +464,6 @@
                         $('#see-more-btn').prop('disabled', false).html('<i class="fas fa-chevron-down me-2"></i>See more');
                     });
             }
-
-            $('#see-more-btn').on('click', function() { loadMoreCampaigns(); });
 
             $('#see-more-btn').on('click', function() { loadMoreCampaigns(); });
 

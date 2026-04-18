@@ -5,6 +5,9 @@ namespace App\Models;
 use App\Traits\UniversalStatus;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Payment gateway definition (`code`, automation flags); related {@see GatewayCurrency} rows define supported currencies.
+ */
 class Gateway extends Model
 {
     use UniversalStatus;

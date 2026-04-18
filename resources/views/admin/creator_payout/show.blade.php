@@ -2,14 +2,17 @@
 
 @section('master')
     @php
-        $setting = bs();
-        $currency = $setting->cur_sym ?? '';
+        $currency = getPlatformCurrencySymbol();
+        $platformCurrencyCode = getPlatformCurrency();
         $campaign = $payout->campaign;
     @endphp
     <div class="col-12">
         <div class="custom--card">
             <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
-                <h3 class="title">@lang('Creator Payout Details')</h3>
+                <h3 class="title">
+                    @lang('Creator Payout Details')
+                    <span class="badge badge--base ms-1">{{ $platformCurrencyCode }}</span>
+                </h3>
                 <a href="{{ route('admin.creator-payouts.index') }}" class="btn btn--sm btn--base">
                     <i class="ti ti-arrow-left"></i> @lang('Back')
                 </a>

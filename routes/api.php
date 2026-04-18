@@ -4,10 +4,10 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| API Routes
+| API Routes (unused)
 |--------------------------------------------------------------------------
 |
-| All API routes have been moved to routes/web.php
-| This file is kept for reference but is no longer used.
+| JSON/mobile endpoints are registered in `routes/web.php` under `Route::prefix('api')`.
+| `bootstrap/app.php` does not load this file (the api route group there is commented out).
 |
 */

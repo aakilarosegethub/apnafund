@@ -7,6 +7,9 @@ use App\Models\AdminActivityLog;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
+/**
+ * Persists admin audit events to {@see AdminActivityLog} (CRUD, auth, unauthorized access).
+ */
 class ActivityLogger
 {
     public const ACTION_CREATED = 'created';
@@ -17,6 +20,13 @@ class ActivityLogger
     public const ACTION_FAILED_LOGIN = 'failed_login';
     public const ACTION_UNAUTHORIZED = 'unauthorized';
 
+    /**
+     * @param  string  $actionType  One of {@see ActivityLogger} `ACTION_*` constants
+     * @param  string|null  $moduleName  Logical module (e.g. `campaign`)
+     * @param  string|null  $recordId  Primary key or identifier
+     * @param  array<string, mixed>|null  $oldData  Snapshot before change
+     * @param  array<string, mixed>|null  $newData  Snapshot after change
+     */
     public function log(
         string $actionType,
         ?string $moduleName = null,
@@ -44,6 +54,9 @@ class ActivityLogger
         ]);
     }
 
+    /**
+     * @param  \Illuminate\Database\Eloquent\Model  $model
+     */
     public function logModelEvent(string $action, $model, ?array $oldData = null): AdminActivityLog
     {
         $newData = $action === self::ACTION_DELETED ? null : $model->toArray();

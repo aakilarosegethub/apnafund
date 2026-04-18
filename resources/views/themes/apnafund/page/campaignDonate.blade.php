@@ -715,7 +715,9 @@
 @section('frontend')
 @php
     $showRateDebug = request()->has('test');
-    $siteCur = strtoupper($setting->site_cur ?? 'USD');
+    $contributeDisplaySymbol = getLocalCurrencySymbol();
+    $contributeDisplayCode = getLocalCurrencyCode();
+    $siteCur = strtoupper($contributeDisplayCode);
     $gatewayContextCountry = $gatewayContextCountry ?? session('user_country');
     $donateCurrencyService = app(\App\Services\CurrencyService::class);
     $donateInputCurrency = getLocalCurrencyCode();
@@ -764,7 +766,7 @@
                             <strong><i class="ti ti-gift"></i> @lang('Selected Reward'):</strong><br>
                             <strong>{{ __($selectedReward->title) }}</strong><br>
                             <small>{{ __($selectedReward->description) }}</small><br>
-                            <small class="text-muted">@lang('Minimum Amount'): {{ $setting->cur_sym . showAmount($selectedReward->minimum_amount) }}</small>
+                            <small class="text-muted">@lang('Minimum Amount'): {{ $contributeDisplaySymbol . showAmount($selectedReward->minimum_amount) }}</small>
                         </div>
                     @endif
                 @endif
@@ -784,9 +786,9 @@
                 @if($isRewardSelected)
                     <!-- Reward Selected - Amount is Fixed -->
                     <div class="custom-amount" style="pointer-events: none; opacity: 0.8; margin-bottom: 15px;">
-                        <span class="currency-symbol">{{ $setting->cur_sym }}</span>
+                        <span class="currency-symbol">{{ $contributeDisplaySymbol }}</span>
                         <input type="text" id="customAmount" value="{{ number_format($rewardAmount, 2, '.', '') }}" readonly style="background: #f5f5f5; cursor: not-allowed; border: 2px solid #ffc107;">
-                        <span class="currency-label">{{ strtoupper($setting->site_cur) }}</span>
+                        <span class="currency-label">{{ strtoupper($contributeDisplayCode) }}</span>
                     </div>
                     <div class="alert alert-warning mt-2" style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 12px; margin-top: 10px; font-size: 0.9rem;">
                         <i class="ti ti-lock" style="margin-right: 5px;"></i> 
@@ -798,22 +800,22 @@
                         @if($campaignData->preferred_amounts && is_array($campaignData->preferred_amounts))
                             @foreach ($campaignData->preferred_amounts as $preferredAmount)
                                 <button type="button" class="amount-btn" data-amount="{{ $preferredAmount }}">
-                                    {{ $setting->cur_sym . $preferredAmount }}
+                                    {{ $contributeDisplaySymbol . $preferredAmount }}
                                 </button>
                             @endforeach
                         @else
-                            <button type="button" class="amount-btn" data-amount="50">{{ $setting->cur_sym }}50</button>
-                            <button type="button" class="amount-btn" data-amount="100">{{ $setting->cur_sym }}100</button>
-                            <button type="button" class="amount-btn" data-amount="200">{{ $setting->cur_sym }}200</button>
-                            <button type="button" class="amount-btn" data-amount="300">{{ $setting->cur_sym }}300</button>
-                            <button type="button" class="amount-btn" data-amount="500">{{ $setting->cur_sym }}500</button>
-                            <button type="button" class="amount-btn" data-amount="1000">{{ $setting->cur_sym }}1,000</button>
+                            <button type="button" class="amount-btn" data-amount="50">{{ $contributeDisplaySymbol }}50</button>
+                            <button type="button" class="amount-btn" data-amount="100">{{ $contributeDisplaySymbol }}100</button>
+                            <button type="button" class="amount-btn" data-amount="200">{{ $contributeDisplaySymbol }}200</button>
+                            <button type="button" class="amount-btn" data-amount="300">{{ $contributeDisplaySymbol }}300</button>
+                            <button type="button" class="amount-btn" data-amount="500">{{ $contributeDisplaySymbol }}500</button>
+                            <button type="button" class="amount-btn" data-amount="1000">{{ $contributeDisplaySymbol }}1,000</button>
                         @endif
                     </div>
                     <div class="custom-amount">
-                        <span class="currency-symbol">{{ $setting->cur_sym }}</span>
+                        <span class="currency-symbol">{{ $contributeDisplaySymbol }}</span>
                         <input type="text" id="customAmount" placeholder="0.00" min="0" step="0.01">
-                        <span class="currency-label">{{ strtoupper($setting->site_cur) }}</span>
+                        <span class="currency-label">{{ strtoupper($contributeDisplayCode) }}</span>
                     </div>
                 @endif
 
@@ -998,11 +1000,11 @@
             <div class="donation-summary">
                 <div class="summary-item">
                     <span class="summary-label">@lang('Your contribution')</span>
-                    <span class="summary-value" id="donationAmount">{{ $setting->cur_sym }}0.00</span>
+                    <span class="summary-value" id="donationAmount">{{ $contributeDisplaySymbol }}0.00</span>
                                                         </div>
                 {{-- <div class="summary-item">
                     <span class="summary-label">{!! apnaCrowdfundingLink() !!} @lang('tip')</span>
-                    <span class="summary-value" id="tipAmount">{{ $setting->cur_sym }}0.00</span>
+                    <span class="summary-value" id="tipAmount">{{ $contributeDisplaySymbol }}0.00</span>
                 </div> --}}
                 <div class="summary-item" id="summaryGatewayFeeRow">
                     <span class="summary-label">@lang('Processing charges') <small class="text-muted fw-normal">({{ $donateInputCurrency }})</small></span>
@@ -1010,7 +1012,7 @@
                 </div>
                 <div class="summary-item summary-total">
                     <span class="summary-label">@lang('Total due today')</span>
-                    <span class="summary-value" id="totalAmount">{{ $setting->cur_sym }}0.00</span>
+                    <span class="summary-value" id="totalAmount">{{ $contributeDisplaySymbol }}0.00</span>
                                         </div>
                                     </div>
 
@@ -1794,7 +1796,7 @@
             let tipPercentage = 0;
             let selectedGateway = null;
 
-            const summaryCurSym = @json($setting->cur_sym);
+            const summaryCurSym = @json($contributeDisplaySymbol);
             let inputToPlatformFactor = {{ json_encode((float) $donateInputToPlatformFactor) }};
             let platformToInputFactor = {{ json_encode((float) $donatePlatformToInputFactor) }};
             if (!Number.isFinite(inputToPlatformFactor) || inputToPlatformFactor <= 0) {

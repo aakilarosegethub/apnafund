@@ -6,6 +6,9 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 
+/**
+ * Legacy session check: requires `admin` key in session (older admin auth); redirects to `admin/login` if missing.
+ */
 class AdminLogedIn
 {
     /**

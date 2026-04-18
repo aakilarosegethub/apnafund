@@ -6,6 +6,9 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Protects admin routes: unauthenticated admin users are redirected to the admin login form.
+ */
 class RedirectIfNotAdmin
 {
     /**

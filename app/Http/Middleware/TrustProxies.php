@@ -5,6 +5,9 @@ namespace App\Http\Middleware;
 use Illuminate\Http\Middleware\TrustProxies as Middleware;
 use Illuminate\Http\Request;
 
+/**
+ * Trusts forwarded headers (e.g. behind Cloudflare/load balancers) so client IP and scheme are correct.
+ */
 class TrustProxies extends Middleware
 {
     /**

@@ -22,6 +22,23 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
 
+/**
+ * Public website and themed page controller.
+ *
+ * Routes are registered in `routes/web.php` inside {@see \App\Http\Middleware\BetaGate} (and related
+ * groups). Methods render Blade under {@see Controller::$activeTheme} (e.g. `themes.green.page.*`).
+ *
+ * Typical areas:
+ * - **GET** `/`, `home-new` — home variants; passes `SiteData` blocks and featured/trending campaigns.
+ * - **GET** `campaigns`, `campaign/{slug}`, `campaign/{slug}/contribute` — listing, detail, donate flow.
+ * - **POST** `campaign/{slug}/comment` — store comment (validated in-method); **GET** `fetch-comment` — AJAX list.
+ * - **GET** `start-project` (+ POST saves) — multi-step campaign creation wizard (session-backed).
+ * - **GET|POST** `contact-us` — contact form; **POST** `subscriber/store` — newsletter.
+ * - **GET** `page/{slug}`, `{slug}` — CMS-style and catch-all pages.
+ *
+ * Responses are primarily **HTML views**; some campaign update endpoints may return JSON when requested.
+ * Validation uses `Validator`/`$request->validate` patterns per action — see each method for rules.
+ */
 class WebsiteController extends Controller
 {
     public function __construct()
@@ -157,11 +174,11 @@ class WebsiteController extends Controller
         $categories = Category::active()
             ->select('name', 'slug')
             ->withCount(['campaigns' => function($query) {
-                $query->commonQuery()->approve()->running();
+                $query->commonQuery()->approve()->runningOrUpcoming();
             }])
             ->get();
-            
-        $campaigns  = Campaign::when(request()->filled('category'), function ($query) {
+
+        $campaignsQuery = Campaign::when(request()->filled('category'), function ($query) {
                                     $categorySlug = request('category');
                                     $category     = Category::where('slug', $categorySlug)->active()->first();
 
@@ -176,9 +193,19 @@ class WebsiteController extends Controller
                                     $query->where('start_date', '>=', $startDate)->where('end_date', '<=', $endDate);
                                 })->commonQuery()
                                 ->approve()
-                                ->running()
-                                ->latest()
-                                ->paginate(getPaginate(10));
+                                ->runningOrUpcoming();
+
+        $sort = request('sort', 'latest');
+        match ($sort) {
+            'oldest' => $campaignsQuery->oldest(),
+            'goal-high' => $campaignsQuery->orderByDesc('goal_amount'),
+            'goal-low' => $campaignsQuery->orderBy('goal_amount'),
+            'raised-high' => $campaignsQuery->orderByDesc('raised_amount'),
+            'raised-low' => $campaignsQuery->orderBy('raised_amount'),
+            default => $campaignsQuery->latest(),
+        };
+
+        $campaigns = $campaignsQuery->paginate(getPaginate(10));
 
         // Payment error redirect: ensure error toast shows when payment_status=error
         if (request('payment_status') === 'error' && !session()->has('toasts')) {
@@ -247,11 +274,11 @@ class WebsiteController extends Controller
         $categories = Category::active()
             ->select('name', 'slug')
             ->withCount(['campaigns' => function($query) {
-                $query->commonQuery()->approve()->running();
+                $query->commonQuery()->approve()->runningOrUpcoming();
             }])
             ->get();
 
-        $campaigns = Campaign::when(!empty($categoryIds), function ($query) use ($categoryIds) {
+        $campaignsQuery = Campaign::when(!empty($categoryIds), function ($query) use ($categoryIds) {
                                 $query->whereIn('category_id', $categoryIds);
                             })->when($category && empty($categoryIds), function ($query) use ($category) {
                                 $query->where('category_id', $category->id);
@@ -264,9 +291,19 @@ class WebsiteController extends Controller
                                 $query->where('start_date', '>=', $startDate)->where('end_date', '<=', $endDate);
                             })->commonQuery()
                             ->approve()
-                            ->running()
-                            ->latest()
-                            ->paginate(getPaginate(10));
+                            ->runningOrUpcoming();
+
+        $sort = request('sort', 'latest');
+        match ($sort) {
+            'oldest' => $campaignsQuery->oldest(),
+            'goal-high' => $campaignsQuery->orderByDesc('goal_amount'),
+            'goal-low' => $campaignsQuery->orderBy('goal_amount'),
+            'raised-high' => $campaignsQuery->orderByDesc('raised_amount'),
+            'raised-low' => $campaignsQuery->orderBy('raised_amount'),
+            default => $campaignsQuery->latest(),
+        };
+
+        $campaigns = $campaignsQuery->paginate(getPaginate(10));
 
         if ($category) {
             request()->merge(['category' => $category->slug]);
@@ -320,7 +357,7 @@ class WebsiteController extends Controller
             })
             ->commonQuery()
             ->approve()
-            ->running();
+            ->runningOrUpcoming();
 
         // Apply sort
         $sort = request('sort', 'latest');
@@ -472,7 +509,18 @@ class WebsiteController extends Controller
                 session()->put('user_country', $userCountry);
             }
         }
-        
+
+        // Session country (e.g. Pakistan) but display currency still from old IP (USD) — align before gateway + labels.
+        if (! isLocalCurrencyLockedByEnv() && is_string($userCountry) && $userCountry !== '') {
+            $expectedCode = resolveStrictCurrencyCodeForCountryName($userCountry);
+            if ($expectedCode !== null) {
+                $sessionCode = strtoupper(trim((string) (session('user_detected_currency') ?? '')));
+                if ($sessionCode === '' || $sessionCode !== $expectedCode) {
+                    syncVisitorCurrencySessionFromCountryName($userCountry);
+                }
+            }
+        }
+
         // Currency (e.g. PKR) → canonical country (Pakistan); phir sirf gateways jinke `countries` mein woh allow ho.
         $countryFallback            = resolveCountryForGatewayFiltering();
         $localCurrencyCode          = getLocalCurrencyCode();
@@ -1411,31 +1459,53 @@ class WebsiteController extends Controller
 
     function updateUserCountry() {
         $country = request('country');
-        
+
         if ($country) {
             session()->put('user_country', $country);
-            
-            // If user is logged in, update their profile too
+
+            // Footer previously only set user_country; display currency stayed on IP (e.g. USD). Align PKR etc. with country.
+            if (! isLocalCurrencyLockedByEnv()) {
+                syncVisitorCurrencySessionFromCountryName($country);
+            }
+
             if (auth()->check()) {
                 $user = auth()->user();
                 $user->country_name = $country;
                 $user->save();
             }
-            
-            return response()->json(['success' => true, 'message' => 'Country updated successfully']);
-        } else {
-            // Clear country selection (All Countries)
-            session()->forget('user_country');
-            
-            // If user is logged in, clear their country too
-            if (auth()->check()) {
-                $user = auth()->user();
-                $user->country_name = null;
-                $user->save();
-            }
-            
-            return response()->json(['success' => true, 'message' => 'All Countries selected']);
+
+            session()->save();
+
+            $code = strtoupper((string) getCurrencyCodeForCountryName($country));
+            $symbol = \App\Services\CurrencyService::getSymbolForCode($code);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Country updated successfully',
+                'currency_code' => $code,
+                'currency_symbol' => $symbol,
+            ]);
         }
+
+        if (! isLocalCurrencyLockedByEnv()) {
+            session()->forget([
+                'user_detected_currency',
+                'user_detected_symbol',
+                'user_detected_country',
+                'user_currency_manual',
+            ]);
+        }
+        session()->forget('user_country');
+
+        if (auth()->check()) {
+            $user = auth()->user();
+            $user->country_name = null;
+            $user->save();
+        }
+
+        session()->save();
+
+        return response()->json(['success' => true, 'message' => 'All Countries selected']);
     }
 
     /**

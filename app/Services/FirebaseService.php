@@ -10,6 +10,9 @@ use Kreait\Firebase\Contract\Firestore;
 use Illuminate\Support\Facades\Log;
 use Exception;
 
+/**
+ * Firebase Auth/Firestore integration for OTP and chat features (requires valid `config/firebase.php` credentials).
+ */
 class FirebaseService
 {
     protected $auth;

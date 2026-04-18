@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Exception;
 
+/**
+ * Executes outbound webhook HTTP calls and persists request/response to {@see WebhookLog}.
+ */
 class WebhookLoggerService
 {
     /**

@@ -1,4 +1,13 @@
 <?php
+
+/**
+ * Application routes (web + JSON API).
+ *
+ * **Note:** Mobile/legacy APIs live here under `Route::prefix('api')`, not in `routes/api.php`.
+ * Grouping below: beta/cron/debug → public site (`WebsiteController`) → redirects → user/admin → gateways → `/api` blocks.
+ * See inline comments throughout for HTTP methods, middleware, and endpoint purpose.
+ */
+
 use App\Http\Controllers\Api\ActivityController;
 use App\Http\Controllers\Api\FaqController;
 use App\Http\Controllers\Api\PageController;
@@ -615,50 +624,101 @@ Route::prefix('api')->group(function () {
         }
     });
     
-    // Get single campaign/product by slug
-    Route::get('/campaigns/{slug}', function($slug) {
+    // Get single campaign by slug or numeric id (e.g. /api/campaigns/my-slug or /api/campaigns/150)
+    Route::get('/campaigns/{slugOrId}', function ($slugOrId) {
         try {
-            $campaign = Campaign::with([
-                    'category',
-                    'user',
-                    'rewards',
-                    'faqs' => function ($query) {
-                        $query->orderBy('order')->orderBy('id');
-                    },
-                    'updates.user',
-                    'updates.comments.user',
-                    'comments.user',
-                    'deposits.user',
-                ])
-                ->where('slug', $slug)
-                ->approve()
-                ->first();
-            
+            $with = [
+                'category',
+                'user',
+                'rewards',
+                'faqs' => function ($query) {
+                    $query->orderBy('order')->orderBy('id');
+                },
+                'updates' => function ($query) {
+                    $query->with(['user', 'comments.user']);
+                },
+                'comments' => function ($query) {
+                    $query->whereNull('update_id')->with('user');
+                },
+                'deposits.user',
+            ];
+
+            $param = (string) $slugOrId;
+            $query = Campaign::with($with)->approve();
+
+            if ($param !== '' && ctype_digit($param)) {
+                $campaign = $query->where('id', (int) $param)->first();
+            } else {
+                $campaign = $query->where('slug', $param)->first();
+            }
+
             if (!$campaign) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Campaign not found',
-                    'data' => null
+                    'data' => null,
                 ], 404);
             }
-            
+
             $setting = bs();
             $raised = (float) $campaign->raised_amount;
             $goal = (float) $campaign->goal_amount;
 
+            $creatorUser = $campaign->user;
+            $creator = null;
+            if ($creatorUser) {
+                $fullName = trim(($creatorUser->firstname ?? '') . ' ' . ($creatorUser->lastname ?? ''));
+                if ($fullName === '') {
+                    $fullName = (string) ($creatorUser->username ?? '');
+                }
+                $img = $creatorUser->image ?? $creatorUser->avatar ?? null;
+                $creator = [
+                    'id' => (int) $creatorUser->id,
+                    'name' => $fullName,
+                    'username' => (string) ($creatorUser->username ?? ''),
+                    'email' => (string) ($creatorUser->email ?? ''),
+                    'mobile' => (string) ($creatorUser->mobile ?? ''),
+                    'whatsapp' => (string) ($creatorUser->whatsapp ?? $creatorUser->mobile ?? ''),
+                    'country_code' => (string) ($creatorUser->country_code ?? ''),
+                    'country_name' => (string) ($creatorUser->country_name ?? ''),
+                    'profile_image_url' => $img
+                        ? getImage(getFilePath('userProfile') . '/' . $img, getFileSize('userProfile'))
+                        : null,
+                ];
+            }
+
+            $formatApiComment = static function ($comment): array {
+                $displayName = $comment->user
+                    ? (string) ($comment->user->fullname ?? $comment->user->username ?? '')
+                    : (string) ($comment->name ?? '');
+
+                return [
+                    'id' => (int) $comment->id,
+                    'title' => $comment->title,
+                    'text' => (string) ($comment->comment ?? ''),
+                    'rating' => $comment->rating,
+                    'created_at' => $comment->created_at?->toISOString(),
+                    'display_name' => $displayName,
+                    'member' => $comment->user ? [
+                        'id' => (int) $comment->user->id,
+                        'username' => (string) ($comment->user->username ?? ''),
+                    ] : null,
+                ];
+            };
+
+            $campaignComments = $campaign->comments;
+
             $formattedCampaign = [
                 'id' => $campaign->id,
+                'slug' => $campaign->slug,
                 'title' => $campaign->name,
                 'description' => $campaign->description,
                 'short_description' => $campaign->short_description ?? strLimit($campaign->description, 150),
                 'image_url' => getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')),
-                'url' => route('campaign.show', $campaign->slug),
-                'product_url' => route('campaign.show', $campaign->slug),
                 'permalink' => route('campaign.show', $campaign->slug),
                 'category' => $campaign->category->name ?? null,
                 'category_id' => $campaign->category_id,
-                'user' => $campaign->user->username ?? null,
-                'user_id' => $campaign->user_id,
+                'creator' => $creator,
                 'goal_amount' => $goal,
                 'raised_amount' => $raised,
                 'progress_percentage' => $goal > 0 ? round(($raised / $goal) * 100, 2) : 0,
@@ -668,7 +728,8 @@ Route::prefix('api')->group(function () {
                 'created_at' => $campaign->created_at->toISOString(),
                 'updated_at' => $campaign->updated_at->toISOString(),
                 'end_date' => $campaign->end_date ? $campaign->end_date->toISOString() : null,
-                'rewards' => $campaign->rewards->map(function($reward) {
+                'comments_total' => $campaignComments->count(),
+                'rewards' => $campaign->rewards->map(function ($reward) {
                     return [
                         'id' => $reward->id,
                         'title' => $reward->title,
@@ -688,7 +749,16 @@ Route::prefix('api')->group(function () {
                         'order' => (int) ($faq->order ?? 0),
                     ];
                 })->values(),
-                'updates' => $campaign->updates->map(function ($update) {
+                'updates' => $campaign->updates->map(function ($update) use ($formatApiComment) {
+                    $author = null;
+                    if ($update->user) {
+                        $author = [
+                            'id' => (int) $update->user->id,
+                            'name' => (string) ($update->user->fullname ?? $update->user->username ?? ''),
+                            'username' => (string) ($update->user->username ?? ''),
+                        ];
+                    }
+
                     return [
                         'id' => $update->id,
                         'title' => $update->title,
@@ -696,27 +766,9 @@ Route::prefix('api')->group(function () {
                         'slug' => $update->slug,
                         'image_url' => $update->image ? getImage(getFilePath('campaign') . '/' . $update->image, getFileSize('campaign')) : null,
                         'is_published' => (bool) $update->is_published,
-                        'author' => [
-                            'id' => $update->user->id ?? null,
-                            'name' => $update->user->fullname ?? $update->user->username ?? null,
-                            'username' => $update->user->username ?? null,
-                        ],
-                        'comments' => $update->comments->map(function ($comment) {
-                            return [
-                                'id' => $comment->id,
-                                'name' => $comment->name,
-                                'email' => $comment->email,
-                                'comment' => $comment->comment,
-                                'rating' => $comment->rating,
-                                'title' => $comment->title,
-                                'created_at' => $comment->created_at?->toISOString(),
-                                'user' => [
-                                    'id' => $comment->user->id ?? null,
-                                    'name' => $comment->user->fullname ?? $comment->user->username ?? null,
-                                    'username' => $comment->user->username ?? null,
-                                ],
-                            ];
-                        })->values(),
+                        'author' => $author,
+                        'comments' => $update->comments->map(fn ($c) => $formatApiComment($c))->values(),
+                        'comments_count' => $update->comments->count(),
                         'created_at' => $update->created_at?->toISOString(),
                         'updated_at' => $update->updated_at?->toISOString(),
                     ];
@@ -735,24 +787,9 @@ Route::prefix('api')->group(function () {
                             'created_at' => $deposit->created_at?->toISOString(),
                         ];
                     }),
-                'comments' => $campaign->comments->map(function ($comment) {
-                    return [
-                        'id' => $comment->id,
-                        'name' => $comment->name,
-                        'email' => $comment->email,
-                        'comment' => $comment->comment,
-                        'rating' => $comment->rating,
-                        'title' => $comment->title,
-                        'created_at' => $comment->created_at?->toISOString(),
-                        'user' => [
-                            'id' => $comment->user->id ?? null,
-                            'name' => $comment->user->fullname ?? $comment->user->username ?? null,
-                            'username' => $comment->user->username ?? null,
-                        ],
-                    ];
-                })->values(),
+                'comments' => $campaignComments->map(fn ($c) => $formatApiComment($c))->values(),
             ];
-            
+
             return response()->json([
                 'success' => true,
                 'data' => $formattedCampaign,
@@ -761,12 +798,11 @@ Route::prefix('api')->group(function () {
                     'currency_symbol' => $setting ? (string) $setting->cur_sym : '$',
                 ],
             ]);
-            
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Error fetching campaign: ' . $e->getMessage(),
-                'data' => null
+                'data' => null,
             ], 500);
         }
     });

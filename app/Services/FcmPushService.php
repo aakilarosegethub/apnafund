@@ -12,6 +12,9 @@ use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
 use Throwable;
 
+/**
+ * Firebase Cloud Messaging: send notifications to stored {@see UserPushDevice} tokens.
+ */
 class FcmPushService
 {
     private ?Messaging $messaging = null;
@@ -62,6 +65,9 @@ class FcmPushService
         return true;
     }
 
+    /**
+     * @param  array<string, string>  $data  FCM data payload (string values only)
+     */
     public function notifyUserDevices(int $userId, string $title, string $body, array $data = []): void
     {
         $messaging = $this->messaging();

@@ -8,6 +8,9 @@ use App\Traits\UniversalStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Public campaign category (browse/filter); uses {@see UniversalStatus} and `active` scope.
+ */
 class Category extends Model
 {
     use UniversalStatus, Searchable;

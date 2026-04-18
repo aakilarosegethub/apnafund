@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Backer-facing update post (`slug`, `is_published`) with optional threaded comments.
+ */
 class CampaignUpdate extends Model
 {
     protected $fillable = [

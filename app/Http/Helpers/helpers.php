@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * Globally autoloaded helpers (`composer.json` → `autoload.files`).
+ *
+ * Cross-cutting utilities: system metadata, admin RBAC helpers, settings (`bs()`), uploads,
+ * currency/IP detection, notifications, and legacy compatibility helpers used across web and API.
+ */
+
 use App\Constants\ManageStatus;
 use App\Lib\Captcha;
 use App\Lib\ClientInfo;
@@ -1243,6 +1250,8 @@ function getCanonicalCountryNameForCurrencyCode(string $currencyCode): ?string
         'RUB' => 'Russia',
         'QAR' => 'Qatar',
         'KWD' => 'Kuwait',
+        'OMR' => 'Oman',
+        'BHD' => 'Bahrain',
     ];
 
     return $map[$code] ?? null;
@@ -1543,6 +1552,14 @@ function getPlatformCurrency(): string
     if (!$s) return 'USD';
     $raw = $s->getRawOriginal('site_cur') ?? ($s->attributes['site_cur'] ?? null);
     return $raw ? strtoupper(trim($raw)) : 'USD';
+}
+
+/**
+ * Symbol for platform currency (amounts in DB). Not affected by visitor TCUR/session overrides on Setting.
+ */
+function getPlatformCurrencySymbol(): string
+{
+    return \App\Services\CurrencyService::getSymbolForCode(getPlatformCurrency());
 }
 
 /**

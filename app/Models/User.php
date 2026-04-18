@@ -10,6 +10,13 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Laravel\Sanctum\HasApiTokens;
 
+/**
+ * End-user account (backer and/or campaign creator) with Sanctum API tokens.
+ *
+ * **Mass assignment:** see `$fillable` (profile, business, OAuth, verification images, etc.). **Hidden:** secrets and wallet fields.
+ *
+ * **Relationships:** `deposits`, `withdrawals`, `transactions`, `campaigns`, `comments`, `appNotifications`, `pushDevices`, …
+ */
 class User extends Authenticatable
 {
     use HasApiTokens, Notifiable, Searchable, HasFactory;

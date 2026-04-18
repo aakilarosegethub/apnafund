@@ -9,6 +9,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Admin panel RBAC: allows a whitelist of routes for all admins; otherwise checks {@see PermissionHelper} permissions and logs unauthorized attempts.
+ */
 class AdminPermission
 {
     protected array $allowedForAll = [

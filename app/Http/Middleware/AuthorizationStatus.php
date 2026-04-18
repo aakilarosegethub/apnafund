@@ -5,6 +5,9 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 
+/**
+ * For logged-in users: requires email verification (`ec`) before continuing; used on sensitive user routes.
+ */
 class AuthorizationStatus
 {
     /**

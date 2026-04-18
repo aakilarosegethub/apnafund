@@ -5,6 +5,9 @@ namespace App\Http\Middleware;
 use Illuminate\Auth\Middleware\Authenticate as Middleware;
 use Illuminate\Http\Request;
 
+/**
+ * Unauthenticated redirect: web users go to `user.login`; JSON/API requests get a 401 without redirect.
+ */
 class Authenticate extends Middleware
 {
     /**

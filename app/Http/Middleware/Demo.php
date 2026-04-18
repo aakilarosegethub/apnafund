@@ -5,6 +5,9 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 
+/**
+ * Blocks mutating HTTP methods in demo deployments (POST/PUT/DELETE) with flash toasts.
+ */
 class Demo
 {
     /**

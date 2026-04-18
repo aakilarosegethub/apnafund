@@ -7,6 +7,9 @@ use App\Constants\ManageStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 
+/**
+ * Campaign or campaign-update comment; ties to `campaign_id` and optional `update_id`.
+ */
 class Comment extends Model
 {
     use Searchable;

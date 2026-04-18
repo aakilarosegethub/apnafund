@@ -1,3 +1,4 @@
+{{-- Creator hub / business resources: SiteData-driven header, AJAX success stories, categories, static tips. Routes: creator-hub, business-resources. --}}
 @php
     $activeTheme = activeTheme();
     $activeThemeTrue = activeTheme();
@@ -545,7 +546,7 @@
 
     <script>
         // Configuration variables
-        const API_BASE_URL = {!! json_encode(config('services.wordpress.posts_api_url', '')) !!};
+        const API_BASE_URL = '{{ env('WORDPRESS_POSTS_API_URL') }}';
         const POSTS_COUNT = 4; // Variable to easily change the number of posts
 
         // Function to fetch success stories from API

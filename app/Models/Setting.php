@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Singleton-style site settings row (mail/SMS, branding, toggles); accessed widely via `bs()`.
+ */
 class Setting extends Model
 {
     protected $fillable = ['email_from', 'mail_config', 'sms_from', 'email_template', 'sms_body', 'site_email'];

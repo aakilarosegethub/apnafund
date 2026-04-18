@@ -5,6 +5,9 @@ namespace App\Models;
 use App\Traits\Searchable;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Wallet ledger line item for a {@see User} (credits/debits separate from raw {@see Deposit} rows).
+ */
 class Transaction extends Model
 {
     use Searchable;

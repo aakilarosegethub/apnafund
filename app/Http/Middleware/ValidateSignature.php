@@ -4,6 +4,9 @@ namespace App\Http\Middleware;
 
 use Illuminate\Routing\Middleware\ValidateSignature as Middleware;
 
+/**
+ * Validates signed URLs (`URL::temporarySignedRoute`, etc.); query params in `$except` bypass the hash check.
+ */
 class ValidateSignature extends Middleware
 {
     /**

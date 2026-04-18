@@ -6,6 +6,10 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
 
+/**
+ * Optional beta landing flow: when `BETA_GATE_ENABLED` is true, visitors without `apnafund_beta_seen` cookie
+ * are redirected to `/beta` until they accept (see `routes/web.php`).
+ */
 class BetaGate
 {
     /**

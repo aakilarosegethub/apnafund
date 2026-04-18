@@ -45,6 +45,7 @@
                                 <div>
                                     <label class="form-label fw-semibold">@lang('Payment proof') <span class="text-danger">*</span></label>
                                     <input type="file" name="payment_proof" class="form-control" accept=".jpg,.jpeg,.png,.pdf,.webp" required>
+                                    <small class="text-muted d-block mt-1">@lang('Accepted: JPG, PNG, PDF, WebP. Max size: 5 MB.')</small>
                                     @error('payment_proof')
                                         <span class="text-danger small d-block mt-1">{{ $message }}</span>
                                     @enderror
@@ -107,4 +108,28 @@
             word-break: break-word;
         }
     </style>
+@endpush
+
+@push('page-script')
+<script>
+(function () {
+    var input = document.querySelector('input[name="payment_proof"]');
+    var form = input && input.closest('form');
+    var maxBytes = 5 * 1024 * 1024;
+    var msg = @json(__('The payment proof file must not be larger than 5 MB.'));
+    function enforce() {
+        var f = input.files && input.files[0];
+        if (f && f.size > maxBytes) {
+            alert(msg);
+            input.value = '';
+            return false;
+        }
+        return true;
+    }
+    if (input) input.addEventListener('change', enforce);
+    if (form) form.addEventListener('submit', function (e) {
+        if (!enforce()) e.preventDefault();
+    });
+})();
+</script>
 @endpush

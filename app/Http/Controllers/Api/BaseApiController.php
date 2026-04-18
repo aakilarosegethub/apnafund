@@ -7,9 +7,21 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Shared base for mobile/legacy JSON API controllers.
+ *
+ * Provides a mysqli-style query helper (`$this->h`) for backward compatibility with legacy SQL,
+ * {@see getRequestData()} for JSON/form bodies, {@see formatCampaignData()} for fund-shaped arrays,
+ * and Sanctum/session user resolution via {@see getUserId()}.
+ *
+ * Concrete controllers live under `App\Http\Controllers\Api` and are routed from `routes/web.php`
+ * under the `/api` prefix (legacy filenames like `fundlist.php` map here).
+ */
 class BaseApiController extends Controller
 {
+    /** @var object Legacy DB helper (queryfire, fetchData, insert/update helpers). */
     protected $h;
+    /** @var string Placeholder key name kept for compatibility (e.g. map integrations). */
     protected $apiKey;
 
     public function __construct()
@@ -173,7 +185,10 @@ class BaseApiController extends Controller
     }
 
     /**
-     * Format deposite date to relative time
+     * Format a deposit datetime as a human-readable relative string (e.g. "3 day(s) ago").
+     *
+     * @param  string|\DateTimeInterface  $depositeDate  Raw datetime from deposits table
+     * @return string Relative label or "Just now"
      */
     protected function formatDepositeDate($depositeDate)
     {
@@ -242,7 +257,11 @@ class BaseApiController extends Controller
     }
 
     /**
-     * Get donater list for a fund
+     * Build a donor list for a campaign from successful deposits.
+     *
+     * @param  int  $campaignId  Campaign primary key
+     * @param  bool  $includeAnonymous  Unused; reserved for filtering anonymous rows
+     * @return array<int, array{name: string, profile_pic: string, amt: mixed, deposite_date: string}>
      */
     protected function getDonaterList($campaignId, $includeAnonymous = true)
     {
@@ -289,7 +308,11 @@ class BaseApiController extends Controller
     }
 
     /**
-     * Get fund data with donations
+     * Legacy “fund” array shape with totals and optional donor list.
+     *
+     * @param  array<string, mixed>  $row  Raw campaign/fund row
+     * @param  bool  $includeDonaters  When true, attaches `donaterlist`
+     * @return array<string, mixed>
      */
     protected function getFundData($row, $includeDonaters = true)
     {
@@ -333,7 +356,9 @@ class BaseApiController extends Controller
     }
 
     /**
-     * Get request data (handles both JSON and form data)
+     * Merge JSON body, form fields, and raw JSON content into one array (mobile clients vary).
+     *
+     * @return array<string, mixed>
      */
     protected function getRequestData(Request $request)
     {
@@ -384,7 +409,7 @@ class BaseApiController extends Controller
     }
 
     /**
-     * Get authenticated user
+     * @return \Illuminate\Contracts\Auth\Authenticatable|null
      */
     protected function getAuthUser()
     {
@@ -392,7 +417,9 @@ class BaseApiController extends Controller
     }
 
     /**
-     * Map campaigns table status to old fund_status format
+     * Map `campaigns.status` and dates/amounts to legacy string status for API consumers.
+     *
+     * @return string One of Pending|Cancelled|Completed (legacy semantics)
      */
     protected function mapCampaignStatus($status, $endDate, $raisedAmount, $goalAmount)
     {
