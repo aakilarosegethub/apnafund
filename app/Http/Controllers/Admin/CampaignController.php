@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Constants\ManageStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Deposit;
+use App\Services\CampaignStoryHtmlService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
@@ -288,7 +289,7 @@ class CampaignController extends Controller
             $campaign->category_id = $request->category_id;
             $campaign->name = $request->name;
             $campaign->slug = Str::slug($request->name);
-            $campaign->description = $request->description;
+            $campaign->description = CampaignStoryHtmlService::replaceDataUrlImagesWithStoredFiles($request->description);
             $campaign->goal_amount = $request->goal_amount;
             $campaign->start_date = \Carbon\Carbon::parse($request->start_date)->format('Y-m-d');
             $campaign->end_date = \Carbon\Carbon::parse($request->end_date)->format('Y-m-d');

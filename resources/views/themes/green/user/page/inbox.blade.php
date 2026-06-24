@@ -72,9 +72,9 @@
         <div class="inbox-notice">
             <strong>Chat setup:</strong> Add Firebase Web config (FIREBASE_API_KEY, FIREBASE_PROJECT_ID, etc.) in .env. See config/firebase.php.
         </div>
-    @else
+    @elseif(config('app.debug'))
         <div class="inbox-notice" style="background:#e7f3ff;border:1px solid #b3d7ff;">
-            <strong>Messages not sending?</strong> Enable <a href="https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project={{ $firebaseConfig['projectId'] ?? '' }}" target="_blank" rel="noopener">Cloud Firestore API</a> in Google Cloud Console for your project.
+            <strong>Developer note:</strong> Firestore API must be enabled in Google Cloud Console for chat.
         </div>
     @endif
 
@@ -94,7 +94,7 @@
                 <div class="inbox-chat-header">
                     <span class="inbox-chat-header-title" id="chatHeader">{{ ($startCreatorId && $startCampaignId) ? ($creatorFullname ?? $startCampaignTitle ?? '—') : '—' }}</span>
                     <div class="inbox-chat-menu" id="chatMenuWrap" style="display: none;">
-                        <button type="button" class="inbox-chat-menu-btn" id="chatMenuBtn" title="Options"><i class="fas fa-bars"></i></button>
+                        <button type="button" class="inbox-chat-menu-btn" id="chatMenuBtn" title="Delete chat"><i class="fas fa-trash-alt"></i></button>
                         <div class="inbox-chat-menu-dropdown" id="chatMenuDropdown">
                             <button type="button" class="inbox-chat-delete-opt" id="chatDeleteBtn"><i class="fas fa-trash-alt"></i> Delete chat</button>
                         </div>
@@ -531,7 +531,7 @@
             postInboxNotifyServer(selectedOtherId, text, selectedCampaignId, selectedCampaignTitle);
         }).catch(function(err) {
             console.error(err);
-            showInboxMsg('Failed to send. Enable Firestore API in Google Cloud Console and check your connection.', true);
+            showInboxMsg('Failed to send message. Please check your connection and try again.', true);
         });
     }
 

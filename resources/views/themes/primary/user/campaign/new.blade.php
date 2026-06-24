@@ -40,6 +40,15 @@
                                     </div>
                                 </div>
                                 <div class="col-12">
+                                    <label class="form--label required">@lang('Short Description')</label>
+                                    <textarea class="form--control" id="CampaignShortDescription" name="short_description" rows="3" maxlength="{{ getCampaignShortDescriptionMaxLength() }}" placeholder="@lang('Describe your project in one or two sentences...')" required>{{ old('short_description') }}</textarea>
+                                    <small class="form-text text-muted">@lang('Shown on your project card.') <span id="shortDescriptionCount"></span></small>
+                                    <small id="shortDescriptionError" class="text-danger d-none"></small>
+                                    @error('short_description')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                                <div class="col-12">
                                     <label class="form--label required">@lang('Name')</label>
                                     <div class="input--group">
                                         <span class="input-group-text"><i class="ti ti-keyframe-align-center"></i></span>
@@ -169,6 +178,64 @@
             $('.date-picker').on('input keyup keydown keypress', function() {
                 return false
             })
+
+            const SHORT_DESC_MIN = {{ getCampaignShortDescriptionMinLength() }};
+            const SHORT_DESC_MAX = {{ getCampaignShortDescriptionMaxLength() }};
+            const shortDescriptionField = document.getElementById('CampaignShortDescription');
+            const shortDescriptionError = document.getElementById('shortDescriptionError');
+            const shortDescriptionCount = document.getElementById('shortDescriptionCount');
+
+            function normalizeShortDescription(value) {
+                return (value || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+            }
+
+            function validateShortDescriptionField() {
+                if (!shortDescriptionField) {
+                    return true;
+                }
+
+                const text = normalizeShortDescription(shortDescriptionField.value);
+                let message = '';
+
+                if (!text) {
+                    message = (shortDescriptionField.value || '').length > 0
+                        ? 'Short description cannot contain only spaces.'
+                        : 'Please enter a short description for your project.';
+                } else if (text.length < SHORT_DESC_MIN) {
+                    message = `Short description must be at least ${SHORT_DESC_MIN} characters long.`;
+                } else if (text.length > SHORT_DESC_MAX) {
+                    message = `Short description cannot exceed ${SHORT_DESC_MAX} characters.`;
+                }
+
+                if (message) {
+                    if (shortDescriptionError) {
+                        shortDescriptionError.textContent = message;
+                        shortDescriptionError.classList.remove('d-none');
+                    }
+                    return false;
+                }
+
+                if (shortDescriptionError) {
+                    shortDescriptionError.classList.add('d-none');
+                }
+
+                if (shortDescriptionCount) {
+                    shortDescriptionCount.textContent = `(${text.length}/${SHORT_DESC_MAX} characters)`;
+                }
+
+                return true;
+            }
+
+            if (shortDescriptionField) {
+                shortDescriptionField.addEventListener('input', validateShortDescriptionField);
+                shortDescriptionField.addEventListener('blur', validateShortDescriptionField);
+                $('form[action="{{ route('user.campaign.store') }}"]').on('submit', function(e) {
+                    if (!validateShortDescriptionField()) {
+                        e.preventDefault();
+                        shortDescriptionField.focus();
+                    }
+                });
+            }
         })(jQuery)
     </script>
 @endpush

@@ -78,7 +78,8 @@ class UnifiedWebhookLoggerService
     {
         // Common transaction ID field names across different gateways
         $transactionFields = [
-            'TransactionID', 'transaction_id', 'txn_id', 'txnId', 
+            'TransactionID', 'transaction_id', 'txn_id', 'txnId',
+            'pp_TxnRefNo', 'pp_BillReference',
             'payment_id', 'paymentId', 'order_id', 'orderId',
             'reference', 'ref', 'trx', 'trx_id'
         ];

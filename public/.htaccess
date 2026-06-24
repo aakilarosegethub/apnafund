@@ -5,6 +5,10 @@
 
   RewriteEngine On
 
+    # Block direct HTTP access to private CNIC/verification documents
+    RewriteRule ^storage/app/private/ - [F,L]
+    RewriteRule ^assets/universal/documents/campaign/ - [F,L]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]

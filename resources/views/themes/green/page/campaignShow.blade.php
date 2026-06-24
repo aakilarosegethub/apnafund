@@ -1,6 +1,6 @@
 @extends(activeTheme() . 'layouts.green-home')
 
-@section('title', __(@$campaignData->name ?? 'Campaign') . ' - Apnacrowdfunding')
+@section('title', __(@$campaignData->name ?? 'Campaign') . ' - ' . (bs('site_name') ?? 'ApnaCrowdfunding'))
 
 @push('styles')
 <style>
@@ -261,6 +261,9 @@
     $goalAmount = usdToLocal($goalAmountUsd);
     $raisedAmount = usdToLocal($raisedAmountUsd);
     $percentage = donationPercentage($goalAmount, $raisedAmount);
+    $fundingPercentRaw = ($goalAmount > 0) ? (($raisedAmount / $goalAmount) * 100) : 0;
+    $progressBarWidth = min(100, $fundingPercentRaw);
+    $isOverFunded = $fundingPercentRaw > 100;
     $activeTab = request()->get('tab', 'campaign');
     $showRateDebug = request()->has('test');
     $localCur = strtoupper(getLocalCurrencyCode());
@@ -489,10 +492,16 @@
                                                     </div>
                                                 @endif
                                                 
+                                                @if(!$campaignData->isExpired() && !(auth()->check() && auth()->id() == $campaignData->user_id))
                                                 <a href="{{ route('campaign.donate', $campaignData->slug) }}?reward={{ $reward->id }}" 
                                                    class="btn btn-success w-100">
                                                     Get This Reward
                                                 </a>
+                                                @else
+                                                <button type="button" class="btn btn-secondary w-100" disabled>
+                                                    {{ $campaignData->isExpired() ? 'Campaign ended' : 'Not available' }}
+                                                </button>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>
@@ -721,10 +730,15 @@
                 </p>
 
                 <div class="progress">
-                    <div class="progress-bar" style="width: {{ $percentage }}%"></div>
+                    <div class="progress-bar" style="width: {{ $progressBarWidth }}%"></div>
                 </div>
                 
-                <small class="funded-text">{{ round($percentage) }}% funded</small>
+                <small class="funded-text">
+                    {{ round($fundingPercentRaw) }}% funded
+                    @if($isOverFunded)
+                        <span class="text-success">(@lang('Over funded'))</span>
+                    @endif
+                </small>
 
                 <div class="stats">
                     <div>
@@ -758,7 +772,13 @@
                     </div>
                 </div>
 
-                <a href="{{ $donateUrl }}" class="btn btn-success w-100 mt-3">Back This Project</a>
+                @if($campaignData->isExpired())
+                    <button type="button" class="btn btn-secondary w-100 mt-3" disabled>@lang('Campaign ended')</button>
+                @elseif(auth()->check() && auth()->id() == $campaignData->user_id)
+                    <button type="button" class="btn btn-secondary w-100 mt-3" disabled>@lang('You cannot back your own campaign')</button>
+                @else
+                    <a href="{{ $donateUrl }}" class="btn btn-success w-100 mt-3">Back This Project</a>
+                @endif
 
                 <!-- Recent Donations/Backers List -->
                 @if(isset($donations) && $donations->count() > 0)

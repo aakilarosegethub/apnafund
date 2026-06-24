@@ -78,12 +78,53 @@ class LoginController extends Controller
         ]);
     }
 
+    /**
+     * Attempt to log the user in, honouring the "Remember Me" checkbox.
+     *
+     * How "Remember Me" works:
+     *  - The login form sends `remember=1` only when the checkbox is ticked.
+     *  - `$request->boolean('remember')` turns that into a strict true/false.
+     *  - When true, Laravel issues a long-lived "remember" cookie and stores a
+     *    hashed token in the users.remember_token column. On a later visit (after
+     *    the session cookie has expired) Laravel matches that cookie against the
+     *    stored token and re-authenticates the user automatically.
+     *
+     * Security considerations:
+     *  - Only a hash of the token lives in the DB, and the token is rotated on
+     *    each use, so a stolen cookie has limited value.
+     *  - Logging out (see logout()) clears the cookie and rotates the token,
+     *    invalidating any previously issued remember cookies.
+     *  - The session ID is still regenerated on successful login by the parent
+     *    trait's sendLoginResponse(), preventing session-fixation.
+     *
+     * Note: this mirrors the default AuthenticatesUsers::attemptLogin() behaviour
+     * but is declared explicitly here so the remember handling is documented and
+     * obvious rather than hidden inside the framework trait.
+     */
+    protected function attemptLogin(Request $request) {
+        return $this->guard()->attempt(
+            $this->credentials($request),
+            $request->boolean('remember')
+        );
+    }
+
     function logout() {
+        // Forget the user on the current guard. Because the framework "logout"
+        // also clears the remember cookie and cycles users.remember_token, any
+        // previously issued "Remember Me" cookie is rendered useless.
         $this->guard()->logout();
+
+        // Invalidate the session data and issue a brand-new CSRF token so the
+        // old session can no longer be replayed (defence against fixation/CSRF).
         request()->session()->invalidate();
+        request()->session()->regenerateToken();
 
         $toast[] = ['success', 'Logout success'];
-        return back()->withToasts($toast);
+        return redirect()->route('user.login.form')
+            ->withToasts($toast)
+            ->header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', '0');
     }
 
     function authenticated(Request $request, $user) {

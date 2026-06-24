@@ -286,8 +286,10 @@ body{
                 </div>
             </div>
 
+            {{-- "Remember Me": value=1 only sent when checked; Laravel then stores a
+                 hashed token in users.remember_token and sets a persistent cookie. --}}
             <div class="form-check">
-                <label><input type="checkbox" name="remember"> Remember me</label>
+                <label><input type="checkbox" name="remember" value="1" @checked(old('remember'))> Remember me</label>
                 <a href="{{ route('user.password.request.form') }}">Forgot?</a>
             </div>
 

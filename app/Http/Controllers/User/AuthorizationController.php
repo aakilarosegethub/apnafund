@@ -121,19 +121,29 @@ class AuthorizationController extends Controller
     }
 
     function emailVerificationApi() {
-        // This method handles API calls without CSRF token requirement
-        // but still requires authentication through session or token
-        
-        $verCode = $this->codeValidation(request());
-        $user    = auth()->user();
-
-        if (!$user) {
+        if (!auth()->check()) {
             return response()->json([
+                'ResponseCode' => '401',
+                'Result' => 'false',
                 'success' => false,
                 'message' => 'User not authenticated',
-                'errors' => ['auth' => ['User must be logged in to verify email']]
+                'errors' => ['auth' => ['User must be logged in to verify email']],
             ], 401);
         }
+
+        try {
+            $verCode = $this->codeValidation(request());
+        } catch (ValidationException $e) {
+            return response()->json([
+                'ResponseCode' => '422',
+                'Result' => 'false',
+                'success' => false,
+                'message' => $e->validator->errors()->first() ?: 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
+        }
+
+        $user = auth()->user();
 
         if ($user->ver_code == $verCode) {
             $user->ec               = ManageStatus::VERIFIED;
@@ -163,6 +173,8 @@ class AuthorizationController extends Controller
             }
 
             return response()->json([
+                'ResponseCode' => '200',
+                'Result' => 'true',
                 'success' => true,
                 'message' => 'Email verified successfully',
                 'redirect' => route('user.home')
@@ -170,6 +182,8 @@ class AuthorizationController extends Controller
         }
 
         return response()->json([
+            'ResponseCode' => '422',
+            'Result' => 'false',
             'success' => false,
             'message' => 'Verification code didn\'t match!',
             'errors' => ['code' => ['Verification code didn\'t match!']]

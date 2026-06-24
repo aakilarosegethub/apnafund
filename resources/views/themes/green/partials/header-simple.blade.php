@@ -11,7 +11,7 @@
         <div class="header-center">
             <a href="{{ route('home') }}" class="d-inline-block">
                 <img
-                    src="{{ getImage(getFilePath('logoFavicon') . '/logo_light.png', getFileSize('logoFavicon')) }}"
+                    src="{{ getSiteLogo('light') }}"
                     alt="{{ bs('site_name') ?? 'Apna Crowdfunding' }}"
                 >
             </a>

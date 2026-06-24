@@ -306,7 +306,7 @@ class PaymentController extends BaseApiController
         $payable = $amount + $charge;
         // final_amount is payable in gateway/method currency.
         // dd($payable,$gatewayData->rate);
-        $finalAmount = $payable + $charge;
+        $finalAmount = $payable;
 
         $deposit = new Deposit();
         $deposit->campaign_id = $campaign->id;

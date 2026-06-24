@@ -245,7 +245,7 @@
                     <option value="">Select a category</option>
                     @if(isset($categories) && $categories->count() > 0)
                         @foreach($categories as $category)
-                            <option value="{{ $category->id }}">{{ $category->name }}</option>
+                            <option value="{{ $category->id }}" @selected(($savedCategoryId ?? null) == $category->id)>{{ $category->name }}</option>
                         @endforeach
                     @endif
                 </select>
@@ -257,7 +257,7 @@
                     <i class="fas fa-sitemap"></i>
                     Subcategory
                 </label>
-                <select class="form-select" id="subcategory" required>
+                <select class="form-select" id="subcategory" required data-saved-subcategory-id="{{ $savedSubcategoryId ?? '' }}">
                     <option value="">Select a subcategory</option>
                 </select>
             </div>
@@ -268,7 +268,7 @@
             <!-- Buttons -->
             <div class="button-group">
                <button type="button" class="next-btn" id="nextBtn" disabled>
-    Next: Additional subcategory
+    Next: Location
 </button>
 
             </div>
@@ -278,24 +278,23 @@
 @endsection
 @section('script')
     <script>
-        const appUrl = '{{ env('APP_URL') }}';
-        const primaryCategory = document.getElementById('primaryCategory');
-        const subcategory = document.getElementById('subcategory');
-        const nextBtn = document.getElementById('nextBtn');
+        (function() {
+            const primaryCategory = document.getElementById('primaryCategory');
+            const subcategory = document.getElementById('subcategory');
+            const nextBtn = document.getElementById('nextBtn');
+            const NEXT_BTN_LABEL = 'Next: Location';
 
-        // Fetch subcategories via AJAX when category changes
-        primaryCategory.addEventListener('change', function() {
-            
-            const categoryId = this.value;
-            subcategory.innerHTML = '<option value="">Loading subcategories...</option>';
-            subcategory.disabled = true;
-            
-            if (categoryId) {
-                // AJAX request to fetch subcategories
-                const url = `/api/subcategories/${categoryId}`;
-                console.log('Fetching subcategories from:', url);
-                
-                fetch(url, {
+            function loadSubcategories(categoryId, selectedSubcategoryId) {
+                if (!categoryId) {
+                    subcategory.innerHTML = '<option value="">Select a subcategory</option>';
+                    subcategory.disabled = false;
+                    return Promise.resolve();
+                }
+
+                subcategory.innerHTML = '<option value="">Loading subcategories...</option>';
+                subcategory.disabled = true;
+
+                return fetch(`/api/subcategories/${categoryId}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -304,16 +303,14 @@
                     }
                 })
                 .then(response => {
-                    console.log('Response status:', response.status);
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     return response.json();
                 })
                 .then(data => {
-                    console.log('Subcategories data received:', data);
                     subcategory.innerHTML = '<option value="">Select a subcategory</option>';
-                    
+
                     if (data.success && data.data && data.data.length > 0) {
                         data.data.forEach(sub => {
                             const option = document.createElement('option');
@@ -321,52 +318,83 @@
                             option.textContent = sub.name;
                             subcategory.appendChild(option);
                         });
-                        console.log(`Loaded ${data.data.length} subcategories`);
                     } else {
                         subcategory.innerHTML = '<option value="">No subcategories available</option>';
-                        console.log('No subcategories found for this category');
                     }
-                    
+
+                    if (selectedSubcategoryId) {
+                        subcategory.value = String(selectedSubcategoryId);
+                    }
+
                     subcategory.disabled = false;
-                    updateNextBtn();
                 })
                 .catch(error => {
                     console.error('Error fetching subcategories:', error);
                     subcategory.innerHTML = '<option value="">Error loading subcategories</option>';
                     subcategory.disabled = false;
-                    updateNextBtn();
                 });
-            } else {
-                subcategory.innerHTML = '<option value="">Select a subcategory</option>';
-                subcategory.disabled = false;
+            }
+
+            function updateNextBtn() {
+                nextBtn.textContent = NEXT_BTN_LABEL;
+
+                if (primaryCategory.value && subcategory.value) {
+                    nextBtn.disabled = false;
+                    nextBtn.style.background = '#00c6a7';
+                    nextBtn.style.color = 'white';
+                    nextBtn.style.cursor = 'pointer';
+                } else {
+                    nextBtn.disabled = true;
+                    nextBtn.style.background = '#e0e0e0';
+                    nextBtn.style.color = '#999';
+                    nextBtn.style.cursor = 'not-allowed';
+                }
+            }
+
+            let subcategoriesLoading = false;
+
+            function restoreCategoryStep() {
+                nextBtn.textContent = NEXT_BTN_LABEL;
+
+                const categoryId = primaryCategory.value;
+                const savedSubcategoryId = subcategory.dataset.savedSubcategoryId || '';
+                const subcategoryAlreadyLoaded = subcategory.options.length > 1;
+                const subcategoryIdToRestore = subcategory.value || savedSubcategoryId;
+
+                if (categoryId && (!subcategoryAlreadyLoaded || (subcategoryIdToRestore && !subcategory.value))) {
+                    if (subcategoriesLoading) {
+                        return;
+                    }
+                    subcategoriesLoading = true;
+                    loadSubcategories(categoryId, subcategoryIdToRestore)
+                        .finally(function() {
+                            subcategoriesLoading = false;
+                            updateNextBtn();
+                        });
+                    return;
+                }
+
                 updateNextBtn();
             }
-        });
 
-        subcategory.addEventListener('change', updateNextBtn);
+            primaryCategory.addEventListener('change', function() {
+                loadSubcategories(this.value, null).then(updateNextBtn);
+            });
 
-        function updateNextBtn() {
-            if (primaryCategory.value && subcategory.value) {
-                nextBtn.disabled = false;
-                nextBtn.style.background = '#00c6a7';
-                nextBtn.style.color = 'white';
-                nextBtn.style.cursor = 'pointer';
-            } else {
-                nextBtn.disabled = true;
-                nextBtn.style.background = '#e0e0e0';
-                nextBtn.style.color = '#999';
-                nextBtn.style.cursor = 'not-allowed';
-            }
-        }
+            subcategory.addEventListener('change', updateNextBtn);
 
-        nextBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            if (primaryCategory.value && subcategory.value) {
-                // Disable button during request
+            window.addEventListener('pageshow', restoreCategoryStep);
+            restoreCategoryStep();
+
+            nextBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (!primaryCategory.value || !subcategory.value) {
+                    return;
+                }
+
                 nextBtn.disabled = true;
                 nextBtn.textContent = 'Saving...';
-                
-                // Save category and subcategory in session via AJAX
+
                 fetch('{{ route("start.project.save.categories") }}', {
                     method: 'POST',
                     headers: {
@@ -383,22 +411,19 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Redirect to location page
                         window.location.href = data.redirect_url;
                     } else {
                         alert('Error: ' + (data.message || 'Failed to save categories'));
-                        nextBtn.disabled = false;
-                        nextBtn.textContent = 'Next: Additional subcategory';
+                        updateNextBtn();
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
                     alert('An error occurred. Please try again.');
-                    nextBtn.disabled = false;
-                    nextBtn.textContent = 'Next: Additional subcategory';
+                    updateNextBtn();
                 });
-            }
-        });
+            });
+        })();
     </script>
 @endsection
 

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Constants\ManageStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Gateway\PaymentController;
+use App\Services\JazzCashApiLoggerService;
 
 class ProcessController extends Controller
 {
@@ -62,19 +63,27 @@ class ProcessController extends Controller
         $send['method'] = 'post';
         $send['url'] = $gatewayUrl;
 
+        app(JazzCashApiLoggerService::class)->logFormRedirect('card_redirect', $gatewayUrl, $paymentData, $deposit);
+
         return json_encode($send);
     }
 
     public function ipn(Request $request)
     {
+        $logger = app(JazzCashApiLoggerService::class);
         $deposit = Deposit::where('trx', $request->TransactionID)->first();
+        $logContext = $logger->logIncoming($request, 'ipn/card-payment', 'card_ipn', $deposit);
         
         if (!$deposit) {
-            return response('Transaction not found', 404);
+            $response = 'Transaction not found';
+            $logger->finalizeInbound($logContext, 'failed', $response, 404);
+            return response($response, 404);
         }
         
         if ($deposit->status == ManageStatus::PAYMENT_SUCCESS) {
-            return response('Already processed', 200);
+            $response = 'Already processed';
+            $logger->finalizeInbound($logContext, 'success', $response, 200);
+            return response($response, 200);
         }
         
         // Get gateway configuration
@@ -87,15 +96,21 @@ class ProcessController extends Controller
         $expectedHash = hash('sha256', $merchantId . $request->TransactionID . $request->Amount . $request->Currency . $hashKey);
         
         if ($expectedHash !== $request->Hash) {
-            return response('Invalid hash', 400);
+            $response = 'Invalid hash';
+            $logger->finalizeInbound($logContext, 'failed', $response, 400);
+            return response($response, 400);
         }
         
         // Verify payment status according to Page Redirection v1.1
         if ($request->Status === 'Success' || $request->Status === 'Completed' || $request->Status === 'APPROVED') {
             PaymentController::campaignDataUpdate($deposit);
-            return response('Payment processed successfully', 200);
+            $response = 'Payment processed successfully';
+            $logger->finalizeInbound($logContext, 'success', $response, 200);
+            return response($response, 200);
         }
         
-        return response('Payment failed', 400);
+        $response = 'Payment failed';
+        $logger->finalizeInbound($logContext, 'failed', $response, 400);
+        return response($response, 400);
     }
 }

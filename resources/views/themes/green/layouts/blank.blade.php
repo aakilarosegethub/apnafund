@@ -17,7 +17,7 @@
 <!-- Icons -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 
-@yield('custom-css');
+@yield('custom-css')
 
 <style>
 /* Header Simple Styles */

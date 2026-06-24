@@ -255,7 +255,7 @@
 @endphp
 <section class="hero mt-5" @if($heroBgImage) style="background-image: url('{{ custom_asset('assets/images/site/home/' . $heroBgImage) }}'); background-size: cover; background-position: center; background-repeat: no-repeat;" @endif>
   <div class="container">
-    <span class="badge bg-light text-success mb-3">50,000+ Backers</span>
+    <span class="badge bg-light text-success mb-3">{{ $counterElements->first()->data_info->title ?? 'Growing Community of Backers' }}</span>
     <h1>
         @php
             // Helper function to split on space, return [first, rest]

@@ -74,6 +74,12 @@
                 <span class="sidebar-txt">@lang('Activity Logs')</span>
             </a>
         </li>
+        <li class="sidebar-item">
+            <a href="{{ route('admin.webhook.logs.index') }}" class="sidebar-link {{ navigationActive('admin.webhook.logs*', 2) }}">
+                <span class="nav-icon"><i class="ti ti-api"></i></span>
+                <span class="sidebar-txt">@lang('API Request Logs')</span>
+            </a>
+        </li>
         @endif
         @if(admin_can('payout_banks'))
         <li class="sidebar-item">

@@ -273,7 +273,9 @@
             <div class="card-body">
                 @php
                     $requirements = getCampaignDocumentRequirements(true, optional($campaign->user)->country_name);
-                    $verificationDocs = is_array($campaign->verification_documents ?? null) ? $campaign->verification_documents : [];
+                    $verificationDocs = normalizeCampaignVerificationDocuments(
+                        is_array($campaign->verification_documents ?? null) ? $campaign->verification_documents : []
+                    );
                 @endphp
                 <div class="row g-3">
                     @foreach($requirements as $item)
@@ -287,9 +289,13 @@
                             @endif
                             @if($file)
                                 <div class="mt-2">
-                                    <a href="{{ asset(getFilePath('document') . '/' . $file) }}" target="_blank" class="btn btn--sm btn--base">
-                                        @lang('Open File')
-                                    </a>
+                                    @include('partials.campaign-verification-document-link', [
+                                        'campaignId' => $campaign->id,
+                                        'filename' => $file,
+                                        'forAdmin' => true,
+                                        'label' => __('Open File'),
+                                        'linkClass' => 'btn btn--sm btn--base',
+                                    ])
                                 </div>
                             @else
                                 <p class="text-muted mt-2 mb-0">@lang('Not uploaded')</p>

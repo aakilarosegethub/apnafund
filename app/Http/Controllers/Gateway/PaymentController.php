@@ -59,7 +59,19 @@ class PaymentController extends Controller
     }
 
     function depositInserts($slug) {
-        
+        if (!auth()->check()) {
+            $redirect = route('user.login.form', ['redirect' => url()->current()]);
+            if (request()->expectsJson() || request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please log in to make a contribution.',
+                    'redirect' => $redirect,
+                ], 401);
+            }
+            $toast[] = ['error', 'Please log in to make a contribution.'];
+            return redirect($redirect)->withToasts($toast);
+        }
+
         $countryData = (array) json_decode(file_get_contents(resource_path('views/partials/country.json')));
         
         // $mobileCodes = implode(',', array_column($countryData, 'dial_code'));
@@ -93,6 +105,11 @@ class PaymentController extends Controller
             return back()->withToasts($toast);
         }
 
+        if (auth()->check() && (int) auth()->id() === (int) $campaign->user_id) {
+            $toast[] = ['error', 'You cannot contribute to your own campaign'];
+            return back()->withToasts($toast);
+        }
+
         $gatewayFilterCountry = resolveCountryForGatewayFiltering();
 
         $gatewayData = GatewayCurrency::whereHas('method', function ($gateway) use ($gatewayFilterCountry) {
@@ -115,8 +132,14 @@ class PaymentController extends Controller
         $currencyService = app(\App\Services\CurrencyService::class);
         $amount = round((float) $currencyService->convertToPlatform($enteredAmount, $inputCurrency), 8);
 
-        if ($gatewayData->min_amount > $amount || $gatewayData->max_amount < $amount) {
-            $toast[] = ['error', 'Please follow contribution limit'];
+        $gatewayCurrencyCode = strtoupper((string) $gatewayData->currency);
+        $platformCurrency = strtoupper((string) getPlatformCurrency());
+        $amountForGatewayLimit = ($gatewayCurrencyCode === $platformCurrency || $gatewayCurrencyCode === strtoupper($inputCurrency))
+            ? $enteredAmount
+            : round($enteredAmount * (float) $gatewayData->rate, 2);
+
+        if ((float) $gatewayData->min_amount > $amountForGatewayLimit || (float) $gatewayData->max_amount < $amountForGatewayLimit) {
+            $toast[] = ['error', 'Amount must be between ' . showAmount($gatewayData->min_amount) . ' and ' . showAmount($gatewayData->max_amount) . ' ' . $gatewayData->currency];
             return back()->withToasts($toast);
         }
 
@@ -146,7 +169,7 @@ class PaymentController extends Controller
 
         $charge       = $gatewayData->fixed_charge + (($amount * $gatewayData->percent_charge) / 100);
         $payable      = $amount + $charge;
-        $final_amount = round($amount + (float) $gatewayData->rate, 2);
+        $final_amount = round($amountForGatewayLimit + (($amountForGatewayLimit * $gatewayData->percent_charge) / 100) + (float) $gatewayData->fixed_charge, 2);
 
         if (auth()->check()) {
             $userFullName = auth()->user()->fullname;
@@ -196,7 +219,6 @@ class PaymentController extends Controller
     }
 
     function depositConfirm() {
-        
         
         $track = session()->get('Track') ?? request()->query('trx');
         if(!$track || !empty($_GET['trx'])){
@@ -252,6 +274,7 @@ class PaymentController extends Controller
 
         $data    = $new::process($deposit);
         $data    = json_decode($data);
+        // dd($data);
         if (isset($data->error)) {
             $errorMsg = isset($data->message) ? $data->message : 'Payment failed';
             \Log::channel('payments')->error('Payment process returned error to user', [
@@ -279,8 +302,13 @@ class PaymentController extends Controller
     }
 
     static function campaignDataUpdate($deposit, $isManual = null) {
-        if ($deposit->status == ManageStatus::PAYMENT_INITIATE || $deposit->status == ManageStatus::PAYMENT_PENDING) {
+        if ($deposit->status == ManageStatus::PAYMENT_INITIATE || $deposit->status == ManageStatus::PAYMENT_PENDING ) {
             $deposit->status = ManageStatus::PAYMENT_SUCCESS;
+            if(isset($deposit->jazzcash))
+            {
+                unset($deposit->jazzcash);
+                $deposit->status = ManageStatus::PAYMENT_PENDING;
+            }
             $deposit->save();
 
             $depositType = $deposit->deposit_type ?? 'donation';
@@ -714,10 +742,11 @@ class PaymentController extends Controller
     function success() {
         $track   = session()->get('Track');
         $deposit = Deposit::with('gateway')->where('trx', $track)->done()->first();
-
-        if (!$deposit) return redirect()->to(gatewayRedirectUrlFull(false));
-
         $toast[] = ['success', 'Payment completed successfully'];
+
+        if (!$deposit) return redirect()->to(gatewayRedirectUrlFull(true))->withToasts($toast);
+
+        
 
         // Registration fee: redirect to campaign edit
         if (($deposit->deposit_type ?? '') === 'registration_fee' && $deposit->campaign_id) {
@@ -744,7 +773,7 @@ class PaymentController extends Controller
         $message = $message ?: __('Payment could not be completed. Please try again.');
 
         return view($this->activeTheme . 'user.payment.error', [
-            'message' => $message,
+            // 'message' => $message,
             'pageTitle' => __('Payment Failed'),
         ]);
     }

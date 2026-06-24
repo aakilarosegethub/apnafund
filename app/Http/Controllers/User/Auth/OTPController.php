@@ -61,22 +61,28 @@ class OTPController extends Controller
     {
         // Check if this is email-based registration or phone-based login
         if ($request->has('email') && $request->email) {
-            // Email-based registration flow
-            $validator = Validator::make($request->all(), [
-                'email' => 'required|email|max:191',
-                'name' => 'required|string|max:100',
-                'password' => 'required|string|min:6',
-            ]);
+            // Email-based registration flow — validate before OTP/user creation
+            $email = strtolower(trim((string) $request->input('email', '')));
+            $signupErrors = validateRegistrationSignupFields(
+                $request->input('name'),
+                $request->input('password'),
+                $email
+            );
 
-            if ($validator->fails()) {
+            if ($signupErrors !== []) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors()
+                    'message' => registrationSignupFirstError($signupErrors),
+                    'errors' => $signupErrors,
                 ], 422);
             }
 
-            $email = strtolower(trim($request->email));
+            if (loadReCaptcha() && !verifyCaptcha()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid captcha provided.',
+                ], 422);
+            }
 
             // Check if email already exists
             $user = User::where('email', $email)->first();
@@ -123,10 +129,9 @@ class OTPController extends Controller
             
             // If firstname/lastname are defaults but name is provided, split name
             if (($firstname === 'User' && $lastname === 'User') || ($firstname === 'User' && empty($lastname))) {
-                $nameParts = explode(' ', trim($request->name ?? ''), 2);
-                if (count($nameParts) >= 1 && !empty($nameParts[0])) {
-                    $firstname = $nameParts[0];
-                    $lastname = $nameParts[1] ?? '';
+                [$firstname, $lastname] = splitRegistrationName(trim($request->name ?? ''));
+                if ($firstname === '') {
+                    $firstname = 'User';
                 }
             }
 
@@ -321,6 +326,8 @@ class OTPController extends Controller
                 Log::error('Failed to send welcome email: ' . $e->getMessage());
                 // Continue even if email fails
             }
+
+            $request->session()->regenerate();
 
             return response()->json([
                 'success' => true,

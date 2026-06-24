@@ -89,10 +89,7 @@ function navigationActive($routeName, $type = null, $param = null) {
 
 function bs($fieldName = null) {
     try {
-        cache()->forget('setting');
-        // Cache clear karne ke liye aap command line se yeh command chalaen:
-        // php artisan cache:clear
-        $setting = null;
+        $setting = cache()->get('setting');
 
         if (!$setting) {
             $setting = Setting::first();
@@ -769,6 +766,86 @@ function getCampaignDaysLimit(): int
 }
 
 /**
+ * Minimum plain-text length for campaign short description (Basics wizard).
+ */
+function getCampaignShortDescriptionMinLength(): int
+{
+    return 10;
+}
+
+/**
+ * Maximum plain-text length for campaign short description.
+ */
+function getCampaignShortDescriptionMaxLength(): int
+{
+    return 255;
+}
+
+/**
+ * Normalize short description: strip HTML, collapse whitespace, trim.
+ */
+function normalizeCampaignShortDescription(?string $value): string
+{
+    $plain = html_entity_decode(strip_tags((string) $value), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+    return trim(preg_replace('/\s+/u', ' ', $plain));
+}
+
+/**
+ * Plain-text character count for short description validation.
+ */
+function campaignShortDescriptionLength(?string $value): int
+{
+    return mb_strlen(normalizeCampaignShortDescription($value));
+}
+
+/**
+ * Merge normalized short description onto the request before validation.
+ */
+function prepareCampaignShortDescriptionForValidation(\Illuminate\Http\Request $request): void
+{
+    $request->merge([
+        'short_description' => normalizeCampaignShortDescription($request->input('short_description')),
+    ]);
+}
+
+/**
+ * Laravel validation rules for campaign short_description.
+ *
+ * @return array<int, string>
+ */
+function campaignShortDescriptionValidationRules(): array
+{
+    $min = getCampaignShortDescriptionMinLength();
+    $max = getCampaignShortDescriptionMaxLength();
+
+    return [
+        'required',
+        'string',
+        "min:{$min}",
+        "max:{$max}",
+    ];
+}
+
+/**
+ * User-friendly validation messages for campaign short_description.
+ *
+ * @return array<string, string>
+ */
+function campaignShortDescriptionValidationMessages(): array
+{
+    $min = getCampaignShortDescriptionMinLength();
+    $max = getCampaignShortDescriptionMaxLength();
+
+    return [
+        'short_description.required' => 'Please enter a short description for your project.',
+        'short_description.string' => 'Short description must be text.',
+        'short_description.min' => "Short description must be at least {$min} characters (about one or two sentences).",
+        'short_description.max' => "Short description cannot exceed {$max} characters.",
+    ];
+}
+
+/**
  * Get admin-configurable required campaign documents list.
  * Stored in SiteData key: general.campaign_required_documents.
  * Returns non-empty lines; falls back to sensible defaults.
@@ -973,8 +1050,8 @@ function gatewayRedirectUrlFull(bool $success = false, ?string $message = null):
         $params['message'] = trim($message);
     }
     $path = match (gatewayRedirectUrl($success)) {
-        'user.deposit.error'   => '/user/deposit/error',
-        'user.deposit.success' => '/user/deposit/success',
+        'user.deposit.error'   => '/campaigns',
+        'user.deposit.success' => '/campaigns',
         default               => '/campaigns',
     };
     return url($path . '?' . http_build_query($params));
@@ -1042,6 +1119,44 @@ function getSiteLogo($type = 'light'): string {
     }
     
     return getImage($logoPath . '/logo_light.png');
+}
+
+function getCampaignImageMaxKb(): int
+{
+    return 5120;
+}
+
+function getCampaignImageMaxLabel(): string
+{
+    return '5 MB';
+}
+
+/**
+ * Countries allowed for campaign project location (admin-configured).
+ *
+ * @return array<int, string>
+ */
+function getAllowedLocationCountries(): array
+{
+    $siteData = \App\Models\SiteData::where('data_key', 'general.allowed_countries')->first();
+    $fallback = ['Pakistan', 'United States', 'United Kingdom', 'Canada', 'Australia', 'United Arab Emirates', 'Saudi Arabia', 'India', 'Germany', 'France', 'Singapore'];
+
+    if (!$siteData || !$siteData->data_info) {
+        return $fallback;
+    }
+
+    $dataInfo = $siteData->data_info;
+    if (!is_array($dataInfo)) {
+        $dataInfo = is_object($dataInfo) ? (array) $dataInfo : (array) json_decode((string) $dataInfo, true);
+    }
+
+    $selectedCountries = array_values(array_filter((array) ($dataInfo['selected_countries'] ?? [])));
+    if (!empty($selectedCountries)) {
+        sort($selectedCountries);
+        return $selectedCountries;
+    }
+
+    return $fallback;
 }
 
 function getSiteFavicon(): string {
@@ -2297,9 +2412,397 @@ function donationPercentage($goalAmount, $raisedAmount) {
 }
 
 /**
+ * Validate registration email (blocks test@.com style addresses).
+ */
+function isValidRegistrationEmail(?string $email): bool
+{
+    $email = strtolower(trim((string) $email));
+    if ($email === '' || strlen($email) > 191) {
+        return false;
+    }
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return false;
+    }
+    if (!preg_match('/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/', $email)) {
+        return false;
+    }
+    $parts = explode('@', $email);
+    $domain = $parts[1] ?? '';
+    if ($domain === '' || str_starts_with($domain, '.') || str_ends_with($domain, '.') || !str_contains($domain, '.')) {
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * Registration field length limits (shared across web, OTP, API, and social flows).
+ */
+function registrationNameMaxLength(): int
+{
+    return \App\Constants\RegistrationLimits::NAME_MAX;
+}
+
+function registrationNamePartMaxLength(): int
+{
+    return \App\Constants\RegistrationLimits::NAME_PART_MAX;
+}
+
+function registrationPasswordMaxLength(): int
+{
+    return \App\Constants\RegistrationLimits::PASSWORD_MAX;
+}
+
+function registrationPasswordMinLength(): int
+{
+    return \App\Constants\RegistrationLimits::PASSWORD_MIN;
+}
+
+/**
+ * Split a full name into firstname/lastname parts capped for storage.
+ *
+ * @return array{0: string, 1: string}
+ */
+function splitRegistrationName(string $name): array
+{
+    $name = trim($name);
+    $parts = preg_split('/\s+/u', $name, 2) ?: [];
+    $partMax = registrationNamePartMaxLength();
+
+    return [
+        mb_substr($parts[0] ?? '', 0, $partMax),
+        mb_substr($parts[1] ?? '', 0, $partMax),
+    ];
+}
+
+/**
+ * Validate registration display name (requires at least one letter).
+ */
+function isValidRegistrationName(?string $name): bool
+{
+    return registrationNameValidationError($name) === null;
+}
+
+/**
+ * User-friendly name validation error for OTP/API signup, or null if valid.
+ */
+function registrationNameValidationError(?string $name): ?string
+{
+    $name = trim((string) $name);
+    $max = registrationNameMaxLength();
+
+    if ($name === '') {
+        return 'Name is required.';
+    }
+
+    if (mb_strlen($name) > $max) {
+        return "Name must not exceed {$max} characters.";
+    }
+
+    if (!preg_match('/\p{L}/u', $name)) {
+        return 'Name must include at least one letter.';
+    }
+
+    return null;
+}
+
+/**
+ * Custom validation messages for classic (firstname/lastname) registration.
+ *
+ * @return array<string, string>
+ */
+function registrationClassicValidationMessages(): array
+{
+    $namePartMax = registrationNamePartMaxLength();
+    $passwordMax = registrationPasswordMaxLength();
+    $passwordMin = registrationPasswordMinLength();
+
+    return [
+        'firstname.required' => 'First name is required.',
+        'firstname.max' => "First name must not exceed {$namePartMax} characters.",
+        'lastname.required' => 'Last name is required.',
+        'lastname.max' => "Last name must not exceed {$namePartMax} characters.",
+        'password.required' => 'Password is required.',
+        'password.max' => "Password must not exceed {$passwordMax} characters.",
+        'password.min' => "Password must be at least {$passwordMin} characters long.",
+        'password.confirmed' => 'Password confirmation does not match.',
+    ];
+}
+
+/**
+ * Validate OTP/API signup fields (name, password, optional email).
+ *
+ * @return array<string, array<int, string>>
+ */
+function validateRegistrationSignupFields(
+    ?string $name,
+    ?string $password,
+    ?string $email = null,
+    ?string $username = null
+): array {
+    $errors = [];
+
+    $nameError = registrationNameValidationError($name);
+    if ($nameError !== null) {
+        $errors['name'][] = $nameError;
+    }
+
+    foreach (registrationPasswordErrors($password, $email, $username, $name) as $message) {
+        $errors['password'][] = $message;
+    }
+
+    if ($email !== null) {
+        $email = trim(strtolower((string) $email));
+
+        if ($email === '') {
+            $errors['email'][] = 'Email is required.';
+        } elseif (strlen($email) > 191) {
+            $errors['email'][] = 'Email must not exceed 191 characters.';
+        } elseif (!isValidRegistrationEmail($email)) {
+            $errors['email'][] = 'Please enter a valid email address.';
+        }
+    }
+
+    return $errors;
+}
+
+/**
+ * First validation error message from validateRegistrationSignupFields().
+ */
+function registrationSignupFirstError(array $errors): string
+{
+    foreach ($errors as $fieldErrors) {
+        if (!empty($fieldErrors[0])) {
+            return (string) $fieldErrors[0];
+        }
+    }
+
+    return 'Validation failed.';
+}
+
+/**
+ * Validate registration password strength for signup flows.
+ *
+ * @return list<string>
+ */
+function registrationPasswordErrors(
+    ?string $password,
+    ?string $email = null,
+    ?string $username = null,
+    ?string $name = null
+): array {
+    $password = (string) $password;
+    $errors = [];
+    $min = registrationPasswordMinLength();
+    $max = registrationPasswordMaxLength();
+
+    if ($password === '') {
+        $errors[] = 'Password is required.';
+
+        return $errors;
+    }
+
+    if (strlen($password) > $max) {
+        $errors[] = "Password must not exceed {$max} characters.";
+    }
+
+    if (strlen($password) < $min) {
+        $errors[] = "Password must be at least {$min} characters long.";
+    }
+
+    if (!preg_match('/[A-Z]/', $password)) {
+        $errors[] = 'Password must contain at least one uppercase letter.';
+    }
+
+    if (!preg_match('/[a-z]/', $password)) {
+        $errors[] = 'Password must contain at least one lowercase letter.';
+    }
+
+    if (!preg_match('/[0-9]/', $password)) {
+        $errors[] = 'Password must contain at least one number.';
+    }
+
+    if (!preg_match('/[^A-Za-z0-9]/', $password)) {
+        $errors[] = 'Password must contain at least one special character.';
+    }
+
+    if (\App\Constants\WeakPasswords::isTooCommon($password)) {
+        $errors[] = 'Password is too common. Please choose a stronger password.';
+    }
+
+    $identifierError = registrationPasswordUserIdentifierError($password, $email, $username, $name);
+    if ($identifierError !== null) {
+        $errors[] = $identifierError;
+    }
+
+    return $errors;
+}
+
+/**
+ * Check whether the password contains the user's email, username, or name.
+ */
+function registrationPasswordUserIdentifierError(
+    string $password,
+    ?string $email = null,
+    ?string $username = null,
+    ?string $name = null
+): ?string {
+    $lower = strtolower($password);
+
+    if ($email !== null && trim($email) !== '') {
+        $emailLower = strtolower(trim($email));
+
+        if (str_contains($lower, $emailLower)) {
+            return 'Password must not contain your email address.';
+        }
+
+        $localPart = explode('@', $emailLower)[0] ?? '';
+        if (strlen($localPart) >= 3 && str_contains($lower, $localPart)) {
+            return 'Password must not contain your email address.';
+        }
+    }
+
+    if ($username !== null && trim($username) !== '') {
+        $usernameLower = strtolower(trim($username));
+        if (strlen($usernameLower) >= 3 && str_contains($lower, $usernameLower)) {
+            return 'Password must not contain your username.';
+        }
+    }
+
+    if ($name !== null && trim($name) !== '') {
+        foreach (preg_split('/\s+/', trim($name)) ?: [] as $part) {
+            $partLower = strtolower($part);
+            if (strlen($partLower) >= 3 && str_contains($lower, $partLower)) {
+                return 'Password must not contain your name.';
+            }
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Password strength label for UI: weak, medium, or strong.
+ */
+function registrationPasswordStrengthLevel(string $password): string
+{
+    if (registrationPasswordErrors($password) !== []) {
+        return 'weak';
+    }
+
+    $score = 0;
+    $length = strlen($password);
+
+    if ($length >= 10) {
+        $score++;
+    }
+    if ($length >= 12) {
+        $score++;
+    }
+    if (preg_match('/[^A-Za-z0-9]/', $password) && preg_match('/[0-9]/', $password)) {
+        $score++;
+    }
+    if (preg_match('/[A-Z]/', $password) && preg_match('/[a-z]/', $password)) {
+        $score++;
+    }
+
+    return $score >= 3 ? 'strong' : 'medium';
+}
+
+/**
  * Get ApnaCrowdfunding as italic linked text
  * Returns the brand name as an italic link throughout the project
  */
 function apnaCrowdfundingLink($url = '#', $class = 'italic-text') {
     return '<em>ApnaCrowdfunding</em>';
+}
+
+/**
+ * Normalize a stored verification document reference to a bare filename.
+ * Handles legacy public paths/URLs saved in verification_documents JSON.
+ */
+function normalizeCampaignVerificationDocumentFilename(?string $reference): ?string
+{
+    if ($reference === null || trim($reference) === '') {
+        return null;
+    }
+
+    $reference = trim($reference);
+
+    if (preg_match('#^https?://#i', $reference)) {
+        $path = parse_url($reference, PHP_URL_PATH);
+        $reference = is_string($path) && $path !== '' ? $path : $reference;
+    }
+
+    $reference = ltrim(str_replace('\\', '/', $reference), '/');
+    $legacyPrefix = 'assets/universal/documents/campaign/';
+
+    if (str_contains($reference, $legacyPrefix)) {
+        $reference = substr($reference, strrpos($reference, $legacyPrefix) + strlen($legacyPrefix));
+    }
+
+    $filename = basename($reference);
+
+    if ($filename === '' || !preg_match('/^[A-Za-z0-9._-]+$/', $filename)) {
+        return null;
+    }
+
+    return $filename;
+}
+
+/**
+ * Authenticated URL for a campaign verification document (user or admin).
+ */
+function campaignVerificationDocumentUrl(int $campaignId, ?string $filename, bool $forAdmin = false): ?string
+{
+    $filename = normalizeCampaignVerificationDocumentFilename($filename);
+
+    if (!$filename) {
+        return null;
+    }
+
+    if ($forAdmin) {
+        return route('admin.verification.document', ['id' => $filename]);
+    }
+
+    return route('user.verification.document', ['id' => $filename]);
+}
+
+/**
+ * Authenticated URL for mobile/API clients (Bearer token required).
+ */
+function campaignVerificationDocumentApiUrl(int $campaignId, ?string $filename): string
+{
+    $filename = normalizeCampaignVerificationDocumentFilename($filename);
+
+    if (!$filename) {
+        return '';
+    }
+
+    return route('api.verification.document', ['id' => $filename]);
+}
+
+/**
+ * Normalize verification_documents JSON values to bare filenames only.
+ *
+ * @param  array<string, mixed>|null  $documents
+ * @return array<string, string>
+ */
+function normalizeCampaignVerificationDocuments(?array $documents): array
+{
+    if (!is_array($documents)) {
+        return [];
+    }
+
+    $normalized = [];
+
+    foreach ($documents as $fieldKey => $reference) {
+        $filename = normalizeCampaignVerificationDocumentFilename(is_string($reference) ? $reference : null);
+
+        if ($filename) {
+            $normalized[(string) $fieldKey] = $filename;
+        }
+    }
+
+    return $normalized;
 }

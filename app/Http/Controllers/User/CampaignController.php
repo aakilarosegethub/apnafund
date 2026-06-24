@@ -13,11 +13,13 @@ use App\Models\Category;
 use App\Models\CampaignFaq;
 use App\Models\CampaignUpdate;
 use App\Models\CampaignCollaborator;
+use App\Services\CampaignVerificationDocumentService;
 use App\Models\GatewayCurrency;
 use App\Models\User;
 use App\Models\AdminNotification;
 use App\Http\Controllers\Controller;
 use App\Services\YouTubeUploadService;
+use App\Services\CampaignStoryHtmlService;
 use App\Constants\ManageStatus;
 use Illuminate\Validation\Rules\File;
 use Illuminate\Database\QueryException;
@@ -315,6 +317,8 @@ class CampaignController extends Controller
             $startDate = request('start_date', date('Y-m-d'));
             $endDate = request('end_date', date('Y-m-d', strtotime('+30 days')));
             
+            prepareCampaignShortDescriptionForValidation(request());
+
             $daysLimit = getCampaignDaysLimit();
             $this->validate(request(), [
                 'category_id'         => 'required|integer|gt:0',
@@ -323,22 +327,20 @@ class CampaignController extends Controller
                 'youtube_url'         => 'nullable|url',
                 'location'            => 'nullable|string|max:255',
                 'name'                => 'required|string|max:190|unique:campaigns,name',
-                'short_description'   => 'required|string|max:255',
+                'short_description'   => campaignShortDescriptionValidationRules(),
                 'description'         => 'required|min:30',
                 'goal_amount'         => 'nullable|numeric|gt:0',
                 'start_date'          => 'nullable|date_format:Y-m-d|after_or_equal:today',
                 'end_date'            => 'nullable|date_format:Y-m-d|after:start_date|before_or_equal:' . Carbon::parse($startDate)->addDays($daysLimit)->format('Y-m-d'),
-            ], [
+            ], array_merge([
                 'category_id.required' => 'The category field is required.',
                 'category_id.integer'  => 'The category must be an integer.',
-                'short_description.required' => 'The short description field is required.',
-                'short_description.max' => 'The short description may not be greater than 255 characters.',
                 'image.max'            => 'Campaign image must be under 50 MB.',
                 'video.max'           => 'Video file size must be less than 500MB.',
                 'youtube_url.url'     => 'YouTube URL must be a valid URL.',
                 'youtube_url.regex'   => 'Please enter a valid YouTube URL.',
                 'end_date.before_or_equal' => 'Campaign duration cannot exceed ' . $daysLimit . ' days. Please adjust start and end dates.',
-            ]);
+            ], campaignShortDescriptionValidationMessages()));
             
             // Custom YouTube URL validation
             if (request('youtube_url')) {
@@ -493,8 +495,8 @@ class CampaignController extends Controller
             $campaign->slug        = slug(request('name'));
             $campaign->location    = request('location');
             $purifier              = new HTMLPurifier();
-            $campaign->description = request('description');
-            $campaign->short_description = request('short_description');
+            $campaign->description = CampaignStoryHtmlService::replaceDataUrlImagesWithStoredFiles(request('description'));
+            $campaign->short_description = CampaignStoryHtmlService::replaceDataUrlImagesWithStoredFiles(request('short_description'));
 
             $goalAmountRaw = (float) request('goal_amount', 1000);
             $inputCurrency = request('input_currency') ?: $currencyService->detectCurrencyCode(auth()->user());
@@ -931,7 +933,9 @@ class CampaignController extends Controller
                     ?: auth()->user()->country_name
                     ?: session('user_detected_country');
                 $documentRequirements = getCampaignDocumentRequirements(true, $docCountry);
-                $existingDocs = is_array(optional($campaignForDocs)->verification_documents) ? $campaignForDocs->verification_documents : [];
+                $existingDocs = normalizeCampaignVerificationDocuments(
+                    is_array(optional($campaignForDocs)->verification_documents) ? $campaignForDocs->verification_documents : []
+                );
                 $rules = [];
 
                 foreach ($documentRequirements as $docItem) {
@@ -954,25 +958,47 @@ class CampaignController extends Controller
                 ]);
             } else {
                 // Basics section - all fields required
+                prepareCampaignShortDescriptionForValidation(request());
+
+                $campaignForBasics = Campaign::find($id);
+                $hasProjectImage = ($campaignForBasics && $campaignForBasics->image)
+                    || request('uploaded_image')
+                    || request()->hasFile('image');
+
+                if (!$hasProjectImage) {
+                    $toast[] = ['error', 'Project image is required'];
+                    if (request()->ajax()) {
+                        return response()->json(['success' => false, 'message' => 'Project image is required'], 422);
+                    }
+                    return back()->withToasts($toast)->withInput();
+                }
+
+                $allowedLocations = getAllowedLocationCountries();
                 $daysLimit = getCampaignDaysLimit();
+                $locationRules = ['nullable', 'string', 'max:255'];
+                if (!empty($allowedLocations)) {
+                    $locationRules[] = function ($attribute, $value, $fail) use ($allowedLocations) {
+                        if ($value !== null && $value !== '' && !in_array($value, $allowedLocations, true)) {
+                            $fail('Please select a supported project location.');
+                        }
+                    };
+                }
                 $this->validate(request(), [
                     'category_id'         => 'required|integer|gt:0',
-                    'image'               => ['nullable', File::types(['png', 'jpg', 'jpeg', 'webp'])],
+                    'image'               => ['nullable', File::types(['png', 'jpg', 'jpeg', 'gif', 'webp']), 'max:' . getCampaignImageMaxKb()],
                     'video'               => ['nullable', File::types(['mp4', 'avi', 'mov', 'wmv', 'flv', '3gp']), 'max:512000'], // 500MB max
                     'youtube_url'         => 'nullable|url',
-                    'location'            => 'nullable|string|max:255',
+                    'location'            => $locationRules,
                     'name'                => 'required|string|max:190|unique:campaigns,name,' . $id,
-                    'short_description'   => 'required|string|max:255',
+                    'short_description'   => campaignShortDescriptionValidationRules(),
                     'goal_amount'         => 'required|numeric|gt:0',
                     'start_date'          => 'required|date_format:Y-m-d',
                     'end_date'            => 'required|date_format:Y-m-d|after:start_date|before_or_equal:' . Carbon::parse(request('start_date'))->addDays($daysLimit)->format('Y-m-d'),
                     'document'            => ['nullable', File::types('pdf')],
-                ], [
+                ], array_merge([
                     'category_id.required' => 'The category field is required.',
                     'category_id.integer'  => 'The category must be an integer.',
                     'name.required' => 'The name field is required.',
-                    'short_description.required' => 'The short description field is required.',
-                    'short_description.max' => 'The short description may not be greater than 255 characters.',
                     'goal_amount.required' => 'The goal amount field is required.',
                     'start_date.required' => 'The start date field is required.',
                     'end_date.required' => 'The end date field is required.',
@@ -981,7 +1007,7 @@ class CampaignController extends Controller
                     'video.max'           => 'Video file size must be less than 500MB.',
                     'youtube_url.url'     => 'YouTube URL must be a valid URL.',
                     'youtube_url.regex'   => 'Please enter a valid YouTube URL.',
-                ]);
+                ], campaignShortDescriptionValidationMessages()));
             }
 
             // Custom YouTube URL validation
@@ -1039,7 +1065,7 @@ class CampaignController extends Controller
             if ($section == 'story') {
                 // Story section - only update description
                 $purifier = new HTMLPurifier();
-                $campaign->description = request('description');
+                $campaign->description = CampaignStoryHtmlService::replaceDataUrlImagesWithStoredFiles(request('description'));
             } elseif ($section == 'documents') {
                 // Documents section only uploads files; no basics fields update needed
             } else {
@@ -1062,7 +1088,7 @@ class CampaignController extends Controller
                 $campaign->slug        = slug(request('name'));
                 $campaign->location    = request('location');
                 $purifier              = new HTMLPurifier();
-                $campaign->short_description = request('short_description');
+                $campaign->short_description = CampaignStoryHtmlService::replaceDataUrlImagesWithStoredFiles(request('short_description'));
                 $goalAmountRaw = (float) request('goal_amount', 0);
                 $currencyService = app(\App\Services\CurrencyService::class);
                 $inputCurrency = request('input_currency') ?: $currencyService->detectCurrencyCode($campaign->user ?? auth()->user());
@@ -1323,7 +1349,9 @@ class CampaignController extends Controller
                     ?: auth()->user()->country_name
                     ?: session('user_detected_country');
                 $documentRequirements = getCampaignDocumentRequirements(true, $docCountry);
-                $existingDocs = is_array($campaign->verification_documents) ? $campaign->verification_documents : [];
+                $existingDocs = normalizeCampaignVerificationDocuments(
+                    is_array($campaign->verification_documents) ? $campaign->verification_documents : []
+                );
 
                 foreach ($documentRequirements as $docItem) {
                     $fieldKey = $docItem['field_key'] ?? null;
@@ -1332,15 +1360,13 @@ class CampaignController extends Controller
                     }
 
                     $oldFile = $existingDocs[$fieldKey] ?? null;
-                    $existingDocs[$fieldKey] = fileUploader(
+                    $existingDocs[$fieldKey] = app(CampaignVerificationDocumentService::class)->upload(
                         request()->file('documents.' . $fieldKey),
-                        getFilePath('document'),
-                        getFileSize('document'),
                         $oldFile
                     );
                 }
 
-                $campaign->verification_documents = $existingDocs;
+                $campaign->verification_documents = normalizeCampaignVerificationDocuments($existingDocs);
             }
 
             $campaign->save();
@@ -2313,6 +2339,14 @@ class CampaignController extends Controller
                     'success' => true,
                     'users' => []
                 ]);
+            }
+
+            if (strlen($query) >= 3 && str_contains($query, '@') && !filter_var($query, FILTER_VALIDATE_EMAIL)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please enter a valid email address.',
+                    'users' => [],
+                ], 422);
             }
 
             $users = User::where('status', 1)

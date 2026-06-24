@@ -17,6 +17,8 @@ class VerifyCsrfToken extends Middleware
     protected $except = [
         'user/register-business',
         'api/verify-email',
-        'api/*'  // Exclude all API routes from CSRF verification
+        // Mobile app + legacy JSON endpoints (Bearer auth, no CSRF token)
+        'api/*',
+        'ipn/*',
     ];
 }

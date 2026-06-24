@@ -10,6 +10,8 @@ use App\Models\CampaignUpdate;
 use App\Models\Comment;
 use App\Models\Reward;
 use App\Models\User;
+use App\Services\CampaignStoryHtmlService;
+use App\Services\CampaignVerificationDocumentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -156,7 +158,7 @@ class CampaignManageApiController extends BaseApiController
                 return $this->jsonLegacy(422, '422', false, $v->errors()->first(), ['errors' => $v->errors()]);
             }
 
-            $campaign->description = $data['description'];
+            $campaign->description = CampaignStoryHtmlService::replaceDataUrlImagesWithStoredFiles($data['description']);
             $campaign->save();
 
             return $this->jsonLegacy(200, '200', true, 'Story saved successfully.', [
@@ -225,7 +227,7 @@ class CampaignManageApiController extends BaseApiController
             $reward = new Reward();
             $reward->campaign_id = $campaign->id;
             $reward->title = $request->title;
-            $reward->description = $request->description;
+            $reward->description = CampaignStoryHtmlService::replaceDataUrlImagesWithStoredFiles((string) $request->description);
             $reward->minimum_amount = $request->minimum_amount;
             $reward->quantity = $request->quantity;
             $reward->type = $request->input('type', 'physical');
@@ -271,7 +273,7 @@ class CampaignManageApiController extends BaseApiController
             }
 
             $reward->title = $request->title;
-            $reward->description = $request->description;
+            $reward->description = CampaignStoryHtmlService::replaceDataUrlImagesWithStoredFiles((string) $request->description);
             $reward->minimum_amount = $request->minimum_amount;
             $reward->quantity = $request->quantity;
             if ($request->filled('type')) {
@@ -688,9 +690,11 @@ class CampaignManageApiController extends BaseApiController
 
         $country = optional($campaign->user)->country_name ?: session('user_detected_country');
         $requirements = getCampaignDocumentRequirements(true, $country);
-        $existingDocs = is_array($campaign->verification_documents) ? $campaign->verification_documents : [];
+        $existingDocs = normalizeCampaignVerificationDocuments(
+            is_array($campaign->verification_documents) ? $campaign->verification_documents : []
+        );
 
-        $documents = array_map(function ($doc) use ($existingDocs) {
+        $documents = array_map(function ($doc) use ($existingDocs, $campaign) {
             $fieldKey = $doc['field_key'] ?? '';
             $existingFile = $fieldKey ? ($existingDocs[$fieldKey] ?? null) : null;
             return [
@@ -701,7 +705,7 @@ class CampaignManageApiController extends BaseApiController
                 'countries' => (array) ($doc['countries'] ?? []),
                 'uploaded' => !empty($existingFile),
                 'file' => $existingFile,
-                'file_url' => $existingFile ? asset(getFilePath('document') . '/' . $existingFile) : null,
+                'file_url' => $existingFile ? campaignVerificationDocumentApiUrl($campaign->id, $existingFile) : null,
             ];
         }, $requirements);
 
@@ -726,7 +730,9 @@ class CampaignManageApiController extends BaseApiController
 
         $country = optional($campaign->user)->country_name ?: session('user_detected_country');
         $requirements = getCampaignDocumentRequirements(true, $country);
-        $existingDocs = is_array($campaign->verification_documents) ? $campaign->verification_documents : [];
+        $existingDocs = normalizeCampaignVerificationDocuments(
+            is_array($campaign->verification_documents) ? $campaign->verification_documents : []
+        );
 
         $rules = [];
         foreach ($requirements as $doc) {
@@ -753,21 +759,35 @@ class CampaignManageApiController extends BaseApiController
                 continue;
             }
             $oldFile = $updatedDocs[$fieldKey] ?? null;
-            $updatedDocs[$fieldKey] = fileUploader(
+            $updatedDocs[$fieldKey] = app(CampaignVerificationDocumentService::class)->upload(
                 $request->file('documents.' . $fieldKey),
-                getFilePath('document'),
-                getFileSize('document'),
                 $oldFile
             );
         }
 
+        $updatedDocs = normalizeCampaignVerificationDocuments($updatedDocs);
         $campaign->verification_documents = $updatedDocs;
         $campaign->save();
+
+        $documents = array_map(function ($doc) use ($updatedDocs, $campaign) {
+            $fieldKey = $doc['field_key'] ?? '';
+            $existingFile = $fieldKey ? ($updatedDocs[$fieldKey] ?? null) : null;
+
+            return [
+                'field_key' => $fieldKey,
+                'label' => $doc['label'] ?? $fieldKey,
+                'is_required' => (bool) ($doc['is_required'] ?? false),
+                'uploaded' => !empty($existingFile),
+                'file' => $existingFile,
+                'file_url' => $existingFile ? campaignVerificationDocumentApiUrl($campaign->id, $existingFile) : null,
+            ];
+        }, $requirements);
 
         return $this->jsonLegacy(200, '200', true, 'Required documents submitted successfully.', [
             'campaign_id' => $campaign->id,
             'slug' => $campaign->slug,
             'verification_documents' => $updatedDocs,
+            'documents' => $documents,
         ]);
     }
 

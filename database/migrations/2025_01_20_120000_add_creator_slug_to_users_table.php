@@ -11,8 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('users') || Schema::hasColumn('users', 'creator_slug')) {
+            return;
+        }
+
         Schema::table('users', function (Blueprint $table) {
-            $table->string('creator_slug')->unique()->nullable()->after('username');
+            if (Schema::hasColumn('users', 'username')) {
+                $table->string('creator_slug')->unique()->nullable()->after('username');
+            } else {
+                $table->string('creator_slug')->unique()->nullable();
+            }
         });
     }
 

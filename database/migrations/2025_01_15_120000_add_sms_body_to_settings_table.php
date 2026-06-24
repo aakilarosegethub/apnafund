@@ -11,8 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('settings') || Schema::hasColumn('settings', 'sms_body')) {
+            return;
+        }
+
         Schema::table('settings', function (Blueprint $table) {
-            $table->text('sms_body')->nullable()->after('email_template');
+            if (Schema::hasColumn('settings', 'email_template')) {
+                $table->text('sms_body')->nullable()->after('email_template');
+            } else {
+                $table->text('sms_body')->nullable();
+            }
         });
     }
 
@@ -21,8 +29,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('settings', function (Blueprint $table) {
-            $table->dropColumn('sms_body');
-        });
+        if (Schema::hasTable('settings') && Schema::hasColumn('settings', 'sms_body')) {
+            Schema::table('settings', function (Blueprint $table) {
+                $table->dropColumn('sms_body');
+            });
+        }
     }
 };

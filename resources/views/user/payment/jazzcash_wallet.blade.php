@@ -98,7 +98,7 @@ $(document).ready(function() {
         }
         $(this).val(value);
     });
-
+    alert('Test');
     // Handle form submission
     $('#jazzcash-wallet-form').on('submit', function(e) {
         e.preventDefault();
@@ -131,6 +131,7 @@ $(document).ready(function() {
         resultDiv.addClass('d-none');
         
         // Make AJAX request
+        
         $.ajax({
             url: '{{ route("Jazzcashwallet.process") }}',
             method: 'POST',
@@ -143,7 +144,7 @@ $(document).ready(function() {
                     showResult('success', response.message);
                     // Redirect to success page after 3 seconds
                     setTimeout(function() {
-                        window.location.href = '{{ route("user.deposit.index") }}';
+                        // window.location.href = '{{ route("user.deposit.index") }}';
                     }, 3000);
                 } else {
                     showResult('error', response.message);

@@ -41,6 +41,13 @@
 .contact-form-card {
     padding: 30px;
 }
+.contact-form-card input[readonly],
+.contact-form-card textarea[readonly] {
+    background-color: #f3f4f6;
+    cursor: not-allowed;
+    opacity: 0.95;
+}
+
 .contact-form-card h3 {
     font-weight: 700;
     color: #111827;

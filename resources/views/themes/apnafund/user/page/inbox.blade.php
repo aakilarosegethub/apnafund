@@ -72,9 +72,9 @@
         <div class="inbox-notice">
             <strong>Chat setup:</strong> Add Firebase Web config (FIREBASE_API_KEY, FIREBASE_PROJECT_ID, etc.) in .env and run <code>php artisan config:clear</code>. See config/firebase.php.
         </div>
-    @else
+    @elseif(config('app.debug'))
         <div class="inbox-notice" style="background:#e7f3ff;border:1px solid #b3d7ff;">
-            <strong>Messages not sending?</strong> Enable <a href="https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project={{ $firebaseConfig['projectId'] ?? '' }}" target="_blank" rel="noopener">Cloud Firestore API</a> in Google Cloud Console for your project.
+            <strong>Developer note:</strong> Firestore API must be enabled in Google Cloud Console for chat.
         </div>
     @endif
 

@@ -545,8 +545,9 @@
 
                                     <div class="form-group required-field">
                                         <label for="CampaignShortDescription" class="form-label">Short Description</label>
-                                        <textarea class="form-control" id="CampaignShortDescription" name="short_description" rows="3" placeholder="Describe your project in one or two sentences..." required>{{ old('short_description') }}</textarea>
-                                        <small class="text-muted">This will show on your project card.</small>
+                                        <textarea class="form-control" id="CampaignShortDescription" name="short_description" rows="3" maxlength="{{ getCampaignShortDescriptionMaxLength() }}" placeholder="Describe your project in one or two sentences..." required>{{ old('short_description') }}</textarea>
+                                        <small class="text-muted">This will show on your project card. <span id="shortDescriptionCount"></span></small>
+                                        <small id="shortDescriptionError" class="text-danger" style="display: none;"></small>
                                         @error('short_description')
                                             <small class="text-danger">{{ $message }}</small>
                                         @enderror
@@ -958,6 +959,92 @@
   document.addEventListener('DOMContentLoaded', waitForQuillAndInitialize);
 
   // Function to validate form fields one by one
+  const SHORT_DESC_MIN = {{ getCampaignShortDescriptionMinLength() }};
+  const SHORT_DESC_MAX = {{ getCampaignShortDescriptionMaxLength() }};
+
+  function normalizeShortDescription(value) {
+    return (value || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  function updateShortDescriptionCount() {
+    const field = document.getElementById('CampaignShortDescription');
+    const countElement = document.getElementById('shortDescriptionCount');
+    if (!field || !countElement) {
+      return;
+    }
+
+    const count = normalizeShortDescription(field.value).length;
+
+    if (count === 0) {
+      countElement.textContent = `(minimum ${SHORT_DESC_MIN} characters)`;
+      countElement.style.color = '#6c757d';
+    } else if (count < SHORT_DESC_MIN) {
+      countElement.textContent = `(${count}/${SHORT_DESC_MIN} characters - ${SHORT_DESC_MIN - count} more needed)`;
+      countElement.style.color = '#dc3545';
+    } else if (count > SHORT_DESC_MAX) {
+      countElement.textContent = `(${count}/${SHORT_DESC_MAX} characters - too long)`;
+      countElement.style.color = '#dc3545';
+    } else {
+      countElement.textContent = `(${count}/${SHORT_DESC_MAX} characters ✓)`;
+      countElement.style.color = '#198754';
+    }
+  }
+
+  function validateShortDescriptionField() {
+    const field = document.getElementById('CampaignShortDescription');
+    const errorElement = document.getElementById('shortDescriptionError');
+    if (!field) {
+      return null;
+    }
+
+    const text = normalizeShortDescription(field.value);
+    let message = '';
+
+    if (!text) {
+      if ((field.value || '').length > 0) {
+        message = 'Short description cannot contain only spaces.';
+      } else {
+        message = 'Please enter a short description for your project.';
+      }
+    } else if (text.length < SHORT_DESC_MIN) {
+      message = `Short description must be at least ${SHORT_DESC_MIN} characters long. You have ${text.length} characters (${SHORT_DESC_MIN - text.length} more needed).`;
+    } else if (text.length > SHORT_DESC_MAX) {
+      message = `Short description cannot exceed ${SHORT_DESC_MAX} characters. You have ${text.length} characters.`;
+    }
+
+    if (message) {
+      if (errorElement) {
+        errorElement.textContent = message;
+        errorElement.style.display = 'block';
+      }
+      field.classList.add('is-invalid');
+      field.style.borderColor = '#dc3545';
+      return {
+        field: field,
+        message: message
+      };
+    }
+
+    if (errorElement) {
+      errorElement.style.display = 'none';
+    }
+    field.classList.remove('is-invalid');
+    field.style.borderColor = '';
+    return null;
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const shortDescriptionField = document.getElementById('CampaignShortDescription');
+    if (shortDescriptionField) {
+      shortDescriptionField.addEventListener('input', function() {
+        updateShortDescriptionCount();
+        validateShortDescriptionField();
+      });
+      shortDescriptionField.addEventListener('blur', validateShortDescriptionField);
+      updateShortDescriptionCount();
+    }
+  });
+
   function validateForm() {
     const errors = [];
     const form = document.getElementById('createCampignForm');
@@ -981,6 +1068,11 @@
         field: categoryField,
         message: 'Please select a category'
       });
+    }
+
+    const shortDescriptionError = validateShortDescriptionField();
+    if (shortDescriptionError) {
+      errors.push(shortDescriptionError);
     }
     
     // Validate Description (Quill Editor)

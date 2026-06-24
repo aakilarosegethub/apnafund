@@ -5,6 +5,7 @@ namespace App\Http\Controllers\User;
 use App\Models\Reward;
 use App\Models\Campaign;
 use App\Http\Controllers\Controller;
+use App\Services\CampaignStoryHtmlService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\File;
 use Symfony\Component\HttpFoundation\Response;
@@ -116,7 +117,7 @@ class RewardController extends Controller
         $reward = new Reward();
         $reward->campaign_id = $campaign->id;
         $reward->title = $request->title;
-        $reward->description = $request->description;
+        $reward->description = CampaignStoryHtmlService::replaceDataUrlImagesWithStoredFiles((string) $request->description);
         $reward->minimum_amount = $request->minimum_amount;
         $reward->quantity = $request->quantity;
         $reward->type = $request->type ?? 'physical'; // Default to physical
@@ -305,7 +306,7 @@ class RewardController extends Controller
         }
 
         $reward->title = $request->title;
-        $reward->description = $request->description;
+        $reward->description = CampaignStoryHtmlService::replaceDataUrlImagesWithStoredFiles((string) $request->description);
         $reward->minimum_amount = $request->minimum_amount;
         $reward->quantity = $request->quantity;
         $reward->type = $request->type ?? $reward->type ?? 'physical'; // Keep existing or default

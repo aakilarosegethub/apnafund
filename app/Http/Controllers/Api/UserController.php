@@ -14,17 +14,8 @@ class UserController extends BaseApiController
     {
         $data = $this->getRequestData($request);
 
-        if (empty($data['name']) || empty($data['email']) || empty($data['mobile']) || empty($data['password']) || empty($data['ccode'])) {
-            return response()->json([
-                "ResponseCode" => "401",
-                "Result" => "false",
-                "ResponseMsg" => "Something Went Wrong!"
-            ], 401);
-        }
-
-        // Get user ID from authenticated user
         $uid = $this->getUserId($request);
-        
+
         if (empty($uid)) {
             return response()->json([
                 "ResponseCode" => "401",
@@ -33,45 +24,91 @@ class UserController extends BaseApiController
             ], 401);
         }
 
-        $fname = strip_tags($this->h->real_string($data['name']));
-        $email = strip_tags($this->h->real_string($data['email']));
-        $mobile = strip_tags($this->h->real_string($data['mobile']));
-        $ccode = strip_tags($this->h->real_string($data['ccode']));
-        $password = strip_tags($this->h->real_string($data['password']));
+        $uid = (int) $uid;
 
-        // Check if mobile or email already exists (using users table)
-        $checkmob = $this->h->queryfire("select * from users where mobile='" . $mobile . "' and id!=" . $uid . "");
-        $checkemail = $this->h->queryfire("select * from users where email='" . $email . "' and id!=" . $uid . "");
+        $userQuery = $this->h->queryfire(
+            "select id, firstname, lastname, email, mobile, country_code from users where id=" . $uid . " limit 1"
+        );
+        if (!$userQuery || $userQuery->num_rows === 0) {
+            return response()->json([
+                "ResponseCode" => "404",
+                "Result" => "false",
+                "ResponseMsg" => "User not found!"
+            ], 404);
+        }
+        $current = $userQuery->fetch_assoc();
 
-        if ($checkmob && $checkmob->num_rows != 0) {
-            return response()->json([
-                "ResponseCode" => "401",
-                "Result" => "false",
-                "ResponseMsg" => "Mobile Number Already Used!"
-            ], 401);
-        } elseif ($checkemail && $checkemail->num_rows != 0) {
-            return response()->json([
-                "ResponseCode" => "401",
-                "Result" => "false",
-                "ResponseMsg" => "Email Address Already Used!"
-            ], 401);
+        $field = [];
+
+        if (array_key_exists('name', $data)) {
+            $fname = trim(strip_tags($this->h->real_string((string) $data['name'])));
+            if ($fname !== '') {
+                $field['firstname'] = $fname;
+            }
+        }
+        if (array_key_exists('email', $data)) {
+            $email = trim(strip_tags($this->h->real_string((string) $data['email'])));
+            if ($email !== '') {
+                $field['email'] = $email;
+            }
+        }
+        if (array_key_exists('mobile', $data)) {
+            $mobile = trim(strip_tags($this->h->real_string((string) $data['mobile'])));
+            if ($mobile !== '') {
+                $field['mobile'] = $mobile;
+            }
+        }
+        if (array_key_exists('ccode', $data)) {
+            $ccode = trim(strip_tags($this->h->real_string((string) $data['ccode'])));
+            if ($ccode !== '') {
+                $field['country_code'] = $ccode;
+            }
+        }
+        if (array_key_exists('password', $data)) {
+            $password = strip_tags($this->h->real_string((string) $data['password']));
+            if ($password !== '') {
+                $field['password'] = \Hash::make($password);
+            }
         }
 
-        // Hash password if provided
-        $passwordHash = $password;
-        if (!empty($password)) {
-            $passwordHash = \Hash::make($password);
+        if ($field === []) {
+            return response()->json([
+                "ResponseCode" => "400",
+                "Result" => "false",
+                "ResponseMsg" => "No fields to update. Send at least one of: name, email, mobile, ccode, password (non-empty values).",
+            ], 400);
+        }
+
+        $newEmail = $field['email'] ?? $current['email'];
+        $newMobile = $field['mobile'] ?? $current['mobile'];
+
+        if (isset($field['email']) && $newEmail !== $current['email']) {
+            $checkemail = $this->h->queryfire(
+                "select * from users where email='" . $this->h->real_string($newEmail) . "' and id!=" . $uid . ""
+            );
+            if ($checkemail && $checkemail->num_rows != 0) {
+                return response()->json([
+                    "ResponseCode" => "401",
+                    "Result" => "false",
+                    "ResponseMsg" => "Email Address Already Used!"
+                ], 401);
+            }
+        }
+
+        if (isset($field['mobile']) && $newMobile !== $current['mobile']) {
+            $checkmob = $this->h->queryfire(
+                "select * from users where mobile='" . $this->h->real_string($newMobile) . "' and id!=" . $uid . ""
+            );
+            if ($checkmob && $checkmob->num_rows != 0) {
+                return response()->json([
+                    "ResponseCode" => "401",
+                    "Result" => "false",
+                    "ResponseMsg" => "Mobile Number Already Used!"
+                ], 401);
+            }
         }
 
         $table = "users";
-        $field = [
-            "firstname" => $fname,
-            "email" => $email,
-            "mobile" => $mobile,
-            "password" => $passwordHash,
-            "country_code" => $ccode
-        ];
-
         $where = "where id=" . $uid . "";
 
         $check = $this->h->updateData_Api($field, $table, $where);

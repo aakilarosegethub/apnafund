@@ -10,6 +10,7 @@ use App\Constants\ManageStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Gateway\PaymentController;
 use App\Services\UnifiedWebhookLoggerService;
+use App\Services\JazzCashApiLoggerService;
 
 class IpnController extends Controller
 {
@@ -20,6 +21,7 @@ class IpnController extends Controller
     {
         $endpoint = 'jazzcash/ipn';
         $webhookLogger = new UnifiedWebhookLoggerService();
+        $jazzLogger = app(JazzCashApiLoggerService::class);
         
         // Log incoming webhook data to both DataLog and WebhookLog tables
         $logs = $webhookLogger->logIncomingWebhook(
@@ -27,10 +29,14 @@ class IpnController extends Controller
             $endpoint, 
             'jazzcash_payment',
             [
-                'transaction_id' => $request->TransactionID ?? null,
-                'amount' => $request->Amount ?? null,
-                'status' => $request->Status ?? $request->status ?? null,
-                'currency' => $request->Currency ?? null,
+                'transaction_id' => $request->pp_TxnRefNo ?? $request->TransactionID ?? null,
+                'amount' => $request->Amount ?? $request->pp_Amount ?? null,
+                'status' => $request->Status ?? $request->status ?? $request->pp_ResponseMessage ?? null,
+                'currency' => $request->Currency ?? $request->pp_TxnCurrency ?? null,
+                'gateway' => 'jazzcash',
+                'flow' => 'main_ipn',
+                'direction' => 'inbound',
+                'curl_command' => $jazzLogger->buildIncomingCurl($request, $endpoint),
             ]
         );
 

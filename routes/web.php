@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\FundUpdateController;
 use App\Http\Controllers\Api\CampaignManageApiController;
+use App\Http\Controllers\CampaignVerificationDocumentController;
 use App\Http\Controllers\Api\CampaignCollaboratorApiController;
 use App\Http\Controllers\Api\CampaignPaymentApiController;
 use App\Http\Controllers\Api\UserController;
@@ -31,7 +32,19 @@ use App\Http\Controllers\Api\AllowedLocationCountriesController;
 use App\Http\Controllers\Api\UserNotificationApiController;
 use App\Models\Campaign;
 use Illuminate\Support\Facades\Cookie;
+Route::get('/clear-cache', function () {
 
+    Artisan::call('cache:clear');
+    Artisan::call('config:clear');
+    Artisan::call('route:clear');
+    Artisan::call('view:clear');
+    Artisan::call('optimize:clear');
+
+    return response()->json([
+        'success' => true,
+        'message' => 'All caches cleared successfully.'
+    ]);
+});
 // Beta landing page logic
 Route::get('/beta', function (\Illuminate\Http\Request $request) {
     // If cookie already exists, go to normal home
@@ -97,7 +110,40 @@ Route::get('/debug-currency', function () {
 Route::get('/cron/currencies-sync', [\App\Http\Controllers\Admin\CurrencyController::class, 'syncRatesPublic'])->name('cron.currencies-sync');
 
 // API routes for email verification (no CSRF required)
-Route::post('/api/verify-email', 'App\Http\Controllers\User\AuthorizationController@emailVerificationApi')->name('api.verify.email');
+Route::post('/api/verify-email', 'App\Http\Controllers\User\AuthorizationController@emailVerificationApi')
+    ->middleware('throttle:20,1')
+    ->name('api.verify.email');
+
+// Social signup — terms acceptance (routes/user.php is not always writable in deploy environments)
+Route::middleware([
+    'web',
+    'maintenance',
+    'auth',
+    \App\Http\Middleware\PreventSensitivePageCache::class,
+])->prefix('user')->name('user.')->group(function () {
+    Route::get('terms/accept', [\App\Http\Controllers\User\Auth\SocialLoginController::class, 'showTermsAcceptForm'])->name('terms.accept.form');
+    Route::post('terms/accept', [\App\Http\Controllers\User\Auth\SocialLoginController::class, 'acceptTerms'])->name('terms.accept');
+});
+
+// Campaign CNIC / verification documents — login + owner/collaborator check in controller
+Route::middleware(['web', 'maintenance', 'auth'])
+    ->prefix('user')
+    ->name('user.')
+    ->group(function () {
+        Route::get('cnic/{id}', [CampaignVerificationDocumentController::class, 'showByDocumentId'])
+            ->where('id', '[A-Za-z0-9._-]+')
+            ->name('verification.document');
+    });
+
+// Admin CNIC document serve (routes/admin.php is not always writable in deploy environments)
+Route::middleware(['web', 'admin', 'admin.permission'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::get('cnic/{id}', [CampaignVerificationDocumentController::class, 'adminShowByDocumentId'])
+            ->where('id', '[A-Za-z0-9._-]+')
+            ->name('verification.document');
+    });
 
 // Redirect /user/campaign/new to /start-project
 Route::get('/user/campaign/new', function () {
@@ -329,7 +375,7 @@ Route::get('/youtube/callback', function(\Illuminate\Http\Request $request) {
 })->name('youtube.callback');
 
 // JazzCash IPN Callback - Logs all incoming data
-Route::any('/jazzcash/ipn', [App\Http\Controllers\Gateway\JazzCash\IpnController::class, 'handle'])->name('jazzcash.ipn');
+Route::any('/jazzcash/ipn', [App\Http\Controllers\Gateway\jazzcashwallet\ProcessController::class, 'ipn'])->name('jazzcash.ipn');
 
 // Test route to demonstrate logging functionality
 Route::any('/test-logging', function(\Illuminate\Http\Request $request) {
@@ -364,7 +410,7 @@ Route::any('/test-logging', function(\Illuminate\Http\Request $request) {
 })->name('test.logging');
 
 // Mobile App API Routes (moved from routes/api.php)
-Route::prefix('api')->group(function () {
+Route::prefix('api')->middleware('throttle:api')->group(function () {
 
     // Public APIs (No authentication required)
     Route::match(['get', 'post'], '/home_api.php', [HomeController::class, 'index']);
@@ -395,8 +441,8 @@ Route::prefix('api')->group(function () {
     Route::post('/payment/manual-proof', [PaymentController::class, 'manualProof']);
 
     // Auth APIs (Public - No token required for login/register)
-    Route::match(['get', 'post'], '/reg_user.php', [AuthController::class, 'register']);
-    Route::match(['get', 'post'], '/user_login.php', [AuthController::class, 'login']);
+    Route::match(['get', 'post'], '/reg_user.php', [AuthController::class, 'register'])->middleware('throttle:auth');
+    Route::match(['get', 'post'], '/user_login.php', [AuthController::class, 'login'])->middleware('throttle:auth');
     Route::match(['get', 'post'], '/forget_password.php', [AuthController::class, 'forgetPassword']);
     Route::match(['get', 'post'], '/social_login.php', [AuthController::class, 'socialLogin']);
     Route::match(['get', 'post'], '/mobile_check.php', [AuthController::class, 'checkMobile']);
@@ -414,6 +460,10 @@ Route::prefix('api')->group(function () {
 
     // Protected APIs (Require authentication via Bearer token)
     Route::middleware('auth:sanctum')->group(function () {
+        Route::get('cnic/{id}', [CampaignVerificationDocumentController::class, 'showByDocumentId'])
+            ->where('id', '[A-Za-z0-9._-]+')
+            ->name('api.verification.document');
+
         // Fund APIs
         Route::match(['get', 'post'], '/fundlist.php', [FundController::class, 'fundList']);
         Route::match(['get', 'post'], '/fundraise.php', [FundController::class, 'fundRaise']);
@@ -430,7 +480,6 @@ Route::prefix('api')->group(function () {
         Route::match(['get', 'post'], '/campaign_payment.php', [CampaignPaymentApiController::class, 'payment']);
         Route::get('/campaign_required_documents.php', [CampaignManageApiController::class, 'requiredDocuments']);
         Route::post('/campaign_required_documents_submit.php', [CampaignManageApiController::class, 'submitRequiredDocuments']);
-
         // Fund Update APIs
         Route::match(['get', 'post'], '/fund_update.php', [FundUpdateController::class, 'fundUpdate']);
         Route::match(['get', 'post'], '/fund_cancle.php', [FundUpdateController::class, 'cancelFund']);
@@ -445,7 +494,7 @@ Route::prefix('api')->group(function () {
         Route::match(['get', 'post'], '/getbalance.php', [UserController::class, 'getBalance']);
 
         // Donate APIs
-        Route::match(['get', 'post'], '/donate_now.php', [DonateController::class, 'donateNow']);
+        Route::match(['get', 'post'], '/donate_now.php', [DonateController::class, 'donateNow'])->middleware('throttle:donate');
         Route::match(['get', 'post'], '/my_donate_fundlist.php', [DonateController::class, 'myDonateFundList']);
         Route::match(['get', 'post'], '/user_payment_list.php', [PaymentController::class, 'userPaymentList']);
         Route::match(['get', 'post'], '/donation_list.php', [PaymentController::class, 'donationList']);
@@ -644,7 +693,11 @@ Route::prefix('api')->group(function () {
             ];
 
             $param = (string) $slugOrId;
-            $query = Campaign::with($with)->approve();
+            $query = Campaign::with($with)
+                ->whereIn('status', [
+                    \App\Constants\ManageStatus::CAMPAIGN_APPROVED,
+                    \App\Constants\ManageStatus::CAMPAIGN_PENDING,
+                ]);
 
             if ($param !== '' && ctype_digit($param)) {
                 $campaign = $query->where('id', (int) $param)->first();

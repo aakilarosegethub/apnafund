@@ -19,6 +19,14 @@ class AuthController extends BaseApiController
     {
         try {
             $data = $this->getRequestData($request);
+
+            if (plugin_active('googleCaptcha') && !verifyCaptcha()) {
+                return response()->json([
+                    "ResponseCode" => "401",
+                    "Result" => "false",
+                    "ResponseMsg" => "Captcha verification failed. Please try again."
+                ], 401);
+            }
             
             if (empty($data['name']) || empty($data['email']) || empty($data['mobile']) || empty($data['password']) || empty($data['ccode'])) {
                 return response()->json([
@@ -28,14 +36,28 @@ class AuthController extends BaseApiController
                 ], 401);
             }
 
-            // Split name into firstname and lastname
-            $nameParts = explode(' ', trim($data['name']), 2);
-            $firstname = strip_tags($this->h->real_string($nameParts[0]));
-            $lastname = isset($nameParts[1]) ? strip_tags($this->h->real_string($nameParts[1])) : '';
+            $name = strip_tags($this->h->real_string($data['name']));
             $email = strip_tags($this->h->real_string($data['email']));
             $mobile = strip_tags($this->h->real_string($data['mobile']));
             $ccode = strip_tags($this->h->real_string($data['ccode']));
             $password = strip_tags($this->h->real_string($data['password']));
+
+            $usernameHint = strtolower(preg_replace('/[^a-z0-9]/', '', preg_replace('/\s+/', '', $name)));
+
+            $signupErrors = validateRegistrationSignupFields($name, $password, $email, $usernameHint ?: null);
+            if ($signupErrors !== []) {
+                return response()->json([
+                    "ResponseCode" => "401",
+                    "Result" => "false",
+                    "ResponseMsg" => registrationSignupFirstError($signupErrors),
+                    "errors" => $signupErrors,
+                ], 401);
+            }
+
+            // Split name into firstname and lastname
+            [$firstname, $lastname] = splitRegistrationName($name);
+            $firstname = strip_tags($this->h->real_string($firstname));
+            $lastname = strip_tags($this->h->real_string($lastname));
             
             // Generate username from name
             $usernameBase = strtolower(preg_replace('/[^a-z0-9]/', '', $firstname . ($lastname ? $lastname : '')));
@@ -354,6 +376,15 @@ class AuthController extends BaseApiController
             $password = strip_tags($this->h->real_string($data['password']));
             $ccode = !empty($data['ccode']) ? strip_tags($this->h->real_string($data['ccode'])) : null;
 
+            $passwordErrors = registrationPasswordErrors($password);
+            if ($passwordErrors !== []) {
+                return response()->json([
+                    "ResponseCode" => "401",
+                    "Result" => "false",
+                    "ResponseMsg" => $passwordErrors[0]
+                ], 401);
+            }
+
             // Check if input is email or mobile
             $isEmail = filter_var($mobile, FILTER_VALIDATE_EMAIL);
 
@@ -604,6 +635,15 @@ class AuthController extends BaseApiController
 
             $email = strip_tags($this->h->real_string($data['email']));
             $password = strip_tags($this->h->real_string($data['password']));
+
+            $passwordErrors = registrationPasswordErrors($password, $email);
+            if ($passwordErrors !== []) {
+                return response()->json([
+                    "ResponseCode" => "401",
+                    "Result" => "false",
+                    "ResponseMsg" => $passwordErrors[0]
+                ], 401);
+            }
 
             // Find user by email
             $user = User::where('email', $email)->first();

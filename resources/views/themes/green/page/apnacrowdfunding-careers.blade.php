@@ -175,7 +175,7 @@ section h4{
         <h2>Who We Are</h2>
         <p>
             {!! apnaCrowdfundingLink() !!} is normalizing funding so that hardworking people with ideas can launch
-            their projects in the form of campaigns and bakers can support them.
+            their projects in the form of campaigns and backers can support them.
         </p>
         <p>
             Crowdfunding should be accessible, transparent, and impactful. We are trying to build a team

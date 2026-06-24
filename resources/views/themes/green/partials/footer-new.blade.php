@@ -146,9 +146,6 @@
                 @php $slug = trim($item->data_info['slug'] ?? '#'); @endphp
                 <a href="{{ url($slug) }}">{{ __($item->data_info['menu_label'] ?? '') }}</a>
             @endforeach
-
- 
-            
         </div>
     </div>
 </footer>
@@ -211,29 +208,40 @@
     background-color: #000000;
     color: #ffffff;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    border-top: 1px solid #333;
+    border-top: none !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* Footer overall compact size */
+.ks-footer-dark .container.py-5 {
+    padding-top: 1.75rem !important;
+    padding-bottom: 1.75rem !important;
 }
 
 .footer-title {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 700;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     color: #fff;
+    line-height: 1.2;
 }
 
 .footer-list {
     list-style: none;
     padding: 0;
+    margin-bottom: 0;
 }
 
 .footer-list li {
-    margin-bottom: 12px;
+    margin-bottom: 6px;
 }
 
 .footer-list a {
     color: #fff;
     text-decoration: none;
-    font-size: 14px;
+    font-size: 12px;
+    line-height: 1.25;
 }
 
 .footer-list a:hover {
@@ -242,12 +250,12 @@
 
 .ks-selector {
     border: 1px solid #333;
-    padding: 8px 12px;
+    padding: 6px 9px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 14px;
-    max-width: 280px;
+    font-size: 12px;
+    max-width: 220px;
     cursor: pointer;
 }
 .ks-selector--readonly {
@@ -256,12 +264,14 @@
 }
 .ks-selector-select {
     width: 100%;
-    max-width: 280px;
+    max-width: 220px;
     background: #000;
     color: #fff;
     border: 1px solid #333;
     appearance: auto;
     cursor: pointer;
+    font-size: 12px;
+    padding: 5px 7px;
 }
 .ks-selector-select:focus {
     outline: 2px solid #666;
@@ -280,58 +290,61 @@
 }
 
 .footer-currency-wrap {
-    max-width: 280px;
+    max-width: 220px;
 }
 .footer-currency-label {
     display: block;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: #999;
-    margin-bottom: 6px;
+    margin-bottom: 5px;
 }
+
+/* Logo section smaller + remove green tint */
 .ks-huge-branding {
-    padding: 60px 0;
+    padding: 24px 0 20px;
     text-align: center;
 }
 
 .ks-huge-branding img {
     width: 100%;
-    max-width: 1116px;
+    max-width: 700px;
     height: auto;
-    filter: brightness(0) invert(1);
+
     opacity: 0.9;
 }
 
 .footer-bottom-flex {
     border-top: 1px solid #222;
-    padding-top: 25px;
+    padding-top: 12px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: 20px;
+    gap: 10px;
 }
 
 .social-links a {
     color: #fff;
-    font-size: 20px;
-    margin-right: 20px;
+    font-size: 16px;
+    margin-right: 12px;
     text-decoration: none;
 }
 
 .app-badges img {
-    height: 35px;
-    margin-left: 10px;
+    height: 26px;
+    margin-left: 6px;
 }
 
 .footer-legal-bar {
-    margin-top: 30px;
-    font-size: 13px;
+    margin-top: 12px;
+    padding-bottom: 2px;
+    font-size: 11px;
     display: flex;
     flex-wrap: wrap;
-    gap: 15px;
+    gap: 10px;
     align-items: center;
 }
 
@@ -371,10 +384,38 @@
     transform: scale(1.08);
 }
 
-@media (max-width: 768px) {
-    .ks-huge-branding img {
-        max-width: 100%;
+@media (max-width: 992px) {
+    .ks-huge-branding {
+        padding: 20px 0 18px;
     }
+
+    .ks-huge-branding img {
+        max-width: 560px;
+    }
+}
+
+@media (max-width: 768px) {
+    .ks-footer-dark .container.py-5 {
+        padding-top: 1.5rem !important;
+        padding-bottom: 1.5rem !important;
+    }
+
+    .footer-title {
+        margin-bottom: 8px;
+    }
+
+    .footer-list li {
+        margin-bottom: 5px;
+    }
+
+    .ks-huge-branding img {
+        max-width: 420px;
+    }
+
+    .app-badges img {
+        height: 24px;
+    }
+
     .whatsapp-chatbot-fab {
         bottom: 16px;
         right: 16px;

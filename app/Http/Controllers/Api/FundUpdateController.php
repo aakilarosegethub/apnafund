@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use App\Models\Campaign;
 use App\Models\CampaignUpdate;
+use App\Services\CampaignStoryHtmlService;
 use Illuminate\Support\Str;
 
 class FundUpdateController extends BaseApiController
@@ -36,7 +37,7 @@ class FundUpdateController extends BaseApiController
         if ($title === '') {
             $title = 'Update';
         }
-        $description = $content;
+        $description = CampaignStoryHtmlService::replaceDataUrlImagesWithStoredFiles($content);
 
         $uid = $this->getUserId($request);
 
@@ -324,7 +325,9 @@ class FundUpdateController extends BaseApiController
         $full_address = strip_tags($this->h->real_string($request->input('full_address', '')));
         $lats = strip_tags($this->h->real_string($request->input('lats', '')));
         $longs = strip_tags($this->h->real_string($request->input('longs', '')));
-        $fund_story = strip_tags($this->h->real_string($request->input('fund_story', '')));
+        $fund_story = CampaignStoryHtmlService::replaceDataUrlImagesWithStoredFiles(
+            trim((string) $request->input('fund_story', ''))
+        );
         $exp_date = strip_tags($this->h->real_string($request->input('exp_date', '')));
         $patient_title = strip_tags($this->h->real_string($request->input('patient_title', '')));
         $patient_diagnosis = strip_tags($this->h->real_string($request->input('patient_diagnosis', '')));

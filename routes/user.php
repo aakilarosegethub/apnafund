@@ -16,7 +16,7 @@ Route::namespace('User\Auth')->name('user.')->group(function () {
     Route::controller('RegisterController')->middleware('guest')->group(function () {
         Route::get('register', 'registerBusinessForm')->name('register');
         Route::get('register-business', 'registerBusinessForm')->name('register.business');
-        Route::post('register', 'register')->middleware('register.status');
+        Route::post('register', 'register')->middleware(['register.status', 'throttle:auth']);
         Route::post('register-business', 'registerBusiness')->middleware('register.status');
         Route::post('check-user', 'checkUser')->name('check.user');
     });
@@ -55,7 +55,7 @@ Route::namespace('User\Auth')->name('user.')->group(function () {
     });
 });
 
-Route::middleware('auth')->name('user.')->namespace('User')->group(function () {
+Route::middleware(['auth'])->name('user.')->namespace('User')->group(function () {
     // Authorization
     Route::controller('AuthorizationController')->group(function () {
         Route::get('authorization', 'authorizeForm')->name('authorization');

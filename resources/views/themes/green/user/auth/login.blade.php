@@ -278,6 +278,9 @@
 
         <form method="POST" action="{{ route('user.login') }}">
             @csrf
+            @if(!empty($redirectUrl))
+                <input type="hidden" name="redirect" value="{{ $redirectUrl }}">
+            @endif
 
             <div class="ks-form-group">
                 <input type="text" name="username" placeholder="Email address or username"
@@ -300,8 +303,10 @@
                 <span class="btn-text">Log in</span>
             </button>
 
+            {{-- "Remember Me": when checked, sends remember=1 so Laravel issues a
+                 long-lived remember cookie backed by the users.remember_token column. --}}
             <div class="ks-remember">
-                <input type="checkbox" name="remember" id="remember" checked>
+                <input type="checkbox" name="remember" id="remember" value="1" @checked(old('remember'))>
                 <label for="remember">Remember me</label>
             </div>
         </form>

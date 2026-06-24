@@ -6,9 +6,11 @@ use App\Constants\ManageStatus;
 use App\Models\CampaignFaq;
 use App\Models\CampaignUpdate;
 use App\Models\Comment;
+use App\Services\CampaignStoryHtmlService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -416,10 +418,74 @@ class FundController extends BaseApiController
 
         $cat_id = (int) round((float) (strip_tags($this->h->real_string($cat_id))));
         $name = strip_tags($this->h->real_string($name));
-        $description = strip_tags($this->h->real_string($request->input('description') ?: $request->input('fund_story', '')));
-        $short_description = strip_tags($this->h->real_string($request->input('short_description', '')));
+        $description = CampaignStoryHtmlService::replaceDataUrlImagesWithStoredFiles(
+            trim((string) ($request->input('description') ?: $request->input('fund_story', '')))
+        );
+        $short_description = normalizeCampaignShortDescription($request->input('short_description', ''));
+        $shortDescMin = getCampaignShortDescriptionMinLength();
+        $shortDescMax = getCampaignShortDescriptionMaxLength();
+        $shortDescLen = campaignShortDescriptionLength($short_description);
+
+        if ($shortDescLen < $shortDescMin) {
+            $rawShort = $request->input('short_description', '');
+            $responseMsg = isCampaignShortDescriptionWhitespaceOnly($rawShort)
+                ? 'Short description cannot contain only spaces.'
+                : ($shortDescLen === 0
+                    ? 'Please enter a short description for your project.'
+                    : "Short description must be at least {$shortDescMin} characters long.");
+
+            return response()->json([
+                "ResponseCode" => "401",
+                "Result" => "false",
+                "ResponseMsg" => $responseMsg,
+            ], 401);
+        }
+
+        if ($shortDescLen > $shortDescMax) {
+            return response()->json([
+                "ResponseCode" => "401",
+                "Result" => "false",
+                "ResponseMsg" => "Short description cannot exceed {$shortDescMax} characters.",
+            ], 401);
+        }
+
+        $short_description = CampaignStoryHtmlService::replaceDataUrlImagesWithStoredFiles($short_description);
         $location = strip_tags($this->h->real_string($request->input('location') ?: $request->input('full_address', '')));
-        $goal_amount = strip_tags($this->h->real_string($goal_amount));
+        $goal_amount = trim(strip_tags($this->h->real_string($goal_amount)), " \t\n\r\0\x0B\"'");
+        $originalGoalAmount = (float) $goal_amount;
+        if ($originalGoalAmount <= 0) {
+            return response()->json([
+                "ResponseCode" => "401",
+                "Result" => "false",
+                "ResponseMsg" => "goal_amount must be greater than zero."
+            ], 401);
+        }
+
+        $countryId = $request->input('country_id');
+        $countryName = null;
+        $originalCurrency = getPlatformCurrency();
+        $platformGoalAmount = $originalGoalAmount;
+        if ($countryId !== null && $countryId !== '') {
+            $countryId = (int) trim((string) $countryId, " \t\n\r\0\x0B\"'");
+            $countryName = resolveAllowedCountryNameFromCountryId($countryId);
+            if (!$countryName) {
+                return response()->json([
+                    "ResponseCode" => "400",
+                    "Result" => "false",
+                    "ResponseMsg" => "Invalid country_id or country is not allowed for project location."
+                ], 400);
+            }
+
+            $originalCurrency = getCurrencyCodeForCountryName($countryName);
+            $platformGoalAmount = app(\App\Services\CurrencyService::class)
+                ->convertToPlatform($originalGoalAmount, $originalCurrency);
+        }
+
+        $platformGoalAmount = round($platformGoalAmount, 2);
+        $exchangeRateUsed = $originalGoalAmount > 0 ? round($platformGoalAmount / $originalGoalAmount, 8) : 1;
+        if ($countryName && $location === '') {
+            $location = $countryName;
+        }
 
         // Parse dates: multipart form - try allInput, input, $_POST; strip quotes, validate Y-m-d
         $allInput = $request->all();
@@ -505,10 +571,10 @@ class FundController extends BaseApiController
             'name' => $name,
             'slug' => $slug,
             'description' => $description ?: 'Campaign description',
-            'short_description' => $short_description ?: \Illuminate\Support\Str::limit($description, 150),
+            'short_description' => $short_description,
             'image' => $mainImage,
             'gallery' => !empty($gallery) ? json_encode($gallery) : null,
-            'goal_amount' => $goal_amount,
+            'goal_amount' => $platformGoalAmount,
             'start_date' => $start_date,
             'end_date' => $end_date,
             'status' => $campaignStatus,
@@ -517,6 +583,19 @@ class FundController extends BaseApiController
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s')
         ];
+
+        if (Schema::hasColumn('campaigns', 'goal_amount_usd')) {
+            $campaignData['goal_amount_usd'] = $platformGoalAmount;
+        }
+        if (Schema::hasColumn('campaigns', 'original_goal_amount')) {
+            $campaignData['original_goal_amount'] = $originalGoalAmount;
+        }
+        if (Schema::hasColumn('campaigns', 'original_currency')) {
+            $campaignData['original_currency'] = $originalCurrency;
+        }
+        if (Schema::hasColumn('campaigns', 'exchange_rate_used')) {
+            $campaignData['exchange_rate_used'] = $exchangeRateUsed;
+        }
 
         try {
             // Use Laravel DB facade directly to get better error handling

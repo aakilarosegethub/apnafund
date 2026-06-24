@@ -362,6 +362,21 @@ class BaseApiController extends Controller
      */
     protected function getRequestData(Request $request)
     {
+        $rawContent = $request->getContent();
+        if ($rawContent !== '' && $rawContent !== null) {
+            $trimmed = ltrim($rawContent);
+            if ($trimmed !== '' && ($trimmed[0] === '{' || $trimmed[0] === '[')) {
+                json_decode($rawContent, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    abort(response()->json([
+                        'ResponseCode' => '400',
+                        'Result' => 'false',
+                        'ResponseMsg' => 'Invalid JSON in request body.',
+                    ], 400));
+                }
+            }
+        }
+
         // Try to get data from request
         $data = $request->all();
         

@@ -22,11 +22,11 @@
                             <div class="row g-3">
                                 <div class="col-sm-6">
                                     <label class="form--label required">@lang('First Name')</label>
-                                    <input type="text" class="form--control" name="firstname" value="{{ old('firstname') }}" required>
+                                    <input type="text" class="form--control" name="firstname" value="{{ old('firstname') }}" required maxlength="{{ registrationNamePartMaxLength() }}">
                                 </div>
                                 <div class="col-sm-6">
                                     <label class="form--label required">@lang('Last Name')</label>
-                                    <input type="text" class="form--control" name="lastname" value="{{ old('lastname') }}" required>
+                                    <input type="text" class="form--control" name="lastname" value="{{ old('lastname') }}" required maxlength="{{ registrationNamePartMaxLength() }}">
                                 </div>
                                 <div class="col-sm-6">
                                     <label class="form--label required">@lang('Username')</label>
@@ -61,7 +61,7 @@
                                 <div class="col-sm-6">
                                     <label class="form--label required">@lang('Password')</label>
                                     <div class="position-relative">
-                                        <input type="password" class="form-control form--control @if ($setting->strong_pass) secure-password @endif" name="password" id="your-password" required>
+                                        <input type="password" class="form-control form--control @if ($setting->strong_pass) secure-password @endif" name="password" id="your-password" required minlength="{{ registrationPasswordMinLength() }}" maxlength="{{ registrationPasswordMaxLength() }}">
                                         <span class="password-show-hide ti ti-eye toggle-password" id="#your-password"></span>
                                     </div>
                                     @if ($setting->strong_pass)
@@ -95,7 +95,7 @@
                                 <div class="col-sm-6">
                                     <label class="form--label required">@lang('Confirm Password')</label>
                                     <div class="position-relative">
-                                        <input type="password" class="form-control form--control" name="password_confirmation" id="confirm-password" required>
+                                        <input type="password" class="form-control form--control" name="password_confirmation" id="confirm-password" required maxlength="{{ registrationPasswordMaxLength() }}">
                                         <span class="password-show-hide ti ti-eye toggle-password" id="#confirm-password"></span>
                                     </div>
                                 </div>
@@ -144,6 +144,37 @@
     <script>
         (function($) {
             "use strict";
+
+            const NAME_PART_MAX = {{ registrationNamePartMaxLength() }};
+            const PASSWORD_MAX = {{ registrationPasswordMaxLength() }};
+            const PASSWORD_MIN = {{ registrationPasswordMinLength() }};
+
+            $('form.verify-gcaptcha').on('submit', function(e) {
+                const firstname = ($('[name=firstname]').val() || '').trim();
+                const lastname = ($('[name=lastname]').val() || '').trim();
+                const password = ($('[name=password]').val() || '');
+
+                if (firstname.length > NAME_PART_MAX) {
+                    e.preventDefault();
+                    alert('First name must not exceed ' + NAME_PART_MAX + ' characters.');
+                    return false;
+                }
+                if (lastname.length > NAME_PART_MAX) {
+                    e.preventDefault();
+                    alert('Last name must not exceed ' + NAME_PART_MAX + ' characters.');
+                    return false;
+                }
+                if (password.length > PASSWORD_MAX) {
+                    e.preventDefault();
+                    alert('Password must not exceed ' + PASSWORD_MAX + ' characters.');
+                    return false;
+                }
+                if (password.length > 0 && password.length < PASSWORD_MIN) {
+                    e.preventDefault();
+                    alert('Password must be at least ' + PASSWORD_MIN + ' characters long.');
+                    return false;
+                }
+            });
 
             @if ($mobileCode)
                 $(`option[data-code={{ $mobileCode }}]`).attr('selected', '');

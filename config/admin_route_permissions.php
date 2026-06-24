@@ -191,6 +191,7 @@ return [
 
     // === ACTIVITY LOGS ===
     'admin.activity-logs'             => 'activity_logs.view',
+    'admin.webhook.logs'              => 'activity_logs.view',
 
     // admin-users and admin.roles are handled separately in middleware (super admin only)
 ];

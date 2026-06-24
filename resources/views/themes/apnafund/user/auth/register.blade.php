@@ -20,13 +20,18 @@
                         <form action="{{ route('user.register') }}" method="POST" class="verify-gcaptcha" enctype="multipart/form-data">
                             @csrf
                             <div class="row g-3">
+                                <div class="col-12">
+                                    <div id="registerFormErrors" class="alert alert-danger py-2 px-3" style="display:none;" role="alert"></div>
+                                </div>
                                 <div class="col-sm-6">
                                     <label class="form--label required">@lang('First Name')</label>
-                                    <input type="text" class="form--control" name="firstname" value="{{ old('firstname') }}" required>
+                                    <input type="text" class="form--control register-field" name="firstname" id="firstname" value="{{ old('firstname') }}" required maxlength="{{ registrationNamePartMaxLength() }}" autocomplete="given-name">
+                                    <small class="text-danger d-block mt-1 field-error" data-for="firstname"></small>
                                 </div>
                                 <div class="col-sm-6">
                                     <label class="form--label required">@lang('Last Name')</label>
-                                    <input type="text" class="form--control" name="lastname" value="{{ old('lastname') }}" required>
+                                    <input type="text" class="form--control register-field" name="lastname" id="lastname" value="{{ old('lastname') }}" required maxlength="{{ registrationNamePartMaxLength() }}" autocomplete="family-name">
+                                    <small class="text-danger d-block mt-1 field-error" data-for="lastname"></small>
                                 </div>
                                 <div class="col-sm-6">
                                     <label class="form--label required">@lang('Username')</label>
@@ -35,8 +40,9 @@
                                 </div>
                                 <div class="col-sm-6">
                                     <label class="form--label required">@lang('Email Address')</label>
-                                    <input type="email" class="form--control checkUser" name="email" value="{{ old('email') }}" required>
+                                    <input type="email" class="form--control checkUser register-field" name="email" id="email" value="{{ old('email') }}" required maxlength="191" autocomplete="email">
                                     <small class="text-danger emailExist"></small>
+                                    <small class="text-danger d-block mt-1 field-error" data-for="email"></small>
                                 </div>
                                 <div class="col-sm-6">
                                     <label class="form--label required">@lang('Country')</label>
@@ -61,9 +67,10 @@
                                 <div class="col-sm-6">
                                     <label class="form--label required">@lang('Password')</label>
                                     <div class="position-relative">
-                                        <input type="password" class="form-control form--control @if ($setting->strong_pass) secure-password @endif" name="password" id="your-password" required>
+                                        <input type="password" class="form-control form--control register-field @if ($setting->strong_pass) secure-password @endif" name="password" id="your-password" required minlength="{{ registrationPasswordMinLength() }}" maxlength="{{ registrationPasswordMaxLength() }}" autocomplete="new-password">
                                         <span class="password-show-hide ti ti-eye toggle-password" id="#your-password"></span>
                                     </div>
+                                    <small class="text-danger d-block mt-1 field-error" data-for="password"></small>
                                     @if ($setting->strong_pass)
                                         <div class="password-requirements mt-2">
                                             <div class="password-requirement">
@@ -95,7 +102,7 @@
                                 <div class="col-sm-6">
                                     <label class="form--label required">@lang('Confirm Password')</label>
                                     <div class="position-relative">
-                                        <input type="password" class="form-control form--control" name="password_confirmation" id="confirm-password" required>
+                                        <input type="password" class="form-control form--control" name="password_confirmation" id="confirm-password" required maxlength="{{ registrationPasswordMaxLength() }}">
                                         <span class="password-show-hide ti ti-eye toggle-password" id="#confirm-password"></span>
                                     </div>
                                 </div>
@@ -128,22 +135,115 @@
             </div>
         </div>
     </section>
-@endsection
 
-@if ($setting->strong_pass)
-    @push('page-style-lib')
-        <link rel="stylesheet" href="{{ asset('assets/universal/css/strongPassword.css') }}">
-    @endpush
-
-    @push('page-script-lib')
-        <script src="{{asset('assets/universal/js/strongPassword.js')}}"></script>
-    @endpush
-@endif
-
-@push('page-script')
     <script>
         (function($) {
             "use strict";
+
+            const NAME_PART_MAX = {{ registrationNamePartMaxLength() }};
+            const PASSWORD_MAX = {{ registrationPasswordMaxLength() }};
+            const PASSWORD_MIN = {{ registrationPasswordMinLength() }};
+            const WEAK_PASSWORDS = @json(\App\Constants\WeakPasswords::listForFrontend());
+            const formErrors = document.getElementById('registerFormErrors');
+
+            function showFieldError(field, message) {
+                const el = document.querySelector('.field-error[data-for="' + field + '"]');
+                if (el) {
+                    el.textContent = message || '';
+                }
+            }
+
+            function showFormErrors(messages) {
+                if (!formErrors) {
+                    return;
+                }
+                if (!messages.length) {
+                    formErrors.style.display = 'none';
+                    formErrors.innerHTML = '';
+                    return;
+                }
+                formErrors.style.display = 'block';
+                formErrors.innerHTML = '<ul class="mb-0 ps-3">' + messages.map(function(m) {
+                    return '<li>' + m + '</li>';
+                }).join('') + '</ul>';
+            }
+
+            function validatePassword(value, email, fullName) {
+                const errors = [];
+                if (!value) {
+                    errors.push('Password is required.');
+                    return errors;
+                }
+                if (value.length > PASSWORD_MAX) {
+                    errors.push('Password must not exceed ' + PASSWORD_MAX + ' characters.');
+                }
+                if (value.length < PASSWORD_MIN) {
+                    errors.push('Password must be at least ' + PASSWORD_MIN + ' characters.');
+                }
+                if (!/[A-Z]/.test(value)) errors.push('Password must include an uppercase letter.');
+                if (!/[a-z]/.test(value)) errors.push('Password must include a lowercase letter.');
+                if (!/[0-9]/.test(value)) errors.push('Password must include a number.');
+                if (!/[^A-Za-z0-9]/.test(value)) errors.push('Password must include a special character.');
+                const lower = value.toLowerCase();
+                if (WEAK_PASSWORDS.indexOf(lower) !== -1) {
+                    errors.push('Password is too common. Choose a stronger password.');
+                }
+                const emailLocal = (email || '').split('@')[0].toLowerCase();
+                const nameParts = (fullName || '').toLowerCase().split(/\s+/).filter(Boolean);
+                if (emailLocal && emailLocal.length >= 3 && lower.indexOf(emailLocal) !== -1) {
+                    errors.push('Password must not contain your email.');
+                }
+                nameParts.forEach(function(part) {
+                    if (part.length >= 3 && lower.indexOf(part) !== -1) {
+                        errors.push('Password must not contain your name.');
+                    }
+                });
+                return errors;
+            }
+
+            function runClientValidation() {
+                const firstname = ($('#firstname').val() || '').trim();
+                const lastname = ($('#lastname').val() || '').trim();
+                const email = ($('#email').val() || '').trim();
+                const password = ($('[name=password]').val() || '');
+                const messages = [];
+
+                showFieldError('firstname', '');
+                showFieldError('lastname', '');
+                showFieldError('email', '');
+                showFieldError('password', '');
+
+                if (firstname.length > NAME_PART_MAX) {
+                    showFieldError('firstname', 'First name must not exceed ' + NAME_PART_MAX + ' characters.');
+                    messages.push('First name is too long.');
+                }
+                if (lastname.length > NAME_PART_MAX) {
+                    showFieldError('lastname', 'Last name must not exceed ' + NAME_PART_MAX + ' characters.');
+                    messages.push('Last name is too long.');
+                }
+                if (email.length > 191) {
+                    showFieldError('email', 'Email must not exceed 191 characters.');
+                    messages.push('Email is too long.');
+                }
+                const passErrors = validatePassword(password, email, firstname + ' ' + lastname);
+                if (passErrors.length) {
+                    showFieldError('password', passErrors[0]);
+                    messages = messages.concat(passErrors);
+                }
+                showFormErrors(messages);
+                return messages.length === 0;
+            }
+
+            $('.register-field').on('input blur', function() {
+                runClientValidation();
+            });
+
+            $('form.verify-gcaptcha').on('submit', function(e) {
+                if (!runClientValidation()) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
 
             @if ($mobileCode)
                 $(`option[data-code={{ $mobileCode }}]`).attr('selected', '');
@@ -196,4 +296,4 @@
             });
         })(jQuery);
     </script>
-@endpush
+@endsection

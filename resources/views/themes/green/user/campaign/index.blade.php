@@ -24,7 +24,7 @@
                                     @if($campaign->image)
                                         <img src="{{ getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')) }}" alt="{{ __($campaign->name) }}" style="width: 100%; height: 100%; object-fit: cover;">
                                     @else
-                                        <i class="fas fa-seedling"></i>
+                                        <img src="{{ getImage(getFilePath('campaign') . '/default.png', getFileSize('campaign')) }}" alt="{{ __($campaign->name) }}" style="width: 100%; height: 100%; object-fit: cover;">
                                     @endif
                                 </div>
                                 <div class="preview-content">
@@ -71,7 +71,7 @@
                                             <i class="fas fa-eye me-1"></i>@lang('View')
                                         </a>
                                         @else
-                                        <a href="javascript:void(0)" role="button" class="btn btn-sm btn-secondary" onclick='if (typeof showToasts === "function") { showToasts("warning", @json(__('Campaign not approved yet.'))); } else if (typeof iziToast !== "undefined" && iziToast.warning) { iziToast.warning({ message: @json(__('Campaign not approved yet.')), position: "topRight", timeout: 6000 }); } return false;'>
+                                        <a href="{{ route('user.campaign.show', $campaign->slug) }}" target="_blank" rel="noopener" class="btn btn-sm btn-secondary">
                                             <i class="fas fa-eye me-1"></i>@lang('View')
                                         </a>
                                         @endif

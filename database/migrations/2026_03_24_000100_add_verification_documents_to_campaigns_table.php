@@ -8,20 +8,21 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('campaigns') || Schema::hasColumn('campaigns', 'verification_documents')) {
+            return;
+        }
+
         Schema::table('campaigns', function (Blueprint $table) {
-            if (!Schema::hasColumn('campaigns', 'verification_documents')) {
-                $table->json('verification_documents')->nullable()->after('document');
-            }
+            $table->json('verification_documents')->nullable();
         });
     }
 
     public function down(): void
     {
-        Schema::table('campaigns', function (Blueprint $table) {
-            if (Schema::hasColumn('campaigns', 'verification_documents')) {
+        if (Schema::hasTable('campaigns') && Schema::hasColumn('campaigns', 'verification_documents')) {
+            Schema::table('campaigns', function (Blueprint $table) {
                 $table->dropColumn('verification_documents');
-            }
-        });
+            });
+        }
     }
 };
-

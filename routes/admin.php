@@ -444,6 +444,7 @@ Route::middleware(['admin', 'admin.permission'])->group(function () {
     // Webhook Logs Management (specific routes before {id} to avoid conflicts)
     Route::controller('WebhookLogController')->prefix('webhook-logs')->name('webhook.logs.')->group(function() {
         Route::get('/', 'index')->name('index');
+        Route::get('/jazzcash', 'jazzcash')->name('jazzcash');
         Route::get('/statistics', 'statistics')->name('statistics');
         Route::get('/export', 'export')->name('export');
         Route::get('/gateway/{gateway}', 'byGateway')->name('by.gateway');

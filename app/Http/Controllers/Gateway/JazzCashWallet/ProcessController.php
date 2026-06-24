@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use App\Constants\ManageStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Gateway\PaymentController;
-use App\Lib\CurlRequest;
+use App\Services\JazzCashApiLoggerService;
 
 class ProcessController extends Controller
 {
@@ -112,47 +112,90 @@ class ProcessController extends Controller
         $send['method'] = 'get';
         $send['url'] = '';
 
+        app(JazzCashApiLoggerService::class)->logWalletInit($send['val'], $deposit);
+
         return json_encode($send);
     }
 
     public function processPayment(Request $request)
     {
-        $request->validate([
-            'transaction_id' => 'required|string',
-            'phone_number' => 'required|string|regex:/^03[0-9]{9}$/',
-            'cnic_last_6' => 'required|string|regex:/^[0-9]{6}$/'
-        ]);
+        $logger = app(JazzCashApiLoggerService::class);
+        $deposit = Deposit::where('trx', $request->input('transaction_id'))->first();
+        $internalLog = $logger->logInternalRequest(
+            $request,
+            'wallet_process',
+            'ipn/jazzcash-wallet/process',
+            $deposit
+        );
+
+        try {
+            $request->validate([
+                'transaction_id' => 'required|string',
+                'phone_number' => 'required|string',
+                'cnic_last_6' => 'required|string|regex:/^[0-9]{6}$/'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $response = [
+                'success' => false,
+                'message' => $e->validator->errors()->first(),
+                'errors' => $e->errors(),
+            ];
+            $logger->finalizeLog($internalLog, 'failed', $response, 422);
+            return response()->json($response, 422);
+        }
+
+        $normalizedPhone = preg_replace('/\D+/', '', (string) $request->phone_number);
+        if (str_starts_with($normalizedPhone, '92') && strlen($normalizedPhone) === 12) {
+            $normalizedPhone = '0' . substr($normalizedPhone, 2);
+        }
+        if (!preg_match('/^03[0-9]{9}$/', $normalizedPhone)) {
+            $response = [
+                'success' => false,
+                'message' => 'Please enter a valid JazzCash mobile number (03XXXXXXXXX).',
+            ];
+            $logger->finalizeLog($internalLog, 'failed', $response, 422);
+            return response()->json($response, 422);
+        }
+        $request->merge(['phone_number' => $normalizedPhone]);
 
         $deposit = Deposit::where('trx', $request->transaction_id)->first();
         // dd($deposit->status);
         if (!$deposit) {
-            return response()->json([
+            $response = [
                 'success' => false,
                 'message' => 'Transaction not found'
-            ], 404);
+            ];
+            $logger->finalizeLog($internalLog, 'failed', $response, 404);
+            return response()->json($response, 404);
         }
 
         if ($deposit->status == ManageStatus::PAYMENT_SUCCESS) {
-            return response()->json([
+            $response = [
                 'success' => false,
                 'message' => 'Payment already processed'
-            ], 400);
+            ];
+            $logger->finalizeLog($internalLog, 'failed', $response, 400);
+            return response()->json($response, 400);
         }
 
         $gwCurrency = $deposit->gatewayCurrency();
         if (!$gwCurrency) {
-            return response()->json([
+            $response = [
                 'success' => false,
                 'message' => 'Gateway currency configuration not found for this payment.',
-            ], 422);
+            ];
+            $logger->finalizeLog($internalLog, 'failed', $response, 422);
+            return response()->json($response, 422);
         }
 
         $gatewayAcc = json_decode($gwCurrency->gateway_parameter ?? '{}');
         if (!$gatewayAcc || !isset($gatewayAcc->merchant_id, $gatewayAcc->password, $gatewayAcc->integrity_salt)) {
-            return response()->json([
+            $response = [
                 'success' => false,
                 'message' => 'Gateway is not configured correctly. Please contact support.',
-            ], 500);
+            ];
+            $logger->finalizeLog($internalLog, 'failed', $response, 500);
+            return response()->json($response, 500);
         }
 
         $merchantId = $gatewayAcc->merchant_id;
@@ -202,7 +245,9 @@ class ProcessController extends Controller
         // Determine API URL based on sandbox mode
         $url = $sandbox ? 'https://sandbox.jazzcash.com.pk/ApplicationAPI/API/2.0/Purchase/DoMWalletTransaction' : 'https://jazzcash.com.pk/ApplicationAPI/API/2.0/Purchase/DoMWalletTransaction';
 
-        // Initialize cURL
+        $requestHeaders = ['Content-Type' => 'application/json'];
+        $startTime = microtime(true);
+
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
@@ -215,18 +260,46 @@ class ProcessController extends Controller
         // Execute and get response
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $executionTime = microtime(true) - $startTime;
         
         if (curl_errno($ch)) {
+            $curlError = curl_error($ch);
+            $logger->logOutboundRequest(
+                'wallet_api',
+                $url,
+                'POST',
+                $data,
+                $requestHeaders,
+                null,
+                $httpCode ?: null,
+                $executionTime,
+                $deposit,
+                $curlError
+            );
             $newTransactionId = $this->regenerateTransactionId($deposit);
             curl_close($ch);
-            return response()->json([
+            $response = [
                 'success' => false,
-                'message' => 'Connection error: ' . curl_error($ch),
+                'message' => 'Connection error: ' . $curlError,
                 'transaction_id' => $newTransactionId,
-            ], 500);
+            ];
+            $logger->finalizeLog($internalLog, 'failed', $response, 500);
+            return response()->json($response, 500);
         }
         
         curl_close($ch);
+
+        $logger->logOutboundRequest(
+            'wallet_api',
+            $url,
+            'POST',
+            $data,
+            $requestHeaders,
+            is_string($response) ? $response : null,
+            $httpCode,
+            $executionTime,
+            $deposit
+        );
         
         $responseData = json_decode($response, true);
         
@@ -236,23 +309,27 @@ class ProcessController extends Controller
             PaymentController::campaignDataUpdate($deposit);
             session()->put('Track', $deposit->trx);
             
-            return response()->json([
+            $response = [
                 'success' => true,
                 'message' => 'Payment processed successfully',
                 'transaction_id' => $deposit->trx,
                 'amount' => round($localAmount, 2),
-            ]);
-        } else {
-            $errorMessage = $responseData['pp_ResponseMessage'] ?? 'Payment failed';
-            $newTransactionId = $this->regenerateTransactionId($deposit);
-            
-            return response()->json([
-                'success' => false,
-                'message' => $errorMessage,
-                'response_code' => $responseData['pp_ResponseCode'] ?? 'UNKNOWN',
-                'transaction_id' => $newTransactionId,
-            ], 400);
+            ];
+            $logger->finalizeLog($internalLog, 'success', $response, 200);
+            return response()->json($response);
         }
+
+        $errorMessage = $responseData['pp_ResponseMessage'] ?? 'Payment failed';
+        $newTransactionId = $this->regenerateTransactionId($deposit);
+
+        $response = [
+            'success' => false,
+            'message' => $errorMessage,
+            'response_code' => $responseData['pp_ResponseCode'] ?? 'UNKNOWN',
+            'transaction_id' => $newTransactionId,
+        ];
+        $logger->finalizeLog($internalLog, 'failed', $response, 400);
+        return response()->json($response, 400);
     }
 
     private function generateSecureHash($data, $integritySalt)
@@ -270,24 +347,34 @@ class ProcessController extends Controller
 
     public function ipn(Request $request)
     {
+        $logger = app(JazzCashApiLoggerService::class);
         $deposit = Deposit::where('trx', $request->pp_TxnRefNo)->first();
+        $logContext = $logger->logIncoming($request, 'ipn/jazzcash-wallet', 'wallet_ipn', $deposit, 'jazzcash_wallet');
         
         if (!$deposit) {
-            return response('Transaction not found', 404);
+            $response = 'Transaction not found';
+            $logger->finalizeInbound($logContext, 'failed', $response, 404);
+            return response($response, 404);
         }
         
         if ($deposit->status == ManageStatus::PAYMENT_SUCCESS) {
-            return response('Already processed', 200);
+            $response = 'Already processed';
+            $logger->finalizeInbound($logContext, 'success', $response, 200);
+            return response($response, 200);
         }
 
         $gwCurrency = $deposit->gatewayCurrency();
         if (!$gwCurrency) {
-            return response('Gateway configuration not found', 500);
+            $response = 'Gateway configuration not found';
+            $logger->finalizeInbound($logContext, 'failed', $response, 500);
+            return response($response, 500);
         }
 
         $gatewayAcc = json_decode($gwCurrency->gateway_parameter ?? '{}');
         if (!$gatewayAcc || !isset($gatewayAcc->merchant_id, $gatewayAcc->integrity_salt)) {
-            return response('Gateway not configured', 500);
+            $response = 'Gateway not configured';
+            $logger->finalizeInbound($logContext, 'failed', $response, 500);
+            return response($response, 500);
         }
 
         $merchantId = $gatewayAcc->merchant_id;
@@ -297,15 +384,21 @@ class ProcessController extends Controller
         $expectedHash = $this->generateSecureHash($request->all(), $integritySalt);
         
         if ($expectedHash !== $request->pp_SecureHash) {
-            return response('Invalid hash', 400);
+            $response = 'Invalid hash';
+            $logger->finalizeInbound($logContext, 'failed', $response, 400);
+            return response($response, 400);
         }
         
         // Verify JazzCash payment status
         if ($request->pp_ResponseCode === '000' && $request->pp_ResponseMessage === 'Success') {
             PaymentController::campaignDataUpdate($deposit);
-            return response('Payment processed successfully', 200);
+            $response = 'Payment processed successfully';
+            $logger->finalizeInbound($logContext, 'success', $response, 200);
+            return response($response, 200);
         }
         
-        return response('Payment failed', 400);
+        $response = 'Payment failed';
+        $logger->finalizeInbound($logContext, 'failed', $response, 400);
+        return response($response, 400);
     }
 }

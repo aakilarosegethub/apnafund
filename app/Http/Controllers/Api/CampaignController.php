@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Campaign;
 use App\Models\Category;
 use App\Services\CurrencyService;
+use App\Services\CampaignStoryHtmlService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -55,17 +56,19 @@ class CampaignController extends Controller
             $request->merge(['category_id' => (int) round((float) $request->input('category_id'))]);
         }
 
+        prepareCampaignShortDescriptionForValidation($request);
+
         $validator = Validator::make($request->all(), [
             'category_id' => ['required', 'integer', Rule::exists('categories', 'id')],
             'name' => ['required', 'string', 'max:190', Rule::unique('campaigns', 'name')],
-            'short_description' => ['required', 'string', 'max:255'],
+            'short_description' => campaignShortDescriptionValidationRules(),
             'description' => ['required', 'string', 'min:30'],
             'image' => ['required', File::types(['png', 'jpg', 'jpeg', 'webp'])],
             'youtube_url' => ['nullable', 'url'],
             'goal_amount' => ['required', 'numeric', 'gt:0'],
             'start_date' => ['required', 'date_format:Y-m-d', 'after_or_equal:today'],
             'end_date' => ['required', 'date_format:Y-m-d', 'after:start_date'],
-        ]);
+        ], campaignShortDescriptionValidationMessages());
 
         if ($validator->fails()) {
             return response()->json([
@@ -128,13 +131,16 @@ class CampaignController extends Controller
             $counter++;
         }
 
+        $description = CampaignStoryHtmlService::replaceDataUrlImagesWithStoredFiles($request->input('description'));
+        $shortDescription = CampaignStoryHtmlService::replaceDataUrlImagesWithStoredFiles($request->input('short_description'));
+
         $campaign = Campaign::create([
             'user_id' => $request->user()->id,
             'category_id' => $request->input('category_id'),
             'name' => $request->input('name'),
             'slug' => $slug,
-            'description' => $request->input('description'),
-            'short_description' => $request->input('short_description'),
+            'description' => $description,
+            'short_description' => $shortDescription,
             'image' => $image,
             'image_original' => $imageOriginal,
             'youtube_url' => $request->input('youtube_url'),
@@ -172,17 +178,19 @@ class CampaignController extends Controller
             ], 403);
         }
 
+        prepareCampaignShortDescriptionForValidation($request);
+
         $validator = Validator::make($request->all(), [
             'category_id' => ['required', 'integer', Rule::exists('categories', 'id')],
             'name' => ['required', 'string', 'max:190', Rule::unique('campaigns', 'name')->ignore($campaign->id)],
-            'short_description' => ['required', 'string', 'max:255'],
+            'short_description' => campaignShortDescriptionValidationRules(),
             'description' => ['required', 'string', 'min:30'],
             'image' => ['nullable', File::types(['png', 'jpg', 'jpeg', 'webp'])],
             'youtube_url' => ['nullable', 'url'],
             'goal_amount' => ['required', 'numeric', 'gt:0'],
             'start_date' => ['required', 'date_format:Y-m-d'],
             'end_date' => ['required', 'date_format:Y-m-d', 'after:start_date'],
-        ]);
+        ], campaignShortDescriptionValidationMessages());
 
         if ($validator->fails()) {
             return response()->json([
@@ -212,8 +220,8 @@ class CampaignController extends Controller
 
         $campaign->category_id = $request->input('category_id');
         $campaign->name = $request->input('name');
-        $campaign->short_description = $request->input('short_description');
-        $campaign->description = $request->input('description');
+        $campaign->short_description = CampaignStoryHtmlService::replaceDataUrlImagesWithStoredFiles($request->input('short_description'));
+        $campaign->description = CampaignStoryHtmlService::replaceDataUrlImagesWithStoredFiles($request->input('description'));
 
         $slugBase = Str::slug($request->input('name'));
         $slug = $slugBase;

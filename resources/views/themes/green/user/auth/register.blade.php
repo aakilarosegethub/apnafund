@@ -12,6 +12,17 @@
         justify-content: center;
         padding: 60px 16px;
         margin-top: 80px;
+        overflow-y: auto;
+    }
+
+    @media (max-width: 576px) {
+        .ks-signup-wrapper {
+            align-items: flex-start;
+            padding-bottom: 120px;
+        }
+        .ks-otp-inputs {
+            flex-wrap: wrap;
+        }
     }
 
     .ks-signup-card {
@@ -58,6 +69,106 @@
     .ks-form-group input:focus {
         outline: none;
         border-color: #16a34a;
+    }
+
+    .ks-form-group input.ks-input-invalid {
+        border-color: #dc2626;
+    }
+
+    .ks-form-group input.ks-input-valid {
+        border-color: #16a34a;
+    }
+
+    .ks-field-hint {
+        display: block;
+        margin-top: 6px;
+        font-size: 12px;
+        line-height: 1.4;
+        color: #666;
+    }
+
+    .ks-field-hint.ks-field-hint-error {
+        color: #dc2626 !important;
+        font-weight: 500;
+    }
+
+    .ks-field-hint.ks-field-hint-ok {
+        color: #16a34a !important;
+    }
+
+    .ks-password-strength {
+        margin-top: 8px;
+    }
+
+    .ks-strength-track {
+        height: 4px;
+        background: #e5e7eb;
+        border-radius: 999px;
+        overflow: hidden;
+        margin-bottom: 6px;
+    }
+
+    .ks-strength-fill {
+        display: block;
+        height: 100%;
+        width: 0;
+        border-radius: 999px;
+        transition: width 0.2s ease, background-color 0.2s ease;
+    }
+
+    .ks-strength-fill.weak { width: 33%; background: #dc2626; }
+    .ks-strength-fill.medium { width: 66%; background: #f59e0b; }
+    .ks-strength-fill.strong { width: 100%; background: #16a34a; }
+
+    .ks-strength-label {
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: capitalize;
+    }
+
+    .ks-strength-label.weak { color: #dc2626; }
+    .ks-strength-label.medium { color: #d97706; }
+    .ks-strength-label.strong { color: #16a34a; }
+
+    .ks-password-rules {
+        list-style: none;
+        margin: 8px 0 0;
+        padding: 0;
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+    .ks-password-rules li {
+        color: #6b7280;
+        margin-bottom: 2px;
+    }
+
+    .ks-password-rules li.met {
+        color: #16a34a;
+    }
+
+    .ks-password-rules li.unmet {
+        color: #dc2626;
+    }
+
+    .ks-form-errors {
+        background: #fee2e2;
+        border: 1px solid #fecaca;
+        color: #991b1b;
+        padding: 12px 14px;
+        border-radius: 4px;
+        margin-bottom: 16px;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    .ks-form-errors ul {
+        margin: 0;
+        padding-left: 18px;
+    }
+
+    .ks-form-errors li {
+        color: #991b1b !important;
     }
 
     .ks-checkbox {
@@ -287,11 +398,12 @@
 <div class="ks-signup-wrapper">
     <div class="ks-signup-card">
         <div class="ks-top-link">
-            Have an account? <a href="{{ route('user.login') }}">Log in</a>
+            Have an account? <a href="{{ route('user.login.form') }}">Log in</a>
         </div>
 
         <!-- Error/Success Messages -->
         <div id="messageContainer"></div>
+        <div id="formErrors" class="ks-form-errors" style="display:none;" role="alert" aria-live="polite"></div>
 
         <!-- Signup Form -->
         <div class="ks-signup-form" id="signupForm">
@@ -301,15 +413,25 @@
                 @csrf
 
                 <div class="ks-form-group">
-                    <input type="text" name="name" id="name" placeholder="Name" required>
+                    <input type="text" name="name" id="name" placeholder="Name" required maxlength="{{ registrationNameMaxLength() }}" pattern=".*\p{L}.*" title="Name must include at least one letter and be at most {{ registrationNameMaxLength() }} characters" autocomplete="name">
+                    <small class="ks-field-hint" id="nameHint">Maximum {{ registrationNameMaxLength() }} characters</small>
                 </div>
 
                 <div class="ks-form-group">
-                    <input type="email" name="email" id="email" placeholder="Email" required>
+                    <input type="email" name="email" id="email" placeholder="Email" required maxlength="191" autocomplete="email">
+                    <small class="ks-field-hint" id="emailHint"></small>
                 </div>
 
                 <div class="ks-form-group">
-                    <input type="password" name="password" id="password" placeholder="Password" required>
+                    <input type="password" name="password" id="password" placeholder="Password" required autocomplete="new-password">
+                    <small class="ks-field-hint" id="passwordHint">{{ registrationPasswordMinLength() }}–{{ registrationPasswordMaxLength() }} characters with uppercase, lowercase, number, and symbol</small>
+                    <div class="ks-password-strength" id="passwordStrength" style="display: none;">
+                        <div class="ks-strength-track">
+                            <span class="ks-strength-fill" id="strengthFill"></span>
+                        </div>
+                        <span class="ks-strength-label" id="strengthLabel">Weak</span>
+                    </div>
+                    <ul class="ks-password-rules" id="passwordRulesList" style="display: none;"></ul>
                 </div>
 
                 <div class="ks-checkbox">
@@ -328,16 +450,16 @@
 
                 <x-captcha />
 
-                <button type="submit" class="ks-submit" id="submitBtn">
+                <button type="submit" class="ks-submit" id="submitBtn" disabled>
                     <span class="btn-loader"></span>
                     <span class="btn-text">Create account</span>
                 </button>
 
                 <div class="ks-policy">
                     By signing up, you agree to our
-                    <a href="#">Privacy Policy</a>,
-                    <a href="#">Cookie Policy</a> and
-                    <a href="#">Terms of Use</a>.
+                    <a href="{{ route('policy.pages', ['privacy-policy', 11]) }}" target="_blank" rel="noopener">Privacy Policy</a>,
+                    <a href="{{ route('cookie.policy') }}" target="_blank" rel="noopener">Cookie Policy</a> and
+                    <a href="{{ url('policy/terms-of-use/12') }}" target="_blank" rel="noopener">Terms of Use</a>.
                 </div>
             </form>
 
@@ -410,9 +532,7 @@
         </div>
     </div>
 </div>
-@endsection
 
-@push('page-script')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const registerForm = document.getElementById('registerForm');
@@ -421,16 +541,503 @@ document.addEventListener('DOMContentLoaded', function() {
     const submitBtn = document.getElementById('submitBtn');
     const verifyBtn = document.getElementById('verifyBtn');
     const messageContainer = document.getElementById('messageContainer');
+    const nameInput = document.getElementById('name');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const nameHint = document.getElementById('nameHint');
+    const emailHint = document.getElementById('emailHint');
+    const passwordHint = document.getElementById('passwordHint');
+    const passwordStrength = document.getElementById('passwordStrength');
+    const strengthFill = document.getElementById('strengthFill');
+    const strengthLabel = document.getElementById('strengthLabel');
+    const passwordRulesList = document.getElementById('passwordRulesList');
+    const formErrorsBox = document.getElementById('formErrors');
+
+    const NAME_MAX = {{ registrationNameMaxLength() }};
+    const PASSWORD_MIN = {{ registrationPasswordMinLength() }};
+    const PASSWORD_MAX = {{ registrationPasswordMaxLength() }};
+    const EMAIL_MAX = 191;
+    const WEAK_PASSWORDS = @json(\App\Constants\WeakPasswords::listForFrontend());
+    const WEAK_PASSWORD_BASES = ['password', 'passw0rd', 'qwerty', 'abc', 'admin', 'welcome', 'letmein', 'login', 'hello'];
+    const PASSWORD_RULE_LABELS = {
+        length: `At least ${PASSWORD_MIN} characters (max ${PASSWORD_MAX})`,
+        upper: 'At least one uppercase letter',
+        lower: 'At least one lowercase letter',
+        number: 'At least one number',
+        special: 'At least one special character',
+        common: 'Not a common or easily guessed password',
+        identity: 'Must not contain your email or name'
+    };
+
+    function enforceInputMaxLength(input, maxLength, hintEl, label) {
+        if (!input) {
+            return;
+        }
+
+        const trimToMax = function() {
+            if (input.value.length > maxLength) {
+                input.value = input.value.slice(0, maxLength);
+                if (hintEl) {
+                    setFieldState(input, hintEl, label + ' must not exceed ' + maxLength + ' characters.', false);
+                }
+                updateSubmitState(true);
+            }
+        };
+
+        input.addEventListener('input', trimToMax);
+        input.addEventListener('paste', function() {
+            setTimeout(trimToMax, 0);
+        });
+    }
+
+    // Name/email only — password uses validate-only (no silent trim) so >72 shows error
+    enforceInputMaxLength(nameInput, NAME_MAX, nameHint, 'Name');
+    enforceInputMaxLength(emailInput, EMAIL_MAX, emailHint, 'Email');
+
+    function extractSignupErrorMessage(data, fallback) {
+        if (data && data.errors) {
+            const fieldOrder = ['name', 'email', 'password'];
+            for (let i = 0; i < fieldOrder.length; i++) {
+                const field = fieldOrder[i];
+                if (data.errors[field] && data.errors[field][0]) {
+                    return data.errors[field][0];
+                }
+            }
+        }
+
+        return (data && data.message) ? data.message : fallback;
+    }
     
     let userEmail = '';
     let sessionData = null;
+    const touched = { name: false, email: false, password: false };
+
+    function setFieldState(input, hintEl, message, isValid) {
+        input.classList.remove('ks-input-invalid', 'ks-input-valid');
+        hintEl.classList.remove('ks-field-hint-error', 'ks-field-hint-ok');
+        hintEl.style.display = message ? 'block' : 'none';
+
+        if (!message) {
+            hintEl.textContent = '';
+            return;
+        }
+
+        hintEl.textContent = message;
+        if (isValid) {
+            input.classList.add('ks-input-valid');
+            hintEl.classList.add('ks-field-hint-ok');
+        } else {
+            input.classList.add('ks-input-invalid');
+            hintEl.classList.add('ks-field-hint-error');
+        }
+    }
+
+    function getNameError(value, showEmptyHint) {
+        const trimmed = (value || '').trim();
+        const length = trimmed.length;
+
+        if (!trimmed) {
+            return showEmptyHint ? 'Name is required.' : null;
+        }
+        if (length > NAME_MAX) {
+            return `Name must not exceed ${NAME_MAX} characters (${length}/${NAME_MAX}).`;
+        }
+        if (!/\p{L}/u.test(trimmed)) {
+            return 'Name must include at least one letter.';
+        }
+
+        return null;
+    }
+
+    function getEmailError(value, showEmptyHint) {
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+        if (!value) {
+            return showEmptyHint ? 'Email is required.' : null;
+        }
+        if (value.length > EMAIL_MAX) {
+            return `Email must not exceed ${EMAIL_MAX} characters (${value.length}/${EMAIL_MAX}).`;
+        }
+        if (!emailPattern.test(value)) {
+            return 'Please enter a valid email address.';
+        }
+
+        return null;
+    }
+
+    function isSequentialDigits(value) {
+        if (!/^\d+$/.test(value) || value.length < 6) {
+            return false;
+        }
+
+        let ascending = true;
+        let descending = true;
+
+        for (let i = 1; i < value.length; i++) {
+            if (parseInt(value[i], 10) !== parseInt(value[i - 1], 10) + 1) {
+                ascending = false;
+            }
+            if (parseInt(value[i], 10) !== parseInt(value[i - 1], 10) - 1) {
+                descending = false;
+            }
+        }
+
+        return ascending || descending;
+    }
+
+    function isSequentialLetters(value) {
+        if (!/^[a-z]+$/i.test(value) || value.length < 6) {
+            return false;
+        }
+
+        const lower = value.toLowerCase();
+        let ascending = true;
+        let descending = true;
+
+        for (let i = 1; i < lower.length; i++) {
+            if (lower.charCodeAt(i) !== lower.charCodeAt(i - 1) + 1) {
+                ascending = false;
+            }
+            if (lower.charCodeAt(i) !== lower.charCodeAt(i - 1) - 1) {
+                descending = false;
+            }
+        }
+
+        return ascending || descending;
+    }
+
+    function isTooCommonPassword(value) {
+        const lower = (value || '').toLowerCase();
+
+        if (!lower) {
+            return false;
+        }
+
+        if (WEAK_PASSWORDS.includes(lower)) {
+            return true;
+        }
+
+        for (let i = 0; i < WEAK_PASSWORD_BASES.length; i++) {
+            const base = WEAK_PASSWORD_BASES[i];
+            if (lower === base || new RegExp('^' + base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\d*$').test(lower)) {
+                return true;
+            }
+        }
+
+        if (/^\d{8,}$/.test(lower)) {
+            return true;
+        }
+
+        if (/^[a-z]{8,}$/i.test(lower)) {
+            return true;
+        }
+
+        if (/^(.)\1{3,}$/.test(value)) {
+            return true;
+        }
+
+        if (isSequentialDigits(lower) || isSequentialLetters(lower)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    function passwordContainsUserIdentifier(value, email, name) {
+        const lower = (value || '').toLowerCase();
+        const emailValue = (email || '').trim().toLowerCase();
+
+        if (emailValue) {
+            if (lower.includes(emailValue)) {
+                return 'Password must not contain your email address.';
+            }
+
+            const localPart = emailValue.split('@')[0] || '';
+            if (localPart.length >= 3 && lower.includes(localPart)) {
+                return 'Password must not contain your email address.';
+            }
+        }
+
+        if (name) {
+            const parts = name.trim().split(/\s+/);
+            for (let i = 0; i < parts.length; i++) {
+                const part = parts[i].toLowerCase();
+                if (part.length >= 3 && lower.includes(part)) {
+                    return 'Password must not contain your name.';
+                }
+            }
+        }
+
+        return null;
+    }
+
+    function analyzePassword(value, email, name) {
+        const length = value.length;
+        const identityError = passwordContainsUserIdentifier(value, email, name);
+        const rules = {
+            length: length >= PASSWORD_MIN && length <= PASSWORD_MAX,
+            upper: /[A-Z]/.test(value),
+            lower: /[a-z]/.test(value),
+            number: /[0-9]/.test(value),
+            special: /[^A-Za-z0-9]/.test(value),
+            common: value.length > 0 && !isTooCommonPassword(value),
+            identity: !identityError
+        };
+
+        const errors = [];
+
+        if (!value) {
+            errors.push('Password is required.');
+        } else {
+            if (length > PASSWORD_MAX) {
+                errors.push(`Password must not exceed ${PASSWORD_MAX} characters.`);
+            }
+            if (length < PASSWORD_MIN) {
+                errors.push(`Password must be at least ${PASSWORD_MIN} characters long.`);
+            }
+            if (!rules.upper) {
+                errors.push('Password must contain at least one uppercase letter.');
+            }
+            if (!rules.lower) {
+                errors.push('Password must contain at least one lowercase letter.');
+            }
+            if (!rules.number) {
+                errors.push('Password must contain at least one number.');
+            }
+            if (!rules.special) {
+                errors.push('Password must contain at least one special character.');
+            }
+            if (!rules.common) {
+                errors.push('Password is too common. Please choose a stronger password.');
+            }
+            if (identityError) {
+                errors.push(identityError);
+            }
+        }
+
+        let strength = 'weak';
+        if (errors.length === 0) {
+            let score = 0;
+            if (length >= 10) score++;
+            if (length >= 12) score++;
+            if (rules.special && rules.number) score++;
+            if (rules.upper && rules.lower) score++;
+            strength = score >= 3 ? 'strong' : 'medium';
+        }
+
+        return { errors, rules, strength };
+    }
+
+    function getPasswordError(value, showEmptyHint) {
+        const email = emailInput ? emailInput.value.trim() : '';
+        const name = nameInput ? nameInput.value.trim() : '';
+        const result = analyzePassword(value, email, name);
+
+        if (!value) {
+            return showEmptyHint ? 'Password is required.' : null;
+        }
+
+        return result.errors.length ? result.errors[0] : null;
+    }
+
+    function renderPasswordStrengthUI(value) {
+        const email = emailInput ? emailInput.value.trim() : '';
+        const name = nameInput ? nameInput.value.trim() : '';
+        const result = analyzePassword(value, email, name);
+        const hasInput = value.length > 0;
+
+        passwordStrength.style.display = hasInput ? 'block' : 'none';
+        passwordRulesList.style.display = hasInput ? 'block' : 'none';
+
+        if (!hasInput) {
+            strengthFill.className = 'ks-strength-fill';
+            strengthLabel.className = 'ks-strength-label';
+            strengthLabel.textContent = 'Weak';
+            passwordRulesList.innerHTML = '';
+            return;
+        }
+
+        strengthFill.className = 'ks-strength-fill ' + result.strength;
+        strengthLabel.className = 'ks-strength-label ' + result.strength;
+        strengthLabel.textContent = result.strength;
+
+        passwordRulesList.innerHTML = Object.keys(PASSWORD_RULE_LABELS).map(function(key) {
+            const met = result.rules[key];
+            const className = met ? 'met' : 'unmet';
+            const icon = met ? '&#10003;' : '&#10007;';
+            return '<li class="' + className + '">' + icon + ' ' + PASSWORD_RULE_LABELS[key] + '</li>';
+        }).join('');
+    }
+
+    function validateNameField(showEmptyHint) {
+        const value = nameInput.value.trim();
+        const error = getNameError(nameInput.value, showEmptyHint);
+
+        if (error) {
+            setFieldState(nameInput, nameHint, error, false);
+            return false;
+        }
+
+        if (value) {
+            setFieldState(nameInput, nameHint, `${value.length}/${NAME_MAX} characters`, true);
+        } else if (!showEmptyHint) {
+            setFieldState(nameInput, nameHint, `Maximum ${NAME_MAX} characters`, true);
+        } else {
+            setFieldState(nameInput, nameHint, 'Name is required.', false);
+            return false;
+        }
+
+        return true;
+    }
+
+    function validateEmailField(showEmptyHint) {
+        const value = emailInput.value.trim();
+        const error = getEmailError(value, showEmptyHint);
+
+        if (error) {
+            setFieldState(emailInput, emailHint, error, false);
+            return false;
+        }
+
+        setFieldState(emailInput, emailHint, value ? 'Email looks good.' : '', true);
+        return true;
+    }
+
+    function validatePasswordField(showEmptyHint) {
+        const value = passwordInput.value;
+        const error = getPasswordError(value, showEmptyHint);
+
+        renderPasswordStrengthUI(value);
+
+        if (error) {
+            setFieldState(passwordInput, passwordHint, error, false);
+            return false;
+        }
+
+        if (value) {
+            const strength = analyzePassword(value, emailInput.value.trim(), nameInput.value.trim()).strength;
+            setFieldState(passwordInput, passwordHint, 'Password strength: ' + strength.charAt(0).toUpperCase() + strength.slice(1), true);
+        } else if (!showEmptyHint) {
+            setFieldState(passwordInput, passwordHint, `${PASSWORD_MIN}–${PASSWORD_MAX} characters with uppercase, lowercase, number, and symbol`, true);
+        } else {
+            setFieldState(passwordInput, passwordHint, 'Password is required.', false);
+            return false;
+        }
+
+        return true;
+    }
+
+    function isRegistrationFormValidStrict() {
+        return !getNameError(nameInput.value, true)
+            && !getEmailError(emailInput.value.trim(), true)
+            && !getPasswordError(passwordInput.value, true);
+    }
+
+    function showFormErrors(forceAll) {
+        const errors = [];
+
+        const nameError = getNameError(nameInput.value, forceAll || touched.name);
+        const emailError = getEmailError(emailInput.value.trim(), forceAll || touched.email);
+        const passwordAnalysis = analyzePassword(
+            passwordInput.value,
+            emailInput.value.trim(),
+            nameInput.value.trim()
+        );
+
+        if (nameError) errors.push(nameError);
+        if (emailError) errors.push(emailError);
+        if (forceAll || touched.password) {
+            passwordAnalysis.errors.forEach(function(err) {
+                errors.push(err);
+            });
+        }
+
+        if (errors.length) {
+            formErrorsBox.innerHTML = '<ul>' + errors.map(function(err) {
+                return '<li>' + err + '</li>';
+            }).join('') + '</ul>';
+            formErrorsBox.style.display = 'block';
+        } else {
+            formErrorsBox.innerHTML = '';
+            formErrorsBox.style.display = 'none';
+        }
+    }
+
+    function updateSubmitState(forceAll) {
+        const showHints = forceAll === true;
+        const passwordTooLong = passwordInput.value.length > PASSWORD_MAX;
+        const passwordHasValue = passwordInput.value.length > 0;
+
+        if (showHints || touched.name) {
+            validateNameField(showHints || touched.name);
+        }
+        if (showHints || touched.email) {
+            validateEmailField(showHints || touched.email);
+        }
+        if (showHints || touched.password || passwordTooLong || passwordHasValue) {
+            validatePasswordField(showHints || touched.password || passwordTooLong);
+        }
+
+        showFormErrors(showHints || passwordTooLong);
+        submitBtn.disabled = !isRegistrationFormValidStrict();
+    }
+
+    nameInput.addEventListener('keyup', function() {
+        touched.name = true;
+        updateSubmitState(false);
+    });
+    nameInput.addEventListener('input', function() {
+        touched.name = true;
+        updateSubmitState(false);
+    });
+    nameInput.addEventListener('blur', function() {
+        touched.name = true;
+        updateSubmitState(true);
+    });
+
+    emailInput.addEventListener('keyup', function() {
+        touched.email = true;
+        updateSubmitState(false);
+    });
+    emailInput.addEventListener('input', function() {
+        touched.email = true;
+        updateSubmitState(false);
+    });
+    emailInput.addEventListener('blur', function() {
+        touched.email = true;
+        updateSubmitState(true);
+    });
+
+    passwordInput.addEventListener('keyup', function() {
+        touched.password = true;
+        updateSubmitState(false);
+    });
+    passwordInput.addEventListener('input', function() {
+        touched.password = true;
+        updateSubmitState(passwordInput.value.length > PASSWORD_MAX);
+    });
+    passwordInput.addEventListener('paste', function() {
+        setTimeout(function() {
+            touched.password = true;
+            updateSubmitState(true);
+        }, 0);
+    });
+    passwordInput.addEventListener('blur', function() {
+        touched.password = true;
+        updateSubmitState(true);
+    });
+
+    updateSubmitState(false);
 
     // Show message
-    function showMessage(message, type = 'error') {
+    function showMessage(message, type = 'error', autoHide = true) {
+        formErrorsBox.style.display = 'none';
         messageContainer.innerHTML = `<div class="ks-${type}">${message}</div>`;
-        setTimeout(() => {
-            messageContainer.innerHTML = '';
-        }, 5000);
+        if (autoHide) {
+            setTimeout(() => {
+                messageContainer.innerHTML = '';
+            }, 5000);
+        }
     }
 
     // Button loader
@@ -440,7 +1047,11 @@ document.addEventListener('DOMContentLoaded', function() {
             button.disabled = true;
         } else {
             button.classList.remove('btn-loading');
-            button.disabled = false;
+            if (button === submitBtn) {
+                updateSubmitState(false);
+            } else {
+                button.disabled = false;
+            }
         }
     }
 
@@ -467,15 +1078,29 @@ document.addEventListener('DOMContentLoaded', function() {
     // Register Form Submit
     registerForm.addEventListener('submit', function(e) {
         e.preventDefault();
-        
-        const name = document.getElementById('name').value;
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        
-        if (!name || !email || !password) {
-            showMessage('Please fill all required fields');
+
+        touched.name = true;
+        touched.email = true;
+        touched.password = true;
+        updateSubmitState(true);
+
+        if (!isRegistrationFormValidStrict()) {
+            messageContainer.innerHTML = '<div class="ks-error">Please fix the errors below before continuing.</div>';
+            const firstInvalid = document.querySelector('.ks-input-invalid');
+            if (firstInvalid) {
+                firstInvalid.focus();
+                firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            submitBtn.disabled = true;
             return;
         }
+
+        const name = nameInput.value.trim();
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+
+        messageContainer.innerHTML = '';
+        formErrorsBox.style.display = 'none';
 
         userEmail = email;
         setButtonLoading(submitBtn, true);
@@ -494,31 +1119,45 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append('mobile_code', '92');
         formData.append('country_code', 'PK');
 
-        // Send OTP request
+        if (typeof grecaptcha !== 'undefined' && typeof grecaptcha.getResponse === 'function') {
+            const captchaToken = grecaptcha.getResponse();
+            if (!captchaToken) {
+                setButtonLoading(submitBtn, false);
+                showMessage('Please complete the captcha verification.');
+                return;
+            }
+            formData.append('g-recaptcha-response', captchaToken);
+        }
         fetch('{{ route("user.otp.send") }}', {
             method: 'POST',
             body: formData,
             headers: {
-                'X-Requested-With': 'XMLHttpRequest'
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
             }
         })
         .then(response => {
-            // Check if response is OK (status 200-299)
+            const contentType = response.headers.get('content-type') || '';
+            const isJson = contentType.includes('application/json');
+
             if (!response.ok) {
-                // If response is not JSON, handle HTML error pages
-                const contentType = response.headers.get('content-type');
-                if (contentType && contentType.includes('application/json')) {
+                if (isJson) {
                     return response.json().then(data => {
-                        throw new Error(data.message || 'Request failed');
+                        throw new Error(extractSignupErrorMessage(data, 'Request failed'));
                     });
-                } else {
-                    // For HTML error pages (like 419), show generic error
-                    if (response.status === 419) {
-                        throw new Error('Session expired. Please refresh the page and try again.');
-                    }
-                    throw new Error('Request failed with status ' + response.status);
                 }
+
+                if (response.status === 419) {
+                    throw new Error('Session expired. Please refresh the page and try again.');
+                }
+
+                throw new Error('Request failed with status ' + response.status);
             }
+
+            if (!isJson) {
+                throw new Error('Unexpected server response. Please try again.');
+            }
+
             return response.json();
         })
         .then(data => {
@@ -596,11 +1235,12 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (data.success) {
                 showMessage('Account created successfully! Redirecting...', 'success');
-                
-                // Redirect after 2 seconds
+                if (window.history && window.history.replaceState) {
+                    window.history.replaceState(null, '', '{{ route("user.home") }}');
+                }
                 setTimeout(() => {
-                    window.location.href = data.redirect || '{{ route("home") }}';
-                }, 2000);
+                    window.location.replace(data.redirect || '{{ route("user.home") }}');
+                }, 1500);
             } else {
                 showMessage(data.message || 'Invalid OTP. Please try again.');
                 // Clear OTP inputs
@@ -673,4 +1313,4 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-@endpush
+@endsection

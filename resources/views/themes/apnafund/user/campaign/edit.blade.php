@@ -428,15 +428,9 @@
         </div>
         <div style="display: flex; gap: 10px; align-items: center;">
             <!-- Preview Button (public preview only after admin approval) -->
-            @if($campaign->status == \App\Constants\ManageStatus::CAMPAIGN_APPROVED)
-            <a href="{{ route('user.campaign.show', $campaign->slug) }}" target="_blank" class="btn" style="padding: 8px 20px; font-size: 14px; background: #fff; border: 1px solid #ddd; color: #333; text-decoration: none; border-radius: 5px; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;">
+            <a href="{{ route('user.campaign.show', $campaign->slug) }}" target="_blank" rel="noopener" class="btn" style="padding: 8px 20px; font-size: 14px; background: #fff; border: 1px solid #ddd; color: #333; text-decoration: none; border-radius: 5px; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;">
                 <i class="fas fa-eye"></i> Preview
             </a>
-            @else
-            <a href="javascript:void(0)" role="button" class="btn" style="padding: 8px 20px; font-size: 14px; background: #fff; border: 1px solid #ddd; color: #333; text-decoration: none; border-radius: 5px; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; cursor: pointer;" onclick='if (typeof showToasts === "function") { showToasts("warning", @json(__('Campaign not approved yet.'))); } else if (typeof iziToast !== "undefined" && iziToast.warning) { iziToast.warning({ message: @json(__('Campaign not approved yet.')), position: "topRight", timeout: 6000 }); } return false;'>
-                <i class="fas fa-eye"></i> Preview
-            </a>
-            @endif
             
             <!-- Action Buttons (Save/Exit - shown when editing) -->
             <div id="topActionButtons" style="display: none; gap: 10px; align-items: center;">
@@ -496,8 +490,9 @@
             <!-- SHORT DESCRIPTION -->
             <div class="box">
                     <label>Short Description *</label>
-                    <textarea name="short_description" placeholder="Describe your project in one or two sentences..." required>{{ old('short_description', $campaign->short_description) }}</textarea>
-                <p class="note">This will show on your project card.</p>
+                    <textarea id="shortDescriptionInput" name="short_description" maxlength="{{ getCampaignShortDescriptionMaxLength() }}" placeholder="Describe your project in one or two sentences..." required>{{ old('short_description', $campaign->short_description) }}</textarea>
+                <p class="note">This will show on your project card. <span id="shortDescriptionCount"></span></p>
+                <p id="shortDescriptionError" class="note" style="color: red; display: none;"></p>
                     @error('short_description')
                         <p class="note" style="color: red;">{{ $message }}</p>
                     @enderror
@@ -760,7 +755,6 @@
                 
                 <a href="#" id="rewardTabLearnLink" class="learn" style="color: #009b5b; text-decoration: none; font-size: 15px;">Learn about creating items</a>
                 <script>
-                    alert('OKK');
                     (function () {
                         const tabContentMap = {
                             items: {
@@ -1423,7 +1417,9 @@
                     <p class="note">Please upload these documents below. Admin will review them before campaign approval.</p>
                 </div>
                 @php
-                    $existingDocs = is_array($campaign->verification_documents ?? null) ? $campaign->verification_documents : [];
+                    $existingDocs = normalizeCampaignVerificationDocuments(
+                        is_array($campaign->verification_documents ?? null) ? $campaign->verification_documents : []
+                    );
                 @endphp
                 @foreach($requiredDocuments as $docItem)
                     @php $fieldKey = $docItem['field_key']; @endphp
@@ -1432,7 +1428,11 @@
                         @if(!empty($existingDocs[$fieldKey]))
                             <p class="note" style="margin-bottom: 10px;">
                                 Existing file:
-                                <a href="{{ asset(getFilePath('document') . '/' . $existingDocs[$fieldKey]) }}" target="_blank">View current file</a>
+                                @include('partials.campaign-verification-document-link', [
+                                    'campaignId' => $campaign->id,
+                                    'filename' => $existingDocs[$fieldKey],
+                                    'forAdmin' => false,
+                                ])
                             </p>
                         @endif
                         <input type="file" name="documents[{{ $fieldKey }}]" accept=".pdf,.jpg,.jpeg,.png,.webp">
@@ -1712,6 +1712,9 @@
                     if (currentSection === 'basics') {
                         const basicsForm = document.getElementById("basicsForm");
                         if (basicsForm) {
+                            if (typeof window.validateShortDescriptionField === 'function' && !window.validateShortDescriptionField()) {
+                                return;
+                            }
                             basicsForm.submit();
                         }
                     } else if (currentSection === 'story') {
@@ -1777,6 +1780,74 @@
         (function() {
             const basicsForm = document.getElementById("basicsForm");
             let initialValues = {};
+            const SHORT_DESC_MIN = {{ getCampaignShortDescriptionMinLength() }};
+            const SHORT_DESC_MAX = {{ getCampaignShortDescriptionMaxLength() }};
+
+            function normalizeShortDescription(value) {
+                return (value || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+            }
+
+            function updateShortDescriptionCount() {
+                const field = document.getElementById('shortDescriptionInput');
+                const countElement = document.getElementById('shortDescriptionCount');
+                if (!field || !countElement) {
+                    return;
+                }
+
+                const count = normalizeShortDescription(field.value).length;
+
+                if (count === 0) {
+                    countElement.textContent = `(minimum ${SHORT_DESC_MIN} characters)`;
+                    countElement.style.color = '#777';
+                } else if (count < SHORT_DESC_MIN) {
+                    countElement.textContent = `(${count}/${SHORT_DESC_MIN} characters - ${SHORT_DESC_MIN - count} more needed)`;
+                    countElement.style.color = '#c33';
+                } else if (count > SHORT_DESC_MAX) {
+                    countElement.textContent = `(${count}/${SHORT_DESC_MAX} characters - too long)`;
+                    countElement.style.color = '#c33';
+                } else {
+                    countElement.textContent = `(${count}/${SHORT_DESC_MAX} characters ✓)`;
+                    countElement.style.color = '#16a34a';
+                }
+            }
+
+            window.validateShortDescriptionField = function(showInline) {
+                if (typeof showInline === 'undefined') {
+                    showInline = true;
+                }
+
+                const field = document.getElementById('shortDescriptionInput');
+                const errorElement = document.getElementById('shortDescriptionError');
+                if (!field) {
+                    return true;
+                }
+
+                const text = normalizeShortDescription(field.value);
+                let message = '';
+
+                if (!text) {
+                    message = 'Please enter a short description for your project.';
+                } else if (text.length < SHORT_DESC_MIN) {
+                    message = `Short description must be at least ${SHORT_DESC_MIN} characters (about one or two sentences). You have ${text.length} characters (${SHORT_DESC_MIN - text.length} more needed).`;
+                } else if (text.length > SHORT_DESC_MAX) {
+                    message = `Short description cannot exceed ${SHORT_DESC_MAX} characters. You have ${text.length} characters.`;
+                }
+
+                if (message) {
+                    if (showInline && errorElement) {
+                        errorElement.textContent = message;
+                        errorElement.style.display = 'block';
+                    }
+                    field.style.borderColor = '#c33';
+                    return false;
+                }
+
+                if (errorElement) {
+                    errorElement.style.display = 'none';
+                }
+                field.style.borderColor = '';
+                return true;
+            };
             
             if (basicsForm) {
                 // Capture initial form values
@@ -1834,8 +1905,29 @@
                     field.addEventListener('keyup', checkFormChanges);
                 });
 
+                const shortDescriptionInput = document.getElementById('shortDescriptionInput');
+                if (shortDescriptionInput) {
+                    shortDescriptionInput.addEventListener('input', function() {
+                        updateShortDescriptionCount();
+                        validateShortDescriptionField();
+                    });
+                    shortDescriptionInput.addEventListener('blur', function() {
+                        validateShortDescriptionField();
+                    });
+                    updateShortDescriptionCount();
+                    if (shortDescriptionInput.value.trim() !== '') {
+                        validateShortDescriptionField(false);
+                    }
+                }
+
                 // Form submission handling
                 basicsForm.addEventListener("submit", function(e) {
+                    if (!validateShortDescriptionField()) {
+                        e.preventDefault();
+                        shortDescriptionInput?.focus();
+                        return false;
+                    }
+
                     const topSaveBtn = document.getElementById("topSaveBtn");
                     if (topSaveBtn) {
                         topSaveBtn.disabled = true;

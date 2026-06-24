@@ -364,9 +364,58 @@
                 // Handle abort if needed
             };
 
+            function attachManualSourceToggle(editor, node, index) {
+                const editorWrapper = node.closest('.editor-wrapper') || node.parentElement;
+                if (!editorWrapper) {
+                    return;
+                }
+
+                const sourceToggle = document.createElement('button');
+                sourceToggle.type = 'button';
+                sourceToggle.className = 'btn btn--sm btn--base mb-2 source-code-toggle';
+                sourceToggle.dataset.mode = 'visual';
+                sourceToggle.dataset.editorIndex = index;
+                sourceToggle.textContent = 'Source Code';
+
+                const sourceTextarea = document.createElement('textarea');
+                sourceTextarea.className = 'form--control d-none source-code-textarea';
+                sourceTextarea.dataset.editorIndex = index;
+                sourceTextarea.rows = 14;
+                sourceTextarea.style.fontFamily = 'monospace';
+                sourceTextarea.style.marginTop = '10px';
+
+                editorWrapper.insertBefore(sourceToggle, node);
+                editorWrapper.appendChild(sourceTextarea);
+
+                sourceToggle.addEventListener('click', function () {
+                    const editorContainer = editor.ui.view.editable.element.closest('.ck-editor');
+                    const isVisualMode = sourceToggle.dataset.mode === 'visual';
+
+                    if (isVisualMode) {
+                        sourceTextarea.value = editor.getData();
+                        if (editorContainer) {
+                            editorContainer.style.display = 'none';
+                        }
+                        sourceTextarea.classList.remove('d-none');
+                        sourceToggle.dataset.mode = 'source';
+                        sourceToggle.textContent = 'WYSIWYG Editor';
+                    } else {
+                        editor.setData(sourceTextarea.value);
+                        if (editorContainer) {
+                            editorContainer.style.display = '';
+                        }
+                        sourceTextarea.classList.add('d-none');
+                        sourceToggle.dataset.mode = 'visual';
+                        sourceToggle.textContent = 'Source Code';
+                    }
+                });
+            }
+
             if ($(".trumEdit")[0]) {
                 $('.editor-wrapper').find('.ck-editor').remove();
                 window.editors = {};
+                const pluginNames = (ClassicEditor.builtinPlugins || []).map(plugin => plugin.pluginName).filter(Boolean);
+                const supportsSourceEditing = pluginNames.includes('SourceEditing');
                 
                 // Configure FileRepository globally before creating editors
                 ClassicEditor.builtinPlugins.map(plugin => {
@@ -378,6 +427,20 @@
                 });
                 
                 document.querySelectorAll('.trumEdit').forEach((node, index) => {
+                    const toolbarItems = [
+                        'heading', '|',
+                        'bold', 'italic', 'link', '|',
+                        'bulletedList', 'numberedList', '|',
+                        'outdent', 'indent', '|',
+                        'imageUpload', 'blockQuote', 'insertTable', '|',
+                    ];
+
+                    if (supportsSourceEditing) {
+                        toolbarItems.push('sourceEditing', '|');
+                    }
+
+                    toolbarItems.push('undo', 'redo');
+
                     // Create editor with custom upload adapter
                     ClassicEditor
                         .create(node, {
@@ -395,14 +458,7 @@
                                 }
                             },
                             toolbar: {
-                                items: [
-                                    'heading', '|',
-                                    'bold', 'italic', 'link', '|',
-                                    'bulletedList', 'numberedList', '|',
-                                    'outdent', 'indent', '|',
-                                    'imageUpload', 'blockQuote', 'insertTable', '|',
-                                    'undo', 'redo'
-                                ]
+                                items: toolbarItems
                             }
                         })
                         .then(newEditor => {
@@ -481,11 +537,28 @@
                                 }, 100);
                             });
                             
+                            if (!supportsSourceEditing) {
+                                attachManualSourceToggle(newEditor, node, index);
+                            }
+
                             window.editors[index] = newEditor;
                         })
                         .catch(error => {
                             console.error('Error initializing CKEditor:', error);
                         });
+                });
+
+                // If manual source mode is active, sync source textarea content back to editor before submit.
+                $('form').on('submit', function () {
+                    document.querySelectorAll('.source-code-toggle[data-mode="source"]').forEach((toggleBtn) => {
+                        const editorIndex = toggleBtn.dataset.editorIndex;
+                        const sourceTextarea = document.querySelector(`.source-code-textarea[data-editor-index="${editorIndex}"]`);
+                        const editorInstance = window.editors && window.editors[editorIndex];
+
+                        if (sourceTextarea && editorInstance) {
+                            editorInstance.setData(sourceTextarea.value);
+                        }
+                    });
                 });
             }
 

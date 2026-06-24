@@ -77,6 +77,7 @@
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script>
+    alert('apnafund');
 console.log('JazzCash Wallet script loading...');
 // Wait for jQuery to be available
 function initJazzCashWallet() {

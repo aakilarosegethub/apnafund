@@ -13,6 +13,9 @@
     # =====================================
     # 2️⃣ Assets WITHOUT Laravel
     # =====================================
+    # Block direct public access to campaign CNIC/KYC documents
+    RewriteRule ^assets/universal/documents/campaign/ - [F,L]
+    RewriteRule ^storage/app/private/ - [F,L]
     RewriteRule ^assets/(.*)$ public/assets/$1 [L]
     RewriteRule ^admin/assets/(.*)$ public/assets/$1 [L]
     RewriteRule ^storage/(.*)$ public/storage/$1 [L]

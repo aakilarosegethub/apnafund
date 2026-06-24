@@ -24,13 +24,21 @@ return Application::configure(basePath: dirname(__DIR__))
                     ->name('ipn.')
                     ->group(base_path('routes/ipn.php'));
 
-                Route::middleware(['web'])
+                Route::middleware([
+                    'web',
+                    \App\Http\Middleware\PreventSensitivePageCache::class,
+                ])
                     ->namespace('Admin')
                     ->prefix('admin')
                     ->name('admin.')
                     ->group(base_path('routes/admin.php'));
 
-                Route::middleware(['web','maintenance'])
+                Route::middleware([
+                    'web',
+                    'maintenance',
+                    \App\Http\Middleware\PreventSensitivePageCache::class,
+                    \App\Http\Middleware\EnsureTermsAccepted::class,
+                ])
                     ->prefix('user')
                     ->group(base_path('routes/user.php'));
 
@@ -86,6 +94,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'register.status'  => \App\Http\Middleware\AllowRegistration::class,
             'authorize.status' => \App\Http\Middleware\AuthorizationStatus::class,
             'beta.gate'        => \App\Http\Middleware\BetaGate::class,
+            'no.cache'         => \App\Http\Middleware\PreventSensitivePageCache::class,
+            'verification.document.auth' => \App\Http\Middleware\EnsureVerificationDocumentAuth::class,
+            'terms.accepted'   => \App\Http\Middleware\EnsureTermsAccepted::class,
         ]);
 
         $middleware->validateCsrfTokens(
@@ -100,6 +111,51 @@ return Application::configure(basePath: dirname(__DIR__))
         );
     })
     ->withExceptions(function (Exceptions $exceptions) {
+        // Redirect all web 404s to home page.
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e, $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return null;
+            }
+
+            return redirect('/');
+        });
+
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException $e, $request) {
+            if ($request->is('api/*') || str_starts_with($request->path(), 'api/')) {
+                return response()->json([
+                    'ResponseCode' => '405',
+                    'Result' => 'false',
+                    'status' => 405,
+                    'success' => false,
+                    'error' => 'Method Not Allowed',
+                    'message' => 'The HTTP method is not allowed for this route.',
+                ], 405);
+            }
+
+            if ($request->expectsJson() || $request->header('Accept') === 'application/json') {
+                return response()->json([
+                    'status' => 405,
+                    'success' => false,
+                    'error' => 'Method Not Allowed',
+                    'message' => 'The HTTP method is not allowed for this route.',
+                ], 405);
+            }
+
+            return null;
+        });
+
+        $exceptions->render(function (\JsonException $e, $request) {
+            if ($request->is('api/*') || str_starts_with($request->path(), 'api/')) {
+                return response()->json([
+                    'ResponseCode' => '400',
+                    'Result' => 'false',
+                    'ResponseMsg' => 'Invalid JSON in request body.',
+                ], 400);
+            }
+
+            return null;
+        });
+
         // Handle authentication exceptions for API routes
         $exceptions->shouldRenderJsonWhen(function ($request, Throwable $e) {
             if ($e instanceof \Illuminate\Auth\AuthenticationException) {

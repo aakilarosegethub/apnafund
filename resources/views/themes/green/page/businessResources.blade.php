@@ -182,7 +182,7 @@
                             <div class="campaign-card-body">
                                 <h3 class="campaign-card-title">{{ $story->data_info['title'] }}</h3>
                                 <p class="campaign-card-text">{{ strLimit($story->data_info['details'], 80) }}</p>
-                                <a href="{{ route('campaign') }}" class="campaign-card-link">@lang('Read more') <i class="fas fa-arrow-right"></i></a>
+                                <a href="{{ route('stories.show', $story->data_info['slug'] ?? $story->id) }}" class="campaign-card-link">@lang('Read more') <i class="fas fa-arrow-right"></i></a>
                             </div>
                         </div>
                     </div>
@@ -546,7 +546,7 @@
 
     <script>
         // Configuration variables
-        const API_BASE_URL = '{{ env('WORDPRESS_POSTS_API_URL') }}';
+        const API_BASE_URL = @json($wordpressPostsApiUrl ?? config('services.wordpress.posts_api_url'));
         const POSTS_COUNT = 4; // Variable to easily change the number of posts
 
         // Function to fetch success stories from API
@@ -692,8 +692,15 @@
 
         // Main function to initialize success stories
         async function initializeSuccessStories() {
+            const container = document.getElementById('success-stories-container');
+            if (!API_BASE_URL) {
+                if (container) {
+                    container.innerHTML = '<div class="col-12 text-center py-4"><p class="text-muted">Success stories will appear here soon. <a href="{{ route("start.project") }}">Start a project</a> to be featured.</p></div>';
+                }
+                return;
+            }
             const posts = await fetchSuccessStories();
-            renderSuccessStories(posts);
+            await renderSuccessStories(posts);
         }
 
         // Initialize when DOM is loaded

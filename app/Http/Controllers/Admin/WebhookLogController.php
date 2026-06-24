@@ -27,6 +27,12 @@ class WebhookLogController extends Controller
         
         // Get statistics
         $statistics = $this->webhookLogger->getWebhookStatistics();
+        $stats = [
+            'total_requests' => ($statistics['data_logs']['total_requests'] ?? 0) + ($statistics['webhook_logs']['total_webhooks'] ?? 0),
+            'successful_requests' => ($statistics['data_logs']['successful_requests'] ?? 0) + ($statistics['webhook_logs']['successful_webhooks'] ?? 0),
+            'failed_requests' => ($statistics['data_logs']['failed_requests'] ?? 0) + ($statistics['webhook_logs']['failed_webhooks'] ?? 0),
+            'error_requests' => ($statistics['data_logs']['error_requests'] ?? 0) + ($statistics['webhook_logs']['pending_webhooks'] ?? 0),
+        ];
         
         // Get recent logs
         $recentLogs = $this->webhookLogger->getRecentWebhookLogs(50);
@@ -41,7 +47,16 @@ class WebhookLogController extends Controller
         // Build query for DataLogs
         $dataLogsQuery = DataLog::query();
         if ($type) {
-            $dataLogsQuery->where('endpoint', 'like', "%{$type}%");
+            $dataLogsQuery->where(function ($q) use ($type) {
+                $q->where('endpoint', 'like', "%{$type}%")
+                    ->orWhere('transaction_id', 'like', "%{$type}%");
+            });
+        }
+        if ($gateway) {
+            $dataLogsQuery->where(function ($q) use ($gateway) {
+                $q->where('endpoint', 'like', "%{$gateway}%")
+                    ->orWhere('request_data', 'like', "%{$gateway}%");
+            });
         }
         if ($status) {
             $dataLogsQuery->where('status', $status);
@@ -56,13 +71,22 @@ class WebhookLogController extends Controller
         // Build query for WebhookLogs
         $webhookLogsQuery = WebhookLog::query();
         if ($type) {
-            $webhookLogsQuery->where('webhook_type', 'like', "%{$type}%");
+            $webhookLogsQuery->where(function ($q) use ($type) {
+                $q->where('webhook_type', 'like', "%{$type}%")
+                    ->orWhere('url', 'like', "%{$type}%")
+                    ->orWhere('payload->transaction_id', 'like', "%{$type}%");
+            });
         }
         if ($status) {
             $webhookLogsQuery->where('status', $status);
         }
         if ($gateway) {
-            $webhookLogsQuery->where('payload->gateway', $gateway);
+            $webhookLogsQuery->where(function ($q) use ($gateway) {
+                $q->where('payload->gateway', $gateway)
+                    ->orWhere('payload->gateway_code', $gateway)
+                    ->orWhere('webhook_type', 'like', "%{$gateway}%")
+                    ->orWhere('url', 'like', "%{$gateway}%");
+            });
         }
         if ($dateFrom) {
             $webhookLogsQuery->whereDate('created_at', '>=', $dateFrom);
@@ -77,6 +101,7 @@ class WebhookLogController extends Controller
         return view('admin.webhook_logs.index', compact(
             'pageTitle',
             'statistics',
+            'stats',
             'recentLogs',
             'dataLogs',
             'webhookLogs',
@@ -89,11 +114,23 @@ class WebhookLogController extends Controller
     }
 
     /**
+     * JazzCash-only logs shortcut.
+     */
+    public function jazzcash()
+    {
+        return redirect()->route('admin.webhook.logs.index', [
+            'gateway' => 'jazzcash_wallet',
+            'type' => 'jazzcash_wallet',
+        ]);
+    }
+
+    /**
      * Show detailed webhook log
      */
-    public function show($id, $type = 'data_log')
+    public function show(Request $request, $id)
     {
         $pageTitle = 'Webhook Log Details';
+        $type = $request->get('type', 'data_log');
         
         if ($type === 'webhook_log') {
             $log = WebhookLog::with(['user', 'campaign'])->findOrFail($id);

@@ -49,10 +49,13 @@ class Handler extends ExceptionHandler
             }
         }
 
-        if ($this->isHttpException($exception)) {
-            if ($exception->getStatusCode() == 404) {
-                return redirect('/'); // Home page par redirect
+        if ($this->isHttpException($exception) && $exception->getStatusCode() === 404) {
+            // Keep API/JSON clients on proper 404 response.
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return parent::render($request, $exception);
             }
+
+            return redirect()->to(url('/'));
         }
     
         return parent::render($request, $exception);

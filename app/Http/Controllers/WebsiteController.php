@@ -13,6 +13,7 @@ use App\Models\Admins\FooterCategory;
 use App\Models\Language;
 use App\Models\SiteData;
 use App\Constants\ManageStatus;
+use Illuminate\Support\Facades\Cache;
 use App\Models\GatewayCurrency;
 use App\Models\AdminNotification;
 use App\Models\Subscriber;
@@ -170,13 +171,15 @@ class WebsiteController extends Controller
     function campaigns() {
         $pageTitle  = 'Campaigns';
         
-        // Get categories with campaign counts
-        $categories = Category::active()
+        // Get categories with campaign counts (cached to reduce DB load under traffic)
+        $categories = Cache::remember('web.campaigns.categories.v1', 300, function () {
+            return Category::active()
             ->select('name', 'slug')
             ->withCount(['campaigns' => function($query) {
                 $query->commonQuery()->approve()->runningOrUpcoming();
             }])
             ->get();
+        });
 
         $campaignsQuery = Campaign::when(request()->filled('category'), function ($query) {
                                     $categorySlug = request('category');
@@ -184,7 +187,11 @@ class WebsiteController extends Controller
 
                                     if ($category) $query->where('category_id', $category->id);
                                 })->when(request()->filled('name'), function ($query) {
-                                    $query->where('name', 'like', '%' . request('name') . '%');
+                                    $term = request('name');
+                                    $query->where(function ($q) use ($term) {
+                                        $q->where('name', 'like', '%' . $term . '%')
+                                          ->orWhere('slug', 'like', '%' . $term . '%');
+                                    });
                                 })->when(request()->filled('date_range'), function ($query) {
                                     $dateArray = explode(' - ', request('date_range'));
                                     $startDate = Carbon::parse($dateArray[0])->format('Y-m-d');
@@ -205,7 +212,7 @@ class WebsiteController extends Controller
             default => $campaignsQuery->latest(),
         };
 
-        $campaigns = $campaignsQuery->paginate(getPaginate(10));
+        $campaigns = $campaignsQuery->paginate(getPaginate());
 
         // Payment error redirect: ensure error toast shows when payment_status=error
         if (request('payment_status') === 'error' && !session()->has('toasts')) {
@@ -283,7 +290,11 @@ class WebsiteController extends Controller
                             })->when($category && empty($categoryIds), function ($query) use ($category) {
                                 $query->where('category_id', $category->id);
                             })->when(request()->filled('name'), function ($query) {
-                                $query->where('name', 'like', '%' . request('name') . '%');
+                                $term = request('name');
+                                $query->where(function ($q) use ($term) {
+                                    $q->where('name', 'like', '%' . $term . '%')
+                                      ->orWhere('slug', 'like', '%' . $term . '%');
+                                });
                             })->when(request()->filled('date_range'), function ($query) {
                                 $dateArray = explode(' - ', request('date_range'));
                                 $startDate = Carbon::parse($dateArray[0])->format('Y-m-d');
@@ -303,7 +314,7 @@ class WebsiteController extends Controller
             default => $campaignsQuery->latest(),
         };
 
-        $campaigns = $campaignsQuery->paginate(getPaginate(10));
+        $campaigns = $campaignsQuery->paginate(getPaginate());
 
         if ($category) {
             request()->merge(['category' => $category->slug]);
@@ -319,7 +330,7 @@ class WebsiteController extends Controller
     function loadMoreCampaigns()
     {
         $page = max(1, (int) request('page', 1));
-        $perPage = getPaginate(10);
+        $perPage = getPaginate();
 
         // Resolve category filter: category_slug for /campaigns/category/{slug} pages
         $category = null;
@@ -348,7 +359,13 @@ class WebsiteController extends Controller
             ->when(!empty($categoryIds), fn ($q) => $q->whereIn('category_id', $categoryIds))
             ->when($category && empty($categoryIds), fn ($q) => $q->where('category_id', $category->id))
             ->when(request()->filled('category') && $category, fn ($q) => $q->where('category_id', $category->id))
-            ->when(request()->filled('name'), fn ($q) => $q->where('name', 'like', '%' . request('name') . '%'))
+            ->when(request()->filled('name'), function ($q) {
+                $term = request('name');
+                $q->where(function ($sub) use ($term) {
+                    $sub->where('name', 'like', '%' . $term . '%')
+                        ->orWhere('slug', 'like', '%' . $term . '%');
+                });
+            })
             ->when(request()->filled('date_range'), function ($q) {
                 $dateArray = explode(' - ', request('date_range'));
                 $startDate = Carbon::parse($dateArray[0])->format('Y-m-d');
@@ -451,6 +468,11 @@ class WebsiteController extends Controller
         // Check if campaign is expired
         if ($campaignData->isExpired()) {
             $toast[] = ['error', 'This campaign has expired'];
+            return redirect()->route('campaign.show', $slug)->withToasts($toast);
+        }
+
+        if ($authUser && isset($authUser->id) && (int) $authUser->id === (int) $campaignData->user_id) {
+            $toast[] = ['error', 'You cannot contribute to your own campaign'];
             return redirect()->route('campaign.show', $slug)->withToasts($toast);
         }
 
@@ -965,13 +987,19 @@ class WebsiteController extends Controller
         
         // Get page SEO
         $pageSEO = getPageSEO('start_project');
+
+        // Restore wizard selections when user navigates back from a later step
+        $savedCategoryId = session('project_category_id');
+        $savedSubcategoryId = session('project_subcategory_id');
         
         return view($this->activeTheme . 'page.startProject', compact(
             'pageTitle',
             'categories',
             'subcategories',
             'setting',
-            'pageSEO'
+            'pageSEO',
+            'savedCategoryId',
+            'savedSubcategoryId'
         ));
     }
 

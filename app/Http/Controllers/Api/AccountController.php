@@ -2,21 +2,21 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class AccountController extends BaseApiController
 {
     /**
-     * Delete Account
+     * Permanently delete the authenticated user from `users` (cannot log in again).
      */
     public function deleteAccount(Request $request): JsonResponse
     {
-        $data = $this->getRequestData($request);
-
-        // Get user ID from authenticated user
         $uid = $this->getUserId($request);
-        
+
         if (empty($uid)) {
             return response()->json([
                 "ResponseCode" => "401",
@@ -25,11 +25,44 @@ class AccountController extends BaseApiController
             ], 401);
         }
 
-        $table = "tbl_user";
-        $field = ["status" => '0'];
-        $where = "where id=" . $uid . "";
+        $user = User::find($uid);
 
-        $check = $this->h->updateData_Api($field, $table, $where);
+        if (!$user) {
+            return response()->json([
+                "ResponseCode" => "401",
+                "Result" => "false",
+                "ResponseMsg" => "User not found!"
+            ], 401);
+        }
+
+        try {
+            DB::transaction(function () use ($user) {
+                $userId = $user->id;
+
+                $user->tokens()->delete();
+
+                $this->deleteUserRowsIfTableExists('user_push_devices', $userId);
+                $this->deleteUserRowsIfTableExists('user_notifications', $userId);
+                $this->deleteUserRowsIfTableExists('user_registration_responses', $userId);
+                $this->deleteUserRowsIfTableExists('campaign_collaborators', $userId);
+                $this->deleteUserRowsIfTableExists('comments', $userId);
+                $this->deleteUserRowsIfTableExists('campaigns', $userId);
+                $this->deleteUserRowsIfTableExists('deposits', $userId);
+                $this->deleteUserRowsIfTableExists('withdrawals', $userId);
+                $this->deleteUserRowsIfTableExists('transactions', $userId);
+                $this->deleteUserRowsIfTableExists('sessions', $userId);
+
+                $user->delete();
+            });
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                "ResponseCode" => "401",
+                "Result" => "false",
+                "ResponseMsg" => "Unable to delete account. Please contact support."
+            ], 401);
+        }
 
         return response()->json([
             "ResponseCode" => "200",
@@ -37,5 +70,13 @@ class AccountController extends BaseApiController
             "ResponseMsg" => "Account Delete Successfully!!"
         ]);
     }
-}
 
+    private function deleteUserRowsIfTableExists(string $table, int $userId): void
+    {
+        if (!Schema::hasTable($table) || !Schema::hasColumn($table, 'user_id')) {
+            return;
+        }
+
+        DB::table($table)->where('user_id', $userId)->delete();
+    }
+}

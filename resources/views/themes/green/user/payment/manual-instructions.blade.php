@@ -31,7 +31,7 @@
                                     <span class="manual-summary-value">{{ formatPlatformForDisplay($deposit->amount, 2) }} {{ getLocalCurrencyCode() }}</span>
                                 </div>
                                 <div class="manual-summary-item">
-                                    <span class="manual-summary-label">@lang('Platform Fee')</span>
+                                    <span class="manual-summary-label">@lang('Processing Charges')</span>
                                     <span class="manual-summary-value">{{ formatPlatformForDisplay($deposit->charge, 2) }} {{ getLocalCurrencyCode() }}</span>
                                 </div>
                                 <div class="manual-summary-item">

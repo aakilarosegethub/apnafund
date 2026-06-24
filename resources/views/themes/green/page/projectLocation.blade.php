@@ -122,8 +122,7 @@
 <div class="setup-container">
 
     <h1 class="setup-title">
-        Last one—set a location for your project.
-    </h1>
+        set a location for your project.  </h1>
 
     <p class="setup-description">
         Pick your country of legal residence if you're raising funds as an individual.
@@ -146,18 +145,17 @@
                         <option value="{{ $country }}">{{ $country }}</option>
                     @endforeach
                 @else
-                    <option value="Spain">Spain</option>
-                    <option value="United States">United States</option>
-                    <option value="United Kingdom">United Kingdom</option>
-                    <option value="Canada">Canada</option>
-                    <option value="Pakistan">Pakistan</option>
-                    <option value="India">India</option>
+                    @foreach(['Pakistan', 'United States', 'United Kingdom', 'Canada', 'Australia', 'United Arab Emirates', 'Saudi Arabia', 'India', 'Germany', 'France', 'Singapore'] as $country)
+                        <option value="{{ $country }}">{{ $country }}</option>
+                    @endforeach
                 @endif
             </select>
         </div>
 
         <div class="info">
-            Who's eligible to run a {{ bs('site_name') ?? 'ApnaCrowdfunding' }} project?
+            <a href="{{ route('apnacrowdfunding-rules') }}" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline;">
+                Who's eligible to run a {{ bs('site_name') ?? 'ApnaCrowdfunding' }} project?
+            </a>
         </div>
 
         <button type="submit" class="continue-btn" id="continueBtn">
@@ -165,7 +163,7 @@
         </button>
 
         <a href="{{ route('start.project') }}" class="back-link">
-            ← Additional subcategory
+            ← category
         </a>
 
     </form>
@@ -175,41 +173,56 @@
 
 @section('script')
 <script>
-document.getElementById('locationForm').addEventListener('submit', function(e) {
-    e.preventDefault();
+(function() {
+    const countrySelect = document.getElementById('country');
+    const continueBtn = document.getElementById('continueBtn');
+    const CONTINUE_BTN_LABEL = 'Continue';
 
-    const country = document.getElementById('country').value;
-    const btn = document.getElementById('continueBtn');
+    function updateContinueBtn() {
+        continueBtn.textContent = CONTINUE_BTN_LABEL;
+        continueBtn.disabled = !countrySelect.value;
+    }
 
-    if (!country) return;
+    countrySelect.addEventListener('change', updateContinueBtn);
 
-    btn.disabled = true;
-    btn.innerText = 'Saving...'; 
-
-    fetch('{{ route("start.project.save.location") }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify({ country })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            window.location.href = data.redirect_url;
-        } else {
-            alert(data.message || 'Something went wrong');
-            btn.disabled = false;
-            btn.innerText = 'Continue';
-        }
-    })
-    .catch(() => {
-        alert('Server error, try again');
-        btn.disabled = false;
-        btn.innerText = 'Continue';
+    window.addEventListener('pageshow', function() {
+        updateContinueBtn();
     });
-});
+
+    updateContinueBtn();
+
+    document.getElementById('locationForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const country = countrySelect.value;
+        if (!country) return;
+
+        continueBtn.disabled = true;
+        continueBtn.textContent = 'Saving...';
+
+        fetch('{{ route("start.project.save.location") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ country })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = data.redirect_url;
+            } else {
+                alert(data.message || 'Something went wrong');
+                updateContinueBtn();
+            }
+        })
+        .catch(() => {
+            alert('Server error, try again');
+            updateContinueBtn();
+        });
+    });
+})();
 </script>
 @endsection

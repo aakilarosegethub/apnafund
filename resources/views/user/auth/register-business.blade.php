@@ -573,12 +573,12 @@
             
             <div class="form-group">
                 <label class="form-label">First Name</label>
-                <input type="text" class="form-control" id="firstName" placeholder="Enter your first name">
+                <input type="text" class="form-control" id="firstName" placeholder="Enter your first name" maxlength="{{ registrationNamePartMaxLength() }}">
             </div>
 
             <div class="form-group">
                 <label class="form-label">Last Name</label>
-                <input type="text" class="form-control" id="lastName" placeholder="Enter your last name">
+                <input type="text" class="form-control" id="lastName" placeholder="Enter your last name" maxlength="{{ registrationNamePartMaxLength() }}">
             </div>
 
                                 <div class="form-group">
@@ -623,7 +623,7 @@
             <div class="form-group">
                 <label class="form-label">Password</label>
                 <div class="password-input-group">
-                    <input type="password" class="form-control" id="password" placeholder="Create a strong password">
+                    <input type="password" class="form-control" id="password" placeholder="Create a strong password" minlength="{{ registrationPasswordMinLength() }}" maxlength="{{ registrationPasswordMaxLength() }}">
                     <button type="button" class="password-toggle" onclick="togglePassword('password')" onkeydown="if(event.key==='Enter'||event.key===' ') togglePassword('password')" aria-label="Toggle password visibility">
                         <i class="fas fa-eye" id="password-eye" title="Show password"></i>
                     </button>
@@ -633,7 +633,7 @@
             <div class="form-group">
                 <label class="form-label">Confirm Password</label>
                 <div class="password-input-group">
-                    <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm your password">
+                    <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm your password" maxlength="{{ registrationPasswordMaxLength() }}">
                     <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')" onkeydown="if(event.key==='Enter'||event.key===' ') togglePassword('confirmPassword')" aria-label="Toggle confirm password visibility">
                         <i class="fas fa-eye" id="confirmPassword-eye" title="Show password"></i>
                     </button>
@@ -816,6 +816,8 @@
                         errors.push('Please enter your first name');
                     } else if (firstName.length < 2) {
                         errors.push('First name must be at least 2 characters long');
+                    } else if (firstName.length > {{ registrationNamePartMaxLength() }}) {
+                        errors.push('First name must not exceed {{ registrationNamePartMaxLength() }} characters');
                     } else if (!/^[a-zA-Z\s]+$/.test(firstName)) {
                         errors.push('First name can only contain letters and spaces');
                     }
@@ -824,6 +826,8 @@
                         errors.push('Please enter your last name');
                     } else if (lastName.length < 2) {
                         errors.push('Last name must be at least 2 characters long');
+                    } else if (lastName.length > {{ registrationNamePartMaxLength() }}) {
+                        errors.push('Last name must not exceed {{ registrationNamePartMaxLength() }} characters');
                     } else if (!/^[a-zA-Z\s]+$/.test(lastName)) {
                         errors.push('Last name can only contain letters and spaces');
                     }
@@ -854,10 +858,10 @@
                     
                     if (password === '') {
                         errors.push('Please enter a password');
-                    } else if (password.length < 8) {
-                        errors.push('Password must be at least 8 characters long');
-                    } else if (password.length > 50) {
-                        errors.push('Password is too long (maximum 50 characters)');
+                    } else if (password.length < {{ registrationPasswordMinLength() }}) {
+                        errors.push('Password must be at least {{ registrationPasswordMinLength() }} characters long');
+                    } else if (password.length > {{ registrationPasswordMaxLength() }}) {
+                        errors.push('Password must not exceed {{ registrationPasswordMaxLength() }} characters');
                     } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
                         errors.push('Password must contain at least one uppercase letter, one lowercase letter, and one number');
                     }

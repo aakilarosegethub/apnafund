@@ -66,8 +66,17 @@ class LoginController extends Controller
     /* Log the user out of the application */
 
     function logout() {
+        // Forget the admin, drop the session data, and rotate the CSRF token so
+        // the old session cannot be replayed after logout.
         $this->guard()->logout();
         request()->session()->invalidate();
-        return $this->loggedOut(request()) ?: redirect($this->redirectTo);
+        request()->session()->regenerateToken();
+
+        // No-store headers ensure the browser Back button cannot show cached
+        // admin pages once the session is gone.
+        return redirect()->route('admin.login.form')
+            ->header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', '0');
     }
 }

@@ -999,7 +999,7 @@
                                                             </label>
                                                         </div>
                 <div class="checkbox-item">
-                    <div class="checkbox checked" id="marketingCheckbox"></div>
+                    <div class="checkbox" id="marketingCheckbox"></div>
                     <label class="checkbox-label">
                         @lang('Get occasional marketing updates from') {!! apnaCrowdfundingLink() !!}. @lang('You may unsubscribe at any time.')
                                                         </label>

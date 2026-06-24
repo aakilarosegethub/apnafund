@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\User\Auth;
 
 use App\Constants\ManageStatus;
+use App\Constants\RegistrationLimits;
 use App\Http\Controllers\Controller;
 use App\Models\AdminNotification;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rules\Password;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
 
@@ -68,35 +68,44 @@ class RegisterController extends Controller
     }
 
     protected function validator(array $data) {
-        $setting = bs();
-        $passwordValidation = Password::min(6);
-
-        if ($setting->strong_pass) {
-            $passwordValidation = $passwordValidation->mixedCase()->numbers()->symbols()->uncompromised();
-        }
-
         $agree = 'nullable';
 
-        if ($setting->agree_policy) {
+        if (bs()->agree_policy) {
             $agree = 'required';
         }
 
         $countryData  = (array)json_decode(file_get_contents(resource_path('views/partials/country.json')));
         $countryCodes = implode(',', array_keys($countryData));
-        $mobileCodes  = implode(',',array_column($countryData, 'dial_code'));
-        $countries    = implode(',',array_column($countryData, 'country'));
-        $validate     = Validator::make($data, [
-            'firstname'    => 'required|string|max:40',
-            'lastname'     => 'required|string|max:40',
+        $mobileCodes  = implode(',', array_column($countryData, 'dial_code'));
+        $countries    = implode(',', array_column($countryData, 'country'));
+        $fullName     = trim(($data['firstname'] ?? '') . ' ' . ($data['lastname'] ?? ''));
+
+        $validate = Validator::make($data, [
+            'firstname'    => 'required|string|max:' . RegistrationLimits::NAME_PART_MAX,
+            'lastname'     => 'required|string|max:' . RegistrationLimits::NAME_PART_MAX,
             'email'        => 'required|string|email|max:40|unique:users',
             'mobile'       => 'required|max:40|regex:/^([0-9]*)$/',
-            'password'     => ['required', 'confirmed', $passwordValidation],
+            'password'     => [
+                'required',
+                'confirmed',
+                'max:' . RegistrationLimits::PASSWORD_MAX,
+                function ($attribute, $value, $fail) use ($data, $fullName) {
+                    foreach (registrationPasswordErrors(
+                        $value,
+                        $data['email'] ?? null,
+                        $data['username'] ?? null,
+                        $fullName !== '' ? $fullName : null
+                    ) as $message) {
+                        $fail($message);
+                    }
+                },
+            ],
             'username'     => 'required|unique:users|min:6|max:40',
             'mobile_code'  => 'required|in:'.$mobileCodes,
             'country_code' => 'required|in:'.$countryCodes,
             'country'      => 'required|in:'.$countries,
             'agree'        => $agree,
-        ]);
+        ], registrationClassicValidationMessages());
 
         return $validate;
     }
