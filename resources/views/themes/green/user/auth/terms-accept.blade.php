@@ -16,7 +16,14 @@
                     <a href="{{ route('policy.pages', ['privacy-policy', 11]) }}" target="_blank">Privacy Policy</a>
                     @if($policyPages && count($policyPages))
                         @foreach ($policyPages as $policy)
-                            and <a href="{{ route('policy.pages', [slug($policy->data_info->title), $policy->id]) }}" target="_blank">{{ __($policy->data_info->title) }}</a>
+                            @php
+                                $policyId = is_array($policy) ? ($policy['id'] ?? null) : $policy->id;
+                                $policyDataInfo = is_array($policy)
+                                    ? ($policy['data_info'] ?? [])
+                                    : (is_array($policy->data_info) ? $policy->data_info : (array) $policy->data_info);
+                                $policyTitle = $policyDataInfo['title'] ?? 'Terms of Use';
+                            @endphp
+                            and <a href="{{ route('policy.pages', [slug($policyTitle), $policyId]) }}" target="_blank">{{ __($policyTitle) }}</a>
                         @endforeach
                     @else
                         and <a href="{{ url('policy/terms-of-use/12') }}" target="_blank">Terms of Use</a>

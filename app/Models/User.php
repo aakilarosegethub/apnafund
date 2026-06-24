@@ -29,6 +29,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name', 'email', 'password', 'firstname', 'lastname', 'username', 'mobile', 'whatsapp', 'country_code', 'country_name', 'address', 'business_type', 'business_name', 'business_description', 'industry', 'funding_amount', 'fund_usage', 'campaign_duration', 'phone', 'phone_verified_at', 'last_login_at', 'provider', 'provider_id', 'avatar', 'status', 'ec', 'sc', 'tc', 'terms_accepted_at',
         'ver_code', 'ver_code_send_at', 'cnic_front_image', 'cnic_back_image',
+        'failed_login_attempts', 'blocked_until',
     ];
 
     /**
@@ -54,6 +55,7 @@ class User extends Authenticatable
         'phone_verified_at' => 'datetime',
         'last_login_at'     => 'datetime',
         'terms_accepted_at' => 'datetime',
+        'blocked_until'     => 'datetime',
     ];
 
     /**

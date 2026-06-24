@@ -4,6 +4,7 @@ namespace App\Http\Controllers\User\Auth;
 
 use App\Constants\ManageStatus;
 use App\Http\Controllers\Controller;
+use App\Services\LoginLockoutService;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 
@@ -36,6 +37,14 @@ class LoginController extends Controller
             return back()->withToasts($toast);
         }
 
+        $lockout = app(LoginLockoutService::class);
+        $user = $lockout->findUserByWebLogin((string) request()->input('username'));
+
+        if ($message = $lockout->assertNotBlocked($user)) {
+            $toast[] = ['error', $message];
+            return back()->withToasts($toast);
+        }
+
         // If the class is using the ThrottlesLogins trait, we can automatically throttle
         // the login attempts for this application. We'll key this by the username and
         // the IP address of the client making these requests into this application.
@@ -54,6 +63,7 @@ class LoginController extends Controller
         // to login and redirect the user back to the login form. Of course, when this
         // user surpasses their maximum number of attempts they will get locked out.
 
+        $lockout->recordFailedAttempt($user, request());
         $this->incrementLoginAttempts(request());
 
         return $this->sendFailedLoginResponse(request());
@@ -128,6 +138,8 @@ class LoginController extends Controller
     }
 
     function authenticated(Request $request, $user) {
+        app(LoginLockoutService::class)->clearLock($user);
+
         $user->tc = $user->ts == ManageStatus::VERIFIED ? ManageStatus::UNVERIFIED : ManageStatus::VERIFIED;
         $user->save();
 
@@ -151,5 +163,19 @@ class LoginController extends Controller
         $parsed = parse_url($url);
         $appUrl = parse_url(config('app.url'), PHP_URL_HOST);
         return isset($parsed['host']) && $parsed['host'] === $appUrl;
+    }
+
+    protected function maxAttempts(): int
+    {
+        $settings = loginLockSettings();
+
+        return $settings['enabled'] ? $settings['max_attempts'] : 999;
+    }
+
+    protected function decayMinutes(): int
+    {
+        $settings = loginLockSettings();
+
+        return $settings['enabled'] ? $settings['lock_duration'] : 1;
     }
 }

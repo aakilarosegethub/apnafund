@@ -77,6 +77,37 @@
                         <small class="form-text text-muted">@lang('Amount in') {{ $setting->site_cur ?? 'USD' }} @lang('(platform currency)')</small>
                     </div>
                     @endif
+                    @if(\Illuminate\Support\Facades\Schema::hasColumn('settings', 'login_lock_enabled'))
+                    <div class="col-12 mt-3">
+                        <hr>
+                        <h5 class="mb-3">@lang('Login Lock Protection')</h5>
+                        <p class="text-muted small">@lang('Lock user accounts after repeated failed login attempts. Applies to web and mobile API login.')</p>
+                    </div>
+                    <div class="col-lg-4 col-sm-6">
+                        <label class="form--label">@lang('Enable Login Lock Protection')</label>
+                        <div class="form-check form--switch">
+                            <input class="form-check-input" type="checkbox" name="login_lock_enabled" value="1" {{ ($setting->login_lock_enabled ?? true) ? 'checked' : '' }}>
+                            <label class="form-check-label">@lang('Lock accounts after failed attempts')</label>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-sm-6">
+                        <label class="form--label required">@lang('Maximum Failed Login Attempts')</label>
+                        <input type="number" class="form--control" name="login_max_attempts" value="{{ old('login_max_attempts', $setting->login_max_attempts ?? 5) }}" min="1" max="100" required>
+                        <small class="form-text text-muted">@lang('E.g. 3, 5, or 10 failed attempts before lock.')</small>
+                    </div>
+                    <div class="col-lg-4 col-sm-6">
+                        <label class="form--label required">@lang('Account Lock Duration (Minutes)')</label>
+                        <input type="number" class="form--control" name="login_lock_duration" value="{{ old('login_lock_duration', $setting->login_lock_duration ?? 60) }}" min="1" max="10080" required>
+                        <small class="form-text text-muted">@lang('E.g. 30, 60, or 120 minutes.')</small>
+                    </div>
+                    <div class="col-lg-4 col-sm-6">
+                        <label class="form--label">@lang('Enable Security Alert Email')</label>
+                        <div class="form-check form--switch">
+                            <input class="form-check-input" type="checkbox" name="login_lock_email_enabled" value="1" {{ ($setting->login_lock_email_enabled ?? true) ? 'checked' : '' }}>
+                            <label class="form-check-label">@lang('Email user when account is locked')</label>
+                        </div>
+                    </div>
+                    @endif
                     <!-- Campaign Days Limit -->
                     <div class="col-12 mt-3">
                         <hr>

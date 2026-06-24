@@ -18,6 +18,7 @@ use App\Models\Setting;
 use App\Models\SiteData;
 use App\Notify\Notify;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 function systemDetails(): array {
@@ -106,6 +107,30 @@ function bs($fieldName = null) {
         \Log::error('Database connection failed in bs() function: ' . $e->getMessage());
         return null;
     }
+}
+
+/**
+ * Login lockout settings from Basic Settings (never hardcode attempts/duration in controllers).
+ */
+function loginLockSettings(): array
+{
+    $defaults = [
+        'max_attempts'   => 5,
+        'lock_duration'  => 60,
+        'enabled'        => true,
+        'email_enabled'  => true,
+    ];
+
+    if (!Schema::hasColumn('settings', 'login_max_attempts')) {
+        return $defaults;
+    }
+
+    return [
+        'max_attempts'  => max(1, (int) (bs('login_max_attempts') ?? $defaults['max_attempts'])),
+        'lock_duration' => max(1, (int) (bs('login_lock_duration') ?? $defaults['lock_duration'])),
+        'enabled'       => (bool) (bs('login_lock_enabled') ?? $defaults['enabled']),
+        'email_enabled' => (bool) (bs('login_lock_email_enabled') ?? $defaults['email_enabled']),
+    ];
 }
 
 function fileUploader($file, $location, $size = null, $old = null, $thumb = null): string {

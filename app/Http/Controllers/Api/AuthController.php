@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Models\User;
 use App\Models\UserPushDevice;
 use App\Constants\ManageStatus;
+use App\Services\LoginLockoutService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
@@ -259,20 +260,8 @@ class AuthController extends BaseApiController
             ], 401);
         }
 
-        // Find user by mobile or email
-        $userQuery = User::where(function($query) use ($mobile) {
-            $query->where('mobile', $mobile)
-                  ->orWhere('email', $mobile);
-        });
-
-        // Only check country_code if it's mobile (not email)
-        if (!$isEmail) {
-            // Remove + sign if present in ccode
-            $ccode = ltrim($ccode, '+');
-            $userQuery->where('country_code', $ccode);
-        }
-
-        $user = $userQuery->where('status', 1)->first();
+        $lockout = app(LoginLockoutService::class);
+        $user = $lockout->findUserByApiLogin($mobile, $ccode);
 
         if (!$user) {
             return response()->json([
@@ -280,6 +269,14 @@ class AuthController extends BaseApiController
                 "Result" => "false",
                 "ResponseMsg" => "Invalid Email/Mobile No or Password!!!"
             ], 401);
+        }
+
+        if ($message = $lockout->assertNotBlocked($user)) {
+            return response()->json([
+                "ResponseCode" => "403",
+                "Result" => "false",
+                "ResponseMsg" => $message
+            ], 403);
         }
 
         // Check if password matches (handle both hashed and plain text for backward compatibility)
@@ -319,12 +316,16 @@ class AuthController extends BaseApiController
         }
 
         if (!$passwordValid) {
+            $lockout->recordFailedAttempt($user, $request);
+
             return response()->json([
                 "ResponseCode" => "401",
                 "Result" => "false",
                 "ResponseMsg" => "Invalid Email/Mobile No or Password!!!"
             ], 401);
         }
+
+        $lockout->clearLock($user);
 
         // Create token
         $token = $user->createToken('auth_token')->plainTextToken;

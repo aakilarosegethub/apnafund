@@ -100,6 +100,10 @@ class SettingController extends Controller
         if (Schema::hasColumn('settings', 'site_email')) {
             $rules['site_email'] = 'nullable|email|max:255';
         }
+        if (Schema::hasColumn('settings', 'login_max_attempts')) {
+            $rules['login_max_attempts'] = 'required|integer|min:1|max:100';
+            $rules['login_lock_duration'] = 'required|integer|min:1|max:10080';
+        }
         $this->validate(request(), $rules);
 
         // This function is called in the basicUpdate() method of SettingController
@@ -122,6 +126,13 @@ class SettingController extends Controller
             $setting->registration_fee_enabled = request('registration_fee_enabled') ? 1 : 0;
             $setting->registration_fee_min     = max(0, (float) (request('registration_fee_amount') ?? 0));
             $setting->registration_fee_max     = $setting->registration_fee_min;
+        }
+
+        if (Schema::hasColumn('settings', 'login_lock_enabled')) {
+            $setting->login_max_attempts       = (int) request('login_max_attempts');
+            $setting->login_lock_duration      = (int) request('login_lock_duration');
+            $setting->login_lock_enabled       = request('login_lock_enabled') ? 1 : 0;
+            $setting->login_lock_email_enabled = request('login_lock_email_enabled') ? 1 : 0;
         }
 
         $result = $setting->save();
