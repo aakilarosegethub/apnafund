@@ -134,13 +134,13 @@
             </div>
 
             <div class="app-badges">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="App Store">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Play Store">
+                <a href="https://apps.apple.com/app/apnacrowdfunding/id6773281524"><img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="App Store"></a>
+                <a href="https://play.google.com/store/apps/details?id=com.david.apnacrowdfunding&hl=en"><img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Play Store"></a>
             </div>
         </div>
 
         <div class="footer-legal-bar">
-            <span class="me-3">{{ bs('site_name') }} © {{ date('Y') }}</span>
+            <span class="me-3">{{ bs('site_name') }}  a subsidiary of Aakilarose, Inc. a California Company. © {{ date('Y') }}</span>
             
             @foreach($sections['down_section'] as $item)
                 @php $slug = trim($item->data_info['slug'] ?? '#'); @endphp

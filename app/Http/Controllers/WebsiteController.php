@@ -51,6 +51,12 @@ class WebsiteController extends Controller
         // You can add any initialization code here if needed
     }
     function home() {
+        $themeKey = bs('active_theme') ?: 'green';
+
+        if ($themeKey === 'primary') {
+            return view($this->activeTheme . 'page.home', $this->primaryHomePageData());
+        }
+
         try {
             $pageTitle               = 'Home';
             $setting                = bs(); // Get settings for currency symbol
@@ -121,24 +127,61 @@ class WebsiteController extends Controller
     }
 
     function homeNew() {
+        return view('themes.primary.page.apnacrowdfunding-new', $this->primaryHomePageData());
+    }
+
+    /**
+     * View data for the legacy primary theme home templates.
+     */
+    private function primaryHomePageData(): array
+    {
         $pageTitle               = 'Home';
         $coverContent            = SiteData::where('data_key', 'cover.content')->first();
-        $bannerElements          = getSiteData('banner.element', false, null, true);
-        $basicCampaignQuery      = Campaign::campaignCheck()->approve();
+        $bannerElements          = getSiteData('banner.element', false, null, true) ?? collect();
         $featuredCampaignContent = getSiteData('featured_campaign.content', true);
-        $featuredCampaigns       = array();
+        $featuredCampaigns       = collect();
         $campaignCategoryContent = getSiteData('campaign_category.content', true);
-        $campaignCategories      = Category::active()->get();
+        $campaignCategories      = collect();
         $recentCampaignContent   = getSiteData('recent_campaign.content', true);
-        $recentCampaigns         = (clone $basicCampaignQuery)->latest()->limit(9)->get();
-        $counterElements         = getSiteData('counter.element', false, null, true);
+        $recentCampaigns         = collect();
+        $counterElements         = getSiteData('counter.element', false, null, true) ?? collect();
         $upcomingContent         = getSiteData('upcoming.content', true);
-        $upcomingCampaigns       = Campaign::upcomingCheck()->approve()->orderby('start_date')->limit(6)->get();
+        $upcomingCampaigns       = collect();
         $subscribeContent        = getSiteData('subscribe.content', true);
         $successContent          = getSiteData('success_story.content', true);
-        $successElements         = getSiteData('success_story.element', false, 3, true);
+        $successElements         = getSiteData('success_story.element', false, 3, true) ?? collect();
 
-        return view('themes.primary.page.apnacrowdfunding-new', compact('pageTitle', 'coverContent', 'bannerElements', 'featuredCampaignContent', 'counterElements', 'campaignCategoryContent', 'campaignCategories', 'recentCampaignContent', 'recentCampaigns', 'featuredCampaigns', 'upcomingContent', 'upcomingCampaigns', 'subscribeContent', 'successContent', 'successElements'));
+        try {
+            $basicCampaignQuery = Campaign::campaignCheck()->approve();
+            $recentCampaigns    = (clone $basicCampaignQuery)->latest()->limit(9)->get();
+            $upcomingCampaigns  = Campaign::upcomingCheck()->approve()->orderby('start_date')->limit(6)->get();
+        } catch (\Exception $e) {
+            \Log::error('Error fetching primary home campaigns', ['error' => $e->getMessage()]);
+        }
+
+        try {
+            $campaignCategories = Category::active()->get();
+        } catch (\Exception $e) {
+            \Log::error('Error fetching primary home categories', ['error' => $e->getMessage()]);
+        }
+
+        return compact(
+            'pageTitle',
+            'coverContent',
+            'bannerElements',
+            'featuredCampaignContent',
+            'featuredCampaigns',
+            'campaignCategoryContent',
+            'campaignCategories',
+            'recentCampaignContent',
+            'recentCampaigns',
+            'counterElements',
+            'upcomingContent',
+            'upcomingCampaigns',
+            'subscribeContent',
+            'successContent',
+            'successElements'
+        );
     }
 
     function aboutUs() {

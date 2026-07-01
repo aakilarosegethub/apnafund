@@ -164,4 +164,16 @@ return [
 
     'ckeditor_license_key' => env('CKEDITOR_LICENSE_KEY', ''),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Beta Gate (testing / pre-launch landing)
+    |--------------------------------------------------------------------------
+    |
+    | When true, first-time visitors are sent to /beta until they accept.
+    | Toggle via .env: BETA_GATE_ENABLED=true|false
+    |
+    */
+
+    'beta_gate_enabled' => filter_var(env('BETA_GATE_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
+
 ];

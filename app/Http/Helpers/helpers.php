@@ -588,7 +588,7 @@ function titleToKey($text): string {
 }
 
 function activeTheme($asset = false): string {
-    $theme = bs('active_theme');
+    $theme = bs('active_theme') ?: 'green';
 
     if ($asset) return 'assets/themes/' . $theme . '/';
 

@@ -153,7 +153,7 @@
         </div>
 
         <div class="info">
-            <a href="{{ route('apnacrowdfunding-rules') }}" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline;">
+            <a href="{{ url('who-can-use-apnacrowdfunding') }}" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline;">
                 Who's eligible to run a {{ bs('site_name') ?? 'ApnaCrowdfunding' }} project?
             </a>
         </div>

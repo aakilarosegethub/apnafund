@@ -30,7 +30,7 @@ class SettingSeeder extends Seeder
                 'fraction_digit' => 2,
                 'first_color' => '00ffff',
                 'second_color' => 'ffff00',
-                'active_theme' => 'primary',
+                'active_theme' => 'green',
                 'signup' => true,
                 'enforce_ssl' => false,
                 'agree_policy' => false,
