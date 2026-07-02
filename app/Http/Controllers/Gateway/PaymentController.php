@@ -60,7 +60,9 @@ class PaymentController extends Controller
 
     function depositInserts($slug) {
         if (!auth()->check()) {
-            $redirect = route('user.login.form', ['redirect' => url()->current()]);
+            $redirect = route('user.login.form', [
+                'redirect' => route('campaign.donate', ['slug' => $slug], false),
+            ]);
             if (request()->expectsJson() || request()->ajax()) {
                 return response()->json([
                     'success' => false,

@@ -173,7 +173,7 @@ Route::controller('WebsiteController')->group(function () {
     // Campaign 
     Route::prefix('campaign/{slug}')->name('campaign.')->group(function () {
         Route::get('/', 'campaignShow')->name('show');
-        Route::get('/contribute', 'campaignDonate')->name('donate');
+        Route::get('/contribute', 'campaignDonate')->middleware('auth')->name('donate');
         Route::get('/rewards', 'RewardController@show')->name('rewards');
         Route::post('comment', 'storeCampaignComment')->name('comment');
         Route::get('fetch-comment', 'fetchCampaignComment')->name('comment.fetch');

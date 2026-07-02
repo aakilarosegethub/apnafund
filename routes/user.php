@@ -217,7 +217,7 @@ Route::middleware(['auth'])->name('user.')->namespace('User')->group(function ()
 });
 
 // Deposit
-Route::prefix('deposit')->name('user.deposit.')->controller('Gateway\PaymentController')->group(function () {
+Route::middleware('auth')->prefix('deposit')->name('user.deposit.')->controller('Gateway\PaymentController')->group(function () {
     Route::post('insert/{slug}', 'depositInserts')->name('insert');
     Route::get('confirm', 'depositConfirm')->name('confirm');
     Route::get('success', 'success')->name('success');

@@ -498,6 +498,12 @@ class WebsiteController extends Controller
         $pageTitle        = 'Make a Contribution';
         $campaignData     = Campaign::where('slug', $slug)->approve()->firstOrFail();
         $authUser         = auth()->user();
+        if (! $authUser) {
+            $toast[] = ['error', 'Please log in to make a contribution.'];
+            return redirect()->route('user.login.form', [
+                'redirect' => route('campaign.donate', ['slug' => $slug], false),
+            ])->withToasts($toast);
+        }
         if(!$authUser)
         {
             $country = session()->get('user_country');
