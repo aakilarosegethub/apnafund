@@ -11,6 +11,8 @@ use Illuminate\Http\Request;
  */
 class JazzCashApiLoggerService
 {
+    private const FILE_LOG_NAME = 'jazzcash-log.txt';
+
     private const SENSITIVE_KEYS = [
         'pp_Password',
         'Password',
@@ -23,6 +25,32 @@ class JazzCashApiLoggerService
         'pp_CNIC',
         'cnic_last_6',
     ];
+
+    /**
+     * Payload prepared when /user/deposit/confirm loads (before user submits wallet form).
+     */
+    public function logDepositConfirmPrepare(
+        string $flow,
+        string $url,
+        array $payload,
+        ?Deposit $deposit = null,
+        ?string $note = null
+    ): void {
+        $masked = $this->maskSensitive($payload);
+        $curl = $this->buildCurlCommand($url, 'POST', ['Content-Type' => 'application/json'], $masked);
+
+        $this->writeFileLog(
+            $this->buildFileLogTitle($flow, 'deposit_confirm', $deposit, null, 'pending'),
+            [
+                'JAZZCASH_API_URL' => $url,
+                'HTTP_METHOD' => 'POST',
+                'NOTE' => $note ?? 'Prepared on /user/deposit/confirm',
+                'CURL' => $curl,
+                'REQUEST' => $masked,
+                'RESPONSE' => 'Awaiting wallet form submit or JazzCash redirect',
+            ]
+        );
+    }
 
     /**
      * Outbound HTTP call to JazzCash API (e.g. DoMWalletTransaction).
@@ -49,6 +77,19 @@ class JazzCashApiLoggerService
             $status = ($httpCode >= 200 && $httpCode < 300) ? 'success' : 'failed';
         }
 
+        $this->writeFileLog(
+            $this->buildFileLogTitle($flow, 'outbound', $deposit, $httpCode, $status),
+            [
+                'JAZZCASH_API_URL' => $url,
+                'HTTP_METHOD' => strtoupper($method),
+                'CURL' => $curl,
+                'REQUEST' => $maskedPayload,
+                'RESPONSE' => $responseBody,
+                'EXECUTION_TIME_SEC' => $executionTime !== null ? round($executionTime, 4) : null,
+                'ERROR' => $curlError,
+            ]
+        );
+
         return $this->createLog([
             'flow' => $flow,
             'direction' => 'outbound',
@@ -74,6 +115,15 @@ class JazzCashApiLoggerService
     {
         $masked = $this->maskSensitive($formFields);
         $curl = $this->buildCurlCommand($url, 'POST', ['Content-Type: application/x-www-form-urlencoded'], $masked, true);
+
+        $this->writeFileLog(
+            $this->buildFileLogTitle($flow, 'outbound_form', $deposit, null, 'pending'),
+            [
+                'CURL' => $curl,
+                'REQUEST' => $masked,
+                'RESPONSE' => 'Browser redirect — user submits form to JazzCash',
+            ]
+        );
 
         return $this->createLog([
             'flow' => $flow,
@@ -107,13 +157,24 @@ class JazzCashApiLoggerService
             ) . "\n# Note: pp_MobileNumber and pp_CNIC are filled when user submits the wallet form."
             : '# Wallet init — API URL not configured';
 
+        $maskedContext = $this->maskSensitive($context);
+
+        $this->writeFileLog(
+            $this->buildFileLogTitle('wallet_init', 'outbound_pending', $deposit, null, 'pending'),
+            [
+                'CURL' => $curl,
+                'REQUEST' => $maskedContext,
+                'RESPONSE' => 'Awaiting user phone/CNIC on wallet payment page',
+            ]
+        );
+
         return $this->createLog([
             'flow' => 'wallet_init',
             'direction' => 'outbound_pending',
             'url' => $apiUrl ?: 'local://jazzcash-wallet-form',
             'method' => 'POST',
             'headers' => ['Content-Type' => 'application/json'],
-            'payload' => $this->maskSensitive($context),
+            'payload' => $maskedContext,
             'curl_command' => $curl,
             'response_status' => null,
             'response_body' => 'Awaiting user phone/CNIC on wallet payment page',
@@ -134,6 +195,18 @@ class JazzCashApiLoggerService
     {
         $startTime = microtime(true);
         $curl = $this->buildIncomingCurl($request, $endpoint);
+
+        $this->writeFileLog(
+            $this->buildFileLogTitle($flow, 'inbound', $deposit, null, 'processing'),
+            [
+                'INTERNAL_URL' => url($endpoint),
+                'HTTP_METHOD' => $request->method(),
+                'NOTE' => 'Browser/AJAX hits our server first; server then calls JazzCash API.',
+                'CURL' => $curl,
+                'REQUEST' => $this->maskSensitive($request->all()),
+                'RAW_INPUT' => $request->getContent() !== '' ? $request->getContent() : null,
+            ]
+        );
 
         $webhookLog = $this->createLog([
             'flow' => $flow,
@@ -174,13 +247,27 @@ class JazzCashApiLoggerService
         $startTime = microtime(true);
         $curl = $this->buildIncomingCurl($request, $endpoint);
 
+        $maskedPayload = $this->maskSensitive($request->all());
+
+        $this->writeFileLog(
+            $this->buildFileLogTitle($flow, 'internal_inbound', $deposit, null, 'processing'),
+            [
+                'INTERNAL_URL' => url($endpoint),
+                'HTTP_METHOD' => $request->method(),
+                'NOTE' => 'Browser/AJAX hits our server first; server then calls JazzCash API.',
+                'CURL' => $curl,
+                'REQUEST' => $maskedPayload,
+                'RAW_INPUT' => $request->getContent() !== '' ? $request->getContent() : null,
+            ]
+        );
+
         $webhookLog = $this->createLog([
             'flow' => $flow,
             'direction' => 'internal_inbound',
             'url' => $endpoint,
             'method' => $request->method(),
             'headers' => $request->headers->all(),
-            'payload' => $this->maskSensitive($request->all()),
+            'payload' => $maskedPayload,
             'curl_command' => $curl,
             'response_status' => null,
             'response_body' => null,
@@ -220,11 +307,33 @@ class JazzCashApiLoggerService
             'execution_time' => $executionTime,
             'error_message' => in_array($status, ['failed', 'error'], true) ? $body : null,
         ]);
+
+        $payload = $logContext['webhook_log']->payload ?? [];
+        $flow = is_array($payload) ? ($payload['flow'] ?? 'unknown') : 'unknown';
+        $direction = is_array($payload) ? ($payload['direction'] ?? 'callback') : 'callback';
+        $trx = is_array($payload) ? ($payload['transaction_id'] ?? null) : null;
+
+        $this->writeFileLog(
+            date('Y-m-d H:i:s') . " | {$flow} | {$direction} | RESPONSE | trx: " . ($trx ?: 'n/a') . " | status: {$status}",
+            [
+                'HTTP_STATUS' => $httpStatus,
+                'RESPONSE' => $body,
+                'EXECUTION_TIME_SEC' => round($executionTime, 4),
+            ]
+        );
     }
 
     public function finalizeInbound(array $logContext, string $status, ?string $responseBody, ?int $httpStatus = null): void
     {
         $this->finalizeLog($logContext, $status, $responseBody, $httpStatus);
+    }
+
+    /**
+     * Write a custom JazzCash entry to project-root jazzcash-log.txt.
+     */
+    public function appendRootLog(string $title, array $sections): void
+    {
+        $this->writeFileLog($title, $sections);
     }
 
     public function buildCurlCommand(string $url, string $method, array $headers, array $data, bool $formEncoded = false): string
@@ -258,6 +367,31 @@ class JazzCashApiLoggerService
         }
 
         return implode(" \\\n", $lines);
+    }
+
+    /**
+     * Masked outbound API details for error JSON responses / debugging.
+     */
+    public function buildOutboundDebug(
+        string $url,
+        string $method,
+        array $headers,
+        array $payload,
+        ?string $responseBody = null,
+        ?int $httpCode = null,
+        ?string $curlError = null
+    ): array {
+        $maskedPayload = $this->maskSensitive($payload);
+
+        return [
+            'api_url' => $url,
+            'http_method' => strtoupper($method),
+            'curl_request' => $this->buildCurlCommand($url, $method, $headers, $maskedPayload),
+            'request' => $maskedPayload,
+            'api_response' => $responseBody,
+            'http_status' => $httpCode,
+            'curl_error' => $curlError,
+        ];
     }
 
     public function buildIncomingCurl(Request $request, string $endpoint): string
@@ -348,5 +482,134 @@ class JazzCashApiLoggerService
         }
 
         return $masked;
+    }
+
+    private function fileLogPath(): string
+    {
+        return base_path(self::FILE_LOG_NAME);
+    }
+
+    private function fallbackFileLogPath(): string
+    {
+        return storage_path('logs/' . self::FILE_LOG_NAME);
+    }
+
+    private function resolveWritableLogPath(): string
+    {
+        $primary = $this->fileLogPath();
+        $directory = dirname($primary);
+
+        if (is_dir($directory) && is_writable($directory)) {
+            return $primary;
+        }
+
+        $fallback = $this->fallbackFileLogPath();
+        $fallbackDir = dirname($fallback);
+
+        if (!is_dir($fallbackDir)) {
+            @mkdir($fallbackDir, 0775, true);
+        }
+
+        return is_writable($fallbackDir) ? $fallback : $primary;
+    }
+
+    private function buildFileLogTitle(
+        string $flow,
+        string $direction,
+        ?Deposit $deposit = null,
+        ?int $httpCode = null,
+        ?string $status = null
+    ): string {
+        $parts = [
+            date('Y-m-d H:i:s'),
+            $flow,
+            $direction,
+        ];
+
+        if ($deposit?->trx) {
+            $parts[] = 'trx: ' . $deposit->trx;
+        }
+
+        if ($httpCode !== null) {
+            $parts[] = 'HTTP ' . $httpCode;
+        }
+
+        if ($status !== null) {
+            $parts[] = 'status: ' . $status;
+        }
+
+        return implode(' | ', $parts);
+    }
+
+    /**
+     * Append JazzCash request/response details to project-root jazzcash-log.txt.
+     */
+    private function writeFileLog(string $title, array $sections): void
+    {
+        try {
+            $lines = [
+                '',
+                str_repeat('=', 90),
+                $title,
+                str_repeat('=', 90),
+            ];
+
+            foreach ($sections as $label => $content) {
+                if ($content === null || $content === '') {
+                    continue;
+                }
+
+                $lines[] = '';
+                $lines[] = '--- ' . strtoupper((string) $label) . ' ---';
+
+                if (is_string($content)) {
+                    $lines[] = $content;
+                    continue;
+                }
+
+                if (is_array($content)) {
+                    $lines[] = json_encode($content, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+                    continue;
+                }
+
+                $lines[] = (string) $content;
+            }
+
+            $lines[] = '';
+
+            $written = false;
+            foreach ([$this->fileLogPath(), $this->fallbackFileLogPath()] as $target) {
+                $directory = dirname($target);
+                if (!is_dir($directory)) {
+                    @mkdir($directory, 0775, true);
+                }
+                if (!is_dir($directory) || !is_writable($directory)) {
+                    continue;
+                }
+                file_put_contents($target, implode("\n", $lines), FILE_APPEND | LOCK_EX);
+                $written = true;
+            }
+
+            if (!$written) {
+                \Log::channel('payments')->warning('JazzCash file log could not be written', [
+                    'paths' => [$this->fileLogPath(), $this->fallbackFileLogPath()],
+                ]);
+            }
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
+
+    public function getLogFilePaths(): array
+    {
+        return array_values(array_unique([
+            $this->fileLogPath(),
+            $this->fallbackFileLogPath(),
+        ]));
+    }
+
+    public function getLogFilePath(): string
+    {
+        return $this->resolveWritableLogPath();
     }
 }

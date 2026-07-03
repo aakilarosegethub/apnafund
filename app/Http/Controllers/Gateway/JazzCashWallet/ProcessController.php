@@ -11,6 +11,11 @@ use App\Services\JazzCashApiLoggerService;
 
 class ProcessController extends Controller
 {
+    private static function jazzCashWalletApiUrl(): string
+    {
+        return 'https://onlinepayments.jazzcash.com.pk/payment-orchestrator/api/v2/rest/payments/m-wallet';
+    }
+
     private function regenerateTransactionId(Deposit $deposit): string
     {
         do {
@@ -48,9 +53,7 @@ class ProcessController extends Controller
         $password = $gatewayAcc->password;
         $integritySalt = $gatewayAcc->integrity_salt;
         $sandbox = $gatewayAcc->sandbox ?? false;
-        
-        // Determine API endpoints based on sandbox mode
-        $baseUrl = $sandbox ? 'https://sandbox.jazzcash.com.pk/ApplicationAPI/API/2.0/Purchase/DoMWalletTransaction' : 'https://jazzcash.com.pk/ApplicationAPI/API/2.0/Purchase/DoMWalletTransaction';
+        $baseUrl = self::jazzCashWalletApiUrl();
         
         // Generate transaction datetime and expiry (Pakistan Time)
         date_default_timezone_set("Asia/Karachi");
@@ -73,13 +76,16 @@ class ProcessController extends Controller
         // die($localAmount);
         $paymentData = [
             "pp_Amount"            => number_format($localAmount * 100, 0, '', ''), // Convert to paisa
-            "pp_BillReference"     => $deposit->trx, // Use transaction ID directly as bill reference
-            "pp_CNIC"              => "", // Will be filled by user
+            "pp_BankID"            => "",
+            "pp_BillReference"     => $deposit->trx,
+            "pp_CNIC"              => "",
             "pp_Description"       => "Donation to " . $setting->site_name,
             "pp_Language"          => "EN",
             "pp_MerchantID"        => $merchantId,
-            "pp_MobileNumber"      => "", // Will be filled by user
+            "pp_MobileNumber"      => "",
             "pp_Password"          => $password,
+            "pp_ProductID"         => "",
+            "pp_SubMerchantID"     => "",
             "pp_TxnCurrency"       => "PKR",
             "pp_TxnDateTime"       => $pp_TxnDateTime,
             "pp_TxnExpiryDateTime" => $pp_TxnExpiryDateTime,
@@ -88,7 +94,7 @@ class ProcessController extends Controller
             "ppmpf_2"              => "",
             "ppmpf_3"              => "",
             "ppmpf_4"              => "",
-            "ppmpf_5"              => ""
+            "ppmpf_5"              => "",
         ];
         
         // Store transaction reference for later use
@@ -218,16 +224,18 @@ class ProcessController extends Controller
             $localAmount = (float) $deposit->final_amount;
         }
         
-        // Prepare JazzCash Wallet payment data
         $data = [
-            "pp_Amount"            => number_format($localAmount * 100, 0, '', ''), // Convert to paisa
-            "pp_BillReference"     => $deposit->trx, // Use transaction ID directly as bill reference
+            "pp_Amount"            => number_format($localAmount * 100, 0, '', ''),
+            "pp_BankID"            => "",
+            "pp_BillReference"     => $deposit->trx,
             "pp_CNIC"              => $request->cnic_last_6,
             "pp_Description"       => "Donation to " . bs()->site_name,
             "pp_Language"          => "EN",
             "pp_MerchantID"        => $merchantId,
             "pp_MobileNumber"      => $request->phone_number,
             "pp_Password"          => $password,
+            "pp_ProductID"         => "",
+            "pp_SubMerchantID"     => "",
             "pp_TxnCurrency"       => "PKR",
             "pp_TxnDateTime"       => $pp_TxnDateTime,
             "pp_TxnExpiryDateTime" => $pp_TxnExpiryDateTime,
@@ -236,26 +244,29 @@ class ProcessController extends Controller
             "ppmpf_2"              => "",
             "ppmpf_3"              => "",
             "ppmpf_4"              => "",
-            "ppmpf_5"              => ""
+            "ppmpf_5"              => "",
         ];
 
-        // Generate Secure Hash
         $data['pp_SecureHash'] = $this->generateSecureHash($data, $integritySalt);
 
-        // Determine API URL based on sandbox mode
-        $url = $sandbox ? 'https://sandbox.jazzcash.com.pk/ApplicationAPI/API/2.0/Purchase/DoMWalletTransaction' : 'https://jazzcash.com.pk/ApplicationAPI/API/2.0/Purchase/DoMWalletTransaction';
-
-        $requestHeaders = ['Content-Type' => 'application/json'];
+        $url = self::jazzCashWalletApiUrl();
+        $requestHeaders = [
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+        ];
         $startTime = microtime(true);
 
         $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-            'Content-Type: application/json'
-        ));
-        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Accept: application/json',
+            ],
+            CURLOPT_POSTFIELDS => json_encode($data),
+            CURLOPT_TIMEOUT => 30,
+        ]);
 
         // Execute and get response
         $response = curl_exec($ch);
@@ -278,11 +289,19 @@ class ProcessController extends Controller
             );
             $newTransactionId = $this->regenerateTransactionId($deposit);
             curl_close($ch);
-            $response = [
+            $response = array_merge([
                 'success' => false,
                 'message' => 'Connection error: ' . $curlError,
                 'transaction_id' => $newTransactionId,
-            ];
+            ], $logger->buildOutboundDebug(
+                $url,
+                'POST',
+                $requestHeaders,
+                $data,
+                null,
+                $httpCode ?: null,
+                $curlError
+            ));
             $logger->finalizeLog($internalLog, 'failed', $response, 500);
             return response()->json($response, 500);
         }
@@ -322,27 +341,35 @@ class ProcessController extends Controller
         $errorMessage = $responseData['pp_ResponseMessage'] ?? 'Payment failed';
         $newTransactionId = $this->regenerateTransactionId($deposit);
 
-        $response = [
+        $response = array_merge([
             'success' => false,
             'message' => $errorMessage,
             'response_code' => $responseData['pp_ResponseCode'] ?? 'UNKNOWN',
             'transaction_id' => $newTransactionId,
-        ];
+        ], $logger->buildOutboundDebug(
+            $url,
+            'POST',
+            $requestHeaders,
+            $data,
+            is_string($response) ? $response : null,
+            $httpCode
+        ));
         $logger->finalizeLog($internalLog, 'failed', $response, 400);
         return response()->json($response, 400);
     }
 
     private function generateSecureHash($data, $integritySalt)
     {
-        ksort($data); // Sort array alphabetically by keys
-        $string = '';
-        foreach ($data as $key => $value) {
-            if (!empty($value)) {
-                $string .= '&' . $value;
+        ksort($data);
+
+        $hashString = $integritySalt;
+        foreach ($data as $value) {
+            if ($value !== '') {
+                $hashString .= '&' . $value;
             }
         }
-        $string = $integritySalt . $string;
-        return strtoupper(hash_hmac('sha256', $string, $integritySalt));
+
+        return strtoupper(hash_hmac('sha256', $hashString, $integritySalt));
     }
 
     public function ipn(Request $request)

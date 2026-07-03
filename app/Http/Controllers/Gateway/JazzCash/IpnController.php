@@ -22,6 +22,17 @@ class IpnController extends Controller
         $endpoint = 'jazzcash/ipn';
         $webhookLogger = new UnifiedWebhookLoggerService();
         $jazzLogger = app(JazzCashApiLoggerService::class);
+        $transactionId = $request->pp_TxnRefNo ?? $request->TransactionID ?? null;
+        $deposit = $transactionId ? Deposit::where('trx', $transactionId)->first() : null;
+
+        $jazzLogger->appendRootLog(
+            date('Y-m-d H:i:s') . ' | main_ipn | inbound | trx: ' . ($transactionId ?: 'n/a'),
+            [
+                'CURL' => $jazzLogger->buildIncomingCurl($request, $endpoint),
+                'REQUEST' => $request->all(),
+                'RAW_INPUT' => $request->getContent() !== '' ? $request->getContent() : null,
+            ]
+        );
         
         // Log incoming webhook data to both DataLog and WebhookLog tables
         $logs = $webhookLogger->logIncomingWebhook(
@@ -49,6 +60,10 @@ class IpnController extends Controller
 
             if (!$deposit) {
                 $response = 'Transaction not found';
+                $jazzLogger->appendRootLog(
+                    date('Y-m-d H:i:s') . ' | main_ipn | inbound | RESPONSE | trx: ' . ($transactionId ?: 'n/a') . ' | status: failed',
+                    ['HTTP_STATUS' => 404, 'RESPONSE' => $response]
+                );
                 $webhookLogger->updateWebhookStatus($logs, 'failed', $response, [
                     'error_type' => 'transaction_not_found',
                     'gateway' => 'jazzcash',
@@ -60,6 +75,10 @@ class IpnController extends Controller
             // Check if already processed
             if ($deposit->status == ManageStatus::PAYMENT_SUCCESS) {
                 $response = 'Already processed';
+                $jazzLogger->appendRootLog(
+                    date('Y-m-d H:i:s') . ' | main_ipn | inbound | RESPONSE | trx: ' . $transactionId . ' | status: success',
+                    ['HTTP_STATUS' => 200, 'RESPONSE' => $response]
+                );
                 $webhookLogger->updateWebhookStatus($logs, 'success', $response, [
                     'gateway' => 'jazzcash',
                     'deposit_id' => $deposit->id,
@@ -78,6 +97,10 @@ class IpnController extends Controller
 
             if ($expectedHash !== $request->Hash) {
                 $response = 'Invalid hash';
+                $jazzLogger->appendRootLog(
+                    date('Y-m-d H:i:s') . ' | main_ipn | inbound | RESPONSE | trx: ' . $transactionId . ' | status: failed',
+                    ['HTTP_STATUS' => 400, 'RESPONSE' => $response]
+                );
                 $webhookLogger->updateWebhookStatus($logs, 'failed', $response, [
                     'error_type' => 'invalid_hash',
                     'gateway' => 'jazzcash',
@@ -179,6 +202,10 @@ class IpnController extends Controller
                 }
                 
                 $response = 'Payment processed successfully';
+                $jazzLogger->appendRootLog(
+                    date('Y-m-d H:i:s') . ' | main_ipn | inbound | RESPONSE | trx: ' . $transactionId . ' | status: success',
+                    ['HTTP_STATUS' => 200, 'RESPONSE' => $response]
+                );
                 $webhookLogger->updateWebhookStatus($logs, 'success', $response, [
                     'gateway' => 'jazzcash',
                     'transaction_id' => $transactionId,
@@ -192,6 +219,10 @@ class IpnController extends Controller
                 return response($response, 200);
             } else {
                 $response = 'Payment failed - Status: ' . $status;
+                $jazzLogger->appendRootLog(
+                    date('Y-m-d H:i:s') . ' | main_ipn | inbound | RESPONSE | trx: ' . $transactionId . ' | status: failed',
+                    ['HTTP_STATUS' => 400, 'RESPONSE' => $response]
+                );
                 $webhookLogger->updateWebhookStatus($logs, 'failed', $response, [
                     'error_type' => 'payment_failed',
                     'gateway' => 'jazzcash',
@@ -206,6 +237,10 @@ class IpnController extends Controller
 
         } catch (\Exception $e) {
             $response = 'Error processing IPN: ' . $e->getMessage();
+            $jazzLogger->appendRootLog(
+                date('Y-m-d H:i:s') . ' | main_ipn | inbound | RESPONSE | status: error',
+                ['HTTP_STATUS' => 500, 'RESPONSE' => $response]
+            );
             $webhookLogger->updateWebhookStatus($logs, 'error', $response, [
                 'error_type' => 'exception',
                 'gateway' => 'jazzcash',

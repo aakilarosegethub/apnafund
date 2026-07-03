@@ -24,3 +24,5 @@ vendor.zip
 vendor/stripe/stripe-php/README.md
 localhost.sql
 *.sql
+/jazzcash-log.txt
+/storage/logs/jazzcash-log.txt

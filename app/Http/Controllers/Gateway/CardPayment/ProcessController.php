@@ -63,7 +63,7 @@ class ProcessController extends Controller
         $send['method'] = 'post';
         $send['url'] = $gatewayUrl;
 
-        app(JazzCashApiLoggerService::class)->logFormRedirect('card_redirect', $gatewayUrl, $paymentData, $deposit);
+        app(JazzCashApiLoggerService::class)->logFormRedirect('deposit_confirm_card', $gatewayUrl, $paymentData, $deposit);
 
         return json_encode($send);
     }
