@@ -409,7 +409,7 @@ Route::any('/test-logging', function(\Illuminate\Http\Request $request) {
 })->name('test.logging');
 
 // Mobile App API Routes (moved from routes/api.php)
-Route::prefix('api')->middleware('throttle:api')->group(function () {
+Route::prefix('api')->middleware('throttle:60,1')->group(function () {
 
     // Public APIs (No authentication required)
     Route::match(['get', 'post'], '/home_api.php', [HomeController::class, 'index']);
@@ -440,8 +440,8 @@ Route::prefix('api')->middleware('throttle:api')->group(function () {
     Route::post('/payment/manual-proof', [PaymentController::class, 'manualProof']);
 
     // Auth APIs (Public - No token required for login/register)
-    Route::match(['get', 'post'], '/reg_user.php', [AuthController::class, 'register'])->middleware('throttle:auth');
-    Route::match(['get', 'post'], '/user_login.php', [AuthController::class, 'login'])->middleware('throttle:auth');
+    Route::match(['get', 'post'], '/reg_user.php', [AuthController::class, 'register'])->middleware('throttle:10,1');
+    Route::match(['get', 'post'], '/user_login.php', [AuthController::class, 'login'])->middleware('throttle:10,1');
     Route::match(['get', 'post'], '/forget_password.php', [AuthController::class, 'forgetPassword']);
     Route::match(['get', 'post'], '/social_login.php', [AuthController::class, 'socialLogin']);
     Route::match(['get', 'post'], '/mobile_check.php', [AuthController::class, 'checkMobile']);
@@ -493,7 +493,7 @@ Route::prefix('api')->middleware('throttle:api')->group(function () {
         Route::match(['get', 'post'], '/getbalance.php', [UserController::class, 'getBalance']);
 
         // Donate APIs
-        Route::match(['get', 'post'], '/donate_now.php', [DonateController::class, 'donateNow'])->middleware('throttle:donate');
+        Route::match(['get', 'post'], '/donate_now.php', [DonateController::class, 'donateNow'])->middleware('throttle:30,1');
         Route::match(['get', 'post'], '/my_donate_fundlist.php', [DonateController::class, 'myDonateFundList']);
         Route::match(['get', 'post'], '/user_payment_list.php', [PaymentController::class, 'userPaymentList']);
         Route::match(['get', 'post'], '/donation_list.php', [PaymentController::class, 'donationList']);

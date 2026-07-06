@@ -14,7 +14,7 @@ if (!env('APP_DEBUG', false)) {
     }
 }
 
-return Application::configure(basePath: dirname(__DIR__))
+$application = Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         using: function() {
             Route::namespace('App\Http\Controllers')->group(function () {
@@ -185,4 +185,6 @@ return Application::configure(basePath: dirname(__DIR__))
             
             return redirect('/');
         });
-    })->create();
+    });
+
+return $application->create();
