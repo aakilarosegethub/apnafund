@@ -259,41 +259,64 @@ class SocialLoginController extends Controller
     }
 
     /**
+     * ?test=1 bypasses auth and validation so the page can be previewed as a guest.
+     */
+    private function isTermsTestMode(Request $request): bool
+    {
+        return $request->has('test');
+    }
+
+    /**
      * Show the first-login "Confirm Account Creation / Accept Terms of Use" screen.
      * Source of truth is the persisted users.terms_accepted_at column, so the gate
      * cannot be skipped by clearing the session or navigating away.
      */
-    public function showTermsAcceptForm()
+    public function showTermsAcceptForm(Request $request)
     {
+        $termsTestMode = $this->isTermsTestMode($request);
         $user = auth()->user();
 
-        if (!$user) {
-            return redirect()->route('user.login');
-        }
+        if (!$termsTestMode) {
+            if (!$user) {
+                return redirect()->route('user.login');
+            }
 
-        // Already accepted (or a non-social account) → nothing to confirm.
-        if (!$user->needsTermsAcceptance()) {
-            session()->forget('requires_terms_accept');
-            return redirect()->route('user.dashboard');
+            // Already accepted (or a non-social account) → nothing to confirm.
+            if (!$user->needsTermsAcceptance()) {
+                session()->forget('requires_terms_accept');
+                return redirect()->route('user.dashboard');
+            }
         }
 
         $pageTitle = 'Accept Terms';
         $policyPages = getSiteData('policy_pages.element', false, null, true) ?? [];
 
-        return view($this->activeTheme . 'user.auth.terms-accept', compact('pageTitle', 'policyPages'));
+        return view($this->activeTheme . 'user.auth.terms-accept', compact('pageTitle', 'policyPages', 'termsTestMode'));
     }
 
     public function acceptTerms(Request $request)
     {
+        $termsTestMode = $this->isTermsTestMode($request);
         $user = auth()->user();
 
-        if (!$user) {
-            return redirect()->route('user.login');
-        }
+        if (!$termsTestMode) {
+            if (!$user) {
+                return redirect()->route('user.login');
+            }
 
-        $request->validate([
-            'agree' => 'required|accepted',
-        ]);
+            $request->validate([
+                'agree' => 'required|accepted',
+            ]);
+        } elseif ($user) {
+            $user->forceFill(['terms_accepted_at' => now()])->save();
+            session()->forget('requires_terms_accept');
+
+            $toast[] = ['success', 'Test mode: terms accepted.'];
+            return redirect()->route('user.dashboard')->withToasts($toast);
+        } else {
+            $toast[] = ['success', 'Test mode: terms page submitted (guest — no account updated).'];
+            return redirect()->route('user.terms.accept.form', ['test' => 1])->withToasts($toast);
+        }
 
         // Persist acceptance so the gate is permanently cleared for this account.
         $user->forceFill(['terms_accepted_at' => now()])->save();

@@ -5,11 +5,17 @@
     <div class="ks-signup-card">
         <h1 class="ks-title">Accept Terms of Use</h1>
         <p class="ks-policy mb-3">Before continuing, please confirm that you agree to our policies.</p>
+        @if(!empty($termsTestMode))
+            <p class="ks-policy mb-3" style="color:#b45309;">Test mode: login and checkbox validation are disabled.</p>
+        @endif
 
-        <form method="POST" action="{{ route('user.terms.accept') }}">
+        <form method="POST" action="{{ route('user.terms.accept', !empty($termsTestMode) ? ['test' => 1] : []) }}">
             @csrf
+            @if(!empty($termsTestMode))
+                <input type="hidden" name="test" value="1">
+            @endif
             <div class="ks-checkbox">
-                <input type="checkbox" name="agree" id="agree" value="1" required>
+                <input type="checkbox" name="agree" id="agree" value="1" @if(empty($termsTestMode)) required @endif>
                 <label for="agree">
                     I agree to the
                     <a href="{{ route('cookie.policy') }}" target="_blank">Cookie Policy</a>,

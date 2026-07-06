@@ -118,7 +118,6 @@ Route::post('/api/verify-email', 'App\Http\Controllers\User\AuthorizationControl
 Route::middleware([
     'web',
     'maintenance',
-    'auth',
     \App\Http\Middleware\PreventSensitivePageCache::class,
 ])->prefix('user')->name('user.')->group(function () {
     Route::get('terms/accept', [\App\Http\Controllers\User\Auth\SocialLoginController::class, 'showTermsAcceptForm'])->name('terms.accept.form');
