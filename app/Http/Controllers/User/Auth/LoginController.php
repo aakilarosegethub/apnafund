@@ -118,6 +118,24 @@ class LoginController extends Controller
         );
     }
 
+    /**
+     * Drop any prior "Remember Me" session when the user logs in without the checkbox.
+     * Laravel does not remove an existing remember cookie on a non-remember login, so
+     * stale cookies could otherwise keep the account auto-authenticated later.
+     */
+    protected function clearStaleRememberMe($user): void
+    {
+        $guard = $this->guard();
+
+        if (!empty($user->getRememberToken())) {
+            $user->forceFill(['remember_token' => null])->save();
+        }
+
+        $guard->getCookieJar()->queue(
+            $guard->getCookieJar()->forget($guard->getRecallerName())
+        );
+    }
+
     function logout() {
         // Forget the user on the current guard. Because the framework "logout"
         // also clears the remember cookie and cycles users.remember_token, any
@@ -138,6 +156,10 @@ class LoginController extends Controller
     }
 
     function authenticated(Request $request, $user) {
+        if (!$request->boolean('remember')) {
+            $this->clearStaleRememberMe($user);
+        }
+
         app(LoginLockoutService::class)->clearLock($user);
 
         $user->tc = $user->ts == ManageStatus::VERIFIED ? ManageStatus::UNVERIFIED : ManageStatus::VERIFIED;
