@@ -35,7 +35,7 @@ class EnsureTermsAccepted
         $user = auth()->user();
 
         // Guests are handled by the normal auth middleware; nothing to gate here.
-        if (!$user || !method_exists($user, 'needsTermsAcceptance') || !$user->needsTermsAcceptance()) {
+        if (! $user || ! method_exists($user, 'needsTermsAcceptance') || ! $user->needsTermsAcceptance()) {
             return $next($request);
         }
 

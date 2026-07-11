@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('footer_categories')) {
+        if (! Schema::hasTable('footer_categories')) {
             Schema::create('footer_categories', function (Blueprint $table) {
                 $table->id();
                 $table->string('label');

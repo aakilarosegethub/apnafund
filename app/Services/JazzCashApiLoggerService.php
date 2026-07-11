@@ -154,7 +154,7 @@ class JazzCashApiLoggerService
                 'POST',
                 ['Content-Type: application/json'],
                 $this->maskSensitive($context),
-            ) . "\n# Note: pp_MobileNumber and pp_CNIC are filled when user submits the wallet form."
+            )."\n# Note: pp_MobileNumber and pp_CNIC are filled when user submits the wallet form."
             : '# Wallet init — API URL not configured';
 
         $maskedContext = $this->maskSensitive($context);
@@ -291,7 +291,7 @@ class JazzCashApiLoggerService
         mixed $responseBody,
         ?int $httpStatus = null
     ): void {
-        if (!$logContext['webhook_log'] ?? null) {
+        if (! $logContext['webhook_log'] ?? null) {
             return;
         }
 
@@ -314,7 +314,7 @@ class JazzCashApiLoggerService
         $trx = is_array($payload) ? ($payload['transaction_id'] ?? null) : null;
 
         $this->writeFileLog(
-            date('Y-m-d H:i:s') . " | {$flow} | {$direction} | RESPONSE | trx: " . ($trx ?: 'n/a') . " | status: {$status}",
+            date('Y-m-d H:i:s')." | {$flow} | {$direction} | RESPONSE | trx: ".($trx ?: 'n/a')." | status: {$status}",
             [
                 'HTTP_STATUS' => $httpStatus,
                 'RESPONSE' => $body,
@@ -339,13 +339,13 @@ class JazzCashApiLoggerService
     public function buildCurlCommand(string $url, string $method, array $headers, array $data, bool $formEncoded = false): string
     {
         $method = strtoupper($method);
-        $lines = ["curl -X {$method} " . escapeshellarg($url)];
+        $lines = ["curl -X {$method} ".escapeshellarg($url)];
 
         foreach ($headers as $key => $value) {
             if (is_int($key)) {
-                $lines[] = '  ' . escapeshellarg($key);
+                $lines[] = '  '.escapeshellarg($key);
             } else {
-                $lines[] = '  -H ' . escapeshellarg("{$key}: {$value}");
+                $lines[] = '  -H '.escapeshellarg("{$key}: {$value}");
             }
         }
 
@@ -353,17 +353,17 @@ class JazzCashApiLoggerService
             if ($formEncoded) {
                 $pairs = [];
                 foreach ($data as $key => $value) {
-                    $pairs[] = rawurlencode((string) $key) . '=' . rawurlencode((string) $value);
+                    $pairs[] = rawurlencode((string) $key).'='.rawurlencode((string) $value);
                 }
                 $body = implode('&', $pairs);
             } else {
                 $body = json_encode($data, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-                if (!isset($headers['Content-Type']) && !in_array('Content-Type: application/json', $headers, true)) {
-                    $lines[] = '  -H ' . escapeshellarg('Content-Type: application/json');
+                if (! isset($headers['Content-Type']) && ! in_array('Content-Type: application/json', $headers, true)) {
+                    $lines[] = '  -H '.escapeshellarg('Content-Type: application/json');
                 }
             }
 
-            $lines[] = '  -d ' . escapeshellarg($body);
+            $lines[] = '  -d '.escapeshellarg($body);
         }
 
         return implode(" \\\n", $lines);
@@ -408,6 +408,7 @@ class JazzCashApiLoggerService
         if (str_contains($contentType, 'json') && $raw !== '') {
             $decoded = json_decode($raw, true);
             $data = is_array($decoded) ? $this->maskSensitive($decoded) : ['raw' => $raw];
+
             return $this->buildCurlCommand($fullUrl, $request->method(), $headers, $data);
         }
 
@@ -435,7 +436,7 @@ class JazzCashApiLoggerService
             $payload = is_array($options['payload'] ?? null) ? $options['payload'] : [];
 
             return WebhookLog::create([
-                'webhook_type' => 'jazzcash_' . ($options['flow'] ?? 'unknown'),
+                'webhook_type' => 'jazzcash_'.($options['flow'] ?? 'unknown'),
                 'url' => $options['url'] ?? '',
                 'method' => $options['method'] ?? 'POST',
                 'headers' => $options['headers'] ?? [],
@@ -463,6 +464,7 @@ class JazzCashApiLoggerService
             ]);
         } catch (\Throwable $e) {
             report($e);
+
             return null;
         }
     }
@@ -491,7 +493,7 @@ class JazzCashApiLoggerService
 
     private function fallbackFileLogPath(): string
     {
-        return storage_path('logs/' . self::FILE_LOG_NAME);
+        return storage_path('logs/'.self::FILE_LOG_NAME);
     }
 
     private function resolveWritableLogPath(): string
@@ -506,7 +508,7 @@ class JazzCashApiLoggerService
         $fallback = $this->fallbackFileLogPath();
         $fallbackDir = dirname($fallback);
 
-        if (!is_dir($fallbackDir)) {
+        if (! is_dir($fallbackDir)) {
             @mkdir($fallbackDir, 0775, true);
         }
 
@@ -527,15 +529,15 @@ class JazzCashApiLoggerService
         ];
 
         if ($deposit?->trx) {
-            $parts[] = 'trx: ' . $deposit->trx;
+            $parts[] = 'trx: '.$deposit->trx;
         }
 
         if ($httpCode !== null) {
-            $parts[] = 'HTTP ' . $httpCode;
+            $parts[] = 'HTTP '.$httpCode;
         }
 
         if ($status !== null) {
-            $parts[] = 'status: ' . $status;
+            $parts[] = 'status: '.$status;
         }
 
         return implode(' | ', $parts);
@@ -560,15 +562,17 @@ class JazzCashApiLoggerService
                 }
 
                 $lines[] = '';
-                $lines[] = '--- ' . strtoupper((string) $label) . ' ---';
+                $lines[] = '--- '.strtoupper((string) $label).' ---';
 
                 if (is_string($content)) {
                     $lines[] = $content;
+
                     continue;
                 }
 
                 if (is_array($content)) {
                     $lines[] = json_encode($content, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
                     continue;
                 }
 
@@ -580,17 +584,17 @@ class JazzCashApiLoggerService
             $written = false;
             foreach ([$this->fileLogPath(), $this->fallbackFileLogPath()] as $target) {
                 $directory = dirname($target);
-                if (!is_dir($directory)) {
+                if (! is_dir($directory)) {
                     @mkdir($directory, 0775, true);
                 }
-                if (!is_dir($directory) || !is_writable($directory)) {
+                if (! is_dir($directory) || ! is_writable($directory)) {
                     continue;
                 }
                 file_put_contents($target, implode("\n", $lines), FILE_APPEND | LOCK_EX);
                 $written = true;
             }
 
-            if (!$written) {
+            if (! $written) {
                 \Log::channel('payments')->warning('JazzCash file log could not be written', [
                     'paths' => [$this->fileLogPath(), $this->fallbackFileLogPath()],
                 ]);

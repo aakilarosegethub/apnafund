@@ -68,7 +68,7 @@ return new class extends Migration
                 'home_faq_subtitle',
                 'home_community_title',
                 'home_community_description',
-                'home_community_button_text'
+                'home_community_button_text',
             ]);
         });
     }

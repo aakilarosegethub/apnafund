@@ -17,12 +17,12 @@ return new class extends Migration
             $table->string('business_name')->nullable()->after('business_type');
             $table->text('business_description')->nullable()->after('business_name');
             $table->string('industry')->nullable()->after('business_description');
-            
+
             // Funding Information Fields
             $table->string('funding_amount')->nullable()->after('industry');
             $table->string('fund_usage')->nullable()->after('funding_amount');
             $table->string('campaign_duration')->nullable()->after('fund_usage');
-            
+
             // Additional Contact Information
             $table->string('phone')->nullable()->after('mobile');
         });
@@ -36,13 +36,13 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->dropColumn([
                 'business_type',
-                'business_name', 
+                'business_name',
                 'business_description',
                 'industry',
                 'funding_amount',
                 'fund_usage',
                 'campaign_duration',
-                'phone'
+                'phone',
             ]);
         });
     }

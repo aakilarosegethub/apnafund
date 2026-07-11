@@ -60,13 +60,13 @@ class CampaignGoalReachedEmailTemplateSeeder extends Seeder
             </div>
         </div>',
             [
-                'campaign_name'   => 'Campaign title',
-                'campaign_url'    => 'Public campaign URL',
-                'goal_amount'     => 'Goal amount (formatted)',
-                'raised_amount'   => 'Raised amount (formatted)',
-                'creator_name'    => 'Campaign creator name',
-                'creator_email'   => 'Campaign creator email',
-                'admin_url'       => 'Admin campaigns URL',
+                'campaign_name' => 'Campaign title',
+                'campaign_url' => 'Public campaign URL',
+                'goal_amount' => 'Goal amount (formatted)',
+                'raised_amount' => 'Raised amount (formatted)',
+                'creator_name' => 'Campaign creator name',
+                'creator_email' => 'Campaign creator email',
+                'admin_url' => 'Admin campaigns URL',
             ]
         );
 
@@ -113,13 +113,13 @@ class CampaignGoalReachedEmailTemplateSeeder extends Seeder
             </div>
         </div>',
             [
-                'campaign_name'   => 'Campaign title',
-                'campaign_url'    => 'Public campaign URL',
-                'goal_amount'     => 'Goal amount (formatted)',
-                'raised_amount'   => 'Raised amount (formatted)',
-                'creator_name'    => 'Campaign creator name',
-                'creator_email'   => 'Campaign creator email',
-                'admin_url'       => 'Admin campaigns URL',
+                'campaign_name' => 'Campaign title',
+                'campaign_url' => 'Public campaign URL',
+                'goal_amount' => 'Goal amount (formatted)',
+                'raised_amount' => 'Raised amount (formatted)',
+                'creator_name' => 'Campaign creator name',
+                'creator_email' => 'Campaign creator email',
+                'admin_url' => 'Admin campaigns URL',
             ]
         );
 
@@ -132,22 +132,22 @@ class CampaignGoalReachedEmailTemplateSeeder extends Seeder
 
         if ($template) {
             $template->update([
-                'subj'         => $subject,
-                'email_body'   => $body,
-                'shortcodes'   => json_encode($shortcodes),
+                'subj' => $subject,
+                'email_body' => $body,
+                'shortcodes' => json_encode($shortcodes),
                 'email_status' => ManageStatus::ACTIVE,
-                'sms_status'   => ManageStatus::INACTIVE,
+                'sms_status' => ManageStatus::INACTIVE,
             ]);
             echo "Template {$act} updated successfully!\n";
         } else {
             NotificationTemplate::create([
-                'act'          => $act,
-                'name'         => ucwords(str_replace('_', ' ', $act)),
-                'subj'         => $subject,
-                'email_body'   => $body,
-                'shortcodes'   => json_encode($shortcodes),
+                'act' => $act,
+                'name' => ucwords(str_replace('_', ' ', $act)),
+                'subj' => $subject,
+                'email_body' => $body,
+                'shortcodes' => json_encode($shortcodes),
                 'email_status' => ManageStatus::ACTIVE,
-                'sms_status'   => ManageStatus::INACTIVE,
+                'sms_status' => ManageStatus::INACTIVE,
             ]);
             echo "Template {$act} created successfully!\n";
         }

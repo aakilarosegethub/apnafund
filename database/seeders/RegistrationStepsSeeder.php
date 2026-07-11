@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\RegistrationStep;
 use App\Models\RegistrationQuestion;
+use App\Models\RegistrationStep;
+use Illuminate\Database\Seeder;
 
 class RegistrationStepsSeeder extends Seeder
 {
@@ -19,7 +19,7 @@ class RegistrationStepsSeeder extends Seeder
             'subtitle' => 'This helps us understand your funding needs better',
             'step_order' => 1,
             'is_active' => true,
-            'is_required' => true
+            'is_required' => true,
         ]);
 
         RegistrationQuestion::create([
@@ -39,9 +39,9 @@ class RegistrationStepsSeeder extends Seeder
                 ['value' => 'manufacturing', 'label' => 'Manufacturing'],
                 ['value' => 'retail', 'label' => 'Retail Business'],
                 ['value' => 'service', 'label' => 'Service Business'],
-                ['value' => 'other', 'label' => 'Other']
+                ['value' => 'other', 'label' => 'Other'],
             ],
-            'is_active' => true
+            'is_active' => true,
         ]);
 
         // Step 2: Business Details
@@ -50,7 +50,7 @@ class RegistrationStepsSeeder extends Seeder
             'subtitle' => 'Share your story and vision',
             'step_order' => 2,
             'is_active' => true,
-            'is_required' => true
+            'is_required' => true,
         ]);
 
         RegistrationQuestion::create([
@@ -61,7 +61,7 @@ class RegistrationStepsSeeder extends Seeder
             'placeholder' => 'Enter your business name',
             'is_required' => true,
             'order' => 1,
-            'is_active' => true
+            'is_active' => true,
         ]);
 
         RegistrationQuestion::create([
@@ -72,7 +72,7 @@ class RegistrationStepsSeeder extends Seeder
             'placeholder' => 'Describe what your business does, your mission, and what makes you unique',
             'is_required' => true,
             'order' => 2,
-            'is_active' => true
+            'is_active' => true,
         ]);
 
         RegistrationQuestion::create([
@@ -93,9 +93,9 @@ class RegistrationStepsSeeder extends Seeder
                 ['value' => 'food-beverage', 'label' => 'Food & Beverage'],
                 ['value' => 'creative-arts', 'label' => 'Creative Arts'],
                 ['value' => 'environmental', 'label' => 'Environmental'],
-                ['value' => 'other', 'label' => 'Other']
+                ['value' => 'other', 'label' => 'Other'],
             ],
-            'is_active' => true
+            'is_active' => true,
         ]);
 
         // Step 3: Funding Details
@@ -104,7 +104,7 @@ class RegistrationStepsSeeder extends Seeder
             'subtitle' => 'Help us understand your financial needs',
             'step_order' => 3,
             'is_active' => true,
-            'is_required' => true
+            'is_required' => true,
         ]);
 
         RegistrationQuestion::create([
@@ -121,9 +121,9 @@ class RegistrationStepsSeeder extends Seeder
                 ['value' => '50k-100k', 'label' => '$50,000 - $100,000'],
                 ['value' => '100k-500k', 'label' => '$100,000 - $500,000'],
                 ['value' => '500k-1m', 'label' => '$500,000 - $1,000,000'],
-                ['value' => 'over-1m', 'label' => 'Over $1,000,000']
+                ['value' => 'over-1m', 'label' => 'Over $1,000,000'],
             ],
-            'is_active' => true
+            'is_active' => true,
         ]);
 
         RegistrationQuestion::create([
@@ -142,9 +142,9 @@ class RegistrationStepsSeeder extends Seeder
                 ['value' => 'expansion', 'label' => 'Business Expansion'],
                 ['value' => 'research', 'label' => 'Research & Development'],
                 ['value' => 'operating-costs', 'label' => 'Operating Costs'],
-                ['value' => 'other', 'label' => 'Other']
+                ['value' => 'other', 'label' => 'Other'],
             ],
-            'is_active' => true
+            'is_active' => true,
         ]);
 
         RegistrationQuestion::create([
@@ -159,9 +159,9 @@ class RegistrationStepsSeeder extends Seeder
                 ['value' => '30-days', 'label' => '30 days'],
                 ['value' => '60-days', 'label' => '60 days'],
                 ['value' => '90-days', 'label' => '90 days'],
-                ['value' => '120-days', 'label' => '120 days']
+                ['value' => '120-days', 'label' => '120 days'],
             ],
-            'is_active' => true
+            'is_active' => true,
         ]);
 
         // Step 4: Contact Information
@@ -170,7 +170,7 @@ class RegistrationStepsSeeder extends Seeder
             'subtitle' => 'We\'ll use this to keep you updated',
             'step_order' => 4,
             'is_active' => true,
-            'is_required' => true
+            'is_required' => true,
         ]);
 
         RegistrationQuestion::create([
@@ -182,7 +182,7 @@ class RegistrationStepsSeeder extends Seeder
             'is_required' => true,
             'order' => 1,
             'validation_rules' => ['min:2', 'regex:/^[a-zA-Z\s]+$/'],
-            'is_active' => true
+            'is_active' => true,
         ]);
 
         RegistrationQuestion::create([
@@ -194,7 +194,7 @@ class RegistrationStepsSeeder extends Seeder
             'is_required' => true,
             'order' => 2,
             'validation_rules' => ['min:2', 'regex:/^[a-zA-Z\s]+$/'],
-            'is_active' => true
+            'is_active' => true,
         ]);
 
         RegistrationQuestion::create([
@@ -206,7 +206,7 @@ class RegistrationStepsSeeder extends Seeder
             'help_text' => 'Format will be applied based on your country selection',
             'is_required' => true,
             'order' => 3,
-            'is_active' => true
+            'is_active' => true,
         ]);
 
         RegistrationQuestion::create([
@@ -217,7 +217,7 @@ class RegistrationStepsSeeder extends Seeder
             'placeholder' => 'Select your country',
             'is_required' => true,
             'order' => 4,
-            'is_active' => true
+            'is_active' => true,
         ]);
 
         // Step 5: Account Creation
@@ -226,7 +226,7 @@ class RegistrationStepsSeeder extends Seeder
             'subtitle' => 'Set up your login credentials',
             'step_order' => 5,
             'is_active' => true,
-            'is_required' => true
+            'is_required' => true,
         ]);
 
         RegistrationQuestion::create([
@@ -238,7 +238,7 @@ class RegistrationStepsSeeder extends Seeder
             'is_required' => true,
             'order' => 1,
             'validation_rules' => ['max:100'],
-            'is_active' => true
+            'is_active' => true,
         ]);
 
         RegistrationQuestion::create([
@@ -250,7 +250,7 @@ class RegistrationStepsSeeder extends Seeder
             'is_required' => true,
             'order' => 2,
             'validation_rules' => ['min:8', 'max:50', 'regex:/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/'],
-            'is_active' => true
+            'is_active' => true,
         ]);
 
         RegistrationQuestion::create([
@@ -261,7 +261,7 @@ class RegistrationStepsSeeder extends Seeder
             'placeholder' => 'Confirm your password',
             'is_required' => true,
             'order' => 3,
-            'is_active' => true
+            'is_active' => true,
         ]);
 
         RegistrationQuestion::create([
@@ -271,7 +271,7 @@ class RegistrationStepsSeeder extends Seeder
             'type' => 'checkbox',
             'is_required' => true,
             'order' => 4,
-            'is_active' => true
+            'is_active' => true,
         ]);
     }
 }

@@ -41,7 +41,7 @@ return new class extends Migration
         Schema::table('settings', function (Blueprint $table) {
             $table->dropColumn([
                 'site_cur',
-                'cur_sym', 
+                'cur_sym',
                 'fraction_digit',
                 'first_color',
                 'second_color',
@@ -56,8 +56,8 @@ return new class extends Migration
                 'sc',
                 'sa',
                 'language',
-                'per_page_item'
+                'per_page_item',
             ]);
         });
     }
-}; 
+};

@@ -46,7 +46,7 @@ class LoginLockoutService
             $q->where('mobile', $mobile)->orWhere('email', $mobile);
         });
 
-        if (!$isEmail && $ccode !== null && $ccode !== '') {
+        if (! $isEmail && $ccode !== null && $ccode !== '') {
             $query->where('country_code', ltrim($ccode, '+'));
         }
 
@@ -55,11 +55,11 @@ class LoginLockoutService
 
     public function isBlocked(?User $user): bool
     {
-        if (!$user || !$this->isEnabled()) {
+        if (! $user || ! $this->isEnabled()) {
             return false;
         }
 
-        if (!$user->blocked_until) {
+        if (! $user->blocked_until) {
             return false;
         }
 
@@ -90,11 +90,11 @@ class LoginLockoutService
 
     public function recordFailedAttempt(?User $user, ?Request $request = null): void
     {
-        if (!$user || !$this->isEnabled()) {
+        if (! $user || ! $this->isEnabled()) {
             return;
         }
 
-        if (!\Illuminate\Support\Facades\Schema::hasColumn('users', 'failed_login_attempts')) {
+        if (! \Illuminate\Support\Facades\Schema::hasColumn('users', 'failed_login_attempts')) {
             return;
         }
 
@@ -116,11 +116,11 @@ class LoginLockoutService
 
     public function clearLock(?User $user): void
     {
-        if (!$user) {
+        if (! $user) {
             return;
         }
 
-        if (!\Illuminate\Support\Facades\Schema::hasColumn('users', 'failed_login_attempts')) {
+        if (! \Illuminate\Support\Facades\Schema::hasColumn('users', 'failed_login_attempts')) {
             return;
         }
 
@@ -131,11 +131,11 @@ class LoginLockoutService
 
     protected function sendSecurityAlert(User $user, ?Request $request = null): void
     {
-        if (!($this->settings()['email_enabled'] ?? false)) {
+        if (! ($this->settings()['email_enabled'] ?? false)) {
             return;
         }
 
-        if (empty($user->email) || !filter_var($user->email, FILTER_VALIDATE_EMAIL)) {
+        if (empty($user->email) || ! filter_var($user->email, FILTER_VALIDATE_EMAIL)) {
             return;
         }
 
@@ -145,16 +145,16 @@ class LoginLockoutService
 
         try {
             notify($user, 'LOGIN_SECURITY_ALERT', [
-                'name'             => $user->fullname ?: $user->username,
-                'attempts'         => (string) $settings['max_attempts'],
-                'lock_minutes'     => (string) $settings['lock_duration'],
-                'blocked_until'    => showDateTime($user->blocked_until),
-                'ip'               => $ipInfo['ip'] ?? ($request?->ip() ?? 'N/A'),
-                'browser'          => $osBrowser['browser'] ?? 'Unknown',
+                'name' => $user->fullname ?: $user->username,
+                'attempts' => (string) $settings['max_attempts'],
+                'lock_minutes' => (string) $settings['lock_duration'],
+                'blocked_until' => showDateTime($user->blocked_until),
+                'ip' => $ipInfo['ip'] ?? ($request?->ip() ?? 'N/A'),
+                'browser' => $osBrowser['browser'] ?? 'Unknown',
                 'operating_system' => $osBrowser['os_platform'] ?? 'Unknown',
             ], ['email']);
         } catch (\Throwable $e) {
-            \Log::warning('Login lock security email failed: ' . $e->getMessage(), ['user_id' => $user->id]);
+            \Log::warning('Login lock security email failed: '.$e->getMessage(), ['user_id' => $user->id]);
         }
     }
 }

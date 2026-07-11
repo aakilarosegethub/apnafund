@@ -24,7 +24,7 @@ class WebhookLogController extends Controller
     public function index(Request $request)
     {
         $pageTitle = 'Webhook Logs Dashboard';
-        
+
         // Get statistics
         $statistics = $this->webhookLogger->getWebhookStatistics();
         $stats = [
@@ -33,17 +33,17 @@ class WebhookLogController extends Controller
             'failed_requests' => ($statistics['data_logs']['failed_requests'] ?? 0) + ($statistics['webhook_logs']['failed_webhooks'] ?? 0),
             'error_requests' => ($statistics['data_logs']['error_requests'] ?? 0) + ($statistics['webhook_logs']['pending_webhooks'] ?? 0),
         ];
-        
+
         // Get recent logs
         $recentLogs = $this->webhookLogger->getRecentWebhookLogs(50);
-        
+
         // Filter parameters
         $type = $request->get('type');
         $status = $request->get('status');
         $gateway = $request->get('gateway');
         $dateFrom = $request->get('date_from');
         $dateTo = $request->get('date_to');
-        
+
         // Build query for DataLogs
         $dataLogsQuery = DataLog::query();
         if ($type) {
@@ -67,7 +67,7 @@ class WebhookLogController extends Controller
         if ($dateTo) {
             $dataLogsQuery->whereDate('created_at', '<=', $dateTo);
         }
-        
+
         // Build query for WebhookLogs
         $webhookLogsQuery = WebhookLog::query();
         if ($type) {
@@ -94,10 +94,10 @@ class WebhookLogController extends Controller
         if ($dateTo) {
             $webhookLogsQuery->whereDate('created_at', '<=', $dateTo);
         }
-        
+
         $dataLogs = $dataLogsQuery->latest()->paginate(20, ['*'], 'data_logs_page');
         $webhookLogs = $webhookLogsQuery->latest()->paginate(20, ['*'], 'webhook_logs_page');
-        
+
         return view('admin.webhook_logs.index', compact(
             'pageTitle',
             'statistics',
@@ -131,13 +131,13 @@ class WebhookLogController extends Controller
     {
         $pageTitle = 'Webhook Log Details';
         $type = $request->get('type', 'data_log');
-        
+
         if ($type === 'webhook_log') {
             $log = WebhookLog::with(['user', 'campaign'])->findOrFail($id);
         } else {
             $log = DataLog::findOrFail($id);
         }
-        
+
         return view('admin.webhook_logs.show', compact('pageTitle', 'log', 'type'));
     }
 
@@ -148,19 +148,20 @@ class WebhookLogController extends Controller
     {
         try {
             $statistics = $this->webhookLogger->getWebhookStatistics();
+
             return response()->json([
                 'success' => true,
-                'data' => $statistics
+                'data' => $statistics,
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to get webhook statistics', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
-            
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to get statistics'
+                'message' => 'Failed to get statistics',
             ], 500);
         }
     }
@@ -172,37 +173,37 @@ class WebhookLogController extends Controller
     {
         try {
             $webhookLog = WebhookLog::findOrFail($id);
-            
+
             if ($webhookLog->status === 'success') {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Webhook already successful'
+                    'message' => 'Webhook already successful',
                 ], 400);
             }
-            
+
             // Use the existing WebhookLoggerService to retry
-            $webhookLoggerService = new \App\Services\WebhookLoggerService();
+            $webhookLoggerService = new \App\Services\WebhookLoggerService;
             $retryResult = $webhookLoggerService->retryWebhook($webhookLog);
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Webhook retry initiated',
                 'data' => [
                     'new_webhook_id' => $retryResult->id,
-                    'status' => $retryResult->status
-                ]
+                    'status' => $retryResult->status,
+                ],
             ]);
-            
+
         } catch (\Exception $e) {
             Log::error('Failed to retry webhook', [
                 'webhook_id' => $id,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
-            
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to retry webhook'
+                'message' => 'Failed to retry webhook',
             ], 500);
         }
     }
@@ -215,23 +216,23 @@ class WebhookLogController extends Controller
         try {
             $days = $request->get('days', 30);
             $result = $this->webhookLogger->cleanupOldLogs($days);
-            
+
             return response()->json([
                 'success' => true,
                 'message' => "Cleaned up {$result['total_deleted']} old webhook logs",
-                'data' => $result
+                'data' => $result,
             ]);
-            
+
         } catch (\Exception $e) {
             Log::error('Failed to cleanup webhook logs', [
                 'days' => $request->get('days', 30),
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
-            
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to cleanup webhook logs'
+                'message' => 'Failed to cleanup webhook logs',
             ], 500);
         }
     }
@@ -246,9 +247,9 @@ class WebhookLogController extends Controller
             $format = $request->get('format', 'csv'); // csv or json
             $dateFrom = $request->get('date_from');
             $dateTo = $request->get('date_to');
-            
+
             $data = [];
-            
+
             if ($type === 'data_log' || $type === 'both') {
                 $dataLogsQuery = DataLog::query();
                 if ($dateFrom) {
@@ -257,11 +258,11 @@ class WebhookLogController extends Controller
                 if ($dateTo) {
                     $dataLogsQuery->whereDate('created_at', '<=', $dateTo);
                 }
-                
+
                 $dataLogs = $dataLogsQuery->latest()->get();
                 $data['data_logs'] = $dataLogs->toArray();
             }
-            
+
             if ($type === 'webhook_log' || $type === 'both') {
                 $webhookLogsQuery = WebhookLog::query();
                 if ($dateFrom) {
@@ -270,11 +271,11 @@ class WebhookLogController extends Controller
                 if ($dateTo) {
                     $webhookLogsQuery->whereDate('created_at', '<=', $dateTo);
                 }
-                
+
                 $webhookLogs = $webhookLogsQuery->latest()->get();
                 $data['webhook_logs'] = $webhookLogs->toArray();
             }
-            
+
             if ($format === 'json') {
                 return response()->json($data);
             } else {
@@ -282,21 +283,21 @@ class WebhookLogController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'CSV export feature coming soon',
-                    'data' => $data
+                    'data' => $data,
                 ]);
             }
-            
+
         } catch (\Exception $e) {
             Log::error('Failed to export webhook logs', [
                 'type' => $request->get('type'),
                 'format' => $request->get('format'),
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
-            
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to export webhook logs'
+                'message' => 'Failed to export webhook logs',
             ], 500);
         }
     }
@@ -311,22 +312,22 @@ class WebhookLogController extends Controller
                 ->with(['user', 'campaign'])
                 ->latest()
                 ->paginate(20);
-            
+
             return response()->json([
                 'success' => true,
-                'data' => $webhookLogs
+                'data' => $webhookLogs,
             ]);
-            
+
         } catch (\Exception $e) {
             Log::error('Failed to get webhook logs by gateway', [
                 'gateway' => $gateway,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
-            
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to get webhook logs'
+                'message' => 'Failed to get webhook logs',
             ], 500);
         }
     }
@@ -342,25 +343,25 @@ class WebhookLogController extends Controller
                 ->with(['user', 'campaign'])
                 ->latest()
                 ->paginate(20);
-            
+
             return response()->json([
                 'success' => true,
                 'data' => [
                     'data_logs' => $dataLogs,
-                    'webhook_logs' => $webhookLogs
-                ]
+                    'webhook_logs' => $webhookLogs,
+                ],
             ]);
-            
+
         } catch (\Exception $e) {
             Log::error('Failed to get webhook logs by status', [
                 'status' => $status,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
-            
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to get webhook logs'
+                'message' => 'Failed to get webhook logs',
             ], 500);
         }
     }

@@ -11,26 +11,26 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasColumn('transactions', 'reward_id')) {
+        if (! Schema::hasColumn('transactions', 'reward_id')) {
             Schema::table('transactions', function (Blueprint $table) {
                 $table->unsignedBigInteger('reward_id')->nullable()->after('remark');
             });
         }
 
-        if (!Schema::hasColumn('transactions', 'reward_fulfilled')) {
+        if (! Schema::hasColumn('transactions', 'reward_fulfilled')) {
             Schema::table('transactions', function (Blueprint $table) {
                 $table->boolean('reward_fulfilled')->default(false)->after('reward_id');
             });
         }
 
-        if (!Schema::hasColumn('transactions', 'reward_fulfilled_at')) {
+        if (! Schema::hasColumn('transactions', 'reward_fulfilled_at')) {
             Schema::table('transactions', function (Blueprint $table) {
                 $table->timestamp('reward_fulfilled_at')->nullable()->after('reward_fulfilled');
             });
         }
 
-        if (!Schema::hasColumn('transactions', 'reward_fulfillment_note')) {
-        Schema::table('transactions', function (Blueprint $table) {
+        if (! Schema::hasColumn('transactions', 'reward_fulfillment_note')) {
+            Schema::table('transactions', function (Blueprint $table) {
                 $table->text('reward_fulfillment_note')->nullable()->after('reward_fulfilled_at');
             });
         }

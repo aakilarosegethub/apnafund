@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -13,7 +13,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('currencies', function (Blueprint $table) {
-            if (!Schema::hasColumn('currencies', 'source')) {
+            if (! Schema::hasColumn('currencies', 'source')) {
                 $table->string('source', 20)->default('default')->after('rate_to_usd');
             }
         });

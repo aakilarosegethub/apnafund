@@ -24,4 +24,3 @@ return new class extends Migration
         Schema::dropIfExists('campaign_document_fields');
     }
 };
-

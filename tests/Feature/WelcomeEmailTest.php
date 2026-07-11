@@ -2,11 +2,11 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
 use App\Models\User;
 use App\Notifications\WelcomeNotification;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
+use Tests\TestCase;
 
 class WelcomeEmailTest extends TestCase
 {
@@ -30,7 +30,7 @@ class WelcomeEmailTest extends TestCase
             'country' => 'United States',
             'business_name' => 'Test Business',
             'business_type' => 'Startup',
-            'industry' => 'Technology'
+            'industry' => 'Technology',
         ];
 
         // Create user
@@ -40,7 +40,7 @@ class WelcomeEmailTest extends TestCase
             'email' => $userData['email'],
             'username' => $userData['username'],
             'password' => bcrypt($userData['password']),
-            'mobile' => $userData['mobile_code'] . $userData['mobile'],
+            'mobile' => $userData['mobile_code'].$userData['mobile'],
             'country_code' => $userData['country_code'],
             'country_name' => $userData['country'],
             'business_name' => $userData['business_name'],
@@ -50,7 +50,7 @@ class WelcomeEmailTest extends TestCase
             'ec' => 0,
             'sc' => 0,
             'ts' => 0,
-            'tc' => 1
+            'tc' => 1,
         ]);
 
         // Send welcome email
@@ -69,7 +69,7 @@ class WelcomeEmailTest extends TestCase
             'username' => 'janesmith',
             'business_name' => 'Smith Enterprises',
             'business_type' => 'Corporation',
-            'industry' => 'Finance'
+            'industry' => 'Finance',
         ]);
 
         $notification = new WelcomeNotification($user);

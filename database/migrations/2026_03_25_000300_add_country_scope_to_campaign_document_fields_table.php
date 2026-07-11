@@ -9,10 +9,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('campaign_document_fields', function (Blueprint $table) {
-            if (!Schema::hasColumn('campaign_document_fields', 'is_global')) {
+            if (! Schema::hasColumn('campaign_document_fields', 'is_global')) {
                 $table->boolean('is_global')->default(true)->after('is_active');
             }
-            if (!Schema::hasColumn('campaign_document_fields', 'countries')) {
+            if (! Schema::hasColumn('campaign_document_fields', 'countries')) {
                 $table->json('countries')->nullable()->after('is_global');
             }
         });
@@ -30,4 +30,3 @@ return new class extends Migration
         });
     }
 };
-

@@ -2,16 +2,15 @@
 
 namespace App\Http\Controllers\User\Auth;
 
-use App\Http\Controllers\Controller;
-use App\Services\FirebaseService;
-use App\Models\User;
 use App\Constants\ManageStatus;
-use App\Notifications\WelcomeNotification;
+use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Services\FirebaseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 
 class OTPController extends Controller
@@ -30,14 +29,15 @@ class OTPController extends Controller
      */
     protected function getFirebaseService()
     {
-        if (!$this->firebaseService) {
+        if (! $this->firebaseService) {
             try {
                 $this->firebaseService = app(FirebaseService::class);
             } catch (\Exception $e) {
-                Log::error('Firebase service not available: ' . $e->getMessage());
+                Log::error('Firebase service not available: '.$e->getMessage());
                 throw new \Exception('Phone OTP service is not available. Please use email registration instead.');
             }
         }
+
         return $this->firebaseService;
     }
 
@@ -51,6 +51,7 @@ class OTPController extends Controller
         }
 
         $pageTitle = 'Phone Login';
+
         return view('user.auth.otp-login', compact('pageTitle'));
     }
 
@@ -77,7 +78,7 @@ class OTPController extends Controller
                 ], 422);
             }
 
-            if (loadReCaptcha() && !verifyCaptcha()) {
+            if (loadReCaptcha() && ! verifyCaptcha()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Invalid captcha provided.',
@@ -98,27 +99,28 @@ class OTPController extends Controller
 
                         // Send verification email
                         notify($user, 'EVER_CODE', [
-                            'code' => $otpCode
+                            'code' => $otpCode,
                         ], ['email']);
 
-                        Log::info('Email OTP resent to existing user: ' . $email);
+                        Log::info('Email OTP resent to existing user: '.$email);
 
                         return response()->json([
                             'success' => true,
                             'message' => 'Verification code has been sent to your email address.',
-                            'email' => $email
+                            'email' => $email,
                         ]);
                     } catch (\Exception $e) {
-                        Log::error('Failed to resend email OTP: ' . $e->getMessage());
+                        Log::error('Failed to resend email OTP: '.$e->getMessage());
+
                         return response()->json([
                             'success' => false,
-                            'message' => 'Failed to send verification code. Please try again.'
+                            'message' => 'Failed to send verification code. Please try again.',
                         ], 500);
                     }
                 } else {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Email address is already registered. Please use a different email or log in.'
+                        'message' => 'Email address is already registered. Please use a different email or log in.',
                     ], 422);
                 }
             }
@@ -126,7 +128,7 @@ class OTPController extends Controller
             // Parse name into firstname/lastname
             $firstname = $request->firstname ?? 'User';
             $lastname = $request->lastname ?? '';
-            
+
             // If firstname/lastname are defaults but name is provided, split name
             if (($firstname === 'User' && $lastname === 'User') || ($firstname === 'User' && empty($lastname))) {
                 [$firstname, $lastname] = splitRegistrationName(trim($request->name ?? ''));
@@ -137,15 +139,15 @@ class OTPController extends Controller
 
             // Generate username from email
             $username = $request->username ?? $this->generateUsernameFromEmail($email);
-            
+
             // Check if username exists and make it unique
             while (User::where('username', $username)->exists()) {
-                $username = $username . rand(100, 999);
+                $username = $username.rand(100, 999);
             }
 
             // Generate OTP code
             $otpCode = verificationCode(6);
-            
+
             // Get settings to check email verification status
             $setting = bs();
             $ecStatus = $setting->ec ? ManageStatus::UNVERIFIED : ManageStatus::VERIFIED;
@@ -158,7 +160,7 @@ class OTPController extends Controller
                     'email' => $email,
                     'username' => $username,
                     'password' => Hash::make($request->password),
-                    'mobile' => ($request->mobile_code ?? '') . ($request->mobile ?? ''),
+                    'mobile' => ($request->mobile_code ?? '').($request->mobile ?? ''),
                     'country_code' => $request->country_code ?? 'PK',
                     'country_name' => $request->country ?? 'Pakistan',
                     'kc' => $setting->kc ? ManageStatus::NO : ManageStatus::YES,
@@ -173,22 +175,22 @@ class OTPController extends Controller
 
                 // Send email OTP
                 notify($user, 'EVER_CODE', [
-                    'code' => $otpCode
+                    'code' => $otpCode,
                 ], ['email']);
 
-                Log::info('Email OTP sent to: ' . $email . ' for registration (user ID: ' . $user->id . ')');
+                Log::info('Email OTP sent to: '.$email.' for registration (user ID: '.$user->id.')');
 
                 return response()->json([
                     'success' => true,
                     'message' => 'Verification code has been sent to your email address.',
-                    'email' => $email
+                    'email' => $email,
                 ]);
             } catch (\Exception $e) {
-                Log::error('Failed to create user or send email OTP: ' . $e->getMessage());
-                
+                Log::error('Failed to create user or send email OTP: '.$e->getMessage());
+
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to register. Please try again.'
+                    'message' => 'Failed to register. Please try again.',
                 ], 500);
             }
         } else {
@@ -198,7 +200,7 @@ class OTPController extends Controller
             } catch (\Exception $e) {
                 return response()->json([
                     'success' => false,
-                    'message' => $e->getMessage()
+                    'message' => $e->getMessage(),
                 ], 503);
             }
 
@@ -210,39 +212,39 @@ class OTPController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation failed',
-                    'errors' => $validator->errors()
+                    'errors' => $validator->errors(),
                 ], 422);
             }
 
             $phoneNumber = $request->phone_number;
 
             // Validate phone number format
-            if (!$firebaseService->validatePhoneNumber($phoneNumber)) {
+            if (! $firebaseService->validatePhoneNumber($phoneNumber)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Invalid phone number format. Please enter a valid phone number.'
+                    'message' => 'Invalid phone number format. Please enter a valid phone number.',
                 ], 422);
             }
 
             // Send OTP using Firebase
             $result = $firebaseService->sendOTP($phoneNumber);
 
-                if ($result['success']) {
-                    // Store verification ID in session for verification
-                    session(['otp_verification_id' => $result['verification_id']]);
-                    session(['otp_phone_number' => $result['phone_number']]);
-
-                    return response()->json([
-                        'success' => true,
-                        'message' => 'OTP sent successfully to ' . $result['phone_number']
-                    ]);
-                }
+            if ($result['success']) {
+                // Store verification ID in session for verification
+                session(['otp_verification_id' => $result['verification_id']]);
+                session(['otp_phone_number' => $result['phone_number']]);
 
                 return response()->json([
-                    'success' => false,
-                    'message' => $result['message']
-                ], 400);
+                    'success' => true,
+                    'message' => 'OTP sent successfully to '.$result['phone_number'],
+                ]);
             }
+
+            return response()->json([
+                'success' => false,
+                'message' => $result['message'],
+            ], 400);
+        }
     }
 
     /**
@@ -263,7 +265,7 @@ class OTPController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation failed',
-                    'errors' => $validator->errors()
+                    'errors' => $validator->errors(),
                 ], 422);
             }
 
@@ -273,10 +275,10 @@ class OTPController extends Controller
             // Find user by email (user should already exist from sendOTP)
             $user = User::where('email', $email)->first();
 
-            if (!$user) {
+            if (! $user) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'User not found. Please register again.'
+                    'message' => 'User not found. Please register again.',
                 ], 422);
             }
 
@@ -284,7 +286,7 @@ class OTPController extends Controller
             if ($user->ver_code != $otpCode) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Invalid verification code. Please try again.'
+                    'message' => 'Invalid verification code. Please try again.',
                 ], 422);
             }
 
@@ -294,7 +296,7 @@ class OTPController extends Controller
                 if (now() > $expiryTime) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Verification code has expired. Please request a new one.'
+                        'message' => 'Verification code has expired. Please request a new one.',
                     ], 422);
                 }
             }
@@ -311,7 +313,7 @@ class OTPController extends Controller
             // Send welcome email
             try {
                 notify($user, 'WELCOME_EMAIL', [
-                    'name' => $user->firstname . ' ' . $user->lastname,
+                    'name' => $user->firstname.' '.$user->lastname,
                     'username' => $user->username,
                     'email' => $user->email,
                     'mobile' => $user->mobile ?? 'Not provided',
@@ -320,10 +322,10 @@ class OTPController extends Controller
                     'industry' => $user->industry ?? '',
                     'login_url' => route('user.login'),
                 ], ['email']);
-                
-                Log::info('Welcome email sent to verified user: ' . $user->email);
+
+                Log::info('Welcome email sent to verified user: '.$user->email);
             } catch (\Exception $e) {
-                Log::error('Failed to send welcome email: ' . $e->getMessage());
+                Log::error('Failed to send welcome email: '.$e->getMessage());
                 // Continue even if email fails
             }
 
@@ -332,7 +334,7 @@ class OTPController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Email verified successfully! Account created.',
-                'redirect' => route('user.home') ?? route('home')
+                'redirect' => route('user.home') ?? route('home'),
             ]);
         } else {
             // Phone-based login flow (existing logic)
@@ -341,7 +343,7 @@ class OTPController extends Controller
             } catch (\Exception $e) {
                 return response()->json([
                     'success' => false,
-                    'message' => $e->getMessage()
+                    'message' => $e->getMessage(),
                 ], 503);
             }
 
@@ -353,37 +355,37 @@ class OTPController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation failed',
-                    'errors' => $validator->errors()
+                    'errors' => $validator->errors(),
                 ], 422);
             }
 
             $verificationId = session('otp_verification_id');
             $phoneNumber = session('otp_phone_number');
 
-            if (!$verificationId || !$phoneNumber) {
+            if (! $verificationId || ! $phoneNumber) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No OTP session found. Please request OTP again.'
+                    'message' => 'No OTP session found. Please request OTP again.',
                 ], 400);
             }
 
             // Verify OTP using Firebase
             $result = $firebaseService->verifyOTP($verificationId, $request->otp, $phoneNumber);
 
-            if (!$result['success']) {
+            if (! $result['success']) {
                 return response()->json([
                     'success' => false,
-                    'message' => $result['message']
+                    'message' => $result['message'],
                 ], 400);
             }
 
             // Find or create user in Laravel
             $user = $this->findOrCreateUser($phoneNumber, $request->all());
 
-            if (!$user) {
+            if (! $user) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to create user account'
+                    'message' => 'Failed to create user account',
                 ], 500);
             }
 
@@ -396,7 +398,7 @@ class OTPController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Login successful',
-                'redirect' => route('user.home')
+                'redirect' => route('user.home'),
             ]);
         }
     }
@@ -408,13 +410,13 @@ class OTPController extends Controller
     {
         try {
             $setting = bs();
-            
+
             // Generate unique username if not provided
             $username = $data['username'] ?? $this->generateUsernameFromEmail($data['email']);
-            
+
             // Check if username exists and generate unique one
             while (User::where('username', $username)->exists()) {
-                $username = $username . rand(100, 999);
+                $username = $username.rand(100, 999);
             }
 
             // Prepare user data
@@ -424,7 +426,7 @@ class OTPController extends Controller
                 'email' => strtolower($data['email']),
                 'username' => $username,
                 'password' => Hash::make($data['password']),
-                'mobile' => ($data['mobile_code'] ?? '') . ($data['mobile'] ?? ''),
+                'mobile' => ($data['mobile_code'] ?? '').($data['mobile'] ?? ''),
                 'country_code' => $data['country_code'] ?? 'PK',
                 'country_name' => $data['country'] ?? 'Pakistan',
                 'kc' => $setting->kc ? ManageStatus::NO : ManageStatus::YES,
@@ -438,19 +440,20 @@ class OTPController extends Controller
             $user = User::create($userData);
 
             // Create admin notification
-            $adminNotification = new \App\Models\AdminNotification();
+            $adminNotification = new \App\Models\AdminNotification;
             $adminNotification->user_id = $user->id;
             $adminNotification->title = 'New user registered via email';
             $adminNotification->click_url = urlPath('admin.user.index');
             $adminNotification->save();
 
-            Log::info('New user created via email OTP registration: ' . $user->id);
+            Log::info('New user created via email OTP registration: '.$user->id);
 
             return $user;
 
         } catch (\Exception $e) {
-            Log::error('Error creating user from registration: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
+            Log::error('Error creating user from registration: '.$e->getMessage());
+            Log::error('Stack trace: '.$e->getTraceAsString());
+
             return null;
         }
     }
@@ -463,11 +466,11 @@ class OTPController extends Controller
         $username = explode('@', $email)[0];
         $username = preg_replace('/[^a-z0-9_]/', '', strtolower($username));
         $username = substr($username, 0, 20);
-        
+
         if (strlen($username) < 6) {
-            $username = $username . rand(1000, 9999);
+            $username = $username.rand(1000, 9999);
         }
-        
+
         return $username;
     }
 
@@ -478,24 +481,26 @@ class OTPController extends Controller
     {
         try {
             // Ensure FirebaseService is available
-            if (!$this->firebaseService) {
+            if (! $this->firebaseService) {
                 try {
                     $this->firebaseService = app(FirebaseService::class);
                 } catch (\Exception $e) {
-                    Log::error('Firebase service not available: ' . $e->getMessage());
+                    Log::error('Firebase service not available: '.$e->getMessage());
+
                     return null;
                 }
             }
 
             // Format phone number for database storage
             $formattedPhone = $this->firebaseService->formatPhoneNumber($phoneNumber);
-            
+
             // Find existing user by phone number
             $user = User::where('mobile', $formattedPhone)->first();
 
             if ($user) {
                 // Update last login
                 $user->update(['last_login_at' => now()]);
+
                 return $user;
             }
 
@@ -521,7 +526,7 @@ class OTPController extends Controller
             $user = User::create($userData);
 
             // Create admin notification
-            $adminNotification = new \App\Models\AdminNotification();
+            $adminNotification = new \App\Models\AdminNotification;
             $adminNotification->user_id = $user->id;
             $adminNotification->title = 'New user registered via phone';
             $adminNotification->click_url = urlPath('admin.user.index');
@@ -529,20 +534,21 @@ class OTPController extends Controller
 
             // Send welcome email to new user
             try {
-                Log::info('Sending welcome email to new OTP user: ' . $user->email);
+                Log::info('Sending welcome email to new OTP user: '.$user->email);
                 $user->notify(new \App\Notifications\WelcomeNotification($user));
-                Log::info('Welcome email sent successfully to: ' . $user->email);
+                Log::info('Welcome email sent successfully to: '.$user->email);
             } catch (\Exception $e) {
-                Log::error('Failed to send welcome email to: ' . $user->email . ' - Error: ' . $e->getMessage());
+                Log::error('Failed to send welcome email to: '.$user->email.' - Error: '.$e->getMessage());
                 // Continue with user creation even if email fails
             }
 
-            Log::info('New user created via phone authentication: ' . $user->id);
+            Log::info('New user created via phone authentication: '.$user->id);
 
             return $user;
 
         } catch (\Exception $e) {
-            Log::error('Error creating user: ' . $e->getMessage());
+            Log::error('Error creating user: '.$e->getMessage());
+
             return null;
         }
     }
@@ -552,12 +558,12 @@ class OTPController extends Controller
      */
     private function generateUsername(string $phoneNumber): string
     {
-        $base = 'user' . substr(preg_replace('/[^0-9]/', '', $phoneNumber), -6);
+        $base = 'user'.substr(preg_replace('/[^0-9]/', '', $phoneNumber), -6);
         $username = $base;
         $counter = 1;
 
         while (User::where('username', $username)->exists()) {
-            $username = $base . $counter;
+            $username = $base.$counter;
             $counter++;
         }
 
@@ -573,14 +579,14 @@ class OTPController extends Controller
         if ($request->has('email') && $request->email) {
             // Email-based resend (using API approach)
             $email = strtolower(trim($request->email));
-            
+
             // Find user by email
             $user = User::where('email', $email)->first();
 
-            if (!$user) {
+            if (! $user) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'User not found. Please register again.'
+                    'message' => 'User not found. Please register again.',
                 ], 422);
             }
 
@@ -593,49 +599,50 @@ class OTPController extends Controller
             // Send email OTP
             try {
                 notify($user, 'EVER_CODE', [
-                    'code' => $otpCode
+                    'code' => $otpCode,
                 ], ['email']);
 
-                Log::info('Email OTP resent to: ' . $email . ' (user ID: ' . $user->id . ')');
+                Log::info('Email OTP resent to: '.$email.' (user ID: '.$user->id.')');
 
                 return response()->json([
                     'success' => true,
-                    'message' => 'Verification code has been resent to your email address.'
+                    'message' => 'Verification code has been resent to your email address.',
                 ]);
             } catch (\Exception $e) {
-                Log::error('Failed to resend email OTP: ' . $e->getMessage());
-                
+                Log::error('Failed to resend email OTP: '.$e->getMessage());
+
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to resend verification code. Please try again.'
+                    'message' => 'Failed to resend verification code. Please try again.',
                 ], 500);
             }
-            } else {
-                // Phone-based resend (existing logic)
-                // Check if FirebaseService is available
-                if (!$this->firebaseService) {
-                    try {
-                        $this->firebaseService = app(FirebaseService::class);
-                    } catch (\Exception $e) {
-                        Log::error('Firebase service not available: ' . $e->getMessage());
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'Phone OTP service is not available.'
-                        ], 503);
-                    }
-                }
+        } else {
+            // Phone-based resend (existing logic)
+            // Check if FirebaseService is available
+            if (! $this->firebaseService) {
+                try {
+                    $this->firebaseService = app(FirebaseService::class);
+                } catch (\Exception $e) {
+                    Log::error('Firebase service not available: '.$e->getMessage());
 
-                $phoneNumber = session('otp_phone_number');
-
-                if (!$phoneNumber) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'No phone number found in session'
-                    ], 400);
+                        'message' => 'Phone OTP service is not available.',
+                    ], 503);
                 }
-
-                return $this->sendOTP($request->merge(['phone_number' => $phoneNumber]));
             }
+
+            $phoneNumber = session('otp_phone_number');
+
+            if (! $phoneNumber) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No phone number found in session',
+                ], 400);
+            }
+
+            return $this->sendOTP($request->merge(['phone_number' => $phoneNumber]));
+        }
     }
 
     /**
@@ -644,14 +651,15 @@ class OTPController extends Controller
     public function checkPhoneNumber(Request $request)
     {
         // Check if FirebaseService is available
-        if (!$this->firebaseService) {
+        if (! $this->firebaseService) {
             try {
                 $this->firebaseService = app(FirebaseService::class);
             } catch (\Exception $e) {
-                Log::error('Firebase service not available: ' . $e->getMessage());
+                Log::error('Firebase service not available: '.$e->getMessage());
+
                 return response()->json([
                     'success' => false,
-                    'message' => 'Phone OTP service is not available.'
+                    'message' => 'Phone OTP service is not available.',
                 ], 503);
             }
         }
@@ -663,7 +671,7 @@ class OTPController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Invalid phone number format'
+                'message' => 'Invalid phone number format',
             ], 422);
         }
 
@@ -673,7 +681,7 @@ class OTPController extends Controller
         return response()->json([
             'success' => true,
             'exists' => $user ? true : false,
-            'message' => $user ? 'Phone number is registered' : 'Phone number not found'
+            'message' => $user ? 'Phone number is registered' : 'Phone number not found',
         ]);
     }
 }

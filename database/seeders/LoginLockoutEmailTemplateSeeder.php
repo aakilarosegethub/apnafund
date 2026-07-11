@@ -40,12 +40,12 @@ class LoginLockoutEmailTemplateSeeder extends Seeder
         </div>';
 
         $shortcodes = [
-            'name'             => 'User full name',
-            'attempts'         => 'Maximum failed attempts before lock',
-            'lock_minutes'     => 'Lock duration in minutes',
-            'blocked_until'    => 'Date/time when lock expires',
-            'ip'               => 'IP address of failed attempt',
-            'browser'          => 'Browser name',
+            'name' => 'User full name',
+            'attempts' => 'Maximum failed attempts before lock',
+            'lock_minutes' => 'Lock duration in minutes',
+            'blocked_until' => 'Date/time when lock expires',
+            'ip' => 'IP address of failed attempt',
+            'browser' => 'Browser name',
             'operating_system' => 'Operating system',
         ];
 
@@ -53,20 +53,20 @@ class LoginLockoutEmailTemplateSeeder extends Seeder
 
         if ($template) {
             $template->update([
-                'subj'       => $subject,
+                'subj' => $subject,
                 'email_body' => $body,
                 'shortcodes' => json_encode($shortcodes),
                 'email_status' => ManageStatus::ACTIVE,
             ]);
         } else {
             NotificationTemplate::create([
-                'act'          => $act,
-                'name'         => 'Login Security Alert',
-                'subj'         => $subject,
-                'email_body'   => $body,
-                'shortcodes'   => json_encode($shortcodes),
+                'act' => $act,
+                'name' => 'Login Security Alert',
+                'subj' => $subject,
+                'email_body' => $body,
+                'shortcodes' => json_encode($shortcodes),
                 'email_status' => ManageStatus::ACTIVE,
-                'sms_status'   => ManageStatus::INACTIVE,
+                'sms_status' => ManageStatus::INACTIVE,
             ]);
         }
     }

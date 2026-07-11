@@ -28,7 +28,7 @@ return new class extends Migration
 
             // Foreign key
             $table->foreign('campaign_id')->references('id')->on('campaigns')->onDelete('cascade');
-            
+
             // Index for faster queries
             $table->index('campaign_id');
             $table->index('status');

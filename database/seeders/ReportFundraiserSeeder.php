@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\SiteData;
 use App\Constants\ManageStatus;
+use App\Models\SiteData;
+use Illuminate\Database\Seeder;
 
 class ReportFundraiserSeeder extends Seeder
 {
@@ -46,9 +46,8 @@ class ReportFundraiserSeeder extends Seeder
                     
                     <p><strong>Thank you for helping us maintain a safe and trustworthy platform!</strong></p>',
                     'status' => ManageStatus::ACTIVE,
-                ]
+                ],
             ]
         );
     }
 }
-

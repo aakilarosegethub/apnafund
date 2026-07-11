@@ -12,7 +12,7 @@ return [
     */
 
     'project_id' => env('FIREBASE_PROJECT_ID'),
-    
+
     'service_account' => [
         'type' => 'service_account',
         'project_id' => env('FIREBASE_PROJECT_ID'),

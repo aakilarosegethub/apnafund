@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('categories', function (Blueprint $table) {
-            if (!Schema::hasColumn('categories', 'sort_order')) {
+            if (! Schema::hasColumn('categories', 'sort_order')) {
                 $table->unsignedInteger('sort_order')->default(0)->after('slug');
             }
         });
@@ -24,4 +24,3 @@ return new class extends Migration
         });
     }
 };
-

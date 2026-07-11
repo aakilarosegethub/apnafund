@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\NotificationTemplate;
 use App\Constants\ManageStatus;
+use App\Models\NotificationTemplate;
+use Illuminate\Database\Seeder;
 
 class EmailTemplateSeeder extends Seeder
 {
@@ -47,7 +47,7 @@ class EmailTemplateSeeder extends Seeder
                 <p>© 2024 ApnaCrowdfunding. All rights reserved.</p>
             </div>
         </div>', [
-            'code' => 'Email verification code'
+            'code' => 'Email verification code',
         ]);
 
         // Create or update PASS_RESET_CODE email template
@@ -97,7 +97,7 @@ class EmailTemplateSeeder extends Seeder
             'operating_system' => 'User operating system',
             'browser' => 'User browser',
             'ip' => 'User IP address',
-            'time' => 'Request time'
+            'time' => 'Request time',
         ]);
 
         // Create or update PASS_RESET_DONE email template
@@ -142,7 +142,7 @@ class EmailTemplateSeeder extends Seeder
             'operating_system' => 'User operating system',
             'browser' => 'User browser',
             'ip' => 'User IP address',
-            'time' => 'Reset time'
+            'time' => 'Reset time',
         ]);
 
         echo "All email templates created/updated successfully!\n";
@@ -151,12 +151,12 @@ class EmailTemplateSeeder extends Seeder
     private function createOrUpdateTemplate($act, $subject, $body, $shortcodes)
     {
         $template = NotificationTemplate::where('act', $act)->first();
-        
+
         if ($template) {
             $template->update([
                 'subj' => $subject,
                 'email_body' => $body,
-                'shortcodes' => json_encode($shortcodes)
+                'shortcodes' => json_encode($shortcodes),
             ]);
             echo "Template {$act} updated successfully!\n";
         } else {
@@ -166,7 +166,7 @@ class EmailTemplateSeeder extends Seeder
                 'subj' => $subject,
                 'email_body' => $body,
                 'shortcodes' => json_encode($shortcodes),
-                'status' => ManageStatus::YES
+                'status' => ManageStatus::YES,
             ]);
             echo "Template {$act} created successfully!\n";
         }

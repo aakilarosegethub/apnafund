@@ -1,0 +1,2165 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Constants\ManageStatus;
+use App\Models\AdminNotification;
+use App\Models\Admins\FooterCategory;
+use App\Models\Admins\HeaderCategory;
+use App\Models\Campaign;
+use App\Models\Category;
+use App\Models\Comment;
+use App\Models\Contact;
+use App\Models\Deposit;
+use App\Models\GatewayCurrency;
+use App\Models\Language;
+use App\Models\SiteData;
+use App\Models\Subscriber;
+use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Validator;
+
+/**
+ * Public website and themed page controller.
+ *
+ * Routes are registered in `routes/web.php` inside {@see \App\Http\Middleware\BetaGate} (and related
+ * groups). Methods render Blade under {@see Controller::$activeTheme} (e.g. `themes.green.page.*`).
+ *
+ * Typical areas:
+ * - **GET** `/`, `home-new` — home variants; passes `SiteData` blocks and featured/trending campaigns.
+ * - **GET** `campaigns`, `campaign/{slug}`, `campaign/{slug}/contribute` — listing, detail, donate flow.
+ * - **POST** `campaign/{slug}/comment` — store comment (validated in-method); **GET** `fetch-comment` — AJAX list.
+ * - **GET** `start-project` (+ POST saves) — multi-step campaign creation wizard (session-backed).
+ * - **GET|POST** `contact-us` — contact form; **POST** `subscriber/store` — newsletter.
+ * - **GET** `page/{slug}`, `{slug}` — CMS-style and catch-all pages.
+ *
+ * Responses are primarily **HTML views**; some campaign update endpoints may return JSON when requested.
+ * Validation uses `Validator`/`$request->validate` patterns per action — see each method for rules.
+ */
+class WebsiteController extends Controller
+{
+    public function __construct()
+    {
+
+        parent::__construct();
+        // Get active theme from database dynamically
+        $this->activeTheme = activeTheme();
+        // You can add any initialization code here if needed
+    }
+
+    public function home()
+    {
+        $themeKey = bs('active_theme') ?: 'green';
+
+        if ($themeKey === 'primary') {
+            return view($this->activeTheme.'page.home', $this->primaryHomePageData());
+        }
+
+        try {
+            $pageTitle = 'Home';
+            $setting = bs(); // Get settings for currency symbol
+
+            // Get dynamic home page content
+            $heroContent = SiteData::where('data_key', 'home.hero')->first();
+            $infoBannerContent = SiteData::where('data_key', 'home.info_banner')->first();
+            $featuredProjectsContent = SiteData::where('data_key', 'home.featured_projects')->first();
+
+            // Get counter elements dynamically from admin
+            $counterElements = getSiteData('counter.element', false, null, true);
+
+            // Get trending campaign ID if enabled
+            $trendingCampaignId = null;
+            $trendingCampaign = null;
+            $showTrending = 0;
+            $trendingCampaignContent = SiteData::where('data_key', 'home.trending_campaign')->first();
+
+            if ($trendingCampaignContent && $trendingCampaignContent->data_info) {
+                $dataInfo = is_array($trendingCampaignContent->data_info)
+                    ? $trendingCampaignContent->data_info
+                    : (array) $trendingCampaignContent->data_info;
+                $showTrending = $dataInfo['show_trending'] ?? 0;
+
+                if ($showTrending == 1) {
+                    $trendingCampaignId = $dataInfo['trending_campaign_id'] ?? null;
+
+                    // Fetch the trending campaign if ID is provided (only show if not expired - Kickstarter style)
+                    if ($trendingCampaignId) {
+                        try {
+                            $trendingCampaign = Campaign::commonQuery()->approve()->running()->where('id', $trendingCampaignId)->first();
+                        } catch (\Exception $e) {
+                            \Log::error('Error fetching trending campaign', ['error' => $e->getMessage()]);
+                            $trendingCampaign = null;
+                        }
+                    }
+                }
+            }
+
+            // Get featured campaigns (approved, featured, running only - no upcoming/expired)
+            // Exclude trending campaign if it exists
+            try {
+                $query = Campaign::commonQuery()->approve()->featured()->running();
+
+                // Exclude trending campaign from featured list if it exists
+                if ($trendingCampaignId) {
+                    $query->where('id', '!=', $trendingCampaignId);
+                }
+
+                $featuredCampaigns = $query->latest()->limit(6)->get();
+            } catch (\Exception $e) {
+                \Log::error('Error fetching featured campaigns', ['error' => $e->getMessage()]);
+                $featuredCampaigns = collect(); // Empty collection if error
+            }
+
+            return view($this->activeTheme.'page.home', compact('pageTitle', 'heroContent', 'infoBannerContent', 'featuredProjectsContent', 'featuredCampaigns', 'counterElements', 'trendingCampaign', 'showTrending', 'setting'));
+        } catch (\Exception $e) {
+            \Log::error('Home page error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            if (config('app.debug')) {
+                throw $e;
+            }
+
+            abort(500, 'Something went wrong. Please try again later.');
+        }
+    }
+
+    public function homeNew()
+    {
+        return view('themes.primary.page.apnacrowdfunding-new', $this->primaryHomePageData());
+    }
+
+    /**
+     * View data for the legacy primary theme home templates.
+     */
+    private function primaryHomePageData(): array
+    {
+        $pageTitle = 'Home';
+        $coverContent = SiteData::where('data_key', 'cover.content')->first();
+        $bannerElements = getSiteData('banner.element', false, null, true) ?? collect();
+        $featuredCampaignContent = getSiteData('featured_campaign.content', true);
+        $featuredCampaigns = collect();
+        $campaignCategoryContent = getSiteData('campaign_category.content', true);
+        $campaignCategories = collect();
+        $recentCampaignContent = getSiteData('recent_campaign.content', true);
+        $recentCampaigns = collect();
+        $counterElements = getSiteData('counter.element', false, null, true) ?? collect();
+        $upcomingContent = getSiteData('upcoming.content', true);
+        $upcomingCampaigns = collect();
+        $subscribeContent = getSiteData('subscribe.content', true);
+        $successContent = getSiteData('success_story.content', true);
+        $successElements = getSiteData('success_story.element', false, 3, true) ?? collect();
+
+        try {
+            $basicCampaignQuery = Campaign::campaignCheck()->approve();
+            $recentCampaigns = (clone $basicCampaignQuery)->latest()->limit(9)->get();
+            $upcomingCampaigns = Campaign::upcomingCheck()->approve()->orderby('start_date')->limit(6)->get();
+        } catch (\Exception $e) {
+            \Log::error('Error fetching primary home campaigns', ['error' => $e->getMessage()]);
+        }
+
+        try {
+            $campaignCategories = Category::active()->get();
+        } catch (\Exception $e) {
+            \Log::error('Error fetching primary home categories', ['error' => $e->getMessage()]);
+        }
+
+        return compact(
+            'pageTitle',
+            'coverContent',
+            'bannerElements',
+            'featuredCampaignContent',
+            'featuredCampaigns',
+            'campaignCategoryContent',
+            'campaignCategories',
+            'recentCampaignContent',
+            'recentCampaigns',
+            'counterElements',
+            'upcomingContent',
+            'upcomingCampaigns',
+            'subscribeContent',
+            'successContent',
+            'successElements'
+        );
+    }
+
+    public function aboutUs()
+    {
+        $pageTitle = 'About Us';
+        $clientContent = getSiteData('client_review.content', true);
+        $clientElements = getSiteData('client_review.element', false, null, true);
+        $pageSEO = getPageSEO('about_us');
+
+        return view($this->activeTheme.'page.about', compact('pageTitle', 'clientContent', 'clientElements', 'pageSEO'));
+    }
+
+    public function faq()
+    {
+        $pageTitle = 'FAQ';
+        $faqContent = getSiteData('faq.content', true);
+        $faqElements = getSiteData('faq.element', false, null, true);
+        $pageSEO = getPageSEO('faq');
+
+        return view($this->activeTheme.'page.faq', compact('pageTitle', 'faqContent', 'faqElements', 'pageSEO'));
+    }
+
+    public function creators()
+    {
+        $pageTitle = 'Creators';
+
+        // Get page SEO
+        $pageSEO = getPageSEO('creators');
+
+        return view($this->activeTheme.'page.creators', compact('pageTitle', 'pageSEO'));
+    }
+
+    public function campaigns()
+    {
+        $pageTitle = 'Campaigns';
+
+        // Get categories with campaign counts
+        $categories = Category::active()
+            ->select('name', 'slug')
+            ->withCount(['campaigns' => function ($query) {
+                $query->commonQuery()->approve()->runningOrUpcoming();
+            }])
+            ->get();
+
+        $campaignsQuery = Campaign::when(request()->filled('category'), function ($query) {
+            $categorySlug = request('category');
+            $category = Category::where('slug', $categorySlug)->active()->first();
+
+            if ($category) {
+                $query->where('category_id', $category->id);
+            }
+        })->when(request()->filled('name'), function ($query) {
+            $query->where('name', 'like', '%'.request('name').'%');
+        })->when(request()->filled('date_range'), function ($query) {
+            $dateArray = explode(' - ', request('date_range'));
+            $startDate = Carbon::parse($dateArray[0])->format('Y-m-d');
+            $endDate = Carbon::parse($dateArray[1])->format('Y-m-d');
+
+            $query->where('start_date', '>=', $startDate)->where('end_date', '<=', $endDate);
+        })->commonQuery()
+            ->approve()
+            ->runningOrUpcoming();
+
+        $sort = request('sort', 'latest');
+        match ($sort) {
+            'oldest' => $campaignsQuery->oldest(),
+            'goal-high' => $campaignsQuery->orderByDesc('goal_amount'),
+            'goal-low' => $campaignsQuery->orderBy('goal_amount'),
+            'raised-high' => $campaignsQuery->orderByDesc('raised_amount'),
+            'raised-low' => $campaignsQuery->orderBy('raised_amount'),
+            default => $campaignsQuery->latest(),
+        };
+
+        $campaigns = $campaignsQuery->paginate(getPaginate(10));
+
+        // Payment error redirect: ensure error toast shows when payment_status=error
+        if (request('payment_status') === 'error' && ! session()->has('toasts')) {
+            session()->flash('toasts', [['error', __('Payment could not be completed. Please try again.')]]);
+        }
+
+        return view($this->activeTheme.'page.campaign', compact('pageTitle', 'categories', 'campaigns'));
+    }
+
+    /**
+     * Pretty URL for campaigns by category, e.g. /campaigns/category/health
+     * Resolves: 1) Header category (multi) 2) Footer category (multi) 3) Single Category
+     */
+    public function campaignCategory($slug)
+    {
+        $category = null;
+        $categoryIds = [];
+        $pageTitle = 'Campaigns';
+
+        // 1) Header category (multi categories)
+        $headerCategory = HeaderCategory::where('slug', $slug)->where('status', 'active')->first();
+        if ($headerCategory) {
+            $categoryIds = $headerCategory->getCategoryIdsForFilter();
+            $pageTitle = 'Campaigns – '.$headerCategory->label;
+        }
+
+        // 2) Footer category (multi categories)
+        if (empty($categoryIds)) {
+            $footerCategory = FooterCategory::where('slug', $slug)->where('status', 'active')->first();
+            if ($footerCategory) {
+                $categoryIds = $footerCategory->getCategoryIdsForFilter();
+                $pageTitle = 'Campaigns – '.$footerCategory->label;
+            }
+        }
+
+        // 3) Single campaign category
+        if (empty($categoryIds)) {
+            $category = Category::where('slug', $slug)->active()->first();
+            if ($category) {
+                $pageTitle = 'Campaigns in '.$category->name;
+            }
+        }
+
+        $pageSEO = null;
+        if ($category) {
+            if (! empty($category->meta_title) || ! empty($category->meta_description) || ! empty($category->meta_keywords)) {
+                $pageSEO = [
+                    'meta_title' => $category->meta_title ?? '',
+                    'meta_description' => $category->meta_description ?? '',
+                    'meta_keywords' => $category->meta_keywords ?? '',
+                ];
+            } else {
+                $categorySeoData = SiteData::where('data_key', 'campaign_category.'.$slug.'.seo')->first();
+                if ($categorySeoData && $categorySeoData->data_info) {
+                    $pageSEO = [
+                        'meta_title' => @$categorySeoData->data_info->meta_title ?? @$categorySeoData->data_info['meta_title'] ?? '',
+                        'meta_description' => @$categorySeoData->data_info->meta_description ?? @$categorySeoData->data_info['meta_description'] ?? '',
+                        'meta_keywords' => @$categorySeoData->data_info->meta_keywords ?? @$categorySeoData->data_info['meta_keywords'] ?? '',
+                    ];
+                }
+            }
+        }
+        if (! $pageSEO || (empty($pageSEO['meta_title']) && empty($pageSEO['meta_description']))) {
+            $pageSEO = getPageSEO('campaign_category');
+        }
+
+        $categories = Category::active()
+            ->select('name', 'slug')
+            ->withCount(['campaigns' => function ($query) {
+                $query->commonQuery()->approve()->runningOrUpcoming();
+            }])
+            ->get();
+
+        $campaignsQuery = Campaign::when(! empty($categoryIds), function ($query) use ($categoryIds) {
+            $query->whereIn('category_id', $categoryIds);
+        })->when($category && empty($categoryIds), function ($query) use ($category) {
+            $query->where('category_id', $category->id);
+        })->when(request()->filled('name'), function ($query) {
+            $query->where('name', 'like', '%'.request('name').'%');
+        })->when(request()->filled('date_range'), function ($query) {
+            $dateArray = explode(' - ', request('date_range'));
+            $startDate = Carbon::parse($dateArray[0])->format('Y-m-d');
+            $endDate = Carbon::parse($dateArray[1])->format('Y-m-d');
+            $query->where('start_date', '>=', $startDate)->where('end_date', '<=', $endDate);
+        })->commonQuery()
+            ->approve()
+            ->runningOrUpcoming();
+
+        $sort = request('sort', 'latest');
+        match ($sort) {
+            'oldest' => $campaignsQuery->oldest(),
+            'goal-high' => $campaignsQuery->orderByDesc('goal_amount'),
+            'goal-low' => $campaignsQuery->orderBy('goal_amount'),
+            'raised-high' => $campaignsQuery->orderByDesc('raised_amount'),
+            'raised-low' => $campaignsQuery->orderBy('raised_amount'),
+            default => $campaignsQuery->latest(),
+        };
+
+        $campaigns = $campaignsQuery->paginate(getPaginate(10));
+
+        if ($category) {
+            request()->merge(['category' => $category->slug]);
+        }
+
+        return view($this->activeTheme.'page.campaign', compact('pageTitle', 'categories', 'campaigns', 'category', 'pageSEO'));
+    }
+
+    /**
+     * Load more campaigns for infinite scroll (AJAX).
+     * Supports same filters as campaigns/campaignCategory.
+     */
+    public function loadMoreCampaigns()
+    {
+        $page = max(1, (int) request('page', 1));
+        $perPage = getPaginate(10);
+
+        // Resolve category filter: category_slug for /campaigns/category/{slug} pages
+        $category = null;
+        $categoryIds = [];
+        $categorySlug = request('category_slug');
+
+        if ($categorySlug) {
+            $headerCategory = HeaderCategory::where('slug', $categorySlug)->where('status', 'active')->first();
+            if ($headerCategory) {
+                $categoryIds = $headerCategory->getCategoryIdsForFilter();
+            }
+            if (empty($categoryIds)) {
+                $footerCategory = FooterCategory::where('slug', $categorySlug)->where('status', 'active')->first();
+                if ($footerCategory) {
+                    $categoryIds = $footerCategory->getCategoryIdsForFilter();
+                }
+            }
+            if (empty($categoryIds)) {
+                $category = Category::where('slug', $categorySlug)->active()->first();
+            }
+        } elseif (request()->filled('category')) {
+            $category = Category::where('slug', request('category'))->active()->first();
+        }
+
+        $query = Campaign::query()
+            ->when(! empty($categoryIds), fn ($q) => $q->whereIn('category_id', $categoryIds))
+            ->when($category && empty($categoryIds), fn ($q) => $q->where('category_id', $category->id))
+            ->when(request()->filled('category') && $category, fn ($q) => $q->where('category_id', $category->id))
+            ->when(request()->filled('name'), fn ($q) => $q->where('name', 'like', '%'.request('name').'%'))
+            ->when(request()->filled('date_range'), function ($q) {
+                $dateArray = explode(' - ', request('date_range'));
+                $startDate = Carbon::parse($dateArray[0])->format('Y-m-d');
+                $endDate = Carbon::parse($dateArray[1])->format('Y-m-d');
+                $q->where('start_date', '>=', $startDate)->where('end_date', '<=', $endDate);
+            })
+            ->commonQuery()
+            ->approve()
+            ->runningOrUpcoming();
+
+        // Apply sort
+        $sort = request('sort', 'latest');
+        match ($sort) {
+            'oldest' => $query->oldest(),
+            'goal-high' => $query->orderByDesc('goal_amount'),
+            'goal-low' => $query->orderBy('goal_amount'),
+            'raised-high' => $query->orderByDesc('raised_amount'),
+            'raised-low' => $query->orderBy('raised_amount'),
+            default => $query->latest(),
+        };
+
+        $campaigns = $query->paginate($perPage, ['*'], 'page', $page);
+
+        $html = '';
+        foreach ($campaigns as $campaign) {
+            $html .= view(activeTheme().'partials.campaign-card-item', compact('campaign'))->render();
+        }
+
+        return response()->json([
+            'html' => $html,
+            'hasMore' => $campaigns->hasMorePages(),
+            'nextPage' => $campaigns->currentPage() + 1,
+        ]);
+    }
+
+    public function campaignShow($slug)
+    {
+
+        $pageTitle = 'Campaign Details';
+        $campaignData = Campaign::with(['rewards', 'deposits'])->where('slug', $slug)->approve()->firstOrFail();
+        $comments = Comment::with('user')->where('campaign_id', $campaignData->id)->approve()->latest()->limit(6)->get();
+
+        $commentCount = Comment::where('campaign_id', $campaignData->id)->approve()->count();
+        $authUser = auth()->user();
+        $relatedCampaigns = Campaign::where('category_id', $campaignData->category_id)->whereNot('slug', $campaignData->slug)->approve()->running()->latest()->limit(4)->get();
+
+        $seoContents['keywords'] = $campaignData->meta_keywords ?? [];
+        $seoContents['social_title'] = $campaignData->name;
+        $seoContents['description'] = strLimit($campaignData->description, 150);
+        $seoContents['social_description'] = strLimit($campaignData->description, 150);
+        $imageSize = getFileSize('campaign');
+        $seoContents['image'] = getImage(getFilePath('campaign').'/'.$campaignData->image, $imageSize);
+        $seoContents['image_size'] = $imageSize;
+
+        $countries = json_decode(file_get_contents(resource_path('views/partials/country.json')));
+        $gatewayCurrencies = GatewayCurrency::whereHas('method', fn ($gateway) => $gateway->active())
+            ->with('method')
+            ->orderby('method_code')
+            ->get();
+
+        $donations = Deposit::with('user')
+            ->where('campaign_id', $campaignData->id)
+            ->done()
+            ->latest()
+            ->limit(5)
+            ->get();
+
+        // Load FAQs for the campaign
+        $faqs = \App\Models\CampaignFaq::where('campaign_id', $campaignData->id)
+            ->orderBy('order')
+            ->orderBy('id')
+            ->get();
+
+        // WhatsApp Contact Creator message template
+        $whatsappData = \App\Models\SiteData::where('data_key', 'general.whatsapp_settings')->first();
+        $whatsappContactMessage = '';
+        if ($whatsappData && $whatsappData->data_info) {
+            $wi = is_array($whatsappData->data_info) ? $whatsappData->data_info : (array) $whatsappData->data_info;
+            $whatsappContactMessage = $wi['contact_creator_message'] ?? '';
+        }
+
+        return view($this->activeTheme.'page.campaignShow', compact('pageTitle', 'campaignData', 'relatedCampaigns', 'seoContents', 'authUser', 'comments', 'commentCount', 'countries', 'gatewayCurrencies', 'donations', 'faqs', 'whatsappContactMessage'));
+    }
+
+    public function campaignDonate($slug)
+    {
+        $pageTitle = 'Make a Contribution';
+        $campaignData = Campaign::where('slug', $slug)->approve()->firstOrFail();
+        $authUser = auth()->user();
+        if (! $authUser) {
+            $toast[] = ['error', 'Please log in to make a contribution.'];
+
+            return redirect()->route('user.login.form', [
+                'redirect' => route('campaign.donate', ['slug' => $slug], false),
+            ])->withToasts($toast);
+        }
+        if (! $authUser) {
+            $country = session()->get('user_country');
+            if (! $country) {
+                $country = getUserCountryByIP();
+            }
+            $authUser = (object) ['country_name' => $country];
+        }
+
+        // Check if campaign is expired
+        if ($campaignData->isExpired()) {
+            $toast[] = ['error', 'This campaign has expired'];
+
+            return redirect()->route('campaign.show', $slug)->withToasts($toast);
+        }
+
+        $seoContents['keywords'] = $campaignData->meta_keywords ?? [];
+        $seoContents['social_title'] = $campaignData->name;
+        $seoContents['description'] = strLimit($campaignData->description, 150);
+        $seoContents['social_description'] = strLimit($campaignData->description, 150);
+        $imageSize = getFileSize('campaign');
+        $seoContents['image'] = getImage(getFilePath('campaign').'/'.$campaignData->image, $imageSize);
+        $seoContents['image_size'] = $imageSize;
+
+        $countries = json_decode(file_get_contents(resource_path('views/partials/country.json')));
+
+        // Get user's country - prioritize IP detection for better UX
+
+        $userCountry = session()->get('user_country');
+
+        if (! session()->get('user_country')) {
+            // 1. First try IP-based detection
+            $ipCountry = getUserCountryByIP();
+            if ($ipCountry) {
+                $userCountry = $ipCountry;
+            }
+
+            // 2. If no IP detection, check logged-in user's country
+            if (! $userCountry && $authUser && $authUser->country_name) {
+                $userCountry = $authUser->country_name;
+            }
+
+            // 3. If still no country, check session
+            if (! $userCountry && session()->has('user_country')) {
+                $userCountry = session()->get('user_country');
+
+            }
+            session()->put('user_country', $userCountry);
+        } else {
+
+            $userCountry = session()->get('user_country');
+        }
+        if ($authUser && ! isset($authUser->country_name) && ! $authUser->country_name) {
+            $authUser->country_name = $userCountry;
+
+        }
+
+        // dd(session());
+        // echo $userCountry;
+
+        // 4. If still no country, check request parameter
+        if (! $userCountry && request()->has('country')) {
+            $requestCountry = request('country');
+            if (! empty($requestCountry)) {
+                $userCountry = $requestCountry;
+                session()->put('user_country', $userCountry);
+            }
+        }
+
+        // Session country (e.g. Pakistan) but display currency still from old IP (USD) — align before gateway + labels.
+        if (! isLocalCurrencyLockedByEnv() && is_string($userCountry) && $userCountry !== '') {
+            $expectedCode = resolveStrictCurrencyCodeForCountryName($userCountry);
+            if ($expectedCode !== null) {
+                $sessionCode = strtoupper(trim((string) (session('user_detected_currency') ?? '')));
+                if ($sessionCode === '' || $sessionCode !== $expectedCode) {
+                    syncVisitorCurrencySessionFromCountryName($userCountry);
+                }
+            }
+        }
+
+        // Currency (e.g. PKR) → canonical country (Pakistan); phir sirf gateways jinke `countries` mein woh allow ho.
+        $countryFallback = resolveCountryForGatewayFiltering();
+        $localCurrencyCode = getLocalCurrencyCode();
+        $countryFromDisplayCurrency = resolveCountryForGatewayCurrencyList($countryFallback);
+        $effectiveCountry = $countryFromDisplayCurrency ?? $countryFallback;
+        $localCurrencyUpper = strtoupper(trim($localCurrencyCode));
+        $gatewayContextCountry = $effectiveCountry ?? $countryFallback;
+
+        $gatewayCurrencies = GatewayCurrency::query()
+            ->where('status', ManageStatus::ACTIVE)
+            ->whereHas('method', function ($gateway) use ($effectiveCountry, $localCurrencyUpper) {
+                $gateway->active();
+                if ($effectiveCountry) {
+                    $gateway->forGatewayRegion($effectiveCountry, $localCurrencyUpper);
+                }
+            })
+            ->with('method')
+            ->orderBy('method_code')
+            ->get();
+
+        $gatewayContextCurrencyCode = $gatewayContextCountry !== null && $gatewayContextCountry !== ''
+            ? (resolveStrictCurrencyCodeForCountryName($gatewayContextCountry) ?? $gatewayContextCountry)
+            : null;
+
+        if (is_string($effectiveCountry) && $effectiveCountry !== '' && ! countryHasActiveGatewayForRegion($effectiveCountry, null)) {
+            return redirect()->route('payments.unavailable.region');
+        }
+
+        return view($this->activeTheme.'page.campaignDonate', compact('pageTitle', 'campaignData', 'seoContents', 'authUser', 'countries', 'gatewayCurrencies', 'gatewayContextCountry', 'gatewayContextCurrencyCode'));
+    }
+
+    /**
+     * Shown when no active payment gateway supports the visitor’s currency for their region.
+     */
+    public function paymentsUnavailableInRegion()
+    {
+        $pageTitle = __('Payments unavailable in your region');
+
+        return view($this->activeTheme.'page.paymentsUnavailableRegion', compact('pageTitle'));
+    }
+
+    public function storeCampaignComment($slug)
+    {
+        // Debug logging
+        \Log::info('Comment submission attempt', [
+            'slug' => $slug,
+            'request_data' => request()->all(),
+            'user_id' => auth()->id(),
+            'ip' => request()->ip(),
+            'is_ajax' => request()->ajax(),
+        ]);
+
+        try {
+            $rules = [
+                'comment' => 'required|string',
+                'title' => 'nullable|string|max:255',
+            ];
+            if (! auth()->check()) {
+                $rules['name'] = 'required|string|max:40';
+                $rules['email'] = 'required|string|max:40';
+            }
+            $this->validate(request(), $rules);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $e->errors(),
+                ], 422);
+            }
+            throw $e;
+        }
+
+        // Check whether user active or not
+        if (auth()->check() && ! auth()->user()->status) {
+            $message = 'The user is banned';
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $message], 403);
+            }
+            $toast[] = ['error', $message];
+
+            return back()->withToasts($toast);
+        }
+
+        $campaign = Campaign::where('slug', $slug)->first();
+
+        // Check whether campaign found or not
+        if (! $campaign) {
+            $message = 'Campaign not found';
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $message], 404);
+            }
+            $toast[] = ['error', $message];
+
+            return back()->withToasts($toast);
+        }
+
+        // Check whether campaign category active or not
+        if (! $campaign->category->status) {
+            $message = 'Campaign category is not active';
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $message], 403);
+            }
+            $toast[] = ['error', $message];
+
+            return back()->withToasts($toast);
+        }
+
+        // Check for approved campaign (allow comments on approved campaigns regardless of date status)
+        if ($campaign->status == ManageStatus::CAMPAIGN_PENDING ||
+            $campaign->status == ManageStatus::CAMPAIGN_REJECTED
+        ) {
+            $message = 'Campaign is unavailable right now';
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $message], 403);
+            }
+            $toast[] = ['error', $message];
+
+            return back()->withToasts($toast);
+        }
+
+        // Check whether user commenting on his/her own campaign
+        if (auth()->check() && $campaign->user_id == auth()->id()) {
+            $message = 'You can\'t comment on your own campaign';
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $message], 403);
+            }
+            $toast[] = ['error', $message];
+
+            return back()->withToasts($toast);
+        }
+
+        $comment = new Comment;
+
+        if (auth()->check()) {
+            $comment->user_id = auth()->id();
+            $comment->name = auth()->user()->fullname;
+            $comment->email = auth()->user()->email;
+        } else {
+            $comment->user_id = null;
+            $comment->name = request('name');
+            $comment->email = request('email');
+        }
+
+        $comment->campaign_id = $campaign->id;
+        $comment->comment = request('comment');
+        $comment->rating = null;
+        $comment->title = request('title');
+        $comment->save();
+
+        \Log::info('Comment saved successfully', [
+            'comment_id' => $comment->id,
+            'campaign_id' => $campaign->id,
+            'user_id' => $comment->user_id,
+            'name' => $comment->name,
+            'email' => $comment->email,
+        ]);
+
+        // Create admin notification
+        $adminNotification = new AdminNotification;
+
+        if (auth()->check()) {
+            $adminNotification->user_id = auth()->id();
+            $adminNotification->title = auth()->user()->fullname.' has commented on a campaign.';
+        } else {
+            $adminNotification->user_id = 0;
+            $adminNotification->title = request('name').' has commented on a campaign.';
+        }
+
+        $adminNotification->click_url = urlPath('admin.comments.index');
+        $adminNotification->save();
+
+        try {
+            if ((int) $campaign->user_id > 0 && (int) $campaign->user_id !== (int) ($comment->user_id ?? 0)) {
+                \App\Models\UserNotification::notifyCreatorReviewPending(
+                    (int) $campaign->user_id,
+                    $campaign,
+                    (string) ($comment->name ?? '')
+                );
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('Creator comment-pending UserNotification failed', ['error' => $e->getMessage()]);
+        }
+
+        $message = 'Your review has been submitted successfully! Please wait for admin approval.';
+
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+            ]);
+        }
+
+        $toast[] = ['success', $message];
+
+        return back()->withToasts($toast);
+    }
+
+    public function fetchCampaignComment($slug)
+    {
+        $validator = Validator::make(request()->all(), [
+            'skip' => 'required|integer|gt:0',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'error' => $validator->errors(),
+            ], 400);
+        }
+
+        $campaign = Campaign::where('slug', $slug)->first();
+
+        if (! $campaign) {
+            return response()->json([
+                'message' => 'Campaign not found',
+            ], 404);
+        }
+
+        $commentsCount = Comment::where('campaign_id', $campaign->id)->approve()->count();
+        $skip = (int) request('skip');
+        $comments = Comment::with('user')
+            ->where('campaign_id', $campaign->id)
+            ->skip($skip)
+            ->approve()
+            ->latest()
+            ->limit(5)
+            ->get();
+
+        $remainingComments = $commentsCount - ($skip + $comments->count());
+
+        if (count($comments)) {
+            $commentsPayload = $comments->map(function ($comment) {
+                $displayName = $comment->user ? $comment->user->fullname : $comment->name;
+
+                return [
+                    'id' => $comment->id,
+                    'name' => $displayName,
+                    'title' => $comment->title,
+                    'comment' => $comment->comment,
+                    'rating' => $comment->rating,
+                    'created_at' => $comment->created_at?->toIso8601String(),
+                    'display_date' => showDateTime($comment->created_at, 'd M, Y'),
+                    'is_guest' => ! $comment->user_id,
+                    'avatar_url' => ($comment->user && $comment->user->image)
+                        ? getImage(getFilePath('userProfile').'/'.$comment->user->image)
+                        : null,
+                    'initials' => strtoupper(substr($displayName, 0, 2)),
+                ];
+            })->values()->all();
+
+            $payload = [
+                'comments' => $commentsPayload,
+                'remaining_comments' => $remainingComments,
+            ];
+
+            if (! request()->wantsJson()) {
+                $payload['html'] = view($this->activeTheme.'partials.basicComment', compact('comments'))->render();
+            }
+
+            return response()->json($payload);
+        } else {
+            return response()->json([
+                'message' => 'No more comments found',
+            ], 404);
+        }
+    }
+
+    public function campaignDonations($slug)
+    {
+        $pageTitle = 'All Donations';
+        $campaign = Campaign::where('slug', $slug)->approve()->firstOrFail();
+
+        $donations = Deposit::with('user')
+            ->where('campaign_id', $campaign->id)
+            ->done()
+            ->latest()
+            ->paginate(20);
+
+        return view($this->activeTheme.'page.campaignDonations', compact('pageTitle', 'campaign', 'donations'));
+    }
+
+    public function campaignTopDonations($slug)
+    {
+        $pageTitle = 'Top Donations';
+        $campaign = Campaign::where('slug', $slug)->approve()->firstOrFail();
+
+        $donations = Deposit::with('user')
+            ->where('campaign_id', $campaign->id)
+            ->done()
+            ->orderBy('amount', 'desc')
+            ->paginate(20);
+
+        return view($this->activeTheme.'page.campaignTopDonations', compact('pageTitle', 'campaign', 'donations'));
+    }
+
+    public function upcomingCampaigns()
+    {
+        $pageTitle = 'Upcoming Campaigns';
+        $upcomingCampaigns = Campaign::when(request()->filled('category'), function ($query) {
+            $categorySlug = request('category');
+            $category = Category::where('slug', $categorySlug)->active()->first();
+
+            if ($category) {
+                $query->where('category_id', $category->id);
+            }
+        })->when(request()->filled('name'), function ($query) {
+            $query->where('name', 'like', '%'.request('name').'%');
+        })->upcomingCheck()
+            ->approve()
+            ->orderby('start_date')
+            ->paginate(getPaginate(10));
+
+        $categories = Category::active()->select('name', 'slug')->get();
+
+        return view($this->activeTheme.'page.upcomingCampaign', compact('pageTitle', 'upcomingCampaigns', 'categories'));
+    }
+
+    public function upcomingCampaignShow($slug)
+    {
+        $pageTitle = 'Upcoming Campaign Details';
+        $campaignData = Campaign::where('slug', $slug)->upcomingCheck()->approve()->firstOrFail();
+
+        $seoContents['keywords'] = $campaignData->meta_keywords ?? [];
+        $seoContents['social_title'] = $campaignData->name;
+        $seoContents['description'] = strLimit($campaignData->description, 150);
+        $seoContents['social_description'] = strLimit($campaignData->description, 150);
+        $imageSize = getFileSize('campaign');
+        $seoContents['image'] = getImage(getFilePath('campaign').'/'.$campaignData->image, $imageSize);
+        $seoContents['image_size'] = $imageSize;
+
+        $moreUpcomingCampaigns = Campaign::upcomingCheck()
+            ->whereNot('slug', $campaignData->slug)
+            ->approve()
+            ->orderby('start_date')
+            ->limit(6)
+            ->get();
+
+        return view($this->activeTheme.'page.upcomingCampaignShow', compact('pageTitle', 'campaignData', 'seoContents', 'moreUpcomingCampaigns'));
+    }
+
+    public function stories()
+    {
+        $pageTitle = 'Success Stories';
+        $successElements = SiteData::where('data_key', 'success_story.element')->paginate(getPaginate());
+        $pageSEO = getPageSEO('success_story');
+
+        return view($this->activeTheme.'page.stories', compact('pageTitle', 'successElements', 'pageSEO'));
+    }
+
+    public function storyShow($slug)
+    {
+        // Try to find by slug first, then fallback to ID for backward compatibility
+        $storyData = SiteData::where('data_key', 'success_story.element')
+            ->where(function ($query) use ($slug) {
+                $query->whereRaw("JSON_EXTRACT(data_info, '$.slug') = ?", [$slug])
+                    ->orWhere('id', $slug); // Fallback for old URLs with ID
+            })
+            ->first();
+
+        if (! $storyData) {
+            abort(404, 'Story not found');
+        }
+
+        // Get story data info
+        $storyInfo = is_array($storyData->data_info) ? $storyData->data_info : (array) $storyData->data_info;
+
+        // Set page title from meta_title or title
+        $pageTitle = $storyInfo['meta_title'] ?? $storyInfo['title'] ?? 'Story Details';
+
+        // Prepare SEO contents
+        $seoContents = [];
+        $seoContents['meta_title'] = $storyInfo['meta_title'] ?? $storyInfo['title'] ?? 'Story Details';
+        $seoContents['meta_description'] = $storyInfo['meta_description'] ?? strLimit(strip_tags($storyInfo['details'] ?? ''), 150);
+        $seoContents['meta_keywords'] = $storyInfo['meta_keywords'] ?? '';
+
+        // Social sharing
+        $seoContents['social_title'] = $storyInfo['meta_title'] ?? $storyInfo['title'] ?? 'Story Details';
+        $seoContents['social_description'] = $storyInfo['meta_description'] ?? strLimit(strip_tags($storyInfo['details'] ?? ''), 150);
+        $seoContents['description'] = $storyInfo['meta_description'] ?? strLimit(strip_tags($storyInfo['details'] ?? ''), 150);
+
+        // Keywords as array
+        if (! empty($seoContents['meta_keywords'])) {
+            $seoContents['keywords'] = is_array($seoContents['meta_keywords'])
+                ? $seoContents['meta_keywords']
+                : array_map('trim', explode(',', $seoContents['meta_keywords']));
+        } else {
+            $seoContents['keywords'] = [];
+        }
+
+        // Image
+        $imageSize = '855x475';
+        $seoContents['image'] = getImage('assets/images/site/success_story/'.($storyInfo['image'] ?? ''), $imageSize);
+        $seoContents['image_size'] = $imageSize;
+
+        $moreStories = SiteData::where('data_key', 'success_story.element')->whereNot('id', $id)->limit(3)->get();
+
+        return view($this->activeTheme.'page.storyShow', compact('pageTitle', 'storyData', 'seoContents', 'moreStories'));
+    }
+
+    public function businessResources()
+    {
+        $pageTitle = 'Business Resources';
+
+        // Get dynamic content from database
+        $businessContent = getSiteData('business_resources.content', true);
+        $successContent = getSiteData('success_story.content', true);
+        $successElements = getSiteData('success_story.element', false, 4, true);
+
+        // Get featured campaigns for inspiration
+        $featuredCampaigns = Campaign::commonQuery()->approve()->featured()->latest()->limit(2)->get();
+
+        // Get categories for tips
+        $categories = Category::active()->get();
+
+        $pageSEO = getPageSEO('business_resources');
+
+        $wordpressPostsApiUrl = config('services.wordpress.posts_api_url');
+        $wordpressBlogHomeUrl = config('services.wordpress.blog_home_url');
+
+        return view($this->activeTheme.'page.businessResources', compact(
+            'pageTitle',
+            'businessContent',
+            'successContent',
+            'successElements',
+            'featuredCampaigns',
+            'categories',
+            'pageSEO',
+            'wordpressPostsApiUrl',
+            'wordpressBlogHomeUrl'
+        ));
+    }
+
+    public function startProject()
+    {
+        // Check if user is authenticated
+        if (! auth()->check()) {
+            $toast[] = ['error', 'Login required to start a project'];
+
+            return redirect()->route('user.login.form')->withToasts($toast);
+        }
+
+        $pageTitle = 'Start Your Project';
+
+        // Get categories for campaign creation - sorted by sort_order, then name
+        $categories = Category::active()
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        // Get subcategories (if table exists) - only active, sorted by sort_order, then name
+        $subcategories = collect([]);
+        if (\Schema::hasTable('sub_categories')) {
+            $subcategories = \App\Models\Admins\SubCategory::where('status', 'active')
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get();
+        }
+
+        // Get site settings
+        $setting = bs();
+
+        // Get page SEO
+        $pageSEO = getPageSEO('start_project');
+
+        return view($this->activeTheme.'page.startProject', compact(
+            'pageTitle',
+            'categories',
+            'subcategories',
+            'setting',
+            'pageSEO'
+        ));
+    }
+
+    public function saveProjectCategories(\Illuminate\Http\Request $request)
+    {
+        // Check if user is authenticated
+        if (! auth()->check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Login required',
+                'redirect_url' => route('user.login.form'),
+            ], 401);
+        }
+
+        $request->validate([
+            'category_id' => 'required|exists:categories,id',
+            'subcategory_id' => 'required|exists:sub_categories,id',
+        ]);
+
+        // Save category and subcategory in session
+        session([
+            'project_category_id' => $request->category_id,
+            'project_subcategory_id' => $request->subcategory_id,
+        ]);
+        session()->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Categories saved successfully',
+            'redirect_url' => route('start.project.location'),
+        ]);
+    }
+
+    public function projectLocation()
+    {
+        // Check if user is authenticated
+        if (! auth()->check()) {
+            $toast[] = ['error', 'Login required to start a project'];
+
+            return redirect()->route('user.login.form')->withToasts($toast);
+        }
+
+        $pageTitle = 'Set Project Location';
+
+        // Check if category and subcategory are set in session
+        if (! session('project_category_id') || ! session('project_subcategory_id')) {
+            return redirect()->route('start.project')->with('error', 'Please select category and subcategory first.');
+        }
+
+        // Get allowed countries from admin settings
+        $allowedCountries = $this->getAllowedCountries();
+
+        // Force green theme for this page
+        return view('themes.green.page.projectLocation', compact('pageTitle', 'allowedCountries'));
+    }
+
+    private function getAllowedCountries()
+    {
+        // Get countries from Admin → Basic Settings → "Allowed Countries for Project Location"
+        $siteData = \App\Models\SiteData::where('data_key', 'general.allowed_countries')->first();
+
+        if ($siteData && $siteData->data_info) {
+            $dataInfo = $siteData->data_info;
+            if (! is_array($dataInfo)) {
+                $dataInfo = is_object($dataInfo) ? (array) $dataInfo : json_decode($dataInfo, true);
+            }
+
+            $selectedCountries = $dataInfo['selected_countries'] ?? [];
+            $useSelectedOnly = false;
+            if (isset($dataInfo['use_selected_only'])) {
+                $value = $dataInfo['use_selected_only'];
+                $useSelectedOnly = ($value === true || $value === '1' || $value === 1 || $value === 'true');
+            }
+
+            // When "Use Only Selected Countries" is checked: show only selected
+            if ($useSelectedOnly) {
+                if (! empty($selectedCountries) && is_array($selectedCountries)) {
+                    $selectedCountries = array_filter($selectedCountries);
+                    if (! empty($selectedCountries)) {
+                        sort($selectedCountries);
+
+                        return array_values($selectedCountries);
+                    }
+                }
+
+                return [];
+            }
+
+            // When unchecked but admin has selected countries: still use only those (dropdown = admin selection)
+            if (! empty($selectedCountries) && is_array($selectedCountries)) {
+                $selectedCountries = array_filter($selectedCountries);
+                if (! empty($selectedCountries)) {
+                    sort($selectedCountries);
+
+                    return array_values($selectedCountries);
+                }
+            }
+        }
+
+        return $this->getAllCountriesList();
+    }
+
+    private function getAllCountriesList()
+    {
+        return [
+            'Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Antigua and Barbuda', 'Argentina', 'Armenia', 'Australia', 'Austria',
+            'Azerbaijan', 'Bahamas', 'Bahrain', 'Bangladesh', 'Barbados', 'Belarus', 'Belgium', 'Belize', 'Benin', 'Bhutan',
+            'Bolivia', 'Bosnia and Herzegovina', 'Botswana', 'Brazil', 'Brunei', 'Bulgaria', 'Burkina Faso', 'Burundi', 'Cambodia', 'Cameroon',
+            'Canada', 'Cape Verde', 'Central African Republic', 'Chad', 'Chile', 'China', 'Colombia', 'Comoros', 'Congo', 'Costa Rica',
+            'Croatia', 'Cuba', 'Cyprus', 'Czech Republic', 'Denmark', 'Djibouti', 'Dominica', 'Dominican Republic', 'Ecuador', 'Egypt',
+            'El Salvador', 'Equatorial Guinea', 'Eritrea', 'Estonia', 'Eswatini', 'Ethiopia', 'Fiji', 'Finland', 'France', 'Gabon',
+            'Gambia', 'Georgia', 'Germany', 'Ghana', 'Greece', 'Grenada', 'Guatemala', 'Guinea', 'Guinea-Bissau', 'Guyana',
+            'Haiti', 'Honduras', 'Hungary', 'Iceland', 'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland', 'Israel',
+            'Italy', 'Jamaica', 'Japan', 'Jordan', 'Kazakhstan', 'Kenya', 'Kiribati', 'Kosovo', 'Kuwait', 'Kyrgyzstan',
+            'Laos', 'Latvia', 'Lebanon', 'Lesotho', 'Liberia', 'Libya', 'Liechtenstein', 'Lithuania', 'Luxembourg', 'Madagascar',
+            'Malawi', 'Malaysia', 'Maldives', 'Mali', 'Malta', 'Marshall Islands', 'Mauritania', 'Mauritius', 'Mexico', 'Micronesia',
+            'Moldova', 'Monaco', 'Mongolia', 'Montenegro', 'Morocco', 'Mozambique', 'Myanmar', 'Namibia', 'Nauru', 'Nepal',
+            'Netherlands', 'New Zealand', 'Nicaragua', 'Niger', 'Nigeria', 'North Korea', 'North Macedonia', 'Norway', 'Oman', 'Pakistan',
+            'Palau', 'Palestine', 'Panama', 'Papua New Guinea', 'Paraguay', 'Peru', 'Philippines', 'Poland', 'Portugal', 'Qatar',
+            'Romania', 'Russia', 'Rwanda', 'Saint Kitts and Nevis', 'Saint Lucia', 'Saint Vincent and the Grenadines', 'Samoa', 'San Marino', 'Sao Tome and Principe', 'Saudi Arabia',
+            'Senegal', 'Serbia', 'Seychelles', 'Sierra Leone', 'Singapore', 'Slovakia', 'Slovenia', 'Solomon Islands', 'Somalia', 'South Africa',
+            'South Korea', 'South Sudan', 'Spain', 'Sri Lanka', 'Sudan', 'Suriname', 'Sweden', 'Switzerland', 'Syria', 'Taiwan',
+            'Tajikistan', 'Tanzania', 'Thailand', 'Timor-Leste', 'Togo', 'Tonga', 'Trinidad and Tobago', 'Tunisia', 'Turkey', 'Turkmenistan',
+            'Tuvalu', 'Uganda', 'Ukraine', 'United Arab Emirates', 'United Kingdom', 'United States', 'Uruguay', 'Uzbekistan', 'Vanuatu', 'Vatican City',
+            'Venezuela', 'Vietnam', 'Yemen', 'Zambia', 'Zimbabwe',
+        ];
+    }
+
+    public function saveProjectLocation(\Illuminate\Http\Request $request)
+    {
+        // Check if user is authenticated
+        if (! auth()->check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Login required',
+                'redirect_url' => route('user.login.form'),
+            ], 401);
+        }
+
+        $request->validate([
+            'country' => 'required|string|max:255',
+        ]);
+
+        // Save country in session
+        session(['project_country' => $request->country]);
+        session()->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Location saved successfully',
+            'redirect_url' => route('start.project.terms'),
+        ]);
+    }
+
+    public function projectTerms()
+    {
+        // Check if user is authenticated
+        if (! auth()->check()) {
+            $toast[] = ['error', 'Login required to start a project'];
+
+            return redirect()->route('user.login.form')->withToasts($toast);
+        }
+
+        $pageTitle = 'Terms & Conditions';
+
+        // Check if all required data is set in session
+        if (! session('project_category_id') || ! session('project_subcategory_id') || ! session('project_country')) {
+            return redirect()->route('start.project')->with('error', 'Please complete all steps first.');
+        }
+
+        // Force green theme for this page - pass session data for fallback in create-campaign
+        $projectData = [
+            'project_category_id' => session('project_category_id'),
+            'project_subcategory_id' => session('project_subcategory_id'),
+            'project_country' => session('project_country'),
+        ];
+
+        return view('themes.green.page.projectTerms', compact('pageTitle', 'projectData'));
+    }
+
+    public function createCampaignFromSession(\Illuminate\Http\Request $request)
+    {
+        // Check if user is authenticated
+        if (! auth()->check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please login to create a campaign',
+            ], 401);
+        }
+
+        // Get data from session or request body (fallback when session lost)
+        $categoryId = session('project_category_id') ?? $request->input('category_id');
+        $subcategoryId = session('project_subcategory_id') ?? $request->input('subcategory_id');
+        $country = session('project_country') ?? $request->input('country');
+
+        if (! $categoryId || ! $subcategoryId || ! $country) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Missing required information. Please complete all steps.',
+            ], 400);
+        }
+
+        // Validate category/subcategory exist
+        $categoryExists = \App\Models\Category::where('id', $categoryId)->exists();
+        $subcategoryExists = \App\Models\Admins\SubCategory::where('id', $subcategoryId)->exists();
+        if (! $categoryExists || ! $subcategoryExists) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid category. Please complete all steps again.',
+            ], 400);
+        }
+
+        try {
+            // Create a basic campaign with session/request data
+            $campaign = new Campaign;
+            $campaign->user_id = auth()->id();
+            $campaign->category_id = $categoryId;
+            $campaign->name = 'My New Campaign '.time(); // Temporary name, user will edit
+            $campaign->slug = slug($campaign->name);
+            $campaign->description = ''; // User will add description in edit page
+            $campaign->location = $country;
+            $campaign->goal_amount = 1000; // Default goal amount
+            $campaign->raised_amount = 0;
+            $campaign->start_date = Carbon::today();
+            $campaign->end_date = Carbon::today()->addDays(30);
+            $campaign->status = ManageStatus::CAMPAIGN_PENDING; // Will need admin approval
+            $campaign->save();
+
+            // Clear session data
+            session()->forget(['project_category_id', 'project_subcategory_id', 'project_country']);
+
+            // Create admin notification
+            $adminNotification = new AdminNotification;
+            $adminNotification->user_id = auth()->id();
+            $adminNotification->title = 'New campaign created by '.auth()->user()->fullname;
+            $adminNotification->click_url = urlPath('admin.campaigns.index');
+            $adminNotification->save();
+
+            // Send email to site admin address (Basic settings → site_email), else all admins
+            try {
+                $user = auth()->user();
+                $campaignName = $campaign->name;
+                $campaignLink = route('admin.campaigns.details', $campaign->id);
+                $userName = $user->fullname ?? $user->username;
+                $userEmail = $user->email ?? 'N/A';
+
+                $emailMessage = "Dear Admin,\n\n";
+                $emailMessage .= "A new campaign has been created and requires your review.\n\n";
+                $emailMessage .= "Campaign Details:\n";
+                $emailMessage .= "- Campaign Name: {$campaignName}\n";
+                $emailMessage .= "- Campaign ID: {$campaign->id}\n";
+                $emailMessage .= "- Created By: {$userName}\n";
+                $emailMessage .= "- Creator Email: {$userEmail}\n";
+                $emailMessage .= '- Goal Amount: '.showAmount($campaign->goal_amount)."\n";
+                $emailMessage .= '- Start Date: '.showDateTime($campaign->start_date)."\n";
+                $emailMessage .= '- End Date: '.showDateTime($campaign->end_date)."\n\n";
+                $emailMessage .= "Please review and approve/reject the campaign.\n\n";
+                $emailMessage .= "View Campaign: {$campaignLink}\n\n";
+                $emailMessage .= 'Thank you.';
+
+                notifySiteAdmins('DEFAULT', [
+                    'message' => $emailMessage,
+                    'subject' => 'New Campaign Created - '.$campaignName,
+                ], ['email']);
+            } catch (\Exception $e) {
+                \Log::error('Failed to send admin email notification: '.$e->getMessage());
+            }
+
+            // If registration fee is enabled, redirect directly to payment page
+            $setting = bs();
+            $redirectUrl = route('user.campaign.edit', $campaign->slug);
+            if (! empty($setting->registration_fee_enabled) && ($setting->registration_fee_min ?? 0) > 0) {
+                $hasPaid = Deposit::where('campaign_id', $campaign->id)
+                    ->where('deposit_type', 'registration_fee')
+                    ->where('status', ManageStatus::PAYMENT_SUCCESS)
+                    ->exists();
+                if (! $hasPaid) {
+                    $redirectUrl = route('user.campaign.pay.registration.fee', $campaign->slug);
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Campaign created successfully',
+                'redirect_url' => $redirectUrl,
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error creating campaign from session: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error creating campaign: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function contact()
+    {
+        $pageTitle = 'Contact';
+        $user = auth()->user();
+        $contactContent = getSiteData('contact_us.content', true);
+        $contactElements = getSiteData('contact_us.element', false, null, true);
+        $pageSEO = getPageSEO('contact_us');
+
+        return view($this->activeTheme.'page.contact', compact('pageTitle', 'user', 'contactContent', 'contactElements', 'pageSEO'));
+    }
+
+    public function contactStore()
+    {
+        $this->validate(request(), [
+            'name' => 'required|string|max:40',
+            'email' => 'required|string|max:40',
+            'subject' => 'required|string|max:255',
+            'message' => 'required',
+        ]);
+
+        $user = auth()->user();
+        $email = $user ? $user->email : request('email');
+        $contactCheck = Contact::where('email', $email)->where('status', ManageStatus::NO)->first();
+
+        if ($contactCheck) {
+            $toast[] = ['warning', 'There is an existing contact on our record, kindly wait for the admin\'s response'];
+
+            return back()->withToasts($toast);
+        }
+
+        $contact = new Contact;
+        $contact->name = $user ? $user->fullname : request('name');
+        $contact->email = $email;
+        $contact->subject = request('subject');
+        $contact->message = request('message');
+        $contact->save();
+
+        $toast[] = ['success', 'We have received your message, kindly wait for the admin\'s response'];
+
+        return back()->withToasts($toast);
+    }
+
+    public function changeLanguage($lang = null)
+    {
+        $language = Language::where('code', $lang)->first();
+
+        if (! $language) {
+            $lang = 'en';
+        }
+
+        session()->put('lang', $lang);
+
+        return back();
+    }
+
+    public function cookieAccept()
+    {
+        Cookie::queue('gdpr_cookie', bs('site_name'), 43200);
+    }
+
+    public function cookiePolicy()
+    {
+        $pageTitle = 'Cookie Policy';
+        $cookie = SiteData::where('data_key', 'cookie.data')->first();
+
+        return view($this->activeTheme.'page.cookie', compact('pageTitle', 'cookie'));
+    }
+
+    public function maintenance()
+    {
+        if (bs('site_maintenance') == ManageStatus::INACTIVE) {
+            return to_route('home');
+        }
+
+        $maintenance = SiteData::where('data_key', 'maintenance.data')->first();
+        $pageTitle = 'Maintenance';
+
+        if ($maintenance && $maintenance->data_info) {
+            $pageTitle = isset($maintenance->data_info['heading'])
+                ? $maintenance->data_info['heading']
+                : 'Maintenance';
+        }
+
+        return view($this->activeTheme.'page.maintenance', compact('pageTitle', 'maintenance'));
+    }
+
+    public function policyPages($slug, $id)
+    {
+        $policy = SiteData::where('id', $id)->where('data_key', 'policy_pages.element')->firstOrFail();
+
+        // Access data_info as array (since it's cast as 'array' in model)
+        $pageTitle = 'Policy';
+        if ($policy->data_info && is_array($policy->data_info) && isset($policy->data_info['title'])) {
+            $pageTitle = $policy->data_info['title'];
+        }
+
+        return view($this->activeTheme.'page.policy', compact('policy', 'pageTitle'));
+    }
+
+    public function dynamicPages($slug)
+    {
+        // Find page by slug - check both slug field and slugified title
+        $allPages = SiteData::where('data_key', 'dynamic_pages.element')->get();
+        $page = null;
+
+        foreach ($allPages as $p) {
+            if (isset($p->data_info['slug']) && $p->data_info['slug']) {
+                // Check if slug matches (both exact and slugified)
+                if ($p->data_info['slug'] == $slug || slug($p->data_info['slug']) == $slug) {
+                    $page = $p;
+                    break;
+                }
+            }
+            // Fallback: check if slugified title matches
+            if (isset($p->data_info['title']) && slug($p->data_info['title']) == $slug) {
+                $page = $p;
+                break;
+            }
+        }
+
+        if (! $page) {
+            abort(404);
+        }
+
+        // Access data_info as array (since it's cast as 'array' in model)
+        $pageTitle = 'Page';
+        if ($page->data_info && is_array($page->data_info) && isset($page->data_info['title'])) {
+            $pageTitle = $page->data_info['title'];
+        }
+
+        // Prepare SEO data
+        $seoContents = [];
+        if ($page->data_info && is_array($page->data_info)) {
+            $seoContents['social_title'] = $page->data_info['title'] ?? $pageTitle;
+            $seoContents['description'] = $page->data_info['meta_description'] ?? strLimit($page->data_info['details'] ?? '', 150);
+            $seoContents['social_description'] = $page->data_info['meta_description'] ?? strLimit($page->data_info['details'] ?? '', 150);
+            $seoContents['keywords'] = isset($page->data_info['meta_keywords']) && is_array($page->data_info['meta_keywords'])
+                ? $page->data_info['meta_keywords']
+                : (isset($page->data_info['meta_keywords']) ? explode(',', $page->data_info['meta_keywords']) : []);
+
+            // Image for SEO (using default logo since image field removed)
+            $seoContents['image'] = getImage(getFilePath('logoFavicon').'/logo_dark.png');
+            $seoContents['image_size'] = '1200x630';
+        }
+
+        $pageSEO = getPageSEO('dynamic_pages');
+
+        return view($this->activeTheme.'page.dynamic', compact('page', 'pageTitle', 'seoContents', 'pageSEO'));
+    }
+
+    public function reportFundraiser()
+    {
+        $pageTitle = 'Report a Fundraiser';
+        $reportContent = SiteData::where('data_key', 'report_fundraiser.content')->first();
+
+        // Check if report page is enabled
+        $status = null;
+        if ($reportContent && $reportContent->data_info) {
+            $status = isset($reportContent->data_info['status'])
+                ? $reportContent->data_info['status']
+                : null;
+        }
+
+        if (! $reportContent || $status != ManageStatus::ACTIVE) {
+            abort(404, 'Report Fundraiser page is not available');
+        }
+
+        return view($this->activeTheme.'page.report-fundraiser', compact('pageTitle', 'reportContent'));
+    }
+
+    public function subscriberStore()
+    {
+        $validate = Validator::make(request()->all(), [
+            'email' => 'required|email|unique:subscribers',
+        ]);
+
+        if ($validate->fails()) {
+            return response()->json(['error' => $validate->errors()]);
+        }
+
+        $subscriber = new Subscriber;
+        $subscriber->email = request('email');
+        $subscriber->save();
+
+        return response()->json(['success' => 'Subscription successful']);
+    }
+
+    public function placeholderImage($size = null)
+    {
+        $imgWidth = explode('x', $size)[0];
+        $imgHeight = explode('x', $size)[1];
+        $text = $imgWidth.'×'.$imgHeight;
+        $fontFile = realpath('assets/font/RobotoMono-Regular.ttf');
+        $fontSize = round(($imgWidth - 50) / 8);
+
+        if ($fontSize <= 9) {
+            $fontSize = 9;
+        }
+
+        if ($imgHeight < 100 && $fontSize > 30) {
+            $fontSize = 30;
+        }
+
+        $image = imagecreatetruecolor($imgWidth, $imgHeight);
+        $colorFill = imagecolorallocate($image, 100, 100, 100);
+        $bgFill = imagecolorallocate($image, 175, 175, 175);
+
+        imagefill($image, 0, 0, $bgFill);
+
+        $textBox = imagettfbbox($fontSize, 0, $fontFile, $text);
+        $textWidth = abs($textBox[4] - $textBox[0]);
+        $textHeight = abs($textBox[5] - $textBox[1]);
+        $textX = ($imgWidth - $textWidth) / 2;
+        $textY = ($imgHeight + $textHeight) / 2;
+
+        header('Content-Type: image/jpeg');
+        imagettftext($image, $fontSize, 0, $textX, $textY, $colorFill, $fontFile, $text);
+        imagejpeg($image);
+        imagedestroy($image);
+    }
+
+    public function updateUserCountry()
+    {
+        $country = request('country');
+
+        if ($country) {
+            session()->put('user_country', $country);
+
+            // Footer previously only set user_country; display currency stayed on IP (e.g. USD). Align PKR etc. with country.
+            if (! isLocalCurrencyLockedByEnv()) {
+                syncVisitorCurrencySessionFromCountryName($country);
+            }
+
+            if (auth()->check()) {
+                $user = auth()->user();
+                $user->country_name = $country;
+                $user->save();
+            }
+
+            session()->save();
+
+            $code = strtoupper((string) getCurrencyCodeForCountryName($country));
+            $symbol = \App\Services\CurrencyService::getSymbolForCode($code);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Country updated successfully',
+                'currency_code' => $code,
+                'currency_symbol' => $symbol,
+            ]);
+        }
+
+        if (! isLocalCurrencyLockedByEnv()) {
+            session()->forget([
+                'user_detected_currency',
+                'user_detected_symbol',
+                'user_detected_country',
+                'user_currency_manual',
+            ]);
+        }
+        session()->forget('user_country');
+
+        if (auth()->check()) {
+            $user = auth()->user();
+            $user->country_name = null;
+            $user->save();
+        }
+
+        session()->save();
+
+        return response()->json(['success' => true, 'message' => 'All Countries selected']);
+    }
+
+    /**
+     * Footer / local display currency: set session from Admin-allowed country → currency mapping.
+     * Skipped when TCUR is set in .env (site forces one currency).
+     */
+    public function updateUserCurrency(Request $request)
+    {
+        $request->validate([
+            'country' => 'required|string|max:120',
+        ]);
+
+        $allowed = getSiteAllowedCountryNames();
+        if (! in_array($request->country, $allowed, true)) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Invalid country.'),
+            ], 422);
+        }
+
+        $currencyCode = getCurrencyCodeForCountryName($request->country);
+        $symbol = \App\Services\CurrencyService::getSymbolForCode($currencyCode);
+
+        session()->put('user_detected_currency', $currencyCode);
+        session()->put('user_detected_symbol', $symbol);
+        session()->put('user_detected_country', $request->country);
+        session()->put('user_country', $request->country);
+        session()->put('user_currency_manual', true);
+        session()->save();
+
+        return response()->json([
+            'success' => true,
+            'currency_code' => $currencyCode,
+            'currency_symbol' => $symbol,
+        ]);
+    }
+
+    public function help()
+    {
+        $pageTitle = 'Help Center';
+
+        // Try to fetch data from the live API
+        try {
+            $response = Http::timeout(10)->get('https://apnacrowdfunding.com/support/wp-json/zia-api/v1/categories-with-posts');
+
+            if ($response->successful()) {
+                $helpData = $response->json();
+                $lastUpdated = now();
+            } else {
+                // Fallback to hardcoded data if API fails
+                $helpData = $this->getFallbackHelpData();
+                $lastUpdated = now();
+            }
+        } catch (\Exception $e) {
+            // Fallback to hardcoded data if API fails
+            $helpData = $this->getFallbackHelpData();
+            $lastUpdated = now();
+        }
+
+        return view($this->activeTheme.'page.help', compact('pageTitle', 'helpData', 'lastUpdated'));
+    }
+
+    public function sitemap()
+    {
+        $pageTitle = 'Sitemap';
+
+        return view($this->activeTheme.'page.sitemap', compact('pageTitle'));
+    }
+
+    public function editor()
+    {
+        $pageTitle = 'Editor';
+
+        return view($this->activeTheme.'page.editor', compact('pageTitle'));
+    }
+
+    public function creatorProfile($username)
+    {
+        $pageTitle = 'Creator Profile';
+
+        $user = User::where('username', $username)
+            ->orWhere('creator_slug', $username)
+            ->firstOrFail();
+
+        // Get user's campaigns with relationships
+        $campaigns = Campaign::with(['user', 'category'])
+            ->where('user_id', $user->id)
+            ->approve()
+            ->latest()
+            ->paginate(12);
+
+        // Get user stats
+        $totalCampaigns = Campaign::where('user_id', $user->id)->approve()->count();
+        $totalRaised = Deposit::whereHas('campaign', function ($q) use ($user) {
+            $q->where('user_id', $user->id);
+        })->done()->sum('amount');
+
+        // Get setting for currency symbol
+        $setting = bs();
+
+        $seoContents['keywords'] = [];
+        $seoContents['social_title'] = $user->fullname.' - Creator Profile';
+        $seoContents['description'] = $user->business_description ?? 'View '.$user->fullname.'\'s profile and campaigns';
+        $seoContents['social_description'] = $seoContents['description'];
+
+        return view($this->activeTheme.'page.creatorProfile', compact('pageTitle', 'user', 'campaigns', 'totalCampaigns', 'totalRaised', 'seoContents', 'setting'));
+    }
+
+    private function getFallbackHelpData()
+    {
+        return [
+            'status' => 'success',
+            'data' => [
+                [
+                    'id' => 2,
+                    'name' => 'Getting Started',
+                    'slug' => 'apnacrowdfunding-basics',
+                    'description' => '',
+                    'count' => 5,
+                    'posts' => [
+                        [
+                            'id' => 7,
+                            'title' => 'How to sign up',
+                            'slug' => 'how-to-sign-up',
+                            'excerpt' => 'Signing up is the first step to join our crowdfunding platform. Create your account and start your journey.',
+                            'date' => '2025-08-29 10:34:10',
+                            'author' => 'admin',
+                            'featured_image' => false,
+                            'permalink' => '#',
+                        ],
+                        [
+                            'id' => 11,
+                            'title' => 'How to start a campaign',
+                            'slug' => 'how-to-start-a-campaign',
+                            'excerpt' => 'Anyone can start a campaign after creating an account. Learn the basics of launching your first project.',
+                            'date' => '2025-08-29 10:38:08',
+                            'author' => 'admin',
+                            'featured_image' => false,
+                            'permalink' => '#',
+                        ],
+                        [
+                            'id' => 13,
+                            'title' => 'How to edit your profile',
+                            'slug' => 'how-to-edit-your-profile',
+                            'excerpt' => 'Update your profile information, add a photo, and customize your public presence on the platform.',
+                            'date' => '2025-08-29 10:39:58',
+                            'author' => 'admin',
+                            'featured_image' => false,
+                            'permalink' => '#',
+                        ],
+                    ],
+                ],
+                [
+                    'id' => 5,
+                    'name' => 'Backer Questions',
+                    'slug' => 'backer-questions',
+                    'description' => '',
+                    'count' => 3,
+                    'posts' => [
+                        [
+                            'id' => 15,
+                            'title' => 'How do I back a project?',
+                            'slug' => 'how-do-i-back-a-project',
+                            'excerpt' => 'Find projects you want to support and learn how to make pledges safely and securely.',
+                            'date' => '2025-08-29 10:44:30',
+                            'author' => 'admin',
+                            'featured_image' => false,
+                            'permalink' => '#',
+                        ],
+                        [
+                            'id' => 17,
+                            'title' => 'How do refunds work?',
+                            'slug' => 'how-do-refunds-work',
+                            'excerpt' => 'Understand our refund policy and how to get your money back if needed.',
+                            'date' => '2025-08-29 10:51:50',
+                            'author' => 'admin',
+                            'featured_image' => false,
+                            'permalink' => '#',
+                        ],
+                        [
+                            'id' => 19,
+                            'title' => 'Can I change my pledge?',
+                            'slug' => 'can-i-change-my-pledge',
+                            'excerpt' => 'Learn how to modify or cancel your existing pledges before the campaign ends.',
+                            'date' => '2025-08-29 10:54:19',
+                            'author' => 'admin',
+                            'featured_image' => false,
+                            'permalink' => '#',
+                        ],
+                    ],
+                ],
+                [
+                    'id' => 4,
+                    'name' => 'Creator Questions',
+                    'slug' => 'creators-questions',
+                    'description' => '',
+                    'count' => 2,
+                    'posts' => [
+                        [
+                            'id' => 21,
+                            'title' => 'How do I launch my campaign?',
+                            'slug' => 'how-do-i-launch-my-campaign',
+                            'excerpt' => 'Step-by-step guide to preparing and launching your crowdfunding campaign successfully.',
+                            'date' => '2025-08-29 10:56:21',
+                            'author' => 'admin',
+                            'featured_image' => false,
+                            'permalink' => '#',
+                        ],
+                        [
+                            'id' => 25,
+                            'title' => 'How to communicate with backers?',
+                            'slug' => 'how-to-communicate-with-backers',
+                            'excerpt' => 'Best practices for keeping your supporters engaged and informed throughout your campaign.',
+                            'date' => '2025-08-29 10:58:38',
+                            'author' => 'admin',
+                            'featured_image' => false,
+                            'permalink' => '#',
+                        ],
+                    ],
+                ],
+                [
+                    'id' => 3,
+                    'name' => 'Payments & Billing',
+                    'slug' => 'payments-billing',
+                    'description' => '',
+                    'count' => 3,
+                    'posts' => [
+                        [
+                            'id' => 27,
+                            'title' => 'How payments are processed',
+                            'slug' => 'how-payments-are-processed',
+                            'excerpt' => 'Learn about our secure payment processing and when charges occur.',
+                            'date' => '2025-08-29 10:59:44',
+                            'author' => 'admin',
+                            'featured_image' => false,
+                            'permalink' => '#',
+                        ],
+                        [
+                            'id' => 29,
+                            'title' => 'Failed payment solutions',
+                            'slug' => 'failed-payment-solutions',
+                            'excerpt' => 'What to do when your payment fails and how to resolve common issues.',
+                            'date' => '2025-08-29 11:01:07',
+                            'author' => 'admin',
+                            'featured_image' => false,
+                            'permalink' => '#',
+                        ],
+                        [
+                            'id' => 23,
+                            'title' => 'What are the fees?',
+                            'slug' => 'what-are-the-fees',
+                            'excerpt' => 'Understand our transparent fee structure for both creators and backers.',
+                            'date' => '2025-08-29 10:57:36',
+                            'author' => 'admin',
+                            'featured_image' => false,
+                            'permalink' => '#',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * Display page by slug from theme pages folder
+     *
+     * @param  string  $slug
+     * @return \Illuminate\View\View|\Illuminate\Http\Response
+     */
+    public function pageBySlug($slug)
+    {
+        try {
+            // Get active theme
+            $activeTheme = activeTheme();
+
+            // Build view path
+            $viewPath = $activeTheme.'page.'.$slug;
+
+            // Check if view exists
+            if (! view()->exists($viewPath)) {
+                abort(404, 'Page not found');
+            }
+
+            $pageTitle = ucfirst(str_replace('-', ' ', $slug));
+
+            // Fetch SEO data for this page slug from page_seo section
+            $pageSeoData = null;
+            $allPageSeo = SiteData::where('data_key', 'page_seo.element')->get();
+
+            // Normalize slug for comparison
+            $normalizedSlug = strtolower(trim($slug, '/'));
+
+            foreach ($allPageSeo as $seoItem) {
+                $seoInfo = is_array($seoItem->data_info) ? $seoItem->data_info : (array) $seoItem->data_info;
+                if (isset($seoInfo['slug'])) {
+                    $seoSlug = trim($seoInfo['slug'], '/');
+                    $normalizedSeoSlug = strtolower($seoSlug);
+
+                    // Check exact match
+                    if ($normalizedSeoSlug == $normalizedSlug) {
+                        $pageSeoData = $seoInfo;
+                        break;
+                    }
+                    // Check if SEO slug is "page/{slug}" format
+                    elseif (strpos($normalizedSeoSlug, 'page/') === 0) {
+                        $seoSlugWithoutPage = substr($normalizedSeoSlug, 5); // Remove "page/" prefix
+                        if ($seoSlugWithoutPage == $normalizedSlug) {
+                            $pageSeoData = $seoInfo;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // If SEO data found, update page title
+            if ($pageSeoData && isset($pageSeoData['meta_title'])) {
+                $pageTitle = $pageSeoData['meta_title'];
+            }
+
+            // Prepare variables based on slug
+            $variables = ['pageTitle' => $pageTitle, 'pageSeoData' => $pageSeoData];
+
+            // Special handling for contact page
+            if ($slug === 'contact') {
+                $user = auth()->user();
+                $contactContent = getSiteData('contact_us.content', true);
+                $contactElements = getSiteData('contact_us.element', false, null, true) ?? collect();
+                $pageSEO = getPageSEO('contact_us');
+
+                $variables = array_merge($variables, compact('user', 'contactContent', 'contactElements', 'pageSEO'));
+            }
+
+            // Return the view with cache-busting headers to prevent old page from showing
+            $response = response()->view($viewPath, $variables);
+            $response->header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
+            $response->header('Pragma', 'no-cache');
+            $response->header('Expires', '0');
+
+            return $response;
+
+        } catch (\Exception $e) {
+            \Log::error('Page by slug error', [
+                'slug' => $slug,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            abort(404, 'Page not found');
+        }
+    }
+
+    /**
+     * Single update URL segment: numeric = {@see CampaignUpdate} id, otherwise slug (backwards compatible).
+     */
+    private function campaignUpdateShowQuery(Campaign $campaign, string $segment)
+    {
+        $q = \App\Models\CampaignUpdate::where('campaign_id', $campaign->id)->where('is_published', true);
+        if (ctype_digit((string) $segment)) {
+            return $q->where('id', (int) $segment);
+        }
+
+        return $q->where('slug', $segment);
+    }
+
+    /**
+     * Show campaign updates list
+     */
+    public function campaignUpdates($slug)
+    {
+        $pageTitle = 'Campaign Updates';
+        $campaign = Campaign::where('slug', $slug)->approve()->firstOrFail();
+
+        $updates = \App\Models\CampaignUpdate::where('campaign_id', $campaign->id)
+            ->where('is_published', true)
+            ->latest()
+            ->paginate(10);
+
+        return view($this->activeTheme.'page.campaignUpdates', compact('pageTitle', 'campaign', 'updates'));
+    }
+
+    /**
+     * JSON: Accept application/json, ?format=json, ?json=1, ya curl default Accept (wildcard) / missing Accept.
+     * Sirf Accept: text/html (browser) par HTML; JSON ke liye ?json=1, ?format=json ya Accept: application/json.
+     */
+    private function wantsCampaignUpdateJsonResponse(Request $request): bool
+    {
+        if ($request->query('format') === 'json' || $request->boolean('json')) {
+            return true;
+        }
+        if ($request->wantsJson()) {
+            return true;
+        }
+        $accept = strtolower(trim((string) $request->header('Accept', '')));
+        if ($accept === '' || str_contains($accept, '*/*')) {
+            return true;
+        }
+        if (str_contains($accept, 'application/json')) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Show single campaign update (HTML, or JSON with `comments` array).
+     */
+    public function campaignUpdateShow(Request $request, $slug, $updateSlug)
+    {
+        $pageTitle = 'Campaign Update';
+        $campaign = Campaign::where('slug', $slug)->approve()->firstOrFail();
+
+        $update = $this->campaignUpdateShowQuery($campaign, (string) $updateSlug)->firstOrFail();
+
+        // Get comments for this update
+        $comments = Comment::with('user')
+            ->where('update_id', $update->id)
+            ->approve()
+            ->latest()
+            ->get();
+
+        $commentCount = $comments->count();
+
+        if ($this->wantsCampaignUpdateJsonResponse($request)) {
+            $imageUrl = $update->image
+                ? getImage(getFilePath('campaign').'/'.$update->image, getFileSize('campaign'))
+                : null;
+
+            return response()->json([
+                'success' => true,
+                'campaign' => [
+                    'id' => $campaign->id,
+                    'slug' => $campaign->slug,
+                    'name' => $campaign->name,
+                ],
+                'update' => [
+                    'id' => $update->id,
+                    'campaign_id' => $update->campaign_id,
+                    'title' => $update->title,
+                    'slug' => $update->slug,
+                    'content' => $update->content,
+                    'image' => $update->image,
+                    'image_url' => $imageUrl,
+                    'created_at' => $update->created_at?->toDateTimeString(),
+                    'updated_at' => $update->updated_at?->toDateTimeString(),
+                ],
+                'comments' => $comments->map(function (Comment $c) {
+                    return [
+                        'id' => $c->id,
+                        'name' => $c->name,
+                        'comment' => $c->comment,
+                        'title' => $c->title,
+                        'created_at' => $c->created_at?->toDateTimeString(),
+                        'user' => $c->user ? [
+                            'id' => $c->user->id,
+                            'username' => $c->user->username,
+                            'fullname' => $c->user->fullname ?? null,
+                        ] : null,
+                    ];
+                })->values()->all(),
+                'comment_count' => $commentCount,
+            ]);
+        }
+
+        return view($this->activeTheme.'page.campaignUpdateShow', compact('pageTitle', 'campaign', 'update', 'comments', 'commentCount'));
+    }
+
+    /**
+     * Store comment on campaign update
+     */
+    public function storeUpdateComment($slug, $updateSlug)
+    {
+        $campaign = Campaign::where('slug', $slug)->approve()->firstOrFail();
+
+        $update = $this->campaignUpdateShowQuery($campaign, (string) $updateSlug)->firstOrFail();
+
+        if (! auth()->check()) {
+            $toast[] = ['error', __('Please login to comment')];
+
+            return back()->withToasts($toast);
+        }
+
+        if (! auth()->user()->status) {
+            $toast[] = ['error', __('Your account is not active.')];
+
+            return back()->withToasts($toast);
+        }
+
+        $this->validate(request(), [
+            'comment' => 'required|string|max:1000',
+            'title' => 'nullable|string|max:200',
+        ]);
+
+        $user = auth()->user();
+
+        $comment = new Comment;
+        $comment->user_id = $user->id;
+        $comment->campaign_id = $campaign->id;
+        $comment->update_id = $update->id;
+        $comment->name = $user->fullname ?? $user->username;
+        $comment->email = $user->email;
+        $comment->comment = request('comment');
+        $comment->rating = null;
+        $comment->title = request('title');
+        // Approved so the comment appears immediately on this page (list uses scopeApprove)
+        $comment->status = ManageStatus::CAMPAIGN_COMMENT_APPROVED;
+        $comment->save();
+
+        $adminNotification = new AdminNotification;
+        $adminNotification->user_id = $user->id;
+        $adminNotification->title = ($user->fullname ?? $user->username).' commented on a campaign update.';
+        $adminNotification->click_url = urlPath('admin.comments.index');
+        $adminNotification->save();
+
+        $toast[] = ['success', __('Your comment has been posted.')];
+
+        return back()->withToasts($toast);
+    }
+
+    /**
+     * Order/Donation success thank you page.
+     * Supports: Deposit (donation) by id, or Order (ecommerce) by id.
+     */
+    public function orderSuccess($id)
+    {
+        $deposit = Deposit::with(['campaign', 'reward'])
+            ->where('id', $id)
+            ->where('status', ManageStatus::PAYMENT_SUCCESS)
+            ->first();
+
+        if ($deposit) {
+            $pageTitle = __('Thank You');
+            $type = 'donation';
+
+            return view($this->activeTheme.'page.order-success', compact('deposit', 'pageTitle', 'type'));
+        }
+
+        $order = \App\Models\Order::where('id', $id)->first();
+        if ($order) {
+            $pageTitle = __('Thank You');
+            $type = 'order';
+
+            return view($this->activeTheme.'page.order-success', compact('order', 'pageTitle', 'type'));
+        }
+
+        return redirect()->route('home')->with('error', __('Order or contribution not found.'));
+    }
+}

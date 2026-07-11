@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('country_code')->nullable()->after('mobile');
             $table->string('country_name')->nullable()->after('country_code');
             $table->json('address')->nullable()->after('country_name');
-            
+
             // Status fields
             $table->boolean('status')->default(1)->after('address');
             $table->boolean('kc')->default(0)->after('status');
@@ -28,17 +28,17 @@ return new class extends Migration
             $table->boolean('sc')->default(0)->after('ec');
             $table->boolean('ts')->default(0)->after('sc');
             $table->boolean('tc')->default(0)->after('ts');
-            
+
             // Reference fields
             $table->unsignedBigInteger('ref_by')->default(0)->after('tc');
-            
+
             // Verification fields
             $table->string('ver_code')->nullable()->after('ref_by');
             $table->timestamp('ver_code_send_at')->nullable()->after('ver_code');
-            
+
             // Balance field
             $table->decimal('balance', 18, 8)->default(0)->after('ver_code_send_at');
-            
+
             // KYC data
             $table->json('kyc_data')->nullable()->after('balance');
         });
@@ -68,7 +68,7 @@ return new class extends Migration
                 'ver_code',
                 'ver_code_send_at',
                 'balance',
-                'kyc_data'
+                'kyc_data',
             ]);
         });
     }

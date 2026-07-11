@@ -4,10 +4,10 @@ namespace App\Models;
 
 use App\Constants\ManageStatus;
 use App\Traits\Searchable;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
 /**
@@ -19,7 +19,7 @@ use Laravel\Sanctum\HasApiTokens;
  */
 class User extends Authenticatable
 {
-    use HasApiTokens, Notifiable, Searchable, HasFactory;
+    use HasApiTokens, HasFactory, Notifiable, Searchable;
 
     /**
      * The attributes that are mass assignable.
@@ -38,7 +38,7 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $hidden = [
-        'password', 'remember_token', 'ver_code', 'balance', 'kyc_data'
+        'password', 'remember_token', 'ver_code', 'balance', 'kyc_data',
     ];
 
     /**
@@ -48,14 +48,14 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'password'          => 'hashed',
-        'address'           => 'object',
-        'kyc_data'          => 'object',
-        'ver_code_send_at'  => 'datetime',
+        'password' => 'hashed',
+        'address' => 'object',
+        'kyc_data' => 'object',
+        'ver_code_send_at' => 'datetime',
         'phone_verified_at' => 'datetime',
-        'last_login_at'     => 'datetime',
+        'last_login_at' => 'datetime',
         'terms_accepted_at' => 'datetime',
-        'blocked_until'     => 'datetime',
+        'blocked_until' => 'datetime',
     ];
 
     /**
@@ -65,7 +65,7 @@ class User extends Authenticatable
      */
     public function needsTermsAcceptance(): bool
     {
-        return !empty($this->provider) && is_null($this->terms_accepted_at);
+        return ! empty($this->provider) && is_null($this->terms_accepted_at);
     }
 
     /**
@@ -74,13 +74,13 @@ class User extends Authenticatable
     public function fullname(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->firstname . ' ' . $this->lastname,
+            get: fn () => $this->firstname.' '.$this->lastname,
         );
     }
 
     public function deposits()
     {
-        return $this->hasMany(Deposit::class)->where('status', '!=' , ManageStatus::PAYMENT_INITIATE);
+        return $this->hasMany(Deposit::class)->where('status', '!=', ManageStatus::PAYMENT_INITIATE);
     }
 
     public function withdrawals()

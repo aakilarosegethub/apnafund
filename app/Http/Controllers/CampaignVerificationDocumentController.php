@@ -13,8 +13,7 @@ class CampaignVerificationDocumentController extends Controller
 {
     public function __construct(
         private readonly CampaignVerificationDocumentService $documents
-    ) {
-    }
+    ) {}
 
     /**
      * GET /user/cnic/{id} or GET /api/cnic/{id}
@@ -23,23 +22,23 @@ class CampaignVerificationDocumentController extends Controller
     {
         $user = $this->resolveAuthenticatedUser($request);
 
-        if (!$user) {
+        if (! $user) {
             $this->denyUnauthenticated($request);
         }
 
         $filename = normalizeCampaignVerificationDocumentFilename($id);
 
-        if (!$filename) {
+        if (! $filename) {
             abort(404);
         }
 
         $campaign = $this->documents->findCampaignByFilename($filename);
 
-        if (!$campaign) {
+        if (! $campaign) {
             abort(404);
         }
 
-        if (!$this->documents->userCanView($user, $campaign)) {
+        if (! $this->documents->userCanView($user, $campaign)) {
             abort(403, 'You do not have permission to view this document.');
         }
 
@@ -51,13 +50,13 @@ class CampaignVerificationDocumentController extends Controller
      */
     public function adminShowByDocumentId(Request $request, string $id): BinaryFileResponse
     {
-        if (!auth('admin')->check()) {
+        if (! auth('admin')->check()) {
             abort(403, 'Admin authentication required.');
         }
 
         $filename = normalizeCampaignVerificationDocumentFilename($id);
 
-        if (!$filename) {
+        if (! $filename) {
             abort(404);
         }
 
@@ -69,13 +68,13 @@ class CampaignVerificationDocumentController extends Controller
     {
         $user = $this->resolveAuthenticatedUser($request);
 
-        if (!$user) {
+        if (! $user) {
             $this->denyUnauthenticated($request);
         }
 
         $campaignModel = Campaign::findOrFail($campaign);
 
-        if (!$this->documents->userCanView($user, $campaignModel)) {
+        if (! $this->documents->userCanView($user, $campaignModel)) {
             abort(403, 'You do not have permission to view this document.');
         }
 
@@ -85,7 +84,7 @@ class CampaignVerificationDocumentController extends Controller
     /** @deprecated Use adminShowByDocumentId */
     public function adminShow(Request $request, int $campaign, string $filename): BinaryFileResponse
     {
-        if (!auth('admin')->check()) {
+        if (! auth('admin')->check()) {
             abort(403, 'Admin authentication required.');
         }
 

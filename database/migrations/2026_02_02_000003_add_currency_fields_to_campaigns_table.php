@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -15,17 +15,17 @@ return new class extends Migration
         $goalColumn = Schema::hasColumn('campaigns', 'goal_amount') ? 'goal_amount' : (Schema::hasColumn('campaigns', 'target_amount') ? 'target_amount' : null);
 
         Schema::table('campaigns', function (Blueprint $table) use ($goalColumn) {
-            if (!Schema::hasColumn('campaigns', 'goal_amount_usd')) {
+            if (! Schema::hasColumn('campaigns', 'goal_amount_usd')) {
                 $column = $goalColumn ?: 'id';
                 $table->decimal('goal_amount_usd', 15, 2)->default(0)->after($column);
             }
-            if (!Schema::hasColumn('campaigns', 'original_goal_amount')) {
+            if (! Schema::hasColumn('campaigns', 'original_goal_amount')) {
                 $table->decimal('original_goal_amount', 15, 2)->default(0)->after('goal_amount_usd');
             }
-            if (!Schema::hasColumn('campaigns', 'original_currency')) {
+            if (! Schema::hasColumn('campaigns', 'original_currency')) {
                 $table->string('original_currency', 10)->default('USD')->after('original_goal_amount');
             }
-            if (!Schema::hasColumn('campaigns', 'exchange_rate_used')) {
+            if (! Schema::hasColumn('campaigns', 'exchange_rate_used')) {
                 $table->decimal('exchange_rate_used', 18, 8)->default(1)->after('original_currency');
             }
         });

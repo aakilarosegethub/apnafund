@@ -16,10 +16,10 @@ return new class extends Migration
             $table->unsignedBigInteger('campaign_id');
             $table->unsignedBigInteger('user_id');
             $table->timestamps();
-            
+
             $table->foreign('campaign_id')->references('id')->on('campaigns')->onDelete('cascade');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            
+
             // Ensure a user can only be added once per campaign
             $table->unique(['campaign_id', 'user_id']);
         });

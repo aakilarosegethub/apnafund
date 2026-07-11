@@ -30,7 +30,7 @@ return new class extends Migration
             $table->string('user_agent')->nullable();
             $table->timestamp('sent_at')->nullable();
             $table->timestamps();
-            
+
             $table->index(['to_email', 'created_at']);
             $table->index(['email_type', 'status']);
             $table->index('user_id');

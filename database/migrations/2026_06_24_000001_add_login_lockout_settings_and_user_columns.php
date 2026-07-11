@@ -11,38 +11,38 @@ return new class extends Migration
     {
         if (Schema::hasTable('settings')) {
             Schema::table('settings', function (Blueprint $table) {
-                if (!Schema::hasColumn('settings', 'login_max_attempts')) {
+                if (! Schema::hasColumn('settings', 'login_max_attempts')) {
                     $table->unsignedSmallInteger('login_max_attempts')->default(5);
                 }
-                if (!Schema::hasColumn('settings', 'login_lock_duration')) {
+                if (! Schema::hasColumn('settings', 'login_lock_duration')) {
                     $table->unsignedSmallInteger('login_lock_duration')->default(60);
                 }
-                if (!Schema::hasColumn('settings', 'login_lock_enabled')) {
+                if (! Schema::hasColumn('settings', 'login_lock_enabled')) {
                     $table->boolean('login_lock_enabled')->default(true);
                 }
-                if (!Schema::hasColumn('settings', 'login_lock_email_enabled')) {
+                if (! Schema::hasColumn('settings', 'login_lock_email_enabled')) {
                     $table->boolean('login_lock_email_enabled')->default(true);
                 }
             });
 
             DB::table('settings')->orderBy('id')->limit(1)->update([
-                'login_max_attempts'        => 5,
-                'login_lock_duration'       => 60,
-                'login_lock_enabled'        => 1,
-                'login_lock_email_enabled'  => 1,
+                'login_max_attempts' => 5,
+                'login_lock_duration' => 60,
+                'login_lock_enabled' => 1,
+                'login_lock_email_enabled' => 1,
             ]);
         }
 
         if (Schema::hasTable('users')) {
             Schema::table('users', function (Blueprint $table) {
-                if (!Schema::hasColumn('users', 'failed_login_attempts')) {
+                if (! Schema::hasColumn('users', 'failed_login_attempts')) {
                     if (Schema::hasColumn('users', 'last_login_at')) {
                         $table->unsignedSmallInteger('failed_login_attempts')->default(0)->after('last_login_at');
                     } else {
                         $table->unsignedSmallInteger('failed_login_attempts')->default(0);
                     }
                 }
-                if (!Schema::hasColumn('users', 'blocked_until')) {
+                if (! Schema::hasColumn('users', 'blocked_until')) {
                     if (Schema::hasColumn('users', 'failed_login_attempts')) {
                         $table->timestamp('blocked_until')->nullable()->after('failed_login_attempts');
                     } else {

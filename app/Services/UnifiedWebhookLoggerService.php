@@ -4,9 +4,9 @@ namespace App\Services;
 
 use App\Models\DataLog;
 use App\Models\WebhookLog;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Exception;
 
 /**
  * Dual logging for payment callbacks: {@see DataLog} (raw request) + {@see WebhookLog} (processing lifecycle).
@@ -21,42 +21,42 @@ class UnifiedWebhookLoggerService
         $startTime = microtime(true);
         $method = $request->method();
         $transactionId = $this->extractTransactionId($request, $additionalData);
-        
+
         // Log to DataLog table (for general request logging)
         $dataLog = DataLog::logRequest($endpoint, $method, $request, null, $transactionId);
-        
+
         // Enhanced DataLog with additional webhook data
         if ($dataLog && $dataLog->id) {
             $dataLog->update([
                 'request_data' => array_merge($request->all(), $additionalData),
                 'headers' => $request->headers->all(),
                 'raw_input' => $request->getContent(),
-                'status' => 'processing'
+                'status' => 'processing',
             ]);
         }
-        
+
         // Log to WebhookLog table (for webhook-specific logging)
         $webhookLog = $this->createWebhookLog($request, $endpoint, $webhookType, $transactionId, $additionalData);
-        
+
         return [
             'data_log' => $dataLog,
             'webhook_log' => $webhookLog,
-            'start_time' => $startTime
+            'start_time' => $startTime,
         ];
     }
-    
+
     /**
      * Update webhook processing status
      */
-    public function updateWebhookStatus(array $logs, string $status, string $response = null, array $additionalData = []): void
+    public function updateWebhookStatus(array $logs, string $status, ?string $response = null, array $additionalData = []): void
     {
         $executionTime = microtime(true) - $logs['start_time'];
-        
+
         // Update DataLog
         if ($logs['data_log']) {
             $logs['data_log']->updateStatus($status, $response);
         }
-        
+
         // Update WebhookLog
         if ($logs['webhook_log']) {
             $logs['webhook_log']->update([
@@ -66,11 +66,11 @@ class UnifiedWebhookLoggerService
                 'error_message' => $status === 'failed' ? $response : null,
             ]);
         }
-        
+
         // Enhanced logging based on status
         $this->logStatusUpdate($logs, $status, $response, $executionTime, $additionalData);
     }
-    
+
     /**
      * Extract transaction ID from request or additional data
      */
@@ -81,9 +81,9 @@ class UnifiedWebhookLoggerService
             'TransactionID', 'transaction_id', 'txn_id', 'txnId',
             'pp_TxnRefNo', 'pp_BillReference',
             'payment_id', 'paymentId', 'order_id', 'orderId',
-            'reference', 'ref', 'trx', 'trx_id'
+            'reference', 'ref', 'trx', 'trx_id',
         ];
-        
+
         foreach ($transactionFields as $field) {
             if ($request->has($field)) {
                 return $request->get($field);
@@ -92,10 +92,10 @@ class UnifiedWebhookLoggerService
                 return $additionalData[$field];
             }
         }
-        
+
         return null;
     }
-    
+
     /**
      * Create WebhookLog entry
      */
@@ -124,10 +124,11 @@ class UnifiedWebhookLoggerService
                 'endpoint' => $endpoint,
                 'webhook_type' => $webhookType,
             ]);
+
             return null;
         }
     }
-    
+
     /**
      * Log status update with enhanced details
      */
@@ -139,10 +140,10 @@ class UnifiedWebhookLoggerService
             'status' => $status,
             'execution_time' => $executionTime,
         ];
-        
+
         // Add additional data to log
         $logData = array_merge($logData, $additionalData);
-        
+
         switch ($status) {
             case 'success':
                 Log::info('Webhook processed successfully', $logData);
@@ -157,7 +158,7 @@ class UnifiedWebhookLoggerService
                 Log::info('Webhook status updated', $logData);
         }
     }
-    
+
     /**
      * Get webhook statistics for admin dashboard
      */
@@ -169,24 +170,24 @@ class UnifiedWebhookLoggerService
             'failed_requests' => DataLog::where('status', 'failed')->count(),
             'error_requests' => DataLog::where('status', 'error')->count(),
         ];
-        
+
         $webhookLogStats = [
             'total_webhooks' => WebhookLog::count(),
             'successful_webhooks' => WebhookLog::successful()->count(),
             'failed_webhooks' => WebhookLog::failed()->count(),
             'pending_webhooks' => WebhookLog::pending()->count(),
         ];
-        
+
         return [
             'data_logs' => $dataLogStats,
             'webhook_logs' => $webhookLogStats,
             'combined' => [
                 'total' => $dataLogStats['total_requests'] + $webhookLogStats['total_webhooks'],
                 'success_rate' => $this->calculateSuccessRate($dataLogStats, $webhookLogStats),
-            ]
+            ],
         ];
     }
-    
+
     /**
      * Calculate overall success rate
      */
@@ -194,29 +195,29 @@ class UnifiedWebhookLoggerService
     {
         $total = $dataLogStats['total_requests'] + $webhookLogStats['total_webhooks'];
         $successful = $dataLogStats['successful_requests'] + $webhookLogStats['successful_webhooks'];
-        
+
         return $total > 0 ? round(($successful / $total) * 100, 2) : 0;
     }
-    
+
     /**
      * Get recent webhook logs with pagination
      */
-    public function getRecentWebhookLogs(int $limit = 50, string $type = null): array
+    public function getRecentWebhookLogs(int $limit = 50, ?string $type = null): array
     {
         $dataLogs = DataLog::latest()->limit($limit)->get();
         $webhookLogs = WebhookLog::latest()->limit($limit)->get();
-        
+
         if ($type) {
             $dataLogs = DataLog::where('endpoint', 'like', "%{$type}%")->latest()->limit($limit)->get();
             $webhookLogs = WebhookLog::byType($type)->latest()->limit($limit)->get();
         }
-        
+
         return [
             'data_logs' => $dataLogs,
             'webhook_logs' => $webhookLogs,
         ];
     }
-    
+
     /**
      * Clean up old webhook logs
      */
@@ -224,7 +225,7 @@ class UnifiedWebhookLoggerService
     {
         $dataLogsDeleted = DataLog::where('created_at', '<', now()->subDays($days))->delete();
         $webhookLogsDeleted = WebhookLog::where('created_at', '<', now()->subDays($days))->delete();
-        
+
         return [
             'data_logs_deleted' => $dataLogsDeleted,
             'webhook_logs_deleted' => $webhookLogsDeleted,

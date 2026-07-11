@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Gateway;
 use App\Models\GatewayCurrency;
+use Illuminate\Database\Seeder;
 
 class JazzCashWalletGatewaySeeder extends Seeder
 {
@@ -19,6 +19,7 @@ class JazzCashWalletGatewaySeeder extends Seeder
         $existingGateway = Gateway::where('code', 'jazzcash_wallet')->first();
         if ($existingGateway) {
             $this->command->info('JazzCash Wallet gateway already exists. Skipping...');
+
             return;
         }
 
@@ -32,30 +33,30 @@ class JazzCashWalletGatewaySeeder extends Seeder
                 'merchant_id' => [
                     'title' => 'Merchant ID',
                     'global' => true,
-                    'value' => ''
+                    'value' => '',
                 ],
                 'password' => [
                     'title' => 'Password',
                     'global' => true,
-                    'value' => ''
+                    'value' => '',
                 ],
                 'integrity_salt' => [
                     'title' => 'Integrity Salt',
                     'global' => true,
-                    'value' => ''
+                    'value' => '',
                 ],
                 'sandbox' => [
                     'title' => 'Sandbox Mode',
                     'global' => true,
-                    'value' => '0'
-                ]
+                    'value' => '0',
+                ],
             ]),
             'supported_currencies' => json_encode(['PKR']),
             'extra' => null,
             'input_form' => null,
             'guideline' => 'Configure your JazzCash Wallet payment gateway with the provided credentials. Enable sandbox mode for testing. Users will need to enter their phone number and CNIC last 6 digits for payment processing.',
             'countries' => ['PK'],
-            'status' => 1
+            'status' => 1,
         ]);
 
         // Create the gateway currency
@@ -67,7 +68,7 @@ class JazzCashWalletGatewaySeeder extends Seeder
                 'merchant_id' => '',
                 'password' => '',
                 'integrity_salt' => '',
-                'sandbox' => '0'
+                'sandbox' => '0',
             ]),
             'min_amount' => 100.00,
             'max_amount' => 1000000.00,
@@ -75,7 +76,7 @@ class JazzCashWalletGatewaySeeder extends Seeder
             'percent_charge' => 2.50,
             'rate' => 1.00,
             'symbol' => 'Rs',
-            'status' => 1
+            'status' => 1,
         ]);
 
         $this->command->info('JazzCash Wallet gateway created successfully!');

@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('users') || Schema::hasColumn('users', 'creator_slug')) {
+        if (! Schema::hasTable('users') || Schema::hasColumn('users', 'creator_slug')) {
             return;
         }
 
@@ -34,4 +34,3 @@ return new class extends Migration
         });
     }
 };
-

@@ -17,20 +17,20 @@ return new class extends Migration
             ->orWhere('alias', 'paypal-sdk')
             ->first();
 
-        if (!$gateway) {
+        if (! $gateway) {
             return;
         }
 
         $params = json_decode($gateway->gateway_parameters, true);
-        if (!is_array($params)) {
+        if (! is_array($params)) {
             $params = [];
         }
 
-        if (!isset($params['sandbox'])) {
+        if (! isset($params['sandbox'])) {
             $params['sandbox'] = [
-                'title'  => 'Sandbox Mode',
+                'title' => 'Sandbox Mode',
                 'global' => true,
-                'value'  => '0',
+                'value' => '0',
             ];
             DB::table('gateways')
                 ->where('id', $gateway->id)
@@ -41,7 +41,7 @@ return new class extends Migration
         $currencies = DB::table('gateway_currencies')->where('method_code', $gateway->code)->get();
         foreach ($currencies as $row) {
             $param = json_decode($row->gateway_parameter, true);
-            if (is_array($param) && !array_key_exists('sandbox', $param)) {
+            if (is_array($param) && ! array_key_exists('sandbox', $param)) {
                 $param['sandbox'] = '0';
                 DB::table('gateway_currencies')
                     ->where('id', $row->id)
@@ -60,7 +60,7 @@ return new class extends Migration
             ->orWhere('alias', 'paypal-sdk')
             ->first();
 
-        if (!$gateway) {
+        if (! $gateway) {
             return;
         }
 

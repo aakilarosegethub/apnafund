@@ -2,10 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\Gateway;
 use App\Models\GatewayCurrency;
+use Illuminate\Database\Seeder;
 
 class CustomGatewaySeeder extends Seeder
 {
@@ -29,35 +28,35 @@ class CustomGatewaySeeder extends Seeder
                 'merchant_id' => [
                     'title' => 'Merchant ID',
                     'global' => true,
-                    'value' => ''
+                    'value' => '',
                 ],
                 'password' => [
                     'title' => 'Password',
                     'global' => true,
-                    'value' => ''
+                    'value' => '',
                 ],
                 'hash_key' => [
                     'title' => 'Hash Key',
                     'global' => true,
-                    'value' => ''
+                    'value' => '',
                 ],
                 'return_url' => [
                     'title' => 'Return URL',
                     'global' => true,
-                    'value' => ''
+                    'value' => '',
                 ],
                 'sandbox' => [
                     'title' => 'Sandbox Mode',
                     'global' => true,
-                    'value' => '0'
-                ]
+                    'value' => '0',
+                ],
             ]),
             'supported_currencies' => json_encode(['USD', 'EUR', 'GBP', 'PKR']),
             'extra' => null,
             'input_form' => null,
             'guideline' => 'Configure your custom payment gateway with the provided credentials. Enable sandbox mode for testing.',
             'countries' => null, // Available in all countries
-            'status' => 1
+            'status' => 1,
         ]);
 
         // Create gateway currency for USD
@@ -70,7 +69,7 @@ class CustomGatewaySeeder extends Seeder
                 'password' => '',
                 'hash_key' => '',
                 'return_url' => '',
-                'sandbox' => '0'
+                'sandbox' => '0',
             ]),
             'min_amount' => 1.00,
             'max_amount' => 10000.00,
@@ -78,7 +77,7 @@ class CustomGatewaySeeder extends Seeder
             'percent_charge' => 2.50,
             'rate' => 1.00,
             'symbol' => '$',
-            'status' => 1
+            'status' => 1,
         ]);
     }
 }

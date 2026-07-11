@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('question_id')->constrained('registration_questions')->onDelete('cascade');
             $table->text('response_value');
             $table->timestamps();
-            
+
             $table->unique(['user_id', 'question_id']);
         });
     }

@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -19,19 +19,19 @@ class AccountController extends BaseApiController
 
         if (empty($uid)) {
             return response()->json([
-                "ResponseCode" => "401",
-                "Result" => "false",
-                "ResponseMsg" => "Unauthorized! Please login first."
+                'ResponseCode' => '401',
+                'Result' => 'false',
+                'ResponseMsg' => 'Unauthorized! Please login first.',
             ], 401);
         }
 
         $user = User::find($uid);
 
-        if (!$user) {
+        if (! $user) {
             return response()->json([
-                "ResponseCode" => "401",
-                "Result" => "false",
-                "ResponseMsg" => "User not found!"
+                'ResponseCode' => '401',
+                'Result' => 'false',
+                'ResponseMsg' => 'User not found!',
             ], 401);
         }
 
@@ -58,22 +58,22 @@ class AccountController extends BaseApiController
             report($e);
 
             return response()->json([
-                "ResponseCode" => "401",
-                "Result" => "false",
-                "ResponseMsg" => "Unable to delete account. Please contact support."
+                'ResponseCode' => '401',
+                'Result' => 'false',
+                'ResponseMsg' => 'Unable to delete account. Please contact support.',
             ], 401);
         }
 
         return response()->json([
-            "ResponseCode" => "200",
-            "Result" => "true",
-            "ResponseMsg" => "Account Delete Successfully!!"
+            'ResponseCode' => '200',
+            'Result' => 'true',
+            'ResponseMsg' => 'Account Delete Successfully!!',
         ]);
     }
 
     private function deleteUserRowsIfTableExists(string $table, int $userId): void
     {
-        if (!Schema::hasTable($table) || !Schema::hasColumn($table, 'user_id')) {
+        if (! Schema::hasTable($table) || ! Schema::hasColumn($table, 'user_id')) {
             return;
         }
 

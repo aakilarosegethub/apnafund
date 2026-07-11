@@ -38,7 +38,7 @@ class WeakPasswords
         }
 
         foreach (self::WEAK_BASES as $base) {
-            if ($lower === $base || preg_match('/^' . preg_quote($base, '/') . '\d*$/', $lower) === 1) {
+            if ($lower === $base || preg_match('/^'.preg_quote($base, '/').'\d*$/', $lower) === 1) {
                 return true;
             }
         }
@@ -70,7 +70,7 @@ class WeakPasswords
 
     private static function isSequentialDigits(string $value): bool
     {
-        if (!preg_match('/^\d+$/', $value) || strlen($value) < 6) {
+        if (! preg_match('/^\d+$/', $value) || strlen($value) < 6) {
             return false;
         }
 
@@ -92,7 +92,7 @@ class WeakPasswords
 
     private static function isSequentialLetters(string $value): bool
     {
-        if (!preg_match('/^[a-z]+$/', $value) || strlen($value) < 6) {
+        if (! preg_match('/^[a-z]+$/', $value) || strlen($value) < 6) {
             return false;
         }
 

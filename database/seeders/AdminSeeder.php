@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Admin;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
 class AdminSeeder extends Seeder
@@ -17,6 +17,7 @@ class AdminSeeder extends Seeder
         $existingAdmin = Admin::where('email', 'admin@test.com')->first();
         if ($existingAdmin) {
             $this->command->info('Test admin already exists. Skipping...');
+
             return;
         }
 

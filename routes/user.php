@@ -31,7 +31,7 @@ Route::namespace('User\Auth')->name('user.')->group(function () {
     });
 
     // Social Login
-    Route::controller('SocialLoginController')->prefix('auth')->name('social.')->group(function() {
+    Route::controller('SocialLoginController')->prefix('auth')->name('social.')->group(function () {
         Route::get('facebook', 'redirectToFacebook')->name('facebook');
         Route::get('facebook/callback', 'handleFacebookCallback')->name('facebook.callback');
         Route::get('google', 'redirectToGoogle')->name('google');
@@ -74,7 +74,9 @@ Route::middleware(['auth'])->name('user.')->namespace('User')->group(function ()
             Route::get('rejected', 'rejected')->name('rejected');
             Route::get('new', 'new')->name('create');
             Route::post('store', 'store')->name('store');
-            Route::get('test', function() { return response()->json(['message' => 'Test route working']); })->name('test');
+            Route::get('test', function () {
+                return response()->json(['message' => 'Test route working']);
+            })->name('test');
             Route::get('edit/{slug}', 'edit')->name('edit');
             Route::get('edit/{slug}/basics', 'editSection')->name('edit.basics');
             Route::get('edit/{slug}/reward', 'editSection')->name('edit.reward');

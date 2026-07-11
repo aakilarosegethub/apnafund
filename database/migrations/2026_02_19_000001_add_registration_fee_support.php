@@ -11,19 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasColumn('deposits', 'deposit_type')) {
+        if (! Schema::hasColumn('deposits', 'deposit_type')) {
             Schema::table('deposits', function (Blueprint $table) {
                 $table->string('deposit_type', 30)->default('donation')->after('campaign_id');
             });
         }
 
-        if (!Schema::hasColumn('transactions', 'campaign_id')) {
+        if (! Schema::hasColumn('transactions', 'campaign_id')) {
             Schema::table('transactions', function (Blueprint $table) {
                 $table->unsignedBigInteger('campaign_id')->nullable()->after('user_id');
             });
         }
 
-        if (!Schema::hasColumn('settings', 'registration_fee_enabled')) {
+        if (! Schema::hasColumn('settings', 'registration_fee_enabled')) {
             Schema::table('settings', function (Blueprint $table) {
                 $table->boolean('registration_fee_enabled')->default(false)->after('per_page_item');
                 $table->decimal('registration_fee_min', 15, 2)->default(1)->after('registration_fee_enabled');

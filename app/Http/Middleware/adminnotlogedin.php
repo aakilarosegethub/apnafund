@@ -11,8 +11,6 @@ class AdminNotLogedIn
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
      * @return mixed
      */
     public function handle(Request $request, Closure $next)
@@ -20,6 +18,7 @@ class AdminNotLogedIn
         if (Session::get('admin')) {
             return redirect('admin/dashboard');
         }
+
         return $next($request);
     }
 }

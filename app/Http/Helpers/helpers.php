@@ -12,8 +12,8 @@ use App\Lib\Captcha;
 use App\Lib\ClientInfo;
 use App\Lib\FileManager;
 use App\Lib\GoogleAuthenticator;
-use App\Models\Plugin;
 use App\Models\CampaignDocumentField;
+use App\Models\Plugin;
 use App\Models\Setting;
 use App\Models\SiteData;
 use App\Notify\Notify;
@@ -21,19 +21,23 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
-function systemDetails(): array {
-    $system['name']          = 'ApnaCrowdFunding';
-    $system['version']       = '1.1';
+function systemDetails(): array
+{
+    $system['name'] = 'ApnaCrowdFunding';
+    $system['version'] = '1.1';
     $system['build_version'] = '0.0.1';
 
     return $system;
 }
 
-function verificationCode($length): int {
-    if ($length <= 0) return 0;
+function verificationCode($length): int
+{
+    if ($length <= 0) {
+        return 0;
+    }
 
     $min = pow(10, $length - 1);
-    $max = (int) ($min - 1) . '9';
+    $max = (int) ($min - 1).'9';
 
     return random_int($min, $max);
 }
@@ -41,7 +45,7 @@ function verificationCode($length): int {
 function admin_has_widget(string $widgetKey): bool
 {
     $admin = auth()->guard('admin')->user();
-    if (!$admin) {
+    if (! $admin) {
         return false;
     }
     if ($admin->isSuperAdmin()) {
@@ -49,15 +53,17 @@ function admin_has_widget(string $widgetKey): bool
     }
     if ($admin->role_id && $admin->rbacRole) {
         $widgets = $admin->rbacRole->dashboard_widgets ?? [];
+
         return is_array($widgets) && in_array($widgetKey, $widgets);
     }
+
     return false;
 }
 
 function admin_can(string|array $permission): bool
 {
     $admin = auth()->guard('admin')->user();
-    if (!$admin) {
+    if (! $admin) {
         return false;
     }
     $helper = app(\App\Support\PermissionHelper::class);
@@ -67,44 +73,60 @@ function admin_can(string|array $permission): bool
             return true;
         }
     }
+
     return false;
 }
 
-function navigationActive($routeName, $type = null, $param = null) {
-    if ($type == 1) $class = 'active';
-    else $class = 'active show';
+function navigationActive($routeName, $type = null, $param = null)
+{
+    if ($type == 1) {
+        $class = 'active';
+    } else {
+        $class = 'active show';
+    }
 
     if (is_array($routeName)) {
-        foreach ($routeName as $key => $name) if (request()->routeIs($name)) return $class;
+        foreach ($routeName as $key => $name) {
+            if (request()->routeIs($name)) {
+                return $class;
+            }
+        }
     } elseif (request()->routeIs($routeName)) {
         if ($param) {
             $routeParam = array_values(@request()->route()->parameters ?? []);
 
-            if (strtolower(@$routeParam[0]) == strtolower($param)) return $class;
-            else return;
+            if (strtolower(@$routeParam[0]) == strtolower($param)) {
+                return $class;
+            } else {
+                return;
+            }
         }
 
         return $class;
     }
 }
 
-function bs($fieldName = null) {
+function bs($fieldName = null)
+{
     try {
         $setting = cache()->get('setting');
 
-        if (!$setting) {
+        if (! $setting) {
             $setting = Setting::first();
             if ($setting) {
                 cache()->put('setting', $setting);
             }
         }
 
-        if ($fieldName) return @$setting->$fieldName;
+        if ($fieldName) {
+            return @$setting->$fieldName;
+        }
 
         return $setting;
     } catch (\Exception $e) {
         // Database connection failed, return null
-        \Log::error('Database connection failed in bs() function: ' . $e->getMessage());
+        \Log::error('Database connection failed in bs() function: '.$e->getMessage());
+
         return null;
     }
 }
@@ -115,33 +137,34 @@ function bs($fieldName = null) {
 function loginLockSettings(): array
 {
     $defaults = [
-        'max_attempts'   => 5,
-        'lock_duration'  => 60,
-        'enabled'        => true,
-        'email_enabled'  => true,
+        'max_attempts' => 5,
+        'lock_duration' => 60,
+        'enabled' => true,
+        'email_enabled' => true,
     ];
 
-    if (!Schema::hasColumn('settings', 'login_max_attempts')) {
+    if (! Schema::hasColumn('settings', 'login_max_attempts')) {
         return $defaults;
     }
 
     return [
-        'max_attempts'  => max(1, (int) (bs('login_max_attempts') ?? $defaults['max_attempts'])),
+        'max_attempts' => max(1, (int) (bs('login_max_attempts') ?? $defaults['max_attempts'])),
         'lock_duration' => max(1, (int) (bs('login_lock_duration') ?? $defaults['lock_duration'])),
-        'enabled'       => (bool) (bs('login_lock_enabled') ?? $defaults['enabled']),
+        'enabled' => (bool) (bs('login_lock_enabled') ?? $defaults['enabled']),
         'email_enabled' => (bool) (bs('login_lock_email_enabled') ?? $defaults['email_enabled']),
     ];
 }
 
-function fileUploader($file, $location, $size = null, $old = null, $thumb = null): string {
-    $fileManager        = new FileManager($file);
+function fileUploader($file, $location, $size = null, $old = null, $thumb = null): string
+{
+    $fileManager = new FileManager($file);
     // Convert relative path to full public path if needed
     $publicPath = public_path();
-    
+
     // If location is already an absolute path, use it as is
     if (strpos($location, $publicPath) === 0 || (strpos($location, '/') === 0 && file_exists($location))) {
         $fileManager->path = $location;
-    } 
+    }
     // If location starts with / but doesn't exist, try public_path
     elseif (strpos($location, '/') === 0) {
         $fileManager->path = public_path(ltrim($location, '/'));
@@ -150,41 +173,44 @@ function fileUploader($file, $location, $size = null, $old = null, $thumb = null
     else {
         $fileManager->path = public_path($location);
     }
-    
+
     // Ensure the directory exists and is writable
     $fileManager->makeDirectory();
-    
-    $fileManager->size  = $size;
-    $fileManager->old   = $old;
+
+    $fileManager->size = $size;
+    $fileManager->old = $old;
     $fileManager->thumb = $thumb;
     $fileManager->upload();
 
     return $fileManager->filename;
 }
 
-function fileManager(): FileManager {
-    return new FileManager();
+function fileManager(): FileManager
+{
+    return new FileManager;
 }
 
-function getFilePath($key) {
+function getFilePath($key)
+{
     $fileInfo = new \App\Constants\FileDetails;
     $filePaths = $fileInfo->fileDetails();
-    
+
     if (array_key_exists($key, $filePaths)) {
         return $filePaths[$key]['path'];
     }
-    
+
     return '';
 }
 
-function getFileSize($key) {
+function getFileSize($key)
+{
     $fileInfo = new \App\Constants\FileDetails;
     $filePaths = $fileInfo->fileDetails();
-    
+
     if (array_key_exists($key, $filePaths) && isset($filePaths[$key]['size'])) {
         return $filePaths[$key]['size'];
     }
-    
+
     return null;
 }
 
@@ -192,35 +218,37 @@ function getFileSize($key) {
  * Save an Intervention image instance as WebP.
  * Falls back to cwebp when GD WebP support is missing (XAMPP PHP).
  */
-function saveImageAsWebp($image, $destPath, $quality = 90) {
+function saveImageAsWebp($image, $destPath, $quality = 90)
+{
     // Try Intervention encode first (works for GD or Imagick drivers)
     try {
         $image->encode('webp', $quality)->save($destPath);
+
         return;
     } catch (\Exception $e) {
         // Continue to cwebp fallback
     }
 
     $cwebp = '/usr/local/bin/cwebp';
-    if (!is_executable($cwebp)) {
+    if (! is_executable($cwebp)) {
         throw new \Exception('WebP format is not supported by the server. Please enable WebP support.');
     }
 
     $tmpBase = tempnam(sys_get_temp_dir(), 'webp_');
-    $tmpPng = $tmpBase . '.png';
+    $tmpPng = $tmpBase.'.png';
     @rename($tmpBase, $tmpPng);
 
     $image->encode('png')->save($tmpPng);
 
     $command = escapeshellarg($cwebp)
-        . ' -quiet -q ' . intval($quality)
-        . ' ' . escapeshellarg($tmpPng)
-        . ' -o ' . escapeshellarg($destPath);
+        .' -quiet -q '.intval($quality)
+        .' '.escapeshellarg($tmpPng)
+        .' -o '.escapeshellarg($destPath);
 
     exec($command, $output, $exitCode);
     @unlink($tmpPng);
 
-    if ($exitCode !== 0 || !file_exists($destPath)) {
+    if ($exitCode !== 0 || ! file_exists($destPath)) {
         throw new \Exception('WebP conversion failed. Please ensure cwebp is available.');
     }
 }
@@ -229,7 +257,8 @@ function saveImageAsWebp($image, $destPath, $quality = 90) {
  * Save an uploaded image (or file path) as WebP with optional resize.
  * Uses Intervention first; falls back to cwebp if the driver can't read the source.
  */
-function saveUploadedImageAsWebp($source, $destPath, $quality = 90, $maxWidth = null, $maxHeight = null) {
+function saveUploadedImageAsWebp($source, $destPath, $quality = 90, $maxWidth = null, $maxHeight = null)
+{
     try {
         $image = \Intervention\Image\Facades\Image::make($source);
         if ($maxWidth && $maxHeight) {
@@ -238,6 +267,7 @@ function saveUploadedImageAsWebp($source, $destPath, $quality = 90, $maxWidth = 
             });
         }
         saveImageAsWebp($image, $destPath, $quality);
+
         return;
     } catch (\Exception $e) {
         // Continue to cwebp fallback
@@ -250,9 +280,10 @@ function saveUploadedImageAsWebp($source, $destPath, $quality = 90, $maxWidth = 
 /**
  * Convert a source file to WebP via cwebp with optional resize.
  */
-function saveWebpFromSource($sourcePath, $destPath, $quality = 90, $maxWidth = null, $maxHeight = null) {
+function saveWebpFromSource($sourcePath, $destPath, $quality = 90, $maxWidth = null, $maxHeight = null)
+{
     $cwebp = '/usr/local/bin/cwebp';
-    if (!is_executable($cwebp)) {
+    if (! is_executable($cwebp)) {
         throw new \Exception('WebP format is not supported by the server. Please enable WebP support.');
     }
 
@@ -263,25 +294,26 @@ function saveWebpFromSource($sourcePath, $destPath, $quality = 90, $maxWidth = n
             $ratio = min($maxWidth / $size[0], $maxHeight / $size[1]);
             $newW = max(1, (int) floor($size[0] * $ratio));
             $newH = max(1, (int) floor($size[1] * $ratio));
-            $resizeArgs = ' -resize ' . $newW . ' ' . $newH;
+            $resizeArgs = ' -resize '.$newW.' '.$newH;
         }
     }
 
     $command = escapeshellarg($cwebp)
-        . ' -quiet -q ' . intval($quality)
-        . $resizeArgs
-        . ' ' . escapeshellarg($sourcePath)
-        . ' -o ' . escapeshellarg($destPath);
+        .' -quiet -q '.intval($quality)
+        .$resizeArgs
+        .' '.escapeshellarg($sourcePath)
+        .' -o '.escapeshellarg($destPath);
 
     exec($command, $output, $exitCode);
-    if ($exitCode !== 0 || !file_exists($destPath)) {
+    if ($exitCode !== 0 || ! file_exists($destPath)) {
         throw new \Exception('WebP conversion failed. Please ensure cwebp is available.');
     }
 }
 
-function getPageSEO($pageKey) {
-    $seoData = SiteData::where('data_key', $pageKey . '.seo')->first();
-    
+function getPageSEO($pageKey)
+{
+    $seoData = SiteData::where('data_key', $pageKey.'.seo')->first();
+
     if ($seoData && $seoData->data_info) {
         return [
             'meta_title' => @$seoData->data_info->meta_title,
@@ -289,7 +321,7 @@ function getPageSEO($pageKey) {
             'meta_keywords' => @$seoData->data_info->meta_keywords,
         ];
     }
-    
+
     return [
         'meta_title' => '',
         'meta_description' => '',
@@ -300,13 +332,14 @@ function getPageSEO($pageKey) {
 /**
  * Validate phone number based on country
  */
-function validatePhoneByCountry($phone, $country) {
+function validatePhoneByCountry($phone, $country)
+{
     // Clean the phone number (remove all non-digits)
     $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
-    
+
     // Get country data
     $countryData = json_decode(file_get_contents(resource_path('views/partials/country.json')), true);
-    
+
     // Find country code by country name
     $countryCode = null;
     foreach ($countryData as $code => $data) {
@@ -315,24 +348,24 @@ function validatePhoneByCountry($phone, $country) {
             break;
         }
     }
-    
-    if (!$countryCode) {
+
+    if (! $countryCode) {
         return false; // Invalid country
     }
-    
+
     // Get dial code for the country
     $dialCode = $countryData[$countryCode]['dial_code'];
-    
+
     // Remove country code if it's at the beginning
     if (strpos($cleanPhone, $dialCode) === 0) {
         $cleanPhone = substr($cleanPhone, strlen($dialCode));
     }
-    
+
     // Also handle +92 format (remove the + and 92)
     if (strpos($cleanPhone, '92') === 0 && strlen($cleanPhone) > 10) {
         $cleanPhone = substr($cleanPhone, 2);
     }
-    
+
     // Country-specific validation rules
     switch ($countryCode) {
         case 'PK': // Pakistan
@@ -352,7 +385,7 @@ function validatePhoneByCountry($phone, $country) {
                 return true;
             }
             break;
-            
+
         case 'US': // United States
             // US numbers: 10 digits (area code + number)
             if (strlen($cleanPhone) === 10) {
@@ -363,7 +396,7 @@ function validatePhoneByCountry($phone, $country) {
                 return true;
             }
             break;
-            
+
         case 'GB': // United Kingdom
             // UK numbers: 10-11 digits (excluding country code)
             if (strlen($cleanPhone) >= 10 && strlen($cleanPhone) <= 11) {
@@ -374,7 +407,7 @@ function validatePhoneByCountry($phone, $country) {
                 return true;
             }
             break;
-            
+
         case 'IN': // India
             // Indian mobile numbers: 10 digits
             if (strlen($cleanPhone) === 10) {
@@ -385,7 +418,7 @@ function validatePhoneByCountry($phone, $country) {
                 return true;
             }
             break;
-            
+
         default:
             // General validation: 7-15 digits
             if (strlen($cleanPhone) >= 7 && strlen($cleanPhone) <= 15) {
@@ -393,20 +426,21 @@ function validatePhoneByCountry($phone, $country) {
             }
             break;
     }
-    
+
     return false;
 }
 
 /**
  * Format phone number for storage
  */
-function formatPhoneForStorage($phone, $country) {
+function formatPhoneForStorage($phone, $country)
+{
     // Clean the phone number
     $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
-    
+
     // Get country data
     $countryData = json_decode(file_get_contents(resource_path('views/partials/country.json')), true);
-    
+
     // Find country code by country name
     $countryCode = null;
     foreach ($countryData as $code => $data) {
@@ -415,110 +449,130 @@ function formatPhoneForStorage($phone, $country) {
             break;
         }
     }
-    
-    if (!$countryCode) {
+
+    if (! $countryCode) {
         return $phone; // Return original if country not found
     }
-    
+
     // Get dial code for the country
     $dialCode = $countryData[$countryCode]['dial_code'];
-    
+
     // Remove country code if it's at the beginning
     if (strpos($cleanPhone, $dialCode) === 0) {
         $cleanPhone = substr($cleanPhone, strlen($dialCode));
     }
-    
+
     // Return formatted number with country code
-    return '+' . $dialCode . $cleanPhone;
+    return '+'.$dialCode.$cleanPhone;
 }
 
-function getThumbSize($key) {
+function getThumbSize($key)
+{
     $fileInfo = new \App\Constants\FileDetails;
     $filePaths = $fileInfo->fileDetails();
-    
+
     if (array_key_exists($key, $filePaths) && isset($filePaths[$key]['thumb'])) {
         return $filePaths[$key]['thumb'];
     }
-    
+
     return null;
 }
 
-function custom_asset($path) {
+function custom_asset($path)
+{
     // When running on localhost, always use current URL so local files load correctly
     $isLocal = in_array(request()->getHost(), ['localhost', '127.0.0.1', '0.0.0.0']);
     $assetsUrl = $isLocal ? url('/') : (env('ASSETS_URL') ?: url('/'));
-    
+
     // Remove leading slash from path if present
     $path = ltrim($path, '/');
-    
+
     // Ensure assets URL doesn't end with slash
     $assetsUrl = rtrim($assetsUrl, '/');
-    
-    return $assetsUrl . '/' . $path;
+
+    return $assetsUrl.'/'.$path;
 }
 
-function getImage($image, $size = null, $avatar = false): string {
+function getImage($image, $size = null, $avatar = false): string
+{
     $clean = '';
 
     // Multiple path checks for better compatibility
     $paths = [
         public_path($image),
-        base_path('public/' . $image),
+        base_path('public/'.$image),
         base_path($image),
-        $image
+        $image,
     ];
 
     foreach ($paths as $path) {
         if (file_exists($path) && is_file($path)) {
-            return custom_asset($image) . $clean;
+            return custom_asset($image).$clean;
         }
     }
 
     // If file not found, try direct asset URL (for live servers)
     $assetUrl = custom_asset($image);
     if ($assetUrl && $assetUrl !== custom_asset('assets/universal/images/default.png')) {
-        return $assetUrl . $clean;
+        return $assetUrl.$clean;
     }
 
-    if ($avatar) return custom_asset('assets/universal/images/avatar.png');
+    if ($avatar) {
+        return custom_asset('assets/universal/images/avatar.png');
+    }
 
-    if ($size) return route('placeholder.image', $size);
+    if ($size) {
+        return route('placeholder.image', $size);
+    }
 
     return custom_asset('assets/universal/images/default.png');
 }
 
-function getImageAlt($content, $imageKey, $default = 'image') {
-    if (!$content || !$content->data_info) {
+function getImageAlt($content, $imageKey, $default = 'image')
+{
+    if (! $content || ! $content->data_info) {
         return $default;
     }
-    
-    $altKey = $imageKey . '_alt';
+
+    $altKey = $imageKey.'_alt';
+
     return @$content->data_info->$altKey ?: $default;
 }
 
-function isImage($string): bool {
-    $allowedExtensions = array('jpg', 'jpeg', 'png', 'gif');
-    $fileExtension     = pathinfo($string, PATHINFO_EXTENSION);
+function isImage($string): bool
+{
+    $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
+    $fileExtension = pathinfo($string, PATHINFO_EXTENSION);
 
-    if (in_array($fileExtension, $allowedExtensions)) return true;
-    else return false;
+    if (in_array($fileExtension, $allowedExtensions)) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
-function isHtml($string): bool {
-    if (preg_match('/<.*?>/', $string)) return true;
-    else return false;
+function isHtml($string): bool
+{
+    if (preg_match('/<.*?>/', $string)) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
-function getPaginate($paginate = 0) {
+function getPaginate($paginate = 0)
+{
     return $paginate ? $paginate : bs('per_page_item');
 }
 
-function paginateLinks($data) {
+function paginateLinks($data)
+{
     return $data->appends(request()->all())->links();
 }
 
-function keyToTitle($text): string {
-    return ucwords(preg_replace("/[^A-Za-z0-9 ]/", ' ', $text));
+function keyToTitle($text): string
+{
+    return ucwords(preg_replace('/[^A-Za-z0-9 ]/', ' ', $text));
 }
 
 /**
@@ -583,27 +637,33 @@ function depositHasPaymentProofUpload($deposit): bool
     return false;
 }
 
-function titleToKey($text): string {
+function titleToKey($text): string
+{
     return strtolower(str_replace(' ', '_', $text));
 }
 
-function activeTheme($asset = false): string {
+function activeTheme($asset = false): string
+{
     $theme = bs('active_theme') ?: 'green';
 
-    if ($asset) return 'assets/themes/' . $theme . '/';
+    if ($asset) {
+        return 'assets/themes/'.$theme.'/';
+    }
 
-    return 'themes.' . $theme . '.';
+    return 'themes.'.$theme.'.';
 }
 
-function getPageSections($arr = false) {
-    $jsonUrl  = resource_path('views/') . str_replace('.', '/', activeTheme()) . 'site.json';
-    
+function getPageSections($arr = false)
+{
+    $jsonUrl = resource_path('views/').str_replace('.', '/', activeTheme()).'site.json';
+
     // Check if file exists
-    if (!file_exists($jsonUrl)) {
+    if (! file_exists($jsonUrl)) {
         \Log::error('site.json not found', ['path' => $jsonUrl, 'active_theme' => bs('active_theme')]);
-        return $arr ? [] : (object)[];
+
+        return $arr ? [] : (object) [];
     }
-    
+
     $jsonContent = file_get_contents($jsonUrl);
     $sections = json_decode($jsonContent);
 
@@ -612,9 +672,10 @@ function getPageSections($arr = false) {
         \Log::error('JSON decode error in site.json', [
             'error' => json_last_error_msg(),
             'path' => $jsonUrl,
-            'active_theme' => bs('active_theme')
+            'active_theme' => bs('active_theme'),
         ]);
-        return $arr ? [] : (object)[];
+
+        return $arr ? [] : (object) [];
     }
 
     if ($arr) {
@@ -625,34 +686,40 @@ function getPageSections($arr = false) {
     return $sections;
 }
 
-function getAmount($amount, $length = 2): float|int {
+function getAmount($amount, $length = 2): float|int
+{
     $num = $amount ?? 0;
-    if ($num === '' || !is_numeric($num)) {
+    if ($num === '' || ! is_numeric($num)) {
         $num = 0;
     }
+
     return round((float) $num, (int) $length);
 }
 
-function removeElement($array, $value): array {
-    return array_diff($array, (is_array($value) ? $value : array($value)));
+function removeElement($array, $value): array
+{
+    return array_diff($array, (is_array($value) ? $value : [$value]));
 }
 
-function notify($user, $templateName, $shortCodes = null, $sendVia = null): void {
-    $setting          = bs();
+function notify($user, $templateName, $shortCodes = null, $sendVia = null): void
+{
+    $setting = bs();
     $globalShortCodes = [
-        'site_name'       => $setting->site_name,
-        'site_currency'   => $setting->site_cur,
+        'site_name' => $setting->site_name,
+        'site_currency' => $setting->site_cur,
         'currency_symbol' => $setting->cur_sym,
     ];
 
-    if (gettype($user) == 'array') $user = (object) $user;
+    if (gettype($user) == 'array') {
+        $user = (object) $user;
+    }
 
-    $shortCodes           = array_merge($shortCodes ?? [], $globalShortCodes);
-    $notify               = new Notify($sendVia);
+    $shortCodes = array_merge($shortCodes ?? [], $globalShortCodes);
+    $notify = new Notify($sendVia);
     $notify->templateName = $templateName;
-    $notify->shortCodes   = $shortCodes;
-    $notify->user         = $user;
-    $notify->userColumn   = isset($user->id) ? $user->getForeignKey() : 'user_id';
+    $notify->shortCodes = $shortCodes;
+    $notify->user = $user;
+    $notify->userColumn = isset($user->id) ? $user->getForeignKey() : 'user_id';
     $notify->send();
 }
 
@@ -668,19 +735,19 @@ function adminMailNotifyRecipients(): array
     $email = isset($setting->site_email) ? trim((string) $setting->site_email) : '';
     if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
         return [(object) [
-            'email'    => strtolower($email),
-            'fullname' => ($setting->site_name ?? 'Site') . ' Admin',
+            'email' => strtolower($email),
+            'fullname' => ($setting->site_name ?? 'Site').' Admin',
             'username' => 'admin',
         ]];
     }
 
     $recipients = [];
     foreach (\App\Models\Admin::query()->orderBy('id')->get() as $admin) {
-        if (empty($admin->email) || !filter_var($admin->email, FILTER_VALIDATE_EMAIL)) {
+        if (empty($admin->email) || ! filter_var($admin->email, FILTER_VALIDATE_EMAIL)) {
             continue;
         }
         $recipients[] = (object) [
-            'email'    => $admin->email,
+            'email' => $admin->email,
             'fullname' => $admin->name ?? $admin->username ?? 'Admin',
             'username' => $admin->username ?? 'admin',
         ];
@@ -699,18 +766,21 @@ function notifySiteAdmins(string $templateName, array $shortCodes, ?array $sendV
     }
 }
 
-function showDateTime($date, $format = null): string {
+function showDateTime($date, $format = null): string
+{
     $lang = session()->get('lang');
     Carbon::setlocale($lang);
 
-    return $format ? Carbon::parse($date)->translatedFormat($format) : Carbon::parse($date)->translatedFormat(bs('date_format') . ' h:i A');
+    return $format ? Carbon::parse($date)->translatedFormat($format) : Carbon::parse($date)->translatedFormat(bs('date_format').' h:i A');
 }
 
-function getIpInfo(): array {
+function getIpInfo(): array
+{
     return ClientInfo::ipInfo();
 }
 
-function osBrowser(): array {
+function osBrowser(): array
+{
     return ClientInfo::osBrowser();
 }
 
@@ -734,7 +804,7 @@ function getRealIP(): string
         if (empty($_SERVER[$key])) {
             continue;
         }
-        $raw   = (string) $_SERVER[$key];
+        $raw = (string) $_SERVER[$key];
         $first = trim(explode(',', $raw)[0]);
         if ($first !== '' && filter_var($first, FILTER_VALIDATE_IP)) {
             return $first === '::1' ? '127.0.0.1' : $first;
@@ -753,23 +823,30 @@ function getRealIP(): string
     return $ip === '::1' ? '127.0.0.1' : $ip;
 }
 
-function loadReCaptcha(): ?string {
+function loadReCaptcha(): ?string
+{
     return Captcha::reCaptcha();
 }
 
-function verifyCaptcha(): bool {
+function verifyCaptcha(): bool
+{
     return Captcha::verify();
 }
 
-function loadExtension($key) {
+function loadExtension($key)
+{
     $plugin = Plugin::where('act', $key)->active()->first();
 
     return $plugin ? $plugin->generateScript() : '';
 }
 
-function urlPath($routeName, $routeParam = null): array|string {
-    if ($routeParam == null) $url = route($routeName);
-    else $url = route($routeName, $routeParam);
+function urlPath($routeName, $routeParam = null): array|string
+{
+    if ($routeParam == null) {
+        $url = route($routeName);
+    } else {
+        $url = route($routeName, $routeParam);
+    }
 
     $basePath = route('home');
 
@@ -784,9 +861,10 @@ function urlPath($routeName, $routeParam = null): array|string {
 function getCampaignDaysLimit(): int
 {
     $data = SiteData::where('data_key', 'general.campaign_days_limit')->first();
-    if (!$data || !isset($data->data_info['campaign_days_limit'])) {
+    if (! $data || ! isset($data->data_info['campaign_days_limit'])) {
         return 30;
     }
+
     return max(1, min(365, (int) $data->data_info['campaign_days_limit']));
 }
 
@@ -878,6 +956,7 @@ function campaignShortDescriptionValidationMessages(): array
 function getCampaignRequiredDocuments(): array
 {
     $requirements = getCampaignDocumentRequirements(true);
+
     return array_map(function ($item) {
         return $item['label'];
     }, $requirements);
@@ -887,7 +966,6 @@ function getCampaignRequiredDocuments(): array
  * Campaign document requirements config.
  * If no config exists, returns defaults for CNIC front/back and supporting PDF.
  *
- * @param bool $onlyActive
  * @return array<int, array{id:string,field_key:string,label:string,is_required:bool,is_active:bool}>
  */
 function getCampaignDocumentRequirements(bool $onlyActive = true, ?string $countryName = null): array
@@ -922,7 +1000,7 @@ function getCampaignDocumentRequirements(bool $onlyActive = true, ?string $count
         ],
     ];
 
-    if (!\Illuminate\Support\Facades\Schema::hasTable('campaign_document_fields')) {
+    if (! \Illuminate\Support\Facades\Schema::hasTable('campaign_document_fields')) {
         return $defaults;
     }
     $rows = CampaignDocumentField::query()
@@ -930,7 +1008,9 @@ function getCampaignDocumentRequirements(bool $onlyActive = true, ?string $count
         ->orderBy('id')
         ->get();
 
-    if ($rows->isEmpty()) return $defaults;
+    if ($rows->isEmpty()) {
+        return $defaults;
+    }
 
     $normalized = $rows->map(function ($row) {
         return [
@@ -950,14 +1030,14 @@ function getCampaignDocumentRequirements(bool $onlyActive = true, ?string $count
 
     if ($onlyActive) {
         $normalized = array_values(array_filter($normalized, function ($item) {
-            return !empty($item['is_active']);
+            return ! empty($item['is_active']);
         }));
     }
 
     if ($countryName !== null && trim($countryName) !== '') {
         $targetCountry = strtolower(trim($countryName));
         $normalized = array_values(array_filter($normalized, function ($item) use ($targetCountry) {
-            if (!empty($item['is_global'])) {
+            if (! empty($item['is_global'])) {
                 return true;
             }
             $countries = array_map(function ($c) {
@@ -968,10 +1048,11 @@ function getCampaignDocumentRequirements(bool $onlyActive = true, ?string $count
         }));
     }
 
-    return !empty($normalized) ? $normalized : $defaults;
+    return ! empty($normalized) ? $normalized : $defaults;
 }
 
-function getSiteData($dataKeys, $singleQuery = false, $limit = null, $orderById = false) {
+function getSiteData($dataKeys, $singleQuery = false, $limit = null, $orderById = false)
+{
     if ($singleQuery) {
         $siteData = SiteData::where('data_key', $dataKeys)->first();
     } else {
@@ -991,28 +1072,34 @@ function getSiteData($dataKeys, $singleQuery = false, $limit = null, $orderById 
     return $siteData;
 }
 
-function slug($string): string {
+function slug($string): string
+{
     return Str::slug($string);
 }
 
-function showMobileNumber($number): array|string {
+function showMobileNumber($number): array|string
+{
     $length = strlen($number);
 
     return substr_replace($number, '***', 2, $length - 4);
 }
 
-function showEmailAddress($email): array|string {
+function showEmailAddress($email): array|string
+{
     $endPosition = strpos($email, '@') - 1;
 
     return substr_replace($email, '***', 1, $endPosition);
 }
 
-function verifyG2fa($user, $code, $secret = null): bool {
-    $authenticator = new GoogleAuthenticator();
+function verifyG2fa($user, $code, $secret = null): bool
+{
+    $authenticator = new GoogleAuthenticator;
 
-    if (!$secret) $secret = $user->tsc;
+    if (! $secret) {
+        $secret = $user->tsc;
+    }
 
-    $oneCode  = $authenticator->getCode($secret);
+    $oneCode = $authenticator->getCode($secret);
     $userCode = $code;
 
     if ($oneCode == $userCode) {
@@ -1025,10 +1112,11 @@ function verifyG2fa($user, $code, $secret = null): bool {
     }
 }
 
-function getTrx($length = 12): string {
-    $characters       = 'ABCDEFGHJKMNOPQRSTUVWXYZ123456789';
+function getTrx($length = 12): string
+{
+    $characters = 'ABCDEFGHJKMNOPQRSTUVWXYZ123456789';
     $charactersLength = strlen($characters);
-    $randomString     = '';
+    $randomString = '';
 
     for ($i = 0; $i < $length; $i++) {
         $randomString .= $characters[rand(0, $charactersLength - 1)];
@@ -1045,20 +1133,33 @@ function getTrx($length = 12): string {
  * Use X-Flutter-Webview: 1 header in Flutter WebView for reliable detection.
  * UA fallback: Android "; wv)" or iOS "iPhone" + in-app patterns.
  */
-function isFlutterWebview(): bool {
-    if (request()->header('X-Flutter-Webview') === '1') return true;
+function isFlutterWebview(): bool
+{
+    if (request()->header('X-Flutter-Webview') === '1') {
+        return true;
+    }
     $ua = request()->userAgent() ?? '';
     // Android WebView (specific "; wv)" pattern, not generic "wv")
-    if (str_contains($ua, '; wv)')) return true;
+    if (str_contains($ua, '; wv)')) {
+        return true;
+    }
     // Flutter WebView or in-app browser
-    if (str_contains($ua, 'Flutter') || preg_match('/WebView\/[\d.]+/', $ua)) return true;
+    if (str_contains($ua, 'Flutter') || preg_match('/WebView\/[\d.]+/', $ua)) {
+        return true;
+    }
+
     return false;
 }
 
-function gatewayRedirectUrl($type = false): string {
-    if (auth()->check() && $type) return 'user.deposit.success';
+function gatewayRedirectUrl($type = false): string
+{
+    if (auth()->check() && $type) {
+        return 'user.deposit.success';
+    }
     // Error case: mobile app → dedicated page for Flutter to detect; desktop → campaigns + toast
-    if (!$type) return isFlutterWebview() ? 'user.deposit.error' : 'campaign';
+    if (! $type) {
+        return isFlutterWebview() ? 'user.deposit.error' : 'campaign';
+    }
 
     return 'campaign';
 }
@@ -1069,81 +1170,100 @@ function gatewayRedirectUrl($type = false): string {
  * Error case: dedicated user.deposit.error page (mobile-friendly).
  * Uses url() to avoid "Route [user.deposit.error] not defined" when route cache is stale.
  */
-function gatewayRedirectUrlFull(bool $success = false, ?string $message = null): string {
+function gatewayRedirectUrlFull(bool $success = false, ?string $message = null): string
+{
     $params = $success ? ['payment_status' => 'success'] : ['payment_status' => 'error'];
-    if (!$success && $message !== null && trim($message) !== '') {
+    if (! $success && $message !== null && trim($message) !== '') {
         $params['message'] = trim($message);
     }
     $path = match (gatewayRedirectUrl($success)) {
-        'user.deposit.error'   => '/campaigns',
+        'user.deposit.error' => '/campaigns',
         'user.deposit.success' => '/campaigns',
-        default               => '/campaigns',
+        default => '/campaigns',
     };
-    return url($path . '?' . http_build_query($params));
+
+    return url($path.'?'.http_build_query($params));
 }
 
-function showAmount($amount, $decimal = 0, $separate = true, $exceptZeros = false): string {
-    $decimal   = $decimal ?? bs('fraction_digit');
+function showAmount($amount, $decimal = 0, $separate = true, $exceptZeros = false): string
+{
+    $decimal = $decimal ?? bs('fraction_digit');
     $separator = '';
 
-    if ($separate) $separator = ',';
+    if ($separate) {
+        $separator = ',';
+    }
 
     $printAmount = number_format($amount, $decimal, '.', $separator);
 
     if ($exceptZeros) {
         $exp = explode('.', $printAmount);
 
-        if ($exp[1] * 1 == 0) $printAmount = $exp[0];
-        else $printAmount = rtrim($printAmount, '0');
+        if ($exp[1] * 1 == 0) {
+            $printAmount = $exp[0];
+        } else {
+            $printAmount = rtrim($printAmount, '0');
+        }
     }
 
     return $printAmount;
 }
 
-function cryptoQR($wallet): string {
+function cryptoQR($wallet): string
+{
     return "https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=$wallet&choe=UTF-8";
 }
 
-function diffForHumans($date): string {
+function diffForHumans($date): string
+{
     $lang = session()->get('lang');
     Carbon::setlocale($lang);
 
     return Carbon::parse($date)->diffForHumans();
 }
 
-function appendQuery($key, $value): string {
+function appendQuery($key, $value): string
+{
     return request()->fullUrlWithQuery([$key => $value]);
 }
 
-function strLimit($title = null, $length = 10): string {
+function strLimit($title = null, $length = 10): string
+{
     if ($title === null) {
         return '';
     }
+
     return Str::limit($title, $length);
 }
 
-function ordinal($number): string {
-    $ends = array('th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th');
+function ordinal($number): string
+{
+    $ends = ['th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th'];
 
-    if (($number % 100) >= 11 && ($number % 100) <= 13) return $number . 'th';
-    else return $number . $ends[$number % 10];
+    if (($number % 100) >= 11 && ($number % 100) <= 13) {
+        return $number.'th';
+    } else {
+        return $number.$ends[$number % 10];
+    }
 }
 
-function contributionPercentage($goalAmount, $raisedAmount): int {
+function contributionPercentage($goalAmount, $raisedAmount): int
+{
     return (int) (($raisedAmount / $goalAmount) * 100);
 }
 
 // New helper functions for replacing hardcoded values
 
-function getSiteLogo($type = 'light'): string {
+function getSiteLogo($type = 'light'): string
+{
     $setting = bs();
     $logoPath = getFilePath('logoFavicon');
-    
+
     if ($type === 'dark') {
-        return getImage($logoPath . '/logo_dark.png');
+        return getImage($logoPath.'/logo_dark.png');
     }
-    
-    return getImage($logoPath . '/logo_light.png');
+
+    return getImage($logoPath.'/logo_light.png');
 }
 
 function getCampaignImageMaxKb(): int
@@ -1166,44 +1286,53 @@ function getAllowedLocationCountries(): array
     $siteData = \App\Models\SiteData::where('data_key', 'general.allowed_countries')->first();
     $fallback = ['Pakistan', 'United States', 'United Kingdom', 'Canada', 'Australia', 'United Arab Emirates', 'Saudi Arabia', 'India', 'Germany', 'France', 'Singapore'];
 
-    if (!$siteData || !$siteData->data_info) {
+    if (! $siteData || ! $siteData->data_info) {
         return $fallback;
     }
 
     $dataInfo = $siteData->data_info;
-    if (!is_array($dataInfo)) {
+    if (! is_array($dataInfo)) {
         $dataInfo = is_object($dataInfo) ? (array) $dataInfo : (array) json_decode((string) $dataInfo, true);
     }
 
     $selectedCountries = array_values(array_filter((array) ($dataInfo['selected_countries'] ?? [])));
-    if (!empty($selectedCountries)) {
+    if (! empty($selectedCountries)) {
         sort($selectedCountries);
+
         return $selectedCountries;
     }
 
     return $fallback;
 }
 
-function getSiteFavicon(): string {
+function getSiteFavicon(): string
+{
     $faviconPath = getFilePath('logoFavicon');
-    return getImage($faviconPath . '/favicon.png');
+
+    return getImage($faviconPath.'/favicon.png');
 }
 
-function getDashboardTitle(): string {
+function getDashboardTitle(): string
+{
     return __('Dashboard');
 }
 
-function getBusinessDashboardTitle(): string {
+function getBusinessDashboardTitle(): string
+{
     return __('Business Dashboard');
 }
 
-function getDefaultCurrency(): string {
+function getDefaultCurrency(): string
+{
     $setting = bs();
+
     return $setting->cur_sym ?? '$';
 }
 
-function getDefaultCurrencyCode(): string {
+function getDefaultCurrencyCode(): string
+{
     $setting = bs();
+
     return $setting->site_cur ?? 'USD';
 }
 
@@ -1254,7 +1383,7 @@ function getSiteAllowedCountryNames(): array
 
     if ($siteData && $siteData->data_info) {
         $dataInfo = $siteData->data_info;
-        if (!is_array($dataInfo)) {
+        if (! is_array($dataInfo)) {
             $dataInfo = is_object($dataInfo) ? (array) $dataInfo : json_decode($dataInfo, true);
         }
 
@@ -1266,9 +1395,9 @@ function getSiteAllowedCountryNames(): array
         }
 
         if ($useSelectedOnly) {
-            if (!empty($selectedCountries) && is_array($selectedCountries)) {
+            if (! empty($selectedCountries) && is_array($selectedCountries)) {
                 $selectedCountries = array_filter($selectedCountries);
-                if (!empty($selectedCountries)) {
+                if (! empty($selectedCountries)) {
                     sort($selectedCountries);
 
                     return array_values($selectedCountries);
@@ -1278,9 +1407,9 @@ function getSiteAllowedCountryNames(): array
             return [];
         }
 
-        if (!empty($selectedCountries) && is_array($selectedCountries)) {
+        if (! empty($selectedCountries) && is_array($selectedCountries)) {
             $selectedCountries = array_filter($selectedCountries);
-            if (!empty($selectedCountries)) {
+            if (! empty($selectedCountries)) {
                 sort($selectedCountries);
 
                 return array_values($selectedCountries);
@@ -1356,7 +1485,7 @@ function getCurrencyCodeForCountryName(string $countryName): string
 function getCanonicalCountryNameForCurrencyCode(string $currencyCode): ?string
 {
     $code = strtoupper(trim($currencyCode));
-    $map  = [
+    $map = [
         'USD' => 'United States',
         'PKR' => 'Pakistan',
         'GBP' => 'United Kingdom',
@@ -1540,15 +1669,14 @@ function getLocalCurrencyCode(): string
     if ($tcur !== null && trim((string) $tcur) !== '') {
         return strtoupper(trim((string) $tcur));
     }
-    
 
     if (session('user_detected_currency')) {
         return strtoupper(trim((string) session('user_detected_currency')));
     }
 
     $ipData = getOrFetchIpCurrencyData();
-    
-    if (!empty($ipData['currency_code'])) {
+
+    if (! empty($ipData['currency_code'])) {
         return strtoupper(trim((string) $ipData['currency_code']));
     }
 
@@ -1598,9 +1726,9 @@ function resolveFooterCountryForLocalCurrency(array $allowedCountryNames): ?stri
         return null;
     }
 
-    $localCode     = strtoupper(getLocalCurrencyCode());
+    $localCode = strtoupper(getLocalCurrencyCode());
     $sessionCountry = session('user_detected_country');
-    $locked        = isLocalCurrencyLockedByEnv();
+    $locked = isLocalCurrencyLockedByEnv();
 
     $matched = [];
     foreach ($allowedCountryNames as $c) {
@@ -1628,7 +1756,7 @@ function resolveFooterCountryForLocalCurrency(array $allowedCountryNames): ?stri
 
     if (is_string($sessionCountry) && $sessionCountry !== ''
         && in_array($sessionCountry, $allowedCountryNames, true)) {
-        if (!$locked) {
+        if (! $locked) {
             return $sessionCountry;
         }
         $sessCode = resolveStrictCurrencyCodeForCountryName($sessionCountry);
@@ -1657,12 +1785,11 @@ function getLocalCurrencySymbol(): string
     if (session('user_detected_currency')) {
         return \App\Services\CurrencyService::getSymbolForCode((string) session('user_detected_currency'));
     }
-    // yhn ip nkl k do customer ki 
+    // yhn ip nkl k do customer ki
     // Get the user's IP address (taking care of proxies, cloudflare, localhost etc.)
-    
 
     $ipData = getOrFetchIpCurrencyData();
-    if (!empty($ipData['currency_symbol'])) {
+    if (! empty($ipData['currency_symbol'])) {
         return (string) $ipData['currency_symbol'];
     }
 
@@ -1675,7 +1802,7 @@ function getLocalCurrencySymbol(): string
  */
 function showCurrency($amount, int $decimal = 0, bool $separate = true, bool $exceptZeros = false): string
 {
-    return getLocalCurrencySymbol() . showAmount((float) ($amount ?? 0), $decimal, $separate, $exceptZeros);
+    return getLocalCurrencySymbol().showAmount((float) ($amount ?? 0), $decimal, $separate, $exceptZeros);
 }
 
 /**
@@ -1689,8 +1816,11 @@ function showCurrency($amount, int $decimal = 0, bool $separate = true, bool $ex
 function getPlatformCurrency(): string
 {
     $s = bs();
-    if (!$s) return 'USD';
+    if (! $s) {
+        return 'USD';
+    }
     $raw = $s->getRawOriginal('site_cur') ?? ($s->attributes['site_cur'] ?? null);
+
     return $raw ? strtoupper(trim($raw)) : 'USD';
 }
 
@@ -1714,16 +1844,18 @@ function formatPlatformForDisplay($amount, int $decimal = 0): string
 
     $platform = getPlatformCurrency();
     if (strtoupper($displayCode ?? '') === $platform) {
-        return $sym . showAmount($amount, $decimal);
+        return $sym.showAmount($amount, $decimal);
     }
 
     try {
         $cs = app(\App\Services\CurrencyService::class);
         $converted = $cs->convertFromPlatform((float) $amount, $displayCode);
-        return $sym . showAmount($converted, $decimal);
+
+        return $sym.showAmount($converted, $decimal);
     } catch (\Throwable $e) {
         \Log::warning('formatPlatformForDisplay failed', ['error' => $e->getMessage(), 'amount' => $amount]);
-        return $sym . showAmount($amount, $decimal);
+
+        return $sym.showAmount($amount, $decimal);
     }
 }
 
@@ -1738,8 +1870,8 @@ function formatUsdForDisplay($usdAmount, int $decimal = 0): string
 /**
  * Convert USD amount to local/site currency. Returns numeric value.
  *
- * @param float $usdAmount Amount in USD
- * @param string|null $targetCurrency Target currency code (e.g. PKR, INR). If null, uses site currency from settings.
+ * @param  float  $usdAmount  Amount in USD
+ * @param  string|null  $targetCurrency  Target currency code (e.g. PKR, INR). If null, uses site currency from settings.
  * @return float Converted amount in target currency
  */
 function usdToLocal(float $usdAmount, ?string $targetCurrency = null): float
@@ -1751,57 +1883,68 @@ function usdToLocal(float $usdAmount, ?string $targetCurrency = null): float
     }
     try {
         $cs = app(\App\Services\CurrencyService::class);
+
         return $cs->convertUsdTo($usdAmount, $target);
     } catch (\Throwable $e) {
         \Log::warning('usdToLocal failed', ['error' => $e->getMessage(), 'amount' => $usdAmount]);
+
         return $usdAmount;
     }
 }
 
-function getNotificationCount(): int {
+function getNotificationCount(): int
+{
     // This can be customized based on actual notification logic
     return auth()->check() ? 3 : 0;
 }
 
-function getDefaultUserAvatar(): string {
+function getDefaultUserAvatar(): string
+{
     return asset('assets/universal/images/avatar.png');
 }
 
-function getCustomCode($type) {
-    $codeData = SiteData::where('data_key', 'custom_code.' . $type)->first();
+function getCustomCode($type)
+{
+    $codeData = SiteData::where('data_key', 'custom_code.'.$type)->first();
     if ($codeData && $codeData->data_info) {
-        $dataInfo = is_array($codeData->data_info) ? $codeData->data_info : (array)$codeData->data_info;
-        if (isset($dataInfo['code']) && !empty($dataInfo['code'])) {
+        $dataInfo = is_array($codeData->data_info) ? $codeData->data_info : (array) $codeData->data_info;
+        if (isset($dataInfo['code']) && ! empty($dataInfo['code'])) {
             return $dataInfo['code'];
         }
     }
+
     return '';
 }
 
-function getDefaultCampaignImage(): string {
+function getDefaultCampaignImage(): string
+{
     return asset('assets/universal/images/default.png');
 }
 
-function getThemeColors(): array {
+function getThemeColors(): array
+{
     $setting = bs();
+
     return [
         'primary' => $setting->first_color ?? '#05ce78',
         'secondary' => $setting->second_color ?? '#04b367',
-        'gradient' => 'linear-gradient(135deg, ' . ($setting->first_color ?? '#05ce78') . ' 0%, ' . ($setting->second_color ?? '#04b367') . ' 100%)'
+        'gradient' => 'linear-gradient(135deg, '.($setting->first_color ?? '#05ce78').' 0%, '.($setting->second_color ?? '#04b367').' 100%)',
     ];
 }
 
-function getDashboardStats(): array {
+function getDashboardStats(): array
+{
     // This can be customized based on actual data
     return [
         'active_gigs' => 12,
         'total_raised' => 45230,
         'total_donors' => 1247,
-        'success_rate' => 89
+        'success_rate' => 89,
     ];
 }
 
-function getRecentActivities(): array {
+function getRecentActivities(): array
+{
     // This can be customized based on actual data
     return [
         [
@@ -1809,19 +1952,20 @@ function getRecentActivities(): array {
             'icon' => 'fas fa-sparkles',
             'title' => __('New contribution received'),
             'description' => '$50 for "Local Food Bank Support"',
-            'color' => 'text-success'
+            'color' => 'text-success',
         ],
         [
             'type' => 'campaign',
             'icon' => 'fas fa-rocket',
             'title' => __('Gig published'),
             'description' => '"Community Garden Project" is now live',
-            'color' => 'text-primary'
-        ]
+            'color' => 'text-primary',
+        ],
     ];
 }
 
-function getGigCategories(): array {
+function getGigCategories(): array
+{
     return [
         'education' => __('Education'),
         'healthcare' => __('Healthcare'),
@@ -1829,168 +1973,175 @@ function getGigCategories(): array {
         'community' => __('Community'),
         'arts' => __('Arts & Culture'),
         'technology' => __('Technology'),
-        'other' => __('Other')
+        'other' => __('Other'),
     ];
 }
 
-function getRewardTypes(): array {
+function getRewardTypes(): array
+{
     return [
         'digital' => __('Digital Reward'),
         'physical' => __('Physical Reward'),
         'experience' => __('Experience'),
-        'recognition' => __('Recognition')
+        'recognition' => __('Recognition'),
     ];
 }
 
-function getRewardColorThemes(): array {
+function getRewardColorThemes(): array
+{
     return [
         'gradient-red' => __('Red Gradient'),
         'gradient-blue' => __('Blue Gradient'),
         'gradient-green' => __('Green Gradient'),
         'gradient-purple' => __('Purple Gradient'),
-        'gradient-orange' => __('Orange Gradient')
+        'gradient-orange' => __('Orange Gradient'),
     ];
 }
 
-function getFileUploadLimits(): array {
+function getFileUploadLimits(): array
+{
     return [
         'image' => [
             'max_size' => 5 * 1024 * 1024, // 5MB
             'allowed_types' => ['jpg', 'jpeg', 'png', 'gif'],
-            'max_files' => 5
+            'max_files' => 5,
         ],
         'reward_image' => [
             'max_size' => 2 * 1024 * 1024, // 2MB
             'allowed_types' => ['jpg', 'jpeg', 'png', 'gif'],
-            'max_files' => 1
-        ]
+            'max_files' => 1,
+        ],
     ];
 }
 
-function getDashboardNavigation(): array {
+function getDashboardNavigation(): array
+{
     return [
         [
             'id' => 'overview',
             'title' => __('Overview'),
             'icon' => 'fas fa-tachometer-alt',
-            'route' => 'user.dashboard'
+            'route' => 'user.dashboard',
         ],
         [
             'id' => 'rewards',
             'title' => __('Rewards'),
             'icon' => 'ti ti-gift',
-            'route' => 'user.rewards'
+            'route' => 'user.rewards',
         ],
         [
             'id' => 'create',
             'title' => __('Create Campaign'),
             'icon' => 'fas fa-rocket',
-            'route' => 'start.project'
+            'route' => 'start.project',
         ],
         [
             'id' => 'manage',
             'title' => __('Manage Campaigns'),
             'icon' => 'fas fa-briefcase',
-            'route' => 'user.campaign.index'
+            'route' => 'user.campaign.index',
         ],
         [
             'id' => 'inbox',
             'title' => __('Inbox'),
             'icon' => 'fas fa-inbox',
-            'route' => 'user.inbox.index'
+            'route' => 'user.inbox.index',
         ],
         [
             'id' => 'payments',
             'title' => __('Payments'),
             'icon' => 'ti ti-credit-card',
-            'route' => 'user.payments'
+            'route' => 'user.payments',
         ],
         [
             'id' => 'analytics',
             'title' => __('Analytics'),
             'icon' => 'fas fa-chart-pie',
-            'route' => 'user.transactions'
+            'route' => 'user.transactions',
         ],
         [
             'id' => 'settings',
             'title' => __('Settings'),
             'icon' => 'fas fa-sliders-h',
-            'route' => 'user.profile'
-        ]
+            'route' => 'user.profile',
+        ],
     ];
 }
 
-function getNotificationTypes(): array {
+function getNotificationTypes(): array
+{
     return [
         'campaign_created' => [
             'icon' => 'fas fa-info-circle',
-            'title' => __('New campaign created')
+            'title' => __('New campaign created'),
         ],
         'donation_received' => [
             'icon' => 'fas fa-donation',
-            'title' => __('Contribution received')
+            'title' => __('Contribution received'),
         ],
         'new_follower' => [
             'icon' => 'fas fa-user-plus',
-            'title' => __('New follower')
-        ]
+            'title' => __('New follower'),
+        ],
     ];
 }
 
-function getUserMenuItems(): array {
+function getUserMenuItems(): array
+{
     return [
         [
             'route' => 'user.dashboard',
             'icon' => 'fas fa-tachometer-alt',
-            'title' => __('Dashboard')
+            'title' => __('Dashboard'),
         ],
         [
             'route' => 'user.inbox.index',
             'icon' => 'fas fa-inbox',
-            'title' => __('Inbox')
+            'title' => __('Inbox'),
         ],
         [
             'route' => 'user.profile',
             'icon' => 'fas fa-user',
-            'title' => __('Profile Settings')
+            'title' => __('Profile Settings'),
         ],
         [
             'route' => 'user.campaign.index',
             'icon' => 'fas fa-campaign',
-            'title' => __('My Campaigns')
+            'title' => __('My Campaigns'),
         ],
         [
             'route' => 'user.donation.history',
             'icon' => 'fas fa-heart',
-            'title' => __('My Contributions')
+            'title' => __('My Contributions'),
         ],
         [
             'route' => 'user.change.password',
             'icon' => 'fas fa-key',
-            'title' => __('Change Password')
+            'title' => __('Change Password'),
         ],
         [
             'route' => 'user.twofactor.form',
             'icon' => 'fas fa-shield-alt',
-            'title' => __('2FA Settings')
-        ]
+            'title' => __('2FA Settings'),
+        ],
     ];
 }
 
-function formatBytes($bytes, $precision = 2): string {
-    $units = array('B', 'KB', 'MB', 'GB', 'TB');
-    
+function formatBytes($bytes, $precision = 2): string
+{
+    $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+
     for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
         $bytes /= 1024;
     }
-    
-    return round($bytes, $precision) . ' ' . $units[$i];
+
+    return round($bytes, $precision).' '.$units[$i];
 }
 
 /**
  * Get geo data (country name + code) from IP. Used for IP currency cache.
  *
- * @param string|null $ip IP address (uses request IP if null)
+ * @param  string|null  $ip  IP address (uses request IP if null)
  * @return array{country: string, country_code: string}|null
  */
 function getIpGeoData(?string $ip = null): ?array
@@ -2001,9 +2152,9 @@ function getIpGeoData(?string $ip = null): ?array
     if (in_array($ip, ['127.0.0.1', '::1', 'localhost'], true)) {
         $headers = ['HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'HTTP_CLIENT_IP', 'REMOTE_ADDR'];
         foreach ($headers as $header) {
-            if (!empty($_SERVER[$header])) {
+            if (! empty($_SERVER[$header])) {
                 $candidate = trim(explode(',', (string) $_SERVER[$header])[0]);
-                if ($candidate !== '' && !in_array($candidate, ['127.0.0.1', '::1', 'localhost'], true)) {
+                if ($candidate !== '' && ! in_array($candidate, ['127.0.0.1', '::1', 'localhost'], true)) {
                     $ip = $candidate;
                     break;
                 }
@@ -2030,7 +2181,7 @@ function getIpGeoData(?string $ip = null): ?array
     try {
         $res = @file_get_contents("http://ip-api.com/json/{$ip}", false, $ctx);
         $data = $res ? json_decode($res, true) : null;
-        if ($data && ($data['status'] ?? '') === 'success' && !empty($data['country'])) {
+        if ($data && ($data['status'] ?? '') === 'success' && ! empty($data['country'])) {
             return [
                 'country' => $data['country'],
                 'country_code' => $data['countryCode'] ?? '',
@@ -2043,7 +2194,7 @@ function getIpGeoData(?string $ip = null): ?array
     try {
         $res = @file_get_contents("https://ipapi.co/{$ip}/json/", false, $ctx);
         $data = $res ? json_decode($res, true) : null;
-        if ($data && !empty($data['country_name'])) {
+        if ($data && ! empty($data['country_name'])) {
             return [
                 'country' => $data['country_name'],
                 'country_code' => $data['country_code'] ?? '',
@@ -2056,12 +2207,13 @@ function getIpGeoData(?string $ip = null): ?array
     try {
         $res = @file_get_contents("https://ipinfo.io/{$ip}/json", false, $ctx);
         $data = $res ? json_decode($res, true) : null;
-        if ($data && !empty($data['country'])) {
+        if ($data && ! empty($data['country'])) {
             $code = strtoupper($data['country']);
             $names = [
                 'US' => 'United States', 'PK' => 'Pakistan', 'IN' => 'India', 'GB' => 'United Kingdom',
                 'CA' => 'Canada', 'AU' => 'Australia', 'DE' => 'Germany', 'FR' => 'France',
             ];
+
             return [
                 'country' => $names[$code] ?? $code,
                 'country_code' => $code,
@@ -2071,6 +2223,7 @@ function getIpGeoData(?string $ip = null): ?array
     }
 
     \Log::channel('single')->info('IpCurrencyDebug: getIpGeoData all APIs failed', ['ip' => $ip ?? '']);
+
     return null;
 }
 
@@ -2085,7 +2238,7 @@ function getOrFetchIpCurrencyData(?string $ip = null): ?array
 
     try {
         $hasCacheTable = \Illuminate\Support\Facades\Schema::hasTable('ip_currency_cache');
-        if (!$hasCacheTable) {
+        if (! $hasCacheTable) {
             \Log::channel('single')->info('IpCurrencyDebug: ip_currency_cache table missing — geo only, no DB cache');
         }
 
@@ -2105,8 +2258,9 @@ function getOrFetchIpCurrencyData(?string $ip = null): ?array
 
         // Localhost: getIpGeoData() ipify + external geo APIs use karta hai — yahan early return mat karo.
         $geo = getIpGeoData($ip);
-        if (!$geo) {
+        if (! $geo) {
             \Log::channel('single')->info('IpCurrencyDebug: getIpGeoData returned null', ['ip' => $ip]);
+
             return null;
         }
 
@@ -2138,6 +2292,7 @@ function getOrFetchIpCurrencyData(?string $ip = null): ?array
         return $payload;
     } catch (\Throwable $e) {
         \Log::channel('single')->warning('IpCurrencyDebug: getOrFetchIpCurrencyData failed', ['ip' => $ip ?? '', 'error' => $e->getMessage()]);
+
         return null;
     }
 }
@@ -2145,7 +2300,8 @@ function getOrFetchIpCurrencyData(?string $ip = null): ?array
 /**
  * Get user's country based on IP address
  */
-function getUserCountryByIP() {
+function getUserCountryByIP()
+{
     try {
         $ip = getRealIP();
 
@@ -2160,78 +2316,83 @@ function getUserCountryByIP() {
                 // Continue with local IP
             }
         }
-        
+
         // Skip if still localhost
         if (in_array($ip, ['127.0.0.1', '::1', 'localhost'])) {
             return null;
         }
-        
+
         // Try multiple IP geolocation services for better reliability
-        
+
         // Service 1: ip-api.com (free, no API key needed)
         try {
             $context = stream_context_create([
                 'http' => [
                     'timeout' => 5,
-                    'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                ]
+                    'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                ],
             ]);
-            
+
             $response = file_get_contents("http://ip-api.com/json/{$ip}", false, $context);
             $data = json_decode($response, true);
-            
-            if ($data && $data['status'] === 'success' && !empty($data['country'])) {
+
+            if ($data && $data['status'] === 'success' && ! empty($data['country'])) {
                 \Log::info('IP Detection Success - ip-api.com', ['ip' => $ip, 'country' => $data['country']]);
+
                 return $data['country'];
             }
         } catch (Exception $e) {
             \Log::warning('IP Detection Failed - ip-api.com', ['ip' => $ip, 'error' => $e->getMessage()]);
         }
-        
+
         // Service 2: ipapi.co (fallback)
         try {
             $context = stream_context_create([
                 'http' => [
                     'timeout' => 5,
-                    'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                ]
+                    'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                ],
             ]);
-            
+
             $response = file_get_contents("https://ipapi.co/{$ip}/json/", false, $context);
             $data = json_decode($response, true);
-            
-            if ($data && isset($data['country_name']) && !empty($data['country_name'])) {
+
+            if ($data && isset($data['country_name']) && ! empty($data['country_name'])) {
                 \Log::info('IP Detection Success - ipapi.co', ['ip' => $ip, 'country' => $data['country_name']]);
+
                 return $data['country_name'];
             }
         } catch (Exception $e) {
             \Log::warning('IP Detection Failed - ipapi.co', ['ip' => $ip, 'error' => $e->getMessage()]);
         }
-        
+
         // Service 3: ipinfo.io (fallback)
         try {
             $context = stream_context_create([
                 'http' => [
                     'timeout' => 5,
-                    'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                ]
+                    'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                ],
             ]);
-            
+
             $response = file_get_contents("https://ipinfo.io/{$ip}/json", false, $context);
             $data = json_decode($response, true);
-            
-            if ($data && isset($data['country']) && !empty($data['country'])) {
+
+            if ($data && isset($data['country']) && ! empty($data['country'])) {
                 \Log::info('IP Detection Success - ipinfo.io', ['ip' => $ip, 'country' => $data['country']]);
+
                 return $data['country'];
             }
         } catch (Exception $e) {
             \Log::warning('IP Detection Failed - ipinfo.io', ['ip' => $ip, 'error' => $e->getMessage()]);
         }
-        
+
         \Log::warning('IP Detection Failed - All services', ['ip' => $ip]);
+
         return null;
     } catch (Exception $e) {
         \Log::error('IP Detection Exception', ['error' => $e->getMessage()]);
+
         return null;
     }
 }
@@ -2239,38 +2400,42 @@ function getUserCountryByIP() {
 /**
  * Get user's country with fallback options
  */
-function detectUserCountry() {
+function detectUserCountry()
+{
     // 1. Check if user is logged in and has country set
     if (auth()->check() && auth()->user()->country_name) {
         return auth()->user()->country_name;
     }
-    
+
     // 2. Check if country is in session
     if (session()->has('user_country')) {
         return session()->get('user_country');
     }
-    
+
     // 3. Check if country is in request
     if (request()->has('country')) {
         $country = request('country');
         session()->put('user_country', $country);
+
         return $country;
     }
-    
+
     // 4. Try to detect by IP
     $ipCountry = getUserCountryByIP();
     if ($ipCountry) {
         session()->put('user_country', $ipCountry);
+
         return $ipCountry;
     }
-    
+
     return null;
 }
 
 /**
  * Get country code from country name
  */
-function getCountryCode($countryName) {
+function getCountryCode($countryName)
+{
     $countryMap = [
         'Pakistan' => 'PK',
         'United States' => 'US',
@@ -2345,69 +2510,71 @@ function getCountryCode($countryName) {
         'Seychelles' => 'SC',
         'Malawi' => 'MW',
         'Lesotho' => 'LS',
-        'Eswatini' => 'SZ'
+        'Eswatini' => 'SZ',
     ];
-    
+
     return $countryMap[$countryName] ?? null;
 }
 
 /**
  * Format phone number based on country
  */
-function formatPhoneNumber($phone, $countryCode) {
+function formatPhoneNumber($phone, $countryCode)
+{
     // Remove all non-digit characters
     $cleanPhone = preg_replace('/\D/', '', $phone);
-    
+
     // Country-wise formatting
-    switch($countryCode) {
+    switch ($countryCode) {
         case 'PK': // Pakistan
             if (strlen($cleanPhone) === 11 && substr($cleanPhone, 0, 2) === '03') {
-                return '+92 ' . substr($cleanPhone, 1, 3) . ' ' . substr($cleanPhone, 4, 3) . ' ' . substr($cleanPhone, 7);
+                return '+92 '.substr($cleanPhone, 1, 3).' '.substr($cleanPhone, 4, 3).' '.substr($cleanPhone, 7);
             } elseif (strlen($cleanPhone) === 10 && substr($cleanPhone, 0, 1) === '3') {
-                return '+92 ' . substr($cleanPhone, 0, 3) . ' ' . substr($cleanPhone, 3, 3) . ' ' . substr($cleanPhone, 6);
+                return '+92 '.substr($cleanPhone, 0, 3).' '.substr($cleanPhone, 3, 3).' '.substr($cleanPhone, 6);
             } elseif (strlen($cleanPhone) === 12 && substr($cleanPhone, 0, 2) === '92') {
-                return '+' . substr($cleanPhone, 0, 2) . ' ' . substr($cleanPhone, 2, 3) . ' ' . substr($cleanPhone, 5, 3) . ' ' . substr($cleanPhone, 8);
+                return '+'.substr($cleanPhone, 0, 2).' '.substr($cleanPhone, 2, 3).' '.substr($cleanPhone, 5, 3).' '.substr($cleanPhone, 8);
             }
             break;
-            
+
         case 'US': // United States
             if (strlen($cleanPhone) === 10) {
-                return '(' . substr($cleanPhone, 0, 3) . ') ' . substr($cleanPhone, 3, 3) . '-' . substr($cleanPhone, 6);
+                return '('.substr($cleanPhone, 0, 3).') '.substr($cleanPhone, 3, 3).'-'.substr($cleanPhone, 6);
             } elseif (strlen($cleanPhone) === 11 && substr($cleanPhone, 0, 1) === '1') {
-                return '+1 (' . substr($cleanPhone, 1, 3) . ') ' . substr($cleanPhone, 4, 3) . '-' . substr($cleanPhone, 7);
+                return '+1 ('.substr($cleanPhone, 1, 3).') '.substr($cleanPhone, 4, 3).'-'.substr($cleanPhone, 7);
             }
             break;
-            
+
         case 'GB': // United Kingdom
             if (strlen($cleanPhone) === 11 && substr($cleanPhone, 0, 1) === '0') {
-                return '+44 ' . substr($cleanPhone, 1, 4) . ' ' . substr($cleanPhone, 5, 3) . ' ' . substr($cleanPhone, 8);
+                return '+44 '.substr($cleanPhone, 1, 4).' '.substr($cleanPhone, 5, 3).' '.substr($cleanPhone, 8);
             } elseif (strlen($cleanPhone) === 12 && substr($cleanPhone, 0, 2) === '44') {
-                return '+' . substr($cleanPhone, 0, 2) . ' ' . substr($cleanPhone, 2, 4) . ' ' . substr($cleanPhone, 6, 3) . ' ' . substr($cleanPhone, 9);
+                return '+'.substr($cleanPhone, 0, 2).' '.substr($cleanPhone, 2, 4).' '.substr($cleanPhone, 6, 3).' '.substr($cleanPhone, 9);
             }
             break;
-            
+
         case 'IN': // India
             if (strlen($cleanPhone) === 10) {
-                return '+91 ' . substr($cleanPhone, 0, 5) . ' ' . substr($cleanPhone, 5);
+                return '+91 '.substr($cleanPhone, 0, 5).' '.substr($cleanPhone, 5);
             } elseif (strlen($cleanPhone) === 12 && substr($cleanPhone, 0, 2) === '91') {
-                return '+' . substr($cleanPhone, 0, 2) . ' ' . substr($cleanPhone, 2, 5) . ' ' . substr($cleanPhone, 7);
+                return '+'.substr($cleanPhone, 0, 2).' '.substr($cleanPhone, 2, 5).' '.substr($cleanPhone, 7);
             }
             break;
-            
+
         default:
             // Generic international format
             if (strlen($cleanPhone) >= 10 && strlen($cleanPhone) <= 15) {
-                return '+' . $cleanPhone;
+                return '+'.$cleanPhone;
             }
     }
-    
+
     return $phone;
 }
 
 /**
  * Get phone placeholder based on country
  */
-function getPhonePlaceholder($countryCode) {
+function getPhonePlaceholder($countryCode)
+{
     $placeholders = [
         'PK' => 'e.g., 0300 1234567 or 300 1234567',
         'US' => 'e.g., (555) 123-4567',
@@ -2416,22 +2583,23 @@ function getPhonePlaceholder($countryCode) {
         'CA' => 'e.g., (555) 123-4567',
         'AU' => 'e.g., 0412 345 678',
         'DE' => 'e.g., 0171 1234567',
-        'FR' => 'e.g., 06 12 34 56 78'
+        'FR' => 'e.g., 06 12 34 56 78',
     ];
-    
+
     return $placeholders[$countryCode] ?? 'e.g., +1234567890';
 }
 
 /**
  * Calculate donation percentage based on goal amount and raised amount
  */
-function donationPercentage($goalAmount, $raisedAmount) {
-    if (!$goalAmount || $goalAmount <= 0) {
+function donationPercentage($goalAmount, $raisedAmount)
+{
+    if (! $goalAmount || $goalAmount <= 0) {
         return 0;
     }
-    
+
     $percentage = ($raisedAmount / $goalAmount) * 100;
-    
+
     // Cap at 100% to avoid showing more than 100%
     return min(round($percentage, 2), 100);
 }
@@ -2445,15 +2613,15 @@ function isValidRegistrationEmail(?string $email): bool
     if ($email === '' || strlen($email) > 191) {
         return false;
     }
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
         return false;
     }
-    if (!preg_match('/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/', $email)) {
+    if (! preg_match('/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/', $email)) {
         return false;
     }
     $parts = explode('@', $email);
     $domain = $parts[1] ?? '';
-    if ($domain === '' || str_starts_with($domain, '.') || str_ends_with($domain, '.') || !str_contains($domain, '.')) {
+    if ($domain === '' || str_starts_with($domain, '.') || str_ends_with($domain, '.') || ! str_contains($domain, '.')) {
         return false;
     }
 
@@ -2524,7 +2692,7 @@ function registrationNameValidationError(?string $name): ?string
         return "Name must not exceed {$max} characters.";
     }
 
-    if (!preg_match('/\p{L}/u', $name)) {
+    if (! preg_match('/\p{L}/u', $name)) {
         return 'Name must include at least one letter.';
     }
 
@@ -2583,7 +2751,7 @@ function validateRegistrationSignupFields(
             $errors['email'][] = 'Email is required.';
         } elseif (strlen($email) > 191) {
             $errors['email'][] = 'Email must not exceed 191 characters.';
-        } elseif (!isValidRegistrationEmail($email)) {
+        } elseif (! isValidRegistrationEmail($email)) {
             $errors['email'][] = 'Please enter a valid email address.';
         }
     }
@@ -2597,7 +2765,7 @@ function validateRegistrationSignupFields(
 function registrationSignupFirstError(array $errors): string
 {
     foreach ($errors as $fieldErrors) {
-        if (!empty($fieldErrors[0])) {
+        if (! empty($fieldErrors[0])) {
             return (string) $fieldErrors[0];
         }
     }
@@ -2635,19 +2803,19 @@ function registrationPasswordErrors(
         $errors[] = "Password must be at least {$min} characters long.";
     }
 
-    if (!preg_match('/[A-Z]/', $password)) {
+    if (! preg_match('/[A-Z]/', $password)) {
         $errors[] = 'Password must contain at least one uppercase letter.';
     }
 
-    if (!preg_match('/[a-z]/', $password)) {
+    if (! preg_match('/[a-z]/', $password)) {
         $errors[] = 'Password must contain at least one lowercase letter.';
     }
 
-    if (!preg_match('/[0-9]/', $password)) {
+    if (! preg_match('/[0-9]/', $password)) {
         $errors[] = 'Password must contain at least one number.';
     }
 
-    if (!preg_match('/[^A-Za-z0-9]/', $password)) {
+    if (! preg_match('/[^A-Za-z0-9]/', $password)) {
         $errors[] = 'Password must contain at least one special character.';
     }
 
@@ -2738,7 +2906,8 @@ function registrationPasswordStrengthLevel(string $password): string
  * Get ApnaCrowdfunding as italic linked text
  * Returns the brand name as an italic link throughout the project
  */
-function apnaCrowdfundingLink($url = '#', $class = 'italic-text') {
+function apnaCrowdfundingLink($url = '#', $class = 'italic-text')
+{
     return '<em>ApnaCrowdfunding</em>';
 }
 
@@ -2768,7 +2937,7 @@ function normalizeCampaignVerificationDocumentFilename(?string $reference): ?str
 
     $filename = basename($reference);
 
-    if ($filename === '' || !preg_match('/^[A-Za-z0-9._-]+$/', $filename)) {
+    if ($filename === '' || ! preg_match('/^[A-Za-z0-9._-]+$/', $filename)) {
         return null;
     }
 
@@ -2782,7 +2951,7 @@ function campaignVerificationDocumentUrl(int $campaignId, ?string $filename, boo
 {
     $filename = normalizeCampaignVerificationDocumentFilename($filename);
 
-    if (!$filename) {
+    if (! $filename) {
         return null;
     }
 
@@ -2800,7 +2969,7 @@ function campaignVerificationDocumentApiUrl(int $campaignId, ?string $filename):
 {
     $filename = normalizeCampaignVerificationDocumentFilename($filename);
 
-    if (!$filename) {
+    if (! $filename) {
         return '';
     }
 
@@ -2815,7 +2984,7 @@ function campaignVerificationDocumentApiUrl(int $campaignId, ?string $filename):
  */
 function normalizeCampaignVerificationDocuments(?array $documents): array
 {
-    if (!is_array($documents)) {
+    if (! is_array($documents)) {
         return [];
     }
 

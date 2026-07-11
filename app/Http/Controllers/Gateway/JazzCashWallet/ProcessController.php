@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\Gateway\JazzCashWallet;
 
-use App\Models\Deposit;
-use Illuminate\Http\Request;
 use App\Constants\ManageStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Gateway\PaymentController;
+use App\Models\Deposit;
 use App\Services\JazzCashApiLoggerService;
+use Illuminate\Http\Request;
 
 class ProcessController extends Controller
 {
@@ -19,7 +19,7 @@ class ProcessController extends Controller
     private function regenerateTransactionId(Deposit $deposit): string
     {
         do {
-            $newTrx = 'T' . time() . random_int(1000, 9999);
+            $newTrx = 'T'.time().random_int(1000, 9999);
         } while (Deposit::where('trx', $newTrx)->exists());
 
         $deposit->trx = $newTrx;
@@ -32,7 +32,7 @@ class ProcessController extends Controller
     public static function process($deposit)
     {
         $gwCurrency = $deposit->gatewayCurrency();
-        if (!$gwCurrency) {
+        if (! $gwCurrency) {
             return json_encode([
                 'error' => true,
                 'message' => 'Gateway currency configuration not found for this payment.',
@@ -40,23 +40,23 @@ class ProcessController extends Controller
         }
 
         $gatewayAcc = json_decode($gwCurrency->gateway_parameter ?? '{}');
-        if (!$gatewayAcc || !isset($gatewayAcc->merchant_id, $gatewayAcc->password, $gatewayAcc->integrity_salt)) {
+        if (! $gatewayAcc || ! isset($gatewayAcc->merchant_id, $gatewayAcc->password, $gatewayAcc->integrity_salt)) {
             return json_encode([
                 'error' => true,
                 'message' => 'Gateway is not configured correctly. Please contact support.',
             ]);
         }
         $setting = bs();
-        
+
         // Get JazzCash Wallet configuration parameters
         $merchantId = $gatewayAcc->merchant_id;
         $password = $gatewayAcc->password;
         $integritySalt = $gatewayAcc->integrity_salt;
         $sandbox = $gatewayAcc->sandbox ?? false;
         $baseUrl = self::jazzCashWalletApiUrl();
-        
+
         // Generate transaction datetime and expiry (Pakistan Time)
-        date_default_timezone_set("Asia/Karachi");
+        date_default_timezone_set('Asia/Karachi');
         $pp_TxnDateTime = date('YmdHis');
         $pp_TxnExpiryDateTime = date('YmdHis', strtotime('+1 day'));
         $country = (string) ($deposit->country ?? '');
@@ -70,37 +70,37 @@ class ProcessController extends Controller
         } catch (\Throwable $e) {
             $localAmount = (float) $deposit->final_amount;
         }
-        $pp_TxnRefNo = "T" . time() . rand(1000, 9999); // Unique reference number
-        
+        $pp_TxnRefNo = 'T'.time().rand(1000, 9999); // Unique reference number
+
         // Prepare JazzCash Wallet payment data
         // die($localAmount);
         $paymentData = [
-            "pp_Amount"            => number_format($localAmount * 100, 0, '', ''), // Convert to paisa
-            "pp_BankID"            => "",
-            "pp_BillReference"     => $deposit->trx,
-            "pp_CNIC"              => "",
-            "pp_Description"       => "Donation to " . $setting->site_name,
-            "pp_Language"          => "EN",
-            "pp_MerchantID"        => $merchantId,
-            "pp_MobileNumber"      => "",
-            "pp_Password"          => $password,
-            "pp_ProductID"         => "",
-            "pp_SubMerchantID"     => "",
-            "pp_TxnCurrency"       => "PKR",
-            "pp_TxnDateTime"       => $pp_TxnDateTime,
-            "pp_TxnExpiryDateTime" => $pp_TxnExpiryDateTime,
-            "pp_TxnRefNo"          => $pp_TxnRefNo,
-            "ppmpf_1"              => "",
-            "ppmpf_2"              => "",
-            "ppmpf_3"              => "",
-            "ppmpf_4"              => "",
-            "ppmpf_5"              => "",
+            'pp_Amount' => number_format($localAmount * 100, 0, '', ''), // Convert to paisa
+            'pp_BankID' => '',
+            'pp_BillReference' => $deposit->trx,
+            'pp_CNIC' => '',
+            'pp_Description' => 'Donation to '.$setting->site_name,
+            'pp_Language' => 'EN',
+            'pp_MerchantID' => $merchantId,
+            'pp_MobileNumber' => '',
+            'pp_Password' => $password,
+            'pp_ProductID' => '',
+            'pp_SubMerchantID' => '',
+            'pp_TxnCurrency' => 'PKR',
+            'pp_TxnDateTime' => $pp_TxnDateTime,
+            'pp_TxnExpiryDateTime' => $pp_TxnExpiryDateTime,
+            'pp_TxnRefNo' => $pp_TxnRefNo,
+            'ppmpf_1' => '',
+            'ppmpf_2' => '',
+            'ppmpf_3' => '',
+            'ppmpf_4' => '',
+            'ppmpf_5' => '',
         ];
-        
+
         // Store transaction reference for later use
         $deposit->update(['trx' => $pp_TxnRefNo]);
         session()->put('Track', $pp_TxnRefNo);
-        
+
         $send['val'] = [
             'merchant_id' => $merchantId,
             'password' => $password,
@@ -112,7 +112,7 @@ class ProcessController extends Controller
             'customer_name' => $deposit->user_id ? $deposit->user->fullname : $deposit->full_name,
             'customer_email' => $deposit->user_id ? $deposit->user->email : $deposit->email,
             'sandbox' => $sandbox,
-            'api_url' => $baseUrl
+            'api_url' => $baseUrl,
         ];
         $send['view'] = 'user.payment.jazzcash_wallet';
         $send['method'] = 'get';
@@ -138,7 +138,7 @@ class ProcessController extends Controller
             $request->validate([
                 'transaction_id' => 'required|string',
                 'phone_number' => 'required|string',
-                'cnic_last_6' => 'required|string|regex:/^[0-9]{6}$/'
+                'cnic_last_6' => 'required|string|regex:/^[0-9]{6}$/',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             $response = [
@@ -147,60 +147,66 @@ class ProcessController extends Controller
                 'errors' => $e->errors(),
             ];
             $logger->finalizeLog($internalLog, 'failed', $response, 422);
+
             return response()->json($response, 422);
         }
 
         $normalizedPhone = preg_replace('/\D+/', '', (string) $request->phone_number);
         if (str_starts_with($normalizedPhone, '92') && strlen($normalizedPhone) === 12) {
-            $normalizedPhone = '0' . substr($normalizedPhone, 2);
+            $normalizedPhone = '0'.substr($normalizedPhone, 2);
         }
-        if (!preg_match('/^03[0-9]{9}$/', $normalizedPhone)) {
+        if (! preg_match('/^03[0-9]{9}$/', $normalizedPhone)) {
             $response = [
                 'success' => false,
                 'message' => 'Please enter a valid JazzCash mobile number (03XXXXXXXXX).',
             ];
             $logger->finalizeLog($internalLog, 'failed', $response, 422);
+
             return response()->json($response, 422);
         }
         $request->merge(['phone_number' => $normalizedPhone]);
 
         $deposit = Deposit::where('trx', $request->transaction_id)->first();
         // dd($deposit->status);
-        if (!$deposit) {
+        if (! $deposit) {
             $response = [
                 'success' => false,
-                'message' => 'Transaction not found'
+                'message' => 'Transaction not found',
             ];
             $logger->finalizeLog($internalLog, 'failed', $response, 404);
+
             return response()->json($response, 404);
         }
 
         if ($deposit->status == ManageStatus::PAYMENT_SUCCESS) {
             $response = [
                 'success' => false,
-                'message' => 'Payment already processed'
+                'message' => 'Payment already processed',
             ];
             $logger->finalizeLog($internalLog, 'failed', $response, 400);
+
             return response()->json($response, 400);
         }
 
         $gwCurrency = $deposit->gatewayCurrency();
-        if (!$gwCurrency) {
+        if (! $gwCurrency) {
             $response = [
                 'success' => false,
                 'message' => 'Gateway currency configuration not found for this payment.',
             ];
             $logger->finalizeLog($internalLog, 'failed', $response, 422);
+
             return response()->json($response, 422);
         }
 
         $gatewayAcc = json_decode($gwCurrency->gateway_parameter ?? '{}');
-        if (!$gatewayAcc || !isset($gatewayAcc->merchant_id, $gatewayAcc->password, $gatewayAcc->integrity_salt)) {
+        if (! $gatewayAcc || ! isset($gatewayAcc->merchant_id, $gatewayAcc->password, $gatewayAcc->integrity_salt)) {
             $response = [
                 'success' => false,
                 'message' => 'Gateway is not configured correctly. Please contact support.',
             ];
             $logger->finalizeLog($internalLog, 'failed', $response, 500);
+
             return response()->json($response, 500);
         }
 
@@ -208,9 +214,9 @@ class ProcessController extends Controller
         $password = $gatewayAcc->password;
         $integritySalt = $gatewayAcc->integrity_salt;
         $sandbox = $gatewayAcc->sandbox ?? false;
-        
+
         // Generate transaction datetime and expiry (Pakistan Time)
-        date_default_timezone_set("Asia/Karachi");
+        date_default_timezone_set('Asia/Karachi');
         $pp_TxnDateTime = date('YmdHis');
         $pp_TxnExpiryDateTime = date('YmdHis', strtotime('+1 day'));
         $country = (string) ($deposit->country ?? '');
@@ -223,28 +229,28 @@ class ProcessController extends Controller
         } catch (\Throwable $e) {
             $localAmount = (float) $deposit->final_amount;
         }
-        
+
         $data = [
-            "pp_Amount"            => number_format($localAmount * 100, 0, '', ''),
-            "pp_BankID"            => "",
-            "pp_BillReference"     => $deposit->trx,
-            "pp_CNIC"              => $request->cnic_last_6,
-            "pp_Description"       => "Donation to " . bs()->site_name,
-            "pp_Language"          => "EN",
-            "pp_MerchantID"        => $merchantId,
-            "pp_MobileNumber"      => $request->phone_number,
-            "pp_Password"          => $password,
-            "pp_ProductID"         => "",
-            "pp_SubMerchantID"     => "",
-            "pp_TxnCurrency"       => "PKR",
-            "pp_TxnDateTime"       => $pp_TxnDateTime,
-            "pp_TxnExpiryDateTime" => $pp_TxnExpiryDateTime,
-            "pp_TxnRefNo"          => $deposit->trx,
-            "ppmpf_1"              => "",
-            "ppmpf_2"              => "",
-            "ppmpf_3"              => "",
-            "ppmpf_4"              => "",
-            "ppmpf_5"              => "",
+            'pp_Amount' => number_format($localAmount * 100, 0, '', ''),
+            'pp_BankID' => '',
+            'pp_BillReference' => $deposit->trx,
+            'pp_CNIC' => $request->cnic_last_6,
+            'pp_Description' => 'Donation to '.bs()->site_name,
+            'pp_Language' => 'EN',
+            'pp_MerchantID' => $merchantId,
+            'pp_MobileNumber' => $request->phone_number,
+            'pp_Password' => $password,
+            'pp_ProductID' => '',
+            'pp_SubMerchantID' => '',
+            'pp_TxnCurrency' => 'PKR',
+            'pp_TxnDateTime' => $pp_TxnDateTime,
+            'pp_TxnExpiryDateTime' => $pp_TxnExpiryDateTime,
+            'pp_TxnRefNo' => $deposit->trx,
+            'ppmpf_1' => '',
+            'ppmpf_2' => '',
+            'ppmpf_3' => '',
+            'ppmpf_4' => '',
+            'ppmpf_5' => '',
         ];
 
         $data['pp_SecureHash'] = $this->generateSecureHash($data, $integritySalt);
@@ -272,7 +278,7 @@ class ProcessController extends Controller
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $executionTime = microtime(true) - $startTime;
-        
+
         if (curl_errno($ch)) {
             $curlError = curl_error($ch);
             $logger->logOutboundRequest(
@@ -291,7 +297,7 @@ class ProcessController extends Controller
             curl_close($ch);
             $response = array_merge([
                 'success' => false,
-                'message' => 'Connection error: ' . $curlError,
+                'message' => 'Connection error: '.$curlError,
                 'transaction_id' => $newTransactionId,
             ], $logger->buildOutboundDebug(
                 $url,
@@ -303,9 +309,10 @@ class ProcessController extends Controller
                 $curlError
             ));
             $logger->finalizeLog($internalLog, 'failed', $response, 500);
+
             return response()->json($response, 500);
         }
-        
+
         curl_close($ch);
 
         $logger->logOutboundRequest(
@@ -319,15 +326,15 @@ class ProcessController extends Controller
             $executionTime,
             $deposit
         );
-        
+
         $responseData = json_decode($response, true);
-        
+
         if ($httpCode == 200 && isset($responseData['pp_ResponseCode']) && $responseData['pp_ResponseCode'] == '000') {
             // Payment successful
             $deposit->status = ManageStatus::PAYMENT_PENDING;
             PaymentController::campaignDataUpdate($deposit);
             session()->put('Track', $deposit->trx);
-            
+
             $response = [
                 'success' => true,
                 'message' => 'Payment processed successfully',
@@ -335,6 +342,7 @@ class ProcessController extends Controller
                 'amount' => round($localAmount, 2),
             ];
             $logger->finalizeLog($internalLog, 'success', $response, 200);
+
             return response()->json($response);
         }
 
@@ -355,6 +363,7 @@ class ProcessController extends Controller
             $httpCode
         ));
         $logger->finalizeLog($internalLog, 'failed', $response, 400);
+
         return response()->json($response, 400);
     }
 
@@ -365,7 +374,7 @@ class ProcessController extends Controller
         $hashString = $integritySalt;
         foreach ($data as $value) {
             if ($value !== '') {
-                $hashString .= '&' . $value;
+                $hashString .= '&'.$value;
             }
         }
 
@@ -377,55 +386,62 @@ class ProcessController extends Controller
         $logger = app(JazzCashApiLoggerService::class);
         $deposit = Deposit::where('trx', $request->pp_TxnRefNo)->first();
         $logContext = $logger->logIncoming($request, 'ipn/jazzcash-wallet', 'wallet_ipn', $deposit, 'jazzcash_wallet');
-        
-        if (!$deposit) {
+
+        if (! $deposit) {
             $response = 'Transaction not found';
             $logger->finalizeInbound($logContext, 'failed', $response, 404);
+
             return response($response, 404);
         }
-        
+
         if ($deposit->status == ManageStatus::PAYMENT_SUCCESS) {
             $response = 'Already processed';
             $logger->finalizeInbound($logContext, 'success', $response, 200);
+
             return response($response, 200);
         }
 
         $gwCurrency = $deposit->gatewayCurrency();
-        if (!$gwCurrency) {
+        if (! $gwCurrency) {
             $response = 'Gateway configuration not found';
             $logger->finalizeInbound($logContext, 'failed', $response, 500);
+
             return response($response, 500);
         }
 
         $gatewayAcc = json_decode($gwCurrency->gateway_parameter ?? '{}');
-        if (!$gatewayAcc || !isset($gatewayAcc->merchant_id, $gatewayAcc->integrity_salt)) {
+        if (! $gatewayAcc || ! isset($gatewayAcc->merchant_id, $gatewayAcc->integrity_salt)) {
             $response = 'Gateway not configured';
             $logger->finalizeInbound($logContext, 'failed', $response, 500);
+
             return response($response, 500);
         }
 
         $merchantId = $gatewayAcc->merchant_id;
         $integritySalt = $gatewayAcc->integrity_salt;
-        
+
         // Verify the hash for JazzCash
         $expectedHash = $this->generateSecureHash($request->all(), $integritySalt);
-        
+
         if ($expectedHash !== $request->pp_SecureHash) {
             $response = 'Invalid hash';
             $logger->finalizeInbound($logContext, 'failed', $response, 400);
+
             return response($response, 400);
         }
-        
+
         // Verify JazzCash payment status
         if ($request->pp_ResponseCode === '000' && $request->pp_ResponseMessage === 'Success') {
             PaymentController::campaignDataUpdate($deposit);
             $response = 'Payment processed successfully';
             $logger->finalizeInbound($logContext, 'success', $response, 200);
+
             return response($response, 200);
         }
-        
+
         $response = 'Payment failed';
         $logger->finalizeInbound($logContext, 'failed', $response, 400);
+
         return response($response, 400);
     }
 }

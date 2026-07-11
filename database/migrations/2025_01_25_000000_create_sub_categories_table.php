@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('sub_categories')) {
+        if (! Schema::hasTable('sub_categories')) {
             Schema::create('sub_categories', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
@@ -32,4 +32,3 @@ return new class extends Migration
         Schema::dropIfExists('sub_categories');
     }
 };
-

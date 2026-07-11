@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Constants\RegistrationLimits;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -15,7 +14,7 @@ class RegistrationMaxLengthTest extends TestCase
     {
         $longName = str_repeat('A', RegistrationLimits::NAME_MAX + 1);
 
-        $email = 'maxlen-name-' . time() . '@example.com';
+        $email = 'maxlen-name-'.time().'@example.com';
 
         $response = $this->postJson(route('user.otp.send'), [
             'email' => $email,
@@ -29,7 +28,7 @@ class RegistrationMaxLengthTest extends TestCase
             ->assertJson([
                 'success' => false,
             ])
-            ->assertJsonPath('errors.name.0', 'Name must not exceed ' . RegistrationLimits::NAME_MAX . ' characters.');
+            ->assertJsonPath('errors.name.0', 'Name must not exceed '.RegistrationLimits::NAME_MAX.' characters.');
 
         $this->assertDatabaseMissing('users', [
             'email' => $email,
@@ -40,7 +39,7 @@ class RegistrationMaxLengthTest extends TestCase
     {
         $longPassword = str_repeat('aA1!', 20);
 
-        $email = 'maxlen-pass-' . time() . '@example.com';
+        $email = 'maxlen-pass-'.time().'@example.com';
 
         $response = $this->postJson(route('user.otp.send'), [
             'email' => $email,
@@ -54,7 +53,7 @@ class RegistrationMaxLengthTest extends TestCase
             ->assertJson([
                 'success' => false,
             ])
-            ->assertJsonPath('errors.password.0', 'Password must not exceed ' . RegistrationLimits::PASSWORD_MAX . ' characters.');
+            ->assertJsonPath('errors.password.0', 'Password must not exceed '.RegistrationLimits::PASSWORD_MAX.' characters.');
 
         $this->assertDatabaseMissing('users', [
             'email' => $email,
@@ -63,7 +62,7 @@ class RegistrationMaxLengthTest extends TestCase
 
     public function test_otp_signup_accepts_valid_lengths_and_creates_unverified_user(): void
     {
-        $email = 'valid-signup-' . time() . '@example.com';
+        $email = 'valid-signup-'.time().'@example.com';
 
         $response = $this->postJson(route('user.otp.send'), [
             'email' => $email,
@@ -90,11 +89,11 @@ class RegistrationMaxLengthTest extends TestCase
         $response = $this->post(route('user.register'), [
             'firstname' => str_repeat('A', RegistrationLimits::NAME_PART_MAX + 1),
             'lastname' => 'User',
-            'email' => 'classic-' . time() . '@example.com',
+            'email' => 'classic-'.time().'@example.com',
             'mobile' => '3001234567',
             'password' => 'Valid1!Pass',
             'password_confirmation' => 'Valid1!Pass',
-            'username' => 'user' . time(),
+            'username' => 'user'.time(),
             'mobile_code' => '92',
             'country_code' => 'PK',
             'country' => 'Pakistan',
@@ -111,11 +110,11 @@ class RegistrationMaxLengthTest extends TestCase
         $response = $this->post(route('user.register'), [
             'firstname' => 'Valid',
             'lastname' => 'User',
-            'email' => 'classic-pass-' . time() . '@example.com',
+            'email' => 'classic-pass-'.time().'@example.com',
             'mobile' => '3001234567',
             'password' => $longPassword,
             'password_confirmation' => $longPassword,
-            'username' => 'user' . time(),
+            'username' => 'user'.time(),
             'mobile_code' => '92',
             'country_code' => 'PK',
             'country' => 'Pakistan',

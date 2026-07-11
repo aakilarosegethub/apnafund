@@ -38,7 +38,7 @@ class CampaignStoryHtmlService
 
                     return preg_replace(
                         '/\bsrc\s*=\s*(["\']).*?\1/iu',
-                        'src=' . $quote . $fileUrl . $quote,
+                        'src='.$quote.$fileUrl.$quote,
                         $fullTag,
                         1
                     );
@@ -84,19 +84,19 @@ class CampaignStoryHtmlService
             return null;
         }
 
-        $fileName = time() . '_' . uniqid('', true) . '.' . $ext;
+        $fileName = time().'_'.uniqid('', true).'.'.$ext;
         $uploadPath = public_path('assets/images/editor');
         if (! is_dir($uploadPath)) {
             @mkdir($uploadPath, 0775, true);
         }
 
-        $full = $uploadPath . '/' . $fileName;
+        $full = $uploadPath.'/'.$fileName;
         if (file_put_contents($full, $binary) === false) {
             return null;
         }
 
         @chmod($full, 0644);
 
-        return asset('assets/images/editor/' . $fileName);
+        return asset('assets/images/editor/'.$fileName);
     }
 }

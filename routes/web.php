@@ -8,30 +8,31 @@
  * See inline comments throughout for HTTP methods, middleware, and endpoint purpose.
  */
 
+use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\Api\ActivityController;
+use App\Http\Controllers\Api\AllowedLocationCountriesController;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CampaignCollaboratorApiController;
+use App\Http\Controllers\Api\CampaignManageApiController;
+use App\Http\Controllers\Api\CampaignPaymentApiController;
+use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\CurrencyInfoController;
+use App\Http\Controllers\Api\DonateController;
 use App\Http\Controllers\Api\FaqController;
+use App\Http\Controllers\Api\FundController;
+use App\Http\Controllers\Api\FundUpdateController;
+use App\Http\Controllers\Api\HomeController;
+use App\Http\Controllers\Api\OTPController;
 use App\Http\Controllers\Api\PageController;
 use App\Http\Controllers\Api\PaymentController;
-use App\Http\Controllers\Api\OTPController;
-use App\Http\Controllers\Api\AccountController;
-use App\Http\Controllers\Api\HomeController;
-use App\Http\Controllers\Api\FundController;
-use App\Http\Controllers\Api\CategoryController;
-use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\FundUpdateController;
-use App\Http\Controllers\Api\CampaignManageApiController;
-use App\Http\Controllers\CampaignVerificationDocumentController;
-use App\Http\Controllers\Api\CampaignCollaboratorApiController;
-use App\Http\Controllers\Api\CampaignPaymentApiController;
 use App\Http\Controllers\Api\UserController;
-use App\Http\Controllers\Api\DonateController;
-use App\Http\Controllers\Api\WithdrawController;
-use App\Http\Controllers\Api\WalletController;
-use App\Http\Controllers\Api\CurrencyInfoController;
-use App\Http\Controllers\Api\AllowedLocationCountriesController;
 use App\Http\Controllers\Api\UserNotificationApiController;
+use App\Http\Controllers\Api\WalletController;
+use App\Http\Controllers\Api\WithdrawController;
+use App\Http\Controllers\CampaignVerificationDocumentController;
 use App\Models\Campaign;
 use Illuminate\Support\Facades\Cookie;
+
 Route::get('/clear-cache', function () {
 
     Artisan::call('cache:clear');
@@ -42,7 +43,7 @@ Route::get('/clear-cache', function () {
 
     return response()->json([
         'success' => true,
-        'message' => 'All caches cleared successfully.'
+        'message' => 'All caches cleared successfully.',
     ]);
 });
 // Beta landing page logic
@@ -70,16 +71,18 @@ Route::get('/csrf-token', function () {
 // Debug currency detection (live: ?key=YOUR_SECRET from .env DEBUG_CURRENCY_KEY)
 Route::get('/debug-currency', function () {
     $key = request('key');
-    if ($key !== env('DEBUG_CURRENCY_KEY') && !config('app.debug')) {
+    if ($key !== env('DEBUG_CURRENCY_KEY') && ! config('app.debug')) {
         return response()->json(['error' => 'Forbidden'], 403);
     }
     $ip = request()->ip();
     $ipHeaders = ['HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'HTTP_CLIENT_IP', 'REMOTE_ADDR'];
     $resolvedIp = $ip;
     foreach ($ipHeaders as $h) {
-        if (!empty($_SERVER[$h])) {
-            $resolvedIp = trim(explode(',', (string)($_SERVER[$h] ?? ''))[0]);
-            if ($resolvedIp && !in_array($resolvedIp, ['127.0.0.1', '::1', 'localhost'])) break;
+        if (! empty($_SERVER[$h])) {
+            $resolvedIp = trim(explode(',', (string) ($_SERVER[$h] ?? ''))[0]);
+            if ($resolvedIp && ! in_array($resolvedIp, ['127.0.0.1', '::1', 'localhost'])) {
+                break;
+            }
         }
     }
     $tcur = config('app.currency');
@@ -88,6 +91,7 @@ Route::get('/debug-currency', function () {
     $geo = function_exists('getIpGeoData') ? getIpGeoData($resolvedIp) : null;
     $data = function_exists('getOrFetchIpCurrencyData') ? getOrFetchIpCurrencyData($resolvedIp) : null;
     $setting = \App\Models\Setting::first();
+
     return response()->json([
         'ip_raw' => $ip,
         'ip_resolved' => $resolvedIp,
@@ -156,174 +160,180 @@ Route::get('/change.htm', function () {
 
 // All public website routes that should respect the beta page
 Route::middleware(\App\Http\Middleware\BetaGate::class)->group(function () {
-Route::controller('WebsiteController')->group(function () {
-    Route::get('/', 'home')->name('home');
-    Route::get('home-new', 'homeNew')->name('home.new');
-    Route::get('about-us', 'aboutUs')->name('about.us');
-    Route::get('about', function () {
-        return redirect('/about-us');
-    })->name('about.redirect');
-    Route::get('faq', 'faq')->name('faq');
-    Route::get('creators', 'creators')->name('creators');
-    Route::get('campaigns/load-more', 'loadMoreCampaigns')->name('campaign.load-more');
-    Route::get('campaigns', 'campaigns')->name('campaign');
-    Route::get('campaigns/category/{slug}', 'campaignCategory')->name('campaign.category');
+    Route::controller('WebsiteController')->group(function () {
+        Route::get('/', 'home')->name('home');
+        Route::get('home-new', 'homeNew')->name('home.new');
+        Route::get('about-us', 'aboutUs')->name('about.us');
+        Route::get('about', function () {
+            return redirect('/about-us');
+        })->name('about.redirect');
+        Route::get('faq', 'faq')->name('faq');
+        Route::get('creators', 'creators')->name('creators');
+        Route::get('campaigns/load-more', 'loadMoreCampaigns')->name('campaign.load-more');
+        Route::get('campaigns', 'campaigns')->name('campaign');
+        Route::get('campaigns/category/{slug}', 'campaignCategory')->name('campaign.category');
 
-    // Campaign 
-    Route::prefix('campaign/{slug}')->name('campaign.')->group(function () {
-        Route::get('/', 'campaignShow')->name('show');
-        Route::get('/contribute', 'campaignDonate')->middleware('auth')->name('donate');
-        Route::get('/rewards', 'RewardController@show')->name('rewards');
-        Route::post('comment', 'storeCampaignComment')->name('comment');
-        Route::get('fetch-comment', 'fetchCampaignComment')->name('comment.fetch');
-        Route::get('donations', 'campaignDonations')->name('donations');
-        Route::get('donations/top', 'campaignTopDonations')->name('donations.top');
-        // Campaign Updates
-        Route::get('updates', 'campaignUpdates')->name('updates');
-        Route::get('updates/{updateSlug}', 'campaignUpdateShow')->name('update.show');
-        Route::post('updates/{updateSlug}/comment', 'storeUpdateComment')->name('update.comment');
-    });
+        // Campaign
+        Route::prefix('campaign/{slug}')->name('campaign.')->group(function () {
+            Route::get('/', 'campaignShow')->name('show');
+            Route::get('/contribute', 'campaignDonate')->middleware('auth')->name('donate');
+            Route::get('/rewards', 'RewardController@show')->name('rewards');
+            Route::post('comment', 'storeCampaignComment')->name('comment');
+            Route::get('fetch-comment', 'fetchCampaignComment')->name('comment.fetch');
+            Route::get('donations', 'campaignDonations')->name('donations');
+            Route::get('donations/top', 'campaignTopDonations')->name('donations.top');
+            // Campaign Updates
+            Route::get('updates', 'campaignUpdates')->name('updates');
+            Route::get('updates/{updateSlug}', 'campaignUpdateShow')->name('update.show');
+            Route::post('updates/{updateSlug}/comment', 'storeUpdateComment')->name('update.comment');
+        });
 
-    Route::get('upcoming-campaigns', 'upcomingCampaigns')->name('upcoming');
-    Route::get('upcoming-campaign/{slug}', 'upcomingCampaignShow')->name('upcoming.show');
+        Route::get('upcoming-campaigns', 'upcomingCampaigns')->name('upcoming');
+        Route::get('upcoming-campaign/{slug}', 'upcomingCampaignShow')->name('upcoming.show');
 
-    // Success Stories
-    Route::get('stories', 'stories')->name('stories');
-    Route::get('stories/{slug}', 'storyShow')->name('stories.show');
+        // Success Stories
+        Route::get('stories', 'stories')->name('stories');
+        Route::get('stories/{slug}', 'storyShow')->name('stories.show');
 
-    // Business Resources / Creator Hub
-    Route::get('creator-hub', 'businessResources')->name('creator.hub');
-    Route::get('business-resources', 'businessResources')->name('business.resources');
-    // Redirect creator-guide to business-resources
-    Route::get('creator-guide', function () {
-        return redirect('/business-resources', 301);
-    })->name('creator.guide.redirect');
+        // Business Resources / Creator Hub
+        Route::get('creator-hub', 'businessResources')->name('creator.hub');
+        Route::get('business-resources', 'businessResources')->name('business.resources');
+        // Redirect creator-guide to business-resources
+        Route::get('creator-guide', function () {
+            return redirect('/business-resources', 301);
+        })->name('creator.guide.redirect');
 
-    // Start Project
-    Route::get('start-project', 'startProject')->name('start.project');
-    Route::post('start-project/save-categories', 'saveProjectCategories')->name('start.project.save.categories');
-    Route::get('start-project/location', 'projectLocation')->name('start.project.location');
-    Route::post('start-project/save-location', 'saveProjectLocation')->name('start.project.save.location');
-    Route::get('start-project/terms', 'projectTerms')->name('start.project.terms');
-    Route::post('start-project/create-campaign', 'createCampaignFromSession')->name('start.project.create.campaign');
+        // Start Project
+        Route::get('start-project', 'startProject')->name('start.project');
+        Route::post('start-project/save-categories', 'saveProjectCategories')->name('start.project.save.categories');
+        Route::get('start-project/location', 'projectLocation')->name('start.project.location');
+        Route::post('start-project/save-location', 'saveProjectLocation')->name('start.project.save.location');
+        Route::get('start-project/terms', 'projectTerms')->name('start.project.terms');
+        Route::post('start-project/create-campaign', 'createCampaignFromSession')->name('start.project.create.campaign');
 
-    // Subscriber
-    Route::post('subscriber/store', 'subscriberStore')->name('subscriber.store');;
+        // Subscriber
+        Route::post('subscriber/store', 'subscriberStore')->name('subscriber.store');
 
-    // Payments not available for visitor currency/region (contribute flow redirect)
-    Route::get('payments-unavailable', 'paymentsUnavailableInRegion')->name('payments.unavailable.region');
+        // Payments not available for visitor currency/region (contribute flow redirect)
+        Route::get('payments-unavailable', 'paymentsUnavailableInRegion')->name('payments.unavailable.region');
 
-    // Contact
+        // Contact
         // New pretty slug: /contact-us
         Route::get('contact-us', 'contact')->name('contact');
         Route::post('contact-us', 'contactStore');
 
-    // Cookie
-    Route::get('cookie/accept', 'cookieAccept')->name('cookie.accept');
-    Route::get('cookie-policy', 'cookiePolicy')->name('cookie.policy');
+        // Cookie
+        Route::get('cookie/accept', 'cookieAccept')->name('cookie.accept');
+        Route::get('cookie-policy', 'cookiePolicy')->name('cookie.policy');
 
-    // Language
-    Route::get('change/{lang?}', 'changeLanguage')->name('lang');
+        // Language
+        Route::get('change/{lang?}', 'changeLanguage')->name('lang');
 
-    // Help & Sitemap
-    Route::get('help', 'help')->name('help');
-    Route::get('sitemap', 'sitemap')->name('sitemap');
+        // Help & Sitemap
+        Route::get('help', 'help')->name('help');
+        Route::get('sitemap', 'sitemap')->name('sitemap');
 
-    // Editor
-    Route::get('editor', 'editor')->name('editor');
+        // Editor
+        Route::get('editor', 'editor')->name('editor');
 
-    // Public User/Creator Profile
-    Route::get('creator/{username}', 'creatorProfile')->name('creator.profile');
+        // Public User/Creator Profile
+        Route::get('creator/{username}', 'creatorProfile')->name('creator.profile');
 
-    // Order/Donation Thank You
-    Route::get('order-success/{id}', 'orderSuccess')->name('order.success');
+        // Order/Donation Thank You
+        Route::get('order-success/{id}', 'orderSuccess')->name('order.success');
 
-    // Policy Details
-    Route::get('policy/{slug}/{id}', 'policyPages')->name('policy.pages');
-    
-    // Report Fundraiser
-    Route::get('report-fundraiser', 'reportFundraiser')->name('report.fundraiser');
+        // Policy Details
+        Route::get('policy/{slug}/{id}', 'policyPages')->name('policy.pages');
 
-    Route::get('placeholder-image/{size}', 'placeholderImage')->name('placeholder.image');
+        // Report Fundraiser
+        Route::get('report-fundraiser', 'reportFundraiser')->name('report.fundraiser');
 
-    // Update user country in session
-    Route::post('/update-user-country', [App\Http\Controllers\WebsiteController::class, 'updateUserCountry'])->name('update.user.country');
-    Route::post('/update-user-currency', [App\Http\Controllers\WebsiteController::class, 'updateUserCurrency'])->name('update.user.currency');
-});
+        Route::get('placeholder-image/{size}', 'placeholderImage')->name('placeholder.image');
 
-// Redirect /page/about to /about-us
-Route::get('page/about', function () {
-    return redirect('/about-us');
-})->name('page.about.redirect');
+        // Update user country in session
+        Route::post('/update-user-country', [App\Http\Controllers\WebsiteController::class, 'updateUserCountry'])->name('update.user.country');
+        Route::post('/update-user-currency', [App\Http\Controllers\WebsiteController::class, 'updateUserCurrency'])->name('update.user.currency');
+    });
 
-// Redirect /page/forwardfunds to /forwardfunds
-Route::get('page/forwardfunds', function () {
-    return redirect('/forwardfunds');
-})->name('page.forwardfunds.redirect');
+    // Redirect /page/about to /about-us
+    Route::get('page/about', function () {
+        return redirect('/about-us');
+    })->name('page.about.redirect');
 
-// Redirect /page/press to /press
-Route::get('page/press', function () {
-    return redirect('/press');
-})->name('page.press.redirect');
+    // Redirect /page/forwardfunds to /forwardfunds
+    Route::get('page/forwardfunds', function () {
+        return redirect('/forwardfunds');
+    })->name('page.forwardfunds.redirect');
+
+    // Redirect /page/press to /press
+    Route::get('page/press', function () {
+        return redirect('/press');
+    })->name('page.press.redirect');
 
     // Redirect /page/rules to /apnacrowdfunding-rules
-Route::get('page/rules', function () {
+    Route::get('page/rules', function () {
         return redirect('/apnacrowdfunding-rules');
-})->name('page.rules.redirect');
+    })->name('page.rules.redirect');
 
-// Redirect /page/charter to /our-mission
-Route::get('page/charter', function () {
-    return redirect('/our-mission');
-})->name('page.charter.redirect');
+    // Redirect /page/charter to /our-mission
+    Route::get('page/charter', function () {
+        return redirect('/our-mission');
+    })->name('page.charter.redirect');
 
-// Redirect /page/story to /our-story for clarity
-Route::get('our-story', function(\Illuminate\Http\Request $request) {
-    $controller = app(\App\Http\Controllers\WebsiteController::class);
-    return $controller->pageBySlug('story');
-})->name('our.story');
+    // Redirect /page/story to /our-story for clarity
+    Route::get('our-story', function (\Illuminate\Http\Request $request) {
+        $controller = app(\App\Http\Controllers\WebsiteController::class);
 
-// Dynamic Page by Slug (outside controller group to avoid binding issues)
-Route::get('page/{slug}', [\App\Http\Controllers\WebsiteController::class, 'pageBySlug'])->name('page.show');
+        return $controller->pageBySlug('story');
+    })->name('our.story');
 
-// Specific routes for pages with view files (before catch-all dynamic route)
+    // Dynamic Page by Slug (outside controller group to avoid binding issues)
+    Route::get('page/{slug}', [\App\Http\Controllers\WebsiteController::class, 'pageBySlug'])->name('page.show');
+
+    // Specific routes for pages with view files (before catch-all dynamic route)
     // New pretty URL for rules page
-Route::get('our-rules', function(\Illuminate\Http\Request $request) {
-    $controller = app(\App\Http\Controllers\WebsiteController::class);
+    Route::get('our-rules', function (\Illuminate\Http\Request $request) {
+        $controller = app(\App\Http\Controllers\WebsiteController::class);
+
         // Still load the same page record by its internal slug
-    return $controller->pageBySlug('apnacrowdfunding-rules');
-})->name('rules');
+        return $controller->pageBySlug('apnacrowdfunding-rules');
+    })->name('rules');
 
     // Backward compatible redirect from old URL
-Route::get('apnacrowdfunding-rules', function () {
-    return redirect('/our-rules');
+    Route::get('apnacrowdfunding-rules', function () {
+        return redirect('/our-rules');
     })->name('apnacrowdfunding-rules.redirect');
 
-// Careers page route
-Route::get('apnacrowdfunding-careers', function(\Illuminate\Http\Request $request) {
-    $controller = app(\App\Http\Controllers\WebsiteController::class);
-    return $controller->pageBySlug('apnacrowdfunding-careers');
-})->name('careers');
+    // Careers page route
+    Route::get('apnacrowdfunding-careers', function (\Illuminate\Http\Request $request) {
+        $controller = app(\App\Http\Controllers\WebsiteController::class);
 
-Route::get('forwardfunds', function(\Illuminate\Http\Request $request) {
-    $controller = app(\App\Http\Controllers\WebsiteController::class);
-    return $controller->pageBySlug('forwardfunds');
-})->name('forwardfunds');
-Route::get('press', function(\Illuminate\Http\Request $request) {
-    $controller = app(\App\Http\Controllers\WebsiteController::class);
-    return $controller->pageBySlug('press');
-})->name('press');
-Route::get('our-mission', function(\Illuminate\Http\Request $request) {
-    $controller = app(\App\Http\Controllers\WebsiteController::class);
-    return $controller->pageBySlug('charter');
-})->name('our.mission');
-Route::get('charter', function () {
-    return redirect('/our-mission');
-})->name('charter.redirect');
+        return $controller->pageBySlug('apnacrowdfunding-careers');
+    })->name('careers');
 
-// Dynamic Pages - Must be at the end to avoid route conflicts
-Route::get('{slug}', [App\Http\Controllers\WebsiteController::class, 'dynamicPages'])
-    ->name('dynamic.pages')
-    ->where('slug', '[a-z0-9-]+');
+    Route::get('forwardfunds', function (\Illuminate\Http\Request $request) {
+        $controller = app(\App\Http\Controllers\WebsiteController::class);
+
+        return $controller->pageBySlug('forwardfunds');
+    })->name('forwardfunds');
+    Route::get('press', function (\Illuminate\Http\Request $request) {
+        $controller = app(\App\Http\Controllers\WebsiteController::class);
+
+        return $controller->pageBySlug('press');
+    })->name('press');
+    Route::get('our-mission', function (\Illuminate\Http\Request $request) {
+        $controller = app(\App\Http\Controllers\WebsiteController::class);
+
+        return $controller->pageBySlug('charter');
+    })->name('our.mission');
+    Route::get('charter', function () {
+        return redirect('/our-mission');
+    })->name('charter.redirect');
+
+    // Dynamic Pages - Must be at the end to avoid route conflicts
+    Route::get('{slug}', [App\Http\Controllers\WebsiteController::class, 'dynamicPages'])
+        ->name('dynamic.pages')
+        ->where('slug', '[a-z0-9-]+');
 });
 
 // Logged-in payments hub (explicit URI so /user/payments always resolves; same name as before for route() / menus)
@@ -337,11 +347,11 @@ Route::get('contact', function () {
 })->name('contact.redirect');
 
 // Test route for IP detection
-Route::get('/test-ip-detection', function() {
+Route::get('/test-ip-detection', function () {
     $ip = request()->ip();
     $ipCountry = getUserCountryByIP();
     $detectedCountry = detectUserCountry();
-    
+
     return response()->json([
         'user_ip' => $ip,
         'ip_country' => $ipCountry,
@@ -353,23 +363,23 @@ Route::get('/test-ip-detection', function() {
             'HTTP_X_REAL_IP' => $_SERVER['HTTP_X_REAL_IP'] ?? null,
             'HTTP_CLIENT_IP' => $_SERVER['HTTP_CLIENT_IP'] ?? null,
             'REMOTE_ADDR' => $_SERVER['REMOTE_ADDR'] ?? null,
-        ]
+        ],
     ]);
 });
 
 // YouTube OAuth Callback (Public route)
-Route::get('/youtube/callback', function(\Illuminate\Http\Request $request) {
+Route::get('/youtube/callback', function (\Illuminate\Http\Request $request) {
     try {
-        $youtubeService = new \App\Services\YouTubeUploadService();
+        $youtubeService = new \App\Services\YouTubeUploadService;
         $accessToken = $youtubeService->handleCallback($request->get('code'));
-        
+
         // You can store tokens in database or session here
         // For now, we'll redirect to admin with success message
-        
+
         return redirect('/admin/youtube')->with('success', 'YouTube authorization successful!');
-        
+
     } catch (\Exception $e) {
-        return redirect('/admin/youtube')->with('error', 'YouTube authorization failed: ' . $e->getMessage());
+        return redirect('/admin/youtube')->with('error', 'YouTube authorization failed: '.$e->getMessage());
     }
 })->name('youtube.callback');
 
@@ -377,7 +387,7 @@ Route::get('/youtube/callback', function(\Illuminate\Http\Request $request) {
 Route::any('/jazzcash/ipn', [App\Http\Controllers\Gateway\jazzcashwallet\ProcessController::class, 'ipn'])->name('jazzcash.ipn');
 
 // Test route to demonstrate logging functionality
-Route::any('/test-logging', function(\Illuminate\Http\Request $request) {
+Route::any('/test-logging', function (\Illuminate\Http\Request $request) {
     try {
         // Create a simple log entry without database
         $logData = [
@@ -389,21 +399,21 @@ Route::any('/test-logging', function(\Illuminate\Http\Request $request) {
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
             'raw_input' => $request->getContent(),
-            'url' => $request->fullUrl()
+            'url' => $request->fullUrl(),
         ];
-        
+
         // Log to file for testing
         \Log::info('Data Logging Test', $logData);
-        
+
         return response()->json([
             'message' => 'Data logged successfully',
             'logged_data' => $logData,
-            'note' => 'Check storage/logs/laravel.log for the logged data'
+            'note' => 'Check storage/logs/laravel.log for the logged data',
         ]);
-        
+
     } catch (\Exception $e) {
         return response()->json([
-            'error' => 'Logging failed: ' . $e->getMessage()
+            'error' => 'Logging failed: '.$e->getMessage(),
         ], 500);
     }
 })->name('test.logging');
@@ -532,35 +542,35 @@ Route::prefix('api')->middleware('throttle:60,1')->group(function () {
 // API Routes for Products/Campaigns
 Route::prefix('api')->group(function () {
     // Get all campaigns/products
-    Route::get('/campaigns', function(\Illuminate\Http\Request $request) {
+    Route::get('/campaigns', function (\Illuminate\Http\Request $request) {
         try {
             $limit = $request->get('limit', 10);
             $offset = $request->get('offset', 0);
             $category = $request->get('category');
             $search = $request->get('search');
-            
+
             $campaigns = Campaign::with(['category', 'user'])
                 ->approve()
-                ->when($search, function($query, $search) {
+                ->when($search, function ($query, $search) {
                     return $query->where('name', 'like', "%{$search}%")
-                               ->orWhere('description', 'like', "%{$search}%");
+                        ->orWhere('description', 'like', "%{$search}%");
                 })
-                ->when($category, function($query, $category) {
-                    return $query->whereHas('category', function($q) use ($category) {
+                ->when($category, function ($query, $category) {
+                    return $query->whereHas('category', function ($q) use ($category) {
                         $q->where('name', 'like', "%{$category}%")
-                          ->orWhere('id', $category);
+                            ->orWhere('id', $category);
                     });
                 })
                 ->latest()
                 ->limit($limit)
                 ->offset($offset)
                 ->get();
-            
+
             $setting = bs();
             $currencyCode = $setting ? (string) $setting->site_cur : 'USD';
             $currencySymbol = $setting ? (string) $setting->cur_sym : '$';
 
-            $formattedCampaigns = $campaigns->map(function($campaign) {
+            $formattedCampaigns = $campaigns->map(function ($campaign) {
                 $raised = (float) $campaign->raised_amount;
                 $goal = (float) $campaign->goal_amount;
 
@@ -568,7 +578,7 @@ Route::prefix('api')->group(function () {
                     'id' => $campaign->id,
                     'title' => $campaign->name,
                     'short_description' => $campaign->short_description ?? strLimit($campaign->description ?? '', 150),
-                    'image_url' => getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')),
+                    'image_url' => getImage(getFilePath('campaign').'/'.$campaign->image, getFileSize('campaign')),
                     'url' => route('campaign.show', $campaign->slug),
                     'product_url' => route('campaign.show', $campaign->slug),
                     'permalink' => route('campaign.show', $campaign->slug),
@@ -597,20 +607,20 @@ Route::prefix('api')->group(function () {
                 ],
                 'total' => $campaigns->count(),
                 'limit' => $limit,
-                'offset' => $offset
+                'offset' => $offset,
             ]);
-            
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error fetching campaigns: ' . $e->getMessage(),
-                'data' => []
+                'message' => 'Error fetching campaigns: '.$e->getMessage(),
+                'data' => [],
             ], 500);
         }
     });
 
     // Must be before /campaigns/{slug} so "featured" is not treated as a slug
-    Route::get('/campaigns/featured', function(\Illuminate\Http\Request $request) {
+    Route::get('/campaigns/featured', function (\Illuminate\Http\Request $request) {
         try {
             $limit = $request->get('limit', 5);
 
@@ -625,7 +635,7 @@ Route::prefix('api')->group(function () {
             $currencyCode = $setting ? (string) $setting->site_cur : 'USD';
             $currencySymbol = $setting ? (string) $setting->cur_sym : '$';
 
-            $formattedCampaigns = $campaigns->map(function($campaign) {
+            $formattedCampaigns = $campaigns->map(function ($campaign) {
                 $raised = (float) $campaign->raised_amount;
                 $goal = (float) $campaign->goal_amount;
 
@@ -633,7 +643,7 @@ Route::prefix('api')->group(function () {
                     'id' => $campaign->id,
                     'title' => $campaign->name,
                     'short_description' => $campaign->short_description ?? strLimit($campaign->description, 150),
-                    'image_url' => getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')),
+                    'image_url' => getImage(getFilePath('campaign').'/'.$campaign->image, getFileSize('campaign')),
                     'url' => route('campaign.show', $campaign->slug),
                     'product_url' => route('campaign.show', $campaign->slug),
                     'permalink' => route('campaign.show', $campaign->slug),
@@ -660,18 +670,18 @@ Route::prefix('api')->group(function () {
                     'currency' => $currencyCode,
                     'currency_symbol' => $currencySymbol,
                 ],
-                'total' => $campaigns->count()
+                'total' => $campaigns->count(),
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error fetching featured campaigns: ' . $e->getMessage(),
-                'data' => []
+                'message' => 'Error fetching featured campaigns: '.$e->getMessage(),
+                'data' => [],
             ], 500);
         }
     });
-    
+
     // Get single campaign by slug or numeric id (e.g. /api/campaigns/my-slug or /api/campaigns/150)
     Route::get('/campaigns/{slugOrId}', function ($slugOrId) {
         try {
@@ -704,7 +714,7 @@ Route::prefix('api')->group(function () {
                 $campaign = $query->where('slug', $param)->first();
             }
 
-            if (!$campaign) {
+            if (! $campaign) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Campaign not found',
@@ -719,7 +729,7 @@ Route::prefix('api')->group(function () {
             $creatorUser = $campaign->user;
             $creator = null;
             if ($creatorUser) {
-                $fullName = trim(($creatorUser->firstname ?? '') . ' ' . ($creatorUser->lastname ?? ''));
+                $fullName = trim(($creatorUser->firstname ?? '').' '.($creatorUser->lastname ?? ''));
                 if ($fullName === '') {
                     $fullName = (string) ($creatorUser->username ?? '');
                 }
@@ -734,7 +744,7 @@ Route::prefix('api')->group(function () {
                     'country_code' => (string) ($creatorUser->country_code ?? ''),
                     'country_name' => (string) ($creatorUser->country_name ?? ''),
                     'profile_image_url' => $img
-                        ? getImage(getFilePath('userProfile') . '/' . $img, getFileSize('userProfile'))
+                        ? getImage(getFilePath('userProfile').'/'.$img, getFileSize('userProfile'))
                         : null,
                 ];
             }
@@ -766,7 +776,7 @@ Route::prefix('api')->group(function () {
                 'title' => $campaign->name,
                 'description' => $campaign->description,
                 'short_description' => $campaign->short_description ?? strLimit($campaign->description, 150),
-                'image_url' => getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign')),
+                'image_url' => getImage(getFilePath('campaign').'/'.$campaign->image, getFileSize('campaign')),
                 'permalink' => route('campaign.show', $campaign->slug),
                 'category' => $campaign->category->name ?? null,
                 'category_id' => $campaign->category_id,
@@ -816,7 +826,7 @@ Route::prefix('api')->group(function () {
                         'title' => $update->title,
                         'content' => $update->content,
                         'slug' => $update->slug,
-                        'image_url' => $update->image ? getImage(getFilePath('campaign') . '/' . $update->image, getFileSize('campaign')) : null,
+                        'image_url' => $update->image ? getImage(getFilePath('campaign').'/'.$update->image, getFileSize('campaign')) : null,
                         'is_published' => (bool) $update->is_published,
                         'author' => $author,
                         'comments' => $update->comments->map(fn ($c) => $formatApiComment($c))->values(),
@@ -853,70 +863,70 @@ Route::prefix('api')->group(function () {
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error fetching campaign: ' . $e->getMessage(),
+                'message' => 'Error fetching campaign: '.$e->getMessage(),
                 'data' => null,
             ], 500);
         }
     });
 
     // Get all categories
-    Route::get('/categories', function() {
+    Route::get('/categories', function () {
         try {
             $categories = Category::active()->orderBy('name')->get(['id', 'name', 'slug']);
-            
+
             return response()->json([
                 'success' => true,
-                'data' => $categories
+                'data' => $categories,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error fetching categories: ' . $e->getMessage(),
-                'data' => []
+                'message' => 'Error fetching categories: '.$e->getMessage(),
+                'data' => [],
             ], 500);
         }
     });
 
     // Get subcategories by category ID
-    Route::get('/subcategories/{categoryId}', function($categoryId) {
+    Route::get('/subcategories/{categoryId}', function ($categoryId) {
         try {
             $subcategories = \App\Models\Admins\SubCategory::where('category_id', $categoryId)
                 ->where('status', 'active')
                 ->orderBy('sort_order')
                 ->orderBy('name')
                 ->get(['id', 'name', 'slug', 'category_id']);
-            
+
             return response()->json([
                 'success' => true,
-                'data' => $subcategories
+                'data' => $subcategories,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error fetching subcategories: ' . $e->getMessage(),
-                'data' => []
+                'message' => 'Error fetching subcategories: '.$e->getMessage(),
+                'data' => [],
             ], 500);
         }
     });
 
     // API route for subcategories (with /api prefix)
-    Route::get('/api/subcategories/{categoryId}', function($categoryId) {
+    Route::get('/api/subcategories/{categoryId}', function ($categoryId) {
         try {
             $subcategories = \App\Models\Admins\SubCategory::where('category_id', $categoryId)
                 ->where('status', 'active')
                 ->orderBy('sort_order')
                 ->orderBy('name')
                 ->get(['id', 'name', 'slug', 'category_id']);
-            
+
             return response()->json([
                 'success' => true,
-                'data' => $subcategories
+                'data' => $subcategories,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error fetching subcategories: ' . $e->getMessage(),
-                'data' => []
+                'message' => 'Error fetching subcategories: '.$e->getMessage(),
+                'data' => [],
             ], 500);
         }
     });

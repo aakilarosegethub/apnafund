@@ -57,15 +57,15 @@ class CampaignManageApiController extends BaseApiController
         $campaign = null;
         if ($rawId !== null && $rawId !== '') {
             $campaign = Campaign::where('id', (int) $rawId)->first();
-        } elseif (!empty($slug)) {
+        } elseif (! empty($slug)) {
             $campaign = Campaign::where('slug', $slug)->first();
         }
 
-        if (!$campaign) {
+        if (! $campaign) {
             return ['response' => $this->jsonLegacy(404, '404', false, 'Campaign not found. Provide campaign_id, fund_id, or slug.')];
         }
 
-        if (!$campaign->canBeEditedBy($uid)) {
+        if (! $campaign->canBeEditedBy($uid)) {
             return ['response' => $this->jsonLegacy(403, '403', false, 'You do not have permission to manage this campaign.')];
         }
 
@@ -201,7 +201,7 @@ class CampaignManageApiController extends BaseApiController
                 return $this->jsonLegacy(400, '400', false, 'reward_id is required.');
             }
             $reward = $campaign->rewards()->where('id', $rewardId)->first();
-            if (!$reward) {
+            if (! $reward) {
                 return $this->jsonLegacy(404, '404', false, 'Reward not found.');
             }
 
@@ -224,7 +224,7 @@ class CampaignManageApiController extends BaseApiController
                 return $this->jsonLegacy(422, '422', false, $v->errors()->first(), ['errors' => $v->errors()]);
             }
 
-            $reward = new Reward();
+            $reward = new Reward;
             $reward->campaign_id = $campaign->id;
             $reward->title = $request->title;
             $reward->description = CampaignStoryHtmlService::replaceDataUrlImagesWithStoredFiles((string) $request->description);
@@ -238,7 +238,7 @@ class CampaignManageApiController extends BaseApiController
                 try {
                     $reward->image = fileUploader($request->image, getFilePath('reward'), getFileSize('reward'), null, getThumbSize('reward'));
                 } catch (\Exception $e) {
-                    return $this->jsonLegacy(400, '400', false, 'Image upload failed: ' . $e->getMessage());
+                    return $this->jsonLegacy(400, '400', false, 'Image upload failed: '.$e->getMessage());
                 }
             }
 
@@ -253,7 +253,7 @@ class CampaignManageApiController extends BaseApiController
                 return $this->jsonLegacy(400, '400', false, 'reward_id is required.');
             }
             $reward = $campaign->rewards()->where('id', $rewardId)->first();
-            if (!$reward) {
+            if (! $reward) {
                 return $this->jsonLegacy(404, '404', false, 'Reward not found.');
             }
 
@@ -288,7 +288,7 @@ class CampaignManageApiController extends BaseApiController
                 try {
                     $reward->image = fileUploader($request->image, getFilePath('reward'), getFileSize('reward'), $reward->image, getThumbSize('reward'));
                 } catch (\Exception $e) {
-                    return $this->jsonLegacy(400, '400', false, 'Image upload failed: ' . $e->getMessage());
+                    return $this->jsonLegacy(400, '400', false, 'Image upload failed: '.$e->getMessage());
                 }
             }
 
@@ -303,7 +303,7 @@ class CampaignManageApiController extends BaseApiController
                 return $this->jsonLegacy(400, '400', false, 'reward_id is required.');
             }
             $reward = $campaign->rewards()->where('id', $rewardId)->first();
-            if (!$reward) {
+            if (! $reward) {
                 return $this->jsonLegacy(404, '404', false, 'Reward not found.');
             }
             $reward->delete();
@@ -317,10 +317,10 @@ class CampaignManageApiController extends BaseApiController
                 return $this->jsonLegacy(400, '400', false, 'reward_id is required.');
             }
             $reward = $campaign->rewards()->where('id', $rewardId)->first();
-            if (!$reward) {
+            if (! $reward) {
                 return $this->jsonLegacy(404, '404', false, 'Reward not found.');
             }
-            $reward->is_active = !$reward->is_active;
+            $reward->is_active = ! $reward->is_active;
             $reward->save();
 
             return $this->jsonLegacy(200, '200', true, 'Reward status updated.', ['reward' => $this->formatReward($reward)]);
@@ -333,7 +333,7 @@ class CampaignManageApiController extends BaseApiController
     {
         $imageUrl = null;
         if ($r->image) {
-            $imageUrl = getImage(getFilePath('reward') . '/' . $r->image, getThumbSize('reward'));
+            $imageUrl = getImage(getFilePath('reward').'/'.$r->image, getThumbSize('reward'));
         }
 
         return [
@@ -402,7 +402,7 @@ class CampaignManageApiController extends BaseApiController
                 return $this->jsonLegacy(400, '400', false, 'faq_id is required.');
             }
             $faq = CampaignFaq::where('id', $faqId)->where('campaign_id', $campaign->id)->first();
-            if (!$faq) {
+            if (! $faq) {
                 return $this->jsonLegacy(404, '404', false, 'FAQ not found.');
             }
 
@@ -421,7 +421,7 @@ class CampaignManageApiController extends BaseApiController
                 return $this->jsonLegacy(422, '422', false, $v->errors()->first(), ['errors' => $v->errors()]);
             }
 
-            $faq = new CampaignFaq();
+            $faq = new CampaignFaq;
             $faq->campaign_id = $campaign->id;
             $faq->question = $data['question'];
             $faq->answer = $data['answer'];
@@ -437,7 +437,7 @@ class CampaignManageApiController extends BaseApiController
                 return $this->jsonLegacy(400, '400', false, 'faq_id is required.');
             }
             $faq = CampaignFaq::where('id', $faqId)->where('campaign_id', $campaign->id)->first();
-            if (!$faq) {
+            if (! $faq) {
                 return $this->jsonLegacy(404, '404', false, 'FAQ not found.');
             }
 
@@ -466,7 +466,7 @@ class CampaignManageApiController extends BaseApiController
                 return $this->jsonLegacy(400, '400', false, 'faq_id is required.');
             }
             $faq = CampaignFaq::where('id', $faqId)->where('campaign_id', $campaign->id)->first();
-            if (!$faq) {
+            if (! $faq) {
                 return $this->jsonLegacy(404, '404', false, 'FAQ not found.');
             }
             $faq->delete();
@@ -556,7 +556,7 @@ class CampaignManageApiController extends BaseApiController
                 return $this->jsonLegacy(400, '400', false, 'update_id is required.');
             }
             $update = CampaignUpdate::where('id', $updateId)->where('campaign_id', $campaign->id)->first();
-            if (!$update) {
+            if (! $update) {
                 return $this->jsonLegacy(404, '404', false, 'Update not found.');
             }
 
@@ -575,19 +575,19 @@ class CampaignManageApiController extends BaseApiController
                 return $this->jsonLegacy(422, '422', false, $v->errors()->first(), ['errors' => $v->errors()]);
             }
 
-            $update = new CampaignUpdate();
+            $update = new CampaignUpdate;
             $update->campaign_id = $campaign->id;
             $update->user_id = $this->getUserId($request);
             $update->title = $request->title;
             $update->content = $request->content;
-            $update->slug = slug($request->title) . '-' . time();
+            $update->slug = slug($request->title).'-'.time();
             $update->is_published = $request->boolean('is_published', true);
 
             if ($request->hasFile('image')) {
                 try {
                     $update->image = fileUploader($request->image, getFilePath('campaign'), getFileSize('campaign'));
                 } catch (\Exception $e) {
-                    return $this->jsonLegacy(400, '400', false, 'Image upload failed: ' . $e->getMessage());
+                    return $this->jsonLegacy(400, '400', false, 'Image upload failed: '.$e->getMessage());
                 }
             }
 
@@ -602,7 +602,7 @@ class CampaignManageApiController extends BaseApiController
                 return $this->jsonLegacy(400, '400', false, 'update_id is required.');
             }
             $update = CampaignUpdate::where('id', $updateId)->where('campaign_id', $campaign->id)->first();
-            if (!$update) {
+            if (! $update) {
                 return $this->jsonLegacy(404, '404', false, 'Update not found.');
             }
 
@@ -622,13 +622,13 @@ class CampaignManageApiController extends BaseApiController
             if ($request->has('is_published')) {
                 $update->is_published = $request->boolean('is_published');
             }
-            $update->slug = slug($request->title) . '-' . time();
+            $update->slug = slug($request->title).'-'.time();
 
             if ($request->hasFile('image')) {
                 try {
                     $update->image = fileUploader($request->image, getFilePath('campaign'), getFileSize('campaign'), $update->image);
                 } catch (\Exception $e) {
-                    return $this->jsonLegacy(400, '400', false, 'Image upload failed: ' . $e->getMessage());
+                    return $this->jsonLegacy(400, '400', false, 'Image upload failed: '.$e->getMessage());
                 }
             }
 
@@ -643,11 +643,11 @@ class CampaignManageApiController extends BaseApiController
                 return $this->jsonLegacy(400, '400', false, 'update_id is required.');
             }
             $update = CampaignUpdate::where('id', $updateId)->where('campaign_id', $campaign->id)->first();
-            if (!$update) {
+            if (! $update) {
                 return $this->jsonLegacy(404, '404', false, 'Update not found.');
             }
             if ($update->image) {
-                fileManager()->removeFile(getFilePath('campaign') . '/' . $update->image);
+                fileManager()->removeFile(getFilePath('campaign').'/'.$update->image);
             }
             $update->delete();
 
@@ -659,7 +659,7 @@ class CampaignManageApiController extends BaseApiController
 
     protected function formatCampaignUpdate(CampaignUpdate $u): array
     {
-        $imageUrl = $u->image ? getImage(getFilePath('campaign') . '/' . $u->image, getFileSize('campaign')) : null;
+        $imageUrl = $u->image ? getImage(getFilePath('campaign').'/'.$u->image, getFileSize('campaign')) : null;
 
         return [
             'id' => $u->id,
@@ -697,13 +697,14 @@ class CampaignManageApiController extends BaseApiController
         $documents = array_map(function ($doc) use ($existingDocs, $campaign) {
             $fieldKey = $doc['field_key'] ?? '';
             $existingFile = $fieldKey ? ($existingDocs[$fieldKey] ?? null) : null;
+
             return [
                 'field_key' => $fieldKey,
                 'label' => $doc['label'] ?? $fieldKey,
                 'is_required' => (bool) ($doc['is_required'] ?? false),
                 'is_global' => (bool) ($doc['is_global'] ?? true),
                 'countries' => (array) ($doc['countries'] ?? []),
-                'uploaded' => !empty($existingFile),
+                'uploaded' => ! empty($existingFile),
                 'file' => $existingFile,
                 'file_url' => $existingFile ? campaignVerificationDocumentApiUrl($campaign->id, $existingFile) : null,
             ];
@@ -737,10 +738,12 @@ class CampaignManageApiController extends BaseApiController
         $rules = [];
         foreach ($requirements as $doc) {
             $fieldKey = $doc['field_key'] ?? null;
-            if (!$fieldKey) continue;
-            $alreadyUploaded = !empty($existingDocs[$fieldKey]);
+            if (! $fieldKey) {
+                continue;
+            }
+            $alreadyUploaded = ! empty($existingDocs[$fieldKey]);
             $base = 'file|mimes:pdf,jpg,jpeg,png,webp|max:10240';
-            $rules['documents.' . $fieldKey] = (!empty($doc['is_required']) && !$alreadyUploaded) ? ('required|' . $base) : ('nullable|' . $base);
+            $rules['documents.'.$fieldKey] = (! empty($doc['is_required']) && ! $alreadyUploaded) ? ('required|'.$base) : ('nullable|'.$base);
         }
 
         $v = Validator::make($request->all(), $rules, [
@@ -755,12 +758,12 @@ class CampaignManageApiController extends BaseApiController
         $updatedDocs = $existingDocs;
         foreach ($requirements as $doc) {
             $fieldKey = $doc['field_key'] ?? null;
-            if (!$fieldKey || !$request->hasFile('documents.' . $fieldKey)) {
+            if (! $fieldKey || ! $request->hasFile('documents.'.$fieldKey)) {
                 continue;
             }
             $oldFile = $updatedDocs[$fieldKey] ?? null;
             $updatedDocs[$fieldKey] = app(CampaignVerificationDocumentService::class)->upload(
-                $request->file('documents.' . $fieldKey),
+                $request->file('documents.'.$fieldKey),
                 $oldFile
             );
         }
@@ -777,7 +780,7 @@ class CampaignManageApiController extends BaseApiController
                 'field_key' => $fieldKey,
                 'label' => $doc['label'] ?? $fieldKey,
                 'is_required' => (bool) ($doc['is_required'] ?? false),
-                'uploaded' => !empty($existingFile),
+                'uploaded' => ! empty($existingFile),
                 'file' => $existingFile,
                 'file_url' => $existingFile ? campaignVerificationDocumentApiUrl($campaign->id, $existingFile) : null,
             ];
@@ -845,7 +848,7 @@ class CampaignManageApiController extends BaseApiController
             return $this->jsonLegacy(422, '422', false, $v->errors()->first(), ['errors' => $v->errors()]);
         }
 
-        $comment = new Comment();
+        $comment = new Comment;
         $comment->user_id = $user->id;
         $comment->campaign_id = $campaign->id;
         $comment->update_id = $update->id;
@@ -857,9 +860,9 @@ class CampaignManageApiController extends BaseApiController
         $comment->status = ManageStatus::CAMPAIGN_COMMENT_APPROVED;
         $comment->save();
 
-        $adminNotification = new AdminNotification();
+        $adminNotification = new AdminNotification;
         $adminNotification->user_id = $user->id;
-        $adminNotification->title = ($user->fullname ?? $user->username) . ' commented on a campaign update.';
+        $adminNotification->title = ($user->fullname ?? $user->username).' commented on a campaign update.';
         $adminNotification->click_url = urlPath('admin.comments.index');
         $adminNotification->save();
 
@@ -942,7 +945,7 @@ class CampaignManageApiController extends BaseApiController
             return $this->jsonLegacy(422, '422', false, $v->errors()->first(), ['errors' => $v->errors()]);
         }
 
-        $comment = new Comment();
+        $comment = new Comment;
         $comment->user_id = $user?->id;
         $comment->campaign_id = $campaign->id;
         $comment->update_id = null;
@@ -954,9 +957,9 @@ class CampaignManageApiController extends BaseApiController
         $comment->status = ManageStatus::CAMPAIGN_COMMENT_APPROVED;
         $comment->save();
 
-        $adminNotification = new AdminNotification();
+        $adminNotification = new AdminNotification;
         $adminNotification->user_id = $user?->id ?? 0;
-        $adminNotification->title = ($comment->name ?: 'Guest') . ' has commented on a campaign.';
+        $adminNotification->title = ($comment->name ?: 'Guest').' has commented on a campaign.';
         $adminNotification->click_url = urlPath('admin.comments.index');
         $adminNotification->save();
 

@@ -11,15 +11,14 @@ class AdminLogedIn
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
      * @return mixed
      */
     public function handle(Request $request, Closure $next)
     {
-        if (!Session::has('admin')) {
+        if (! Session::has('admin')) {
             return redirect('admin/login');
         }
+
         return $next($request);
     }
 }

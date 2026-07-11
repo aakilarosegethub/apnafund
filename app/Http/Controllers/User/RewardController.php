@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\User;
 
-use App\Models\Reward;
-use App\Models\Campaign;
 use App\Http\Controllers\Controller;
+use App\Models\Campaign;
+use App\Models\Reward;
 use App\Services\CampaignStoryHtmlService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\File;
@@ -21,7 +21,7 @@ class RewardController extends Controller
     {
         $campaign = Campaign::where('slug', $slug)->firstOrFail();
 
-        if (!$campaign->canBeEditedBy(auth()->id())) {
+        if (! $campaign->canBeEditedBy(auth()->id())) {
             $message = 'You do not have permission to manage rewards for this campaign';
 
             if (request()->ajax() || request()->wantsJson()) {
@@ -32,11 +32,13 @@ class RewardController extends Controller
             }
 
             $toast[] = ['error', $message];
+
             return back()->withToasts($toast);
         }
 
         return $campaign;
     }
+
     /**
      * Display rewards for a specific campaign.
      */
@@ -50,7 +52,8 @@ class RewardController extends Controller
         $rewards = $campaign->rewards()->active()->orderBy('minimum_amount')->get();
 
         $pageTitle = 'Campaign Rewards';
-        return view($this->activeTheme . 'user.reward.index', compact('pageTitle', 'campaign', 'rewards'));
+
+        return view($this->activeTheme.'user.reward.index', compact('pageTitle', 'campaign', 'rewards'));
     }
 
     /**
@@ -64,8 +67,8 @@ class RewardController extends Controller
         }
 
         $pageTitle = 'Add New Reward';
-        
-        return view($this->activeTheme . 'user.reward.create', compact('pageTitle', 'campaign'));
+
+        return view($this->activeTheme.'user.reward.create', compact('pageTitle', 'campaign'));
     }
 
     /**
@@ -108,13 +111,13 @@ class RewardController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation failed. Please check the errors below.',
-                    'errors' => $e->errors()
+                    'errors' => $e->errors(),
                 ], 422);
             }
             throw $e;
         }
 
-        $reward = new Reward();
+        $reward = new Reward;
         $reward->campaign_id = $campaign->id;
         $reward->title = $request->title;
         $reward->description = CampaignStoryHtmlService::replaceDataUrlImagesWithStoredFiles((string) $request->description);
@@ -130,41 +133,41 @@ class RewardController extends Controller
                 // Validate image file
                 $imageFile = $request->image;
                 $maxSize = 5120; // 5MB in KB
-                
+
                 if ($imageFile->getSize() > $maxSize * 1024) {
                     throw new \Exception('Image size must be less than 5MB');
                 }
-                
+
                 $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-                if (!in_array($imageFile->getMimeType(), $allowedTypes)) {
+                if (! in_array($imageFile->getMimeType(), $allowedTypes)) {
                     throw new \Exception('Invalid image type. Only JPG, PNG, GIF, and WEBP are allowed.');
                 }
-                
+
                 // Get file path and ensure directory exists
                 $filePath = getFilePath('reward');
                 $fullPath = public_path($filePath);
-                
+
                 // Create directory if it doesn't exist
-                if (!file_exists($fullPath)) {
-                    if (!mkdir($fullPath, 0775, true)) {
+                if (! file_exists($fullPath)) {
+                    if (! mkdir($fullPath, 0775, true)) {
                         throw new \Exception('Failed to create upload directory. Please check permissions.');
                     }
                 }
-                
+
                 // Check if directory is writable, if not try to fix permissions automatically
-                if (!is_writable($fullPath)) {
+                if (! is_writable($fullPath)) {
                     // Try to make it writable
-                    if (!chmod($fullPath, 0775)) {
+                    if (! chmod($fullPath, 0775)) {
                         throw new \Exception('Upload directory is not writable and could not be fixed. Please check permissions manually.');
                     }
                 }
-                
+
                 $uploadedImage = fileUploader($request->image, getFilePath('reward'), getFileSize('reward'), null, getThumbSize('reward'));
                 if ($uploadedImage) {
                     $reward->image = $uploadedImage;
                     \Log::info('Reward image uploaded successfully', [
                         'filename' => $uploadedImage,
-                        'campaign_id' => $campaign->id
+                        'campaign_id' => $campaign->id,
                     ]);
                 } else {
                     throw new \Exception('Image upload returned empty filename');
@@ -179,22 +182,23 @@ class RewardController extends Controller
                     'full_path' => public_path(getFilePath('reward')),
                     'path_exists' => file_exists(public_path(getFilePath('reward'))),
                     'path_writable' => is_writable(public_path(getFilePath('reward'))),
-                    'campaign_id' => $campaign->id
+                    'campaign_id' => $campaign->id,
                 ]);
-                
+
                 $errorMessage = 'Image uploading process has failed';
                 if (config('app.debug')) {
-                    $errorMessage .= ': ' . $e->getMessage();
+                    $errorMessage .= ': '.$e->getMessage();
                 }
-                
+
                 if ($request->ajax() || $request->wantsJson()) {
                     return response()->json([
                         'success' => false,
-                        'message' => $errorMessage
+                        'message' => $errorMessage,
                     ], 400);
                 }
-                
+
                 $toast[] = ['error', $errorMessage];
+
                 return back()->withToasts($toast);
             }
         }
@@ -206,11 +210,12 @@ class RewardController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Reward created successfully',
-                'reward' => $reward
+                'reward' => $reward,
             ]);
         }
 
         $toast[] = ['success', 'Reward created successfully'];
+
         return redirect()->route('user.rewards.index', $campaign->slug)->withToasts($toast);
     }
 
@@ -231,9 +236,9 @@ class RewardController extends Controller
             // Get image URL properly
             $imageUrl = null;
             if ($reward->image) {
-                $imageUrl = getImage(getFilePath('reward') . '/' . $reward->image, getThumbSize('reward'));
+                $imageUrl = getImage(getFilePath('reward').'/'.$reward->image, getThumbSize('reward'));
             }
-            
+
             return response()->json([
                 'success' => true,
                 'reward' => [
@@ -247,14 +252,14 @@ class RewardController extends Controller
                     'terms_conditions' => $reward->terms_conditions,
                     'image' => $reward->image,
                     'image_url' => $imageUrl,
-                    'reward_tab_type' => $reward->reward_tab_type
-                ]
+                    'reward_tab_type' => $reward->reward_tab_type,
+                ],
             ]);
         }
 
         $pageTitle = 'Edit Reward';
-        
-        return view($this->activeTheme . 'user.reward.edit', compact('pageTitle', 'campaign', 'reward'));
+
+        return view($this->activeTheme.'user.reward.edit', compact('pageTitle', 'campaign', 'reward'));
     }
 
     /**
@@ -299,7 +304,7 @@ class RewardController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation failed. Please check the errors below.',
-                    'errors' => $e->errors()
+                    'errors' => $e->errors(),
                 ], 422);
             }
             throw $e;
@@ -319,41 +324,41 @@ class RewardController extends Controller
                 // Validate image file
                 $imageFile = $request->image;
                 $maxSize = 5120; // 5MB in KB
-                
+
                 if ($imageFile->getSize() > $maxSize * 1024) {
                     throw new \Exception('Image size must be less than 5MB');
                 }
-                
+
                 $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-                if (!in_array($imageFile->getMimeType(), $allowedTypes)) {
+                if (! in_array($imageFile->getMimeType(), $allowedTypes)) {
                     throw new \Exception('Invalid image type. Only JPG, PNG, GIF, and WEBP are allowed.');
                 }
-                
+
                 // Get file path and ensure directory exists
                 $filePath = getFilePath('reward');
                 $fullPath = public_path($filePath);
-                
+
                 // Create directory if it doesn't exist
-                if (!file_exists($fullPath)) {
-                    if (!mkdir($fullPath, 0775, true)) {
+                if (! file_exists($fullPath)) {
+                    if (! mkdir($fullPath, 0775, true)) {
                         throw new \Exception('Failed to create upload directory. Please check permissions.');
                     }
                 }
-                
+
                 // Check if directory is writable, if not try to fix permissions automatically
-                if (!is_writable($fullPath)) {
+                if (! is_writable($fullPath)) {
                     // Try to make it writable
-                    if (!chmod($fullPath, 0775)) {
+                    if (! chmod($fullPath, 0775)) {
                         throw new \Exception('Upload directory is not writable and could not be fixed. Please check permissions manually.');
                     }
                 }
-                
+
                 $uploadedImage = fileUploader($request->image, getFilePath('reward'), getFileSize('reward'), $reward->image, getThumbSize('reward'));
                 if ($uploadedImage) {
                     $reward->image = $uploadedImage;
                     \Log::info('Reward image updated successfully', [
                         'filename' => $uploadedImage,
-                        'reward_id' => $reward->id
+                        'reward_id' => $reward->id,
                     ]);
                 } else {
                     throw new \Exception('Image upload returned empty filename');
@@ -368,22 +373,23 @@ class RewardController extends Controller
                     'full_path' => public_path(getFilePath('reward')),
                     'path_exists' => file_exists(public_path(getFilePath('reward'))),
                     'path_writable' => is_writable(public_path(getFilePath('reward'))),
-                    'reward_id' => $reward->id
+                    'reward_id' => $reward->id,
                 ]);
-                
+
                 $errorMessage = 'Image uploading process has failed';
                 if (config('app.debug')) {
-                    $errorMessage .= ': ' . $e->getMessage();
+                    $errorMessage .= ': '.$e->getMessage();
                 }
-                
+
                 if ($request->ajax() || $request->wantsJson()) {
                     return response()->json([
                         'success' => false,
-                        'message' => $errorMessage
+                        'message' => $errorMessage,
                     ], 400);
                 }
-                
+
                 $toast[] = ['error', $errorMessage];
+
                 return back()->withToasts($toast);
             }
         }
@@ -395,11 +401,12 @@ class RewardController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Reward updated successfully',
-                'reward' => $reward
+                'reward' => $reward,
             ]);
         }
 
         $toast[] = ['success', 'Reward updated successfully'];
+
         return redirect()->route('user.rewards.index', $campaign->slug)->withToasts($toast);
     }
 
@@ -420,11 +427,12 @@ class RewardController extends Controller
         if (request()->ajax() || request()->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Reward deleted successfully'
+                'message' => 'Reward deleted successfully',
             ]);
         }
 
         $toast[] = ['success', 'Reward deleted successfully'];
+
         return back()->withToasts($toast);
     }
 
@@ -439,11 +447,12 @@ class RewardController extends Controller
         }
 
         $reward = $campaign->rewards()->findOrFail($rewardId);
-        $reward->is_active = !$reward->is_active;
+        $reward->is_active = ! $reward->is_active;
         $reward->save();
 
         $status = $reward->is_active ? 'activated' : 'deactivated';
         $toast[] = ['success', "Reward {$status} successfully"];
+
         return back()->withToasts($toast);
     }
-} 
+}

@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\NotificationTemplate;
 use App\Constants\ManageStatus;
+use App\Models\NotificationTemplate;
+use Illuminate\Database\Seeder;
 
 class PaymentSuccessEmailTemplateSeeder extends Seeder
 {
@@ -82,7 +82,7 @@ class PaymentSuccessEmailTemplateSeeder extends Seeder
             'trx' => 'Transaction ID',
             'date' => 'Payment date',
             'admin_url' => 'Admin panel URL',
-            'currency_symbol' => 'Currency symbol'
+            'currency_symbol' => 'Currency symbol',
         ]);
 
         // Create User Payment Success Email Template
@@ -160,7 +160,7 @@ class PaymentSuccessEmailTemplateSeeder extends Seeder
             'trx' => 'Transaction ID',
             'date' => 'Payment date',
             'campaign_url' => 'Campaign URL',
-            'currency_symbol' => 'Currency symbol'
+            'currency_symbol' => 'Currency symbol',
         ]);
 
         echo "Payment success email templates created/updated successfully!\n";
@@ -169,14 +169,14 @@ class PaymentSuccessEmailTemplateSeeder extends Seeder
     private function createOrUpdateTemplate($act, $subject, $body, $shortcodes)
     {
         $template = NotificationTemplate::where('act', $act)->first();
-        
+
         if ($template) {
             $template->update([
                 'subj' => $subject,
                 'email_body' => $body,
                 'shortcodes' => json_encode($shortcodes),
                 'email_status' => ManageStatus::ACTIVE,
-                'sms_status' => ManageStatus::INACTIVE
+                'sms_status' => ManageStatus::INACTIVE,
             ]);
             echo "Template {$act} updated successfully!\n";
         } else {
@@ -187,7 +187,7 @@ class PaymentSuccessEmailTemplateSeeder extends Seeder
                 'email_body' => $body,
                 'shortcodes' => json_encode($shortcodes),
                 'email_status' => ManageStatus::ACTIVE,
-                'sms_status' => ManageStatus::INACTIVE
+                'sms_status' => ManageStatus::INACTIVE,
             ]);
             echo "Template {$act} created successfully!\n";
         }

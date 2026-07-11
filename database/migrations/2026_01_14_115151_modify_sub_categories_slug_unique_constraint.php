@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -24,7 +24,7 @@ return new class extends Migration
                     // Constraint might not exist or have different name, continue
                 }
             }
-            
+
             // Add composite unique constraint on (category_id, slug)
             $table->unique(['category_id', 'slug'], 'sub_categories_category_slug_unique');
         });
@@ -38,7 +38,7 @@ return new class extends Migration
         Schema::table('sub_categories', function (Blueprint $table) {
             // Drop the composite unique constraint
             $table->dropUnique('sub_categories_category_slug_unique');
-            
+
             // Restore the original unique constraint on slug
             $table->unique('slug', 'sub_categories_slug_unique');
         });

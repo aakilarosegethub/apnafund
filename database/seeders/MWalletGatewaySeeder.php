@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Gateway;
 use App\Models\GatewayCurrency;
+use Illuminate\Database\Seeder;
 
 class MWalletGatewaySeeder extends Seeder
 {
@@ -16,6 +16,7 @@ class MWalletGatewaySeeder extends Seeder
         // Check if MWallet gateway already exists
         if (Gateway::where('code', 'mwallet')->exists()) {
             $this->command->info('MWallet gateway already exists. Skipping...');
+
             return;
         }
 
@@ -29,30 +30,30 @@ class MWalletGatewaySeeder extends Seeder
                 'merchant_id' => [
                     'title' => 'Merchant ID',
                     'global' => true,
-                    'value' => ''
+                    'value' => '',
                 ],
                 'api_key' => [
                     'title' => 'API Key',
                     'global' => true,
-                    'value' => ''
+                    'value' => '',
                 ],
                 'secret_key' => [
                     'title' => 'Secret Key',
                     'global' => true,
-                    'value' => ''
+                    'value' => '',
                 ],
                 'sandbox' => [
                     'title' => 'Sandbox Mode',
                     'global' => true,
-                    'value' => '0'
-                ]
+                    'value' => '0',
+                ],
             ]),
             'supported_currencies' => ['USD', 'PKR', 'EUR', 'GBP'],
             'extra' => null,
             'input_form' => null,
             'guideline' => 'Configure your MWallet payment gateway with the provided credentials. Enable sandbox mode for testing. Make sure to set up your webhook URL in MWallet dashboard.',
             'countries' => ['PK', 'US', 'GB', 'CA', 'AU', 'DE', 'FR', 'IT', 'ES', 'NL', 'BE', 'AT', 'CH', 'SE', 'NO', 'DK', 'FI', 'IE', 'PT', 'GR', 'LU', 'CY', 'MT', 'SI', 'SK', 'CZ', 'HU', 'PL', 'LT', 'LV', 'EE', 'BG', 'RO', 'HR'],
-            'status' => 1
+            'status' => 1,
         ]);
 
         // Create gateway currencies
@@ -65,7 +66,7 @@ class MWalletGatewaySeeder extends Seeder
                 'max_amount' => 1000000.00,
                 'fixed_charge' => 0.00,
                 'percent_charge' => 2.50,
-                'rate' => 1.00
+                'rate' => 1.00,
             ],
             [
                 'name' => 'MWallet - USD',
@@ -75,7 +76,7 @@ class MWalletGatewaySeeder extends Seeder
                 'max_amount' => 10000.00,
                 'fixed_charge' => 0.00,
                 'percent_charge' => 2.50,
-                'rate' => 1.00
+                'rate' => 1.00,
             ],
             [
                 'name' => 'MWallet - EUR',
@@ -85,7 +86,7 @@ class MWalletGatewaySeeder extends Seeder
                 'max_amount' => 10000.00,
                 'fixed_charge' => 0.00,
                 'percent_charge' => 2.50,
-                'rate' => 1.00
+                'rate' => 1.00,
             ],
             [
                 'name' => 'MWallet - GBP',
@@ -95,8 +96,8 @@ class MWalletGatewaySeeder extends Seeder
                 'max_amount' => 10000.00,
                 'fixed_charge' => 0.00,
                 'percent_charge' => 2.50,
-                'rate' => 1.00
-            ]
+                'rate' => 1.00,
+            ],
         ];
 
         foreach ($currencies as $currencyData) {
@@ -109,7 +110,7 @@ class MWalletGatewaySeeder extends Seeder
                     'merchant_id' => '',
                     'api_key' => '',
                     'secret_key' => '',
-                    'sandbox' => '0'
+                    'sandbox' => '0',
                 ]),
                 'min_amount' => $currencyData['min_amount'],
                 'max_amount' => $currencyData['max_amount'],
@@ -117,12 +118,10 @@ class MWalletGatewaySeeder extends Seeder
                 'percent_charge' => $currencyData['percent_charge'],
                 'rate' => $currencyData['rate'],
                 'symbol' => $currencyData['symbol'],
-                'status' => 1
+                'status' => 1,
             ]);
         }
 
         $this->command->info('MWallet gateway and currencies created successfully!');
     }
 }
-
-

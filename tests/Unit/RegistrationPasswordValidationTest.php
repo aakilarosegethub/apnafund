@@ -5,9 +5,9 @@ namespace Tests\Unit;
 use App\Constants\WeakPasswords;
 use PHPUnit\Framework\TestCase;
 
-require_once __DIR__ . '/../../app/Constants/WeakPasswords.php';
-require_once __DIR__ . '/../../app/Constants/RegistrationLimits.php';
-require_once __DIR__ . '/../../app/Http/Helpers/helpers.php';
+require_once __DIR__.'/../../app/Constants/WeakPasswords.php';
+require_once __DIR__.'/../../app/Constants/RegistrationLimits.php';
+require_once __DIR__.'/../../app/Http/Helpers/helpers.php';
 
 class RegistrationPasswordValidationTest extends TestCase
 {

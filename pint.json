@@ -1,0 +1,12 @@
+{
+    "preset": "laravel",
+    "exclude": [
+        "vendor",
+        "app/app",
+        "storage",
+        "bootstrap/cache",
+        "public/assets",
+        "wordpress-plugins",
+        "wp-plugin-apnafund-crowdfunding-posts"
+    ]
+}

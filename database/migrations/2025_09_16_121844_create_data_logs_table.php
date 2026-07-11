@@ -24,7 +24,7 @@ return new class extends Migration
             $table->string('status')->default('received'); // received, processed, failed
             $table->text('response')->nullable(); // Response sent back
             $table->timestamps();
-            
+
             $table->index(['endpoint', 'created_at']);
             $table->index('transaction_id');
         });

@@ -6,7 +6,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Support\Facades\Route;
 
 // Suppress deprecation warnings if not in debug mode (E_STRICT deprecated in PHP 8.4+)
-if (!env('APP_DEBUG', false)) {
+if (! env('APP_DEBUG', false)) {
     if (defined('E_STRICT') && PHP_VERSION_ID < 80400) {
         error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT);
     } else {
@@ -16,9 +16,9 @@ if (!env('APP_DEBUG', false)) {
 
 $application = Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
-        using: function() {
+        using: function () {
             Route::namespace('App\Http\Controllers')->group(function () {
-                Route::middleware(['web','maintenance'])
+                Route::middleware(['web', 'maintenance'])
                     ->namespace('Gateway')
                     ->prefix('ipn')
                     ->name('ipn.')
@@ -42,7 +42,7 @@ $application = Application::configure(basePath: dirname(__DIR__))
                     ->prefix('user')
                     ->group(base_path('routes/user.php'));
 
-                Route::middleware('web','maintenance')
+                Route::middleware('web', 'maintenance')
                     ->group(base_path('routes/web.php'));
             });
 
@@ -51,7 +51,7 @@ $application = Application::configure(basePath: dirname(__DIR__))
             //     ->middleware('api')
             //     ->group(base_path('routes/api.php'));
 
-            Route::get('maintenance-mode','App\Http\Controllers\WebsiteController@maintenance')->name('maintenance');
+            Route::get('maintenance-mode', 'App\Http\Controllers\WebsiteController@maintenance')->name('maintenance');
         },
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
@@ -64,39 +64,39 @@ $application = Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
             \Illuminate\Session\Middleware\StartSession::class,
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-            \App\Http\Middleware\VerifyCsrfToken::class, 
+            \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\LanguageMiddleware::class,
         ]);
 
         $middleware->alias([
-            'auth'             => \App\Http\Middleware\Authenticate::class,
-            'auth.basic'       => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
-            'auth.session'     => \Illuminate\Session\Middleware\AuthenticateSession::class,
-            'cache.headers'    => \Illuminate\Http\Middleware\SetCacheHeaders::class,
-            'can'              => \Illuminate\Auth\Middleware\Authorize::class,
-            'guest'            => \App\Http\Middleware\RedirectIfAuthenticated::class,
+            'auth' => \App\Http\Middleware\Authenticate::class,
+            'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
+            'auth.session' => \Illuminate\Session\Middleware\AuthenticateSession::class,
+            'cache.headers' => \Illuminate\Http\Middleware\SetCacheHeaders::class,
+            'can' => \Illuminate\Auth\Middleware\Authorize::class,
+            'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
             'password.confirm' => \Illuminate\Auth\Middleware\RequirePassword::class,
-            'precognitive'     => \Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests::class,
-            'signed'           => \App\Http\Middleware\ValidateSignature::class,
-            'throttle'         => \Illuminate\Routing\Middleware\ThrottleRequests::class,
-            'verified'         => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+            'precognitive' => \Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests::class,
+            'signed' => \App\Http\Middleware\ValidateSignature::class,
+            'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
+            'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
 
-            'admin'            => \App\Http\Middleware\RedirectIfNotAdmin::class,
-            'admin.guest'      => \App\Http\Middleware\RedirectIfAdmin::class,
-            'admin.api'        => \App\Http\Middleware\EnsureAdminApi::class,
+            'admin' => \App\Http\Middleware\RedirectIfNotAdmin::class,
+            'admin.guest' => \App\Http\Middleware\RedirectIfAdmin::class,
+            'admin.api' => \App\Http\Middleware\EnsureAdminApi::class,
             'admin.permission' => \App\Http\Middleware\AdminPermission::class,
-            'permission'       => \App\Http\Middleware\CheckPermission::class,
+            'permission' => \App\Http\Middleware\CheckPermission::class,
 
-            'demo'             => \App\Http\Middleware\Demo::class,
-            'kyc.status'       => \App\Http\Middleware\KycCheck::class,
-            'maintenance'      => \App\Http\Middleware\MaintenanceMode::class,
-            'register.status'  => \App\Http\Middleware\AllowRegistration::class,
+            'demo' => \App\Http\Middleware\Demo::class,
+            'kyc.status' => \App\Http\Middleware\KycCheck::class,
+            'maintenance' => \App\Http\Middleware\MaintenanceMode::class,
+            'register.status' => \App\Http\Middleware\AllowRegistration::class,
             'authorize.status' => \App\Http\Middleware\AuthorizationStatus::class,
-            'beta.gate'        => \App\Http\Middleware\BetaGate::class,
-            'no.cache'         => \App\Http\Middleware\PreventSensitivePageCache::class,
+            'beta.gate' => \App\Http\Middleware\BetaGate::class,
+            'no.cache' => \App\Http\Middleware\PreventSensitivePageCache::class,
             'verification.document.auth' => \App\Http\Middleware\EnsureVerificationDocumentAuth::class,
-            'terms.accepted'   => \App\Http\Middleware\EnsureTermsAccepted::class,
+            'terms.accepted' => \App\Http\Middleware\EnsureTermsAccepted::class,
         ]);
 
         $middleware->validateCsrfTokens(
@@ -161,19 +161,20 @@ $application = Application::configure(basePath: dirname(__DIR__))
             if ($e instanceof \Illuminate\Auth\AuthenticationException) {
                 return $request->is('api/*') || $request->expectsJson();
             }
+
             return false;
         });
-        
+
         // Custom handler for authentication exceptions
         $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, $request) {
             if ($request->is('api/*') || $request->expectsJson()) {
                 return response()->json([
-                    "ResponseCode" => "401",
-                    "Result" => "false",
-                    "ResponseMsg" => "Unauthenticated! Please provide a valid token."
+                    'ResponseCode' => '401',
+                    'Result' => 'false',
+                    'ResponseMsg' => 'Unauthenticated! Please provide a valid token.',
                 ], 401);
             }
-            
+
             // For web routes, try to redirect to user.login or home
             try {
                 if (\Route::has('user.login')) {
@@ -182,7 +183,7 @@ $application = Application::configure(basePath: dirname(__DIR__))
             } catch (\Exception $ex) {
                 // Route doesn't exist
             }
-            
+
             return redirect('/');
         });
     });

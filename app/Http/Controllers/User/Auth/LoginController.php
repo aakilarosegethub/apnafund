@@ -5,8 +5,8 @@ namespace App\Http\Controllers\User\Auth;
 use App\Constants\ManageStatus;
 use App\Http\Controllers\Controller;
 use App\Services\LoginLockoutService;
-use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Http\Request;
 
 class LoginController extends Controller
 {
@@ -14,26 +14,30 @@ class LoginController extends Controller
 
     protected $username;
 
-    function __construct() {
+    public function __construct()
+    {
         parent::__construct();
         $this->username = $this->findUsername();
     }
 
-    function loginForm() {
+    public function loginForm()
+    {
         $pageTitle = 'Login';
         $loginContent = getSiteData('login.content', true);
         $redirectUrl = request()->query('redirect'); // e.g. inbox with start params for "Contact Creator"
 
-        return view($this->activeTheme . 'user.auth.login', compact('pageTitle', 'loginContent', 'redirectUrl'));
+        return view($this->activeTheme.'user.auth.login', compact('pageTitle', 'loginContent', 'redirectUrl'));
     }
 
-    function login() {
+    public function login()
+    {
         $this->validateLogin(request());
 
         request()->session()->regenerateToken();
 
-        if(!verifyCaptcha()) {
+        if (! verifyCaptcha()) {
             $toast[] = ['error', 'Invalid captcha provided'];
+
             return back()->withToasts($toast);
         }
 
@@ -42,6 +46,7 @@ class LoginController extends Controller
 
         if ($message = $lockout->assertNotBlocked($user)) {
             $toast[] = ['error', $message];
+
             return back()->withToasts($toast);
         }
 
@@ -69,19 +74,23 @@ class LoginController extends Controller
         return $this->sendFailedLoginResponse(request());
     }
 
-    function findUsername() {
-        $login     = request()->input('username');
+    public function findUsername()
+    {
+        $login = request()->input('username');
         $fieldType = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
 
         request()->merge([$fieldType => $login]);
+
         return $fieldType;
     }
 
-    function username() {
+    public function username()
+    {
         return $this->username;
     }
 
-    protected function validateLogin() {
+    protected function validateLogin()
+    {
         $this->validate(request(), [
             $this->username() => 'required|string',
             'password' => 'required|string',
@@ -111,7 +120,8 @@ class LoginController extends Controller
      * but is declared explicitly here so the remember handling is documented and
      * obvious rather than hidden inside the framework trait.
      */
-    protected function attemptLogin(Request $request) {
+    protected function attemptLogin(Request $request)
+    {
         return $this->guard()->attempt(
             $this->credentials($request),
             $request->boolean('remember')
@@ -127,7 +137,7 @@ class LoginController extends Controller
     {
         $guard = $this->guard();
 
-        if (!empty($user->getRememberToken())) {
+        if (! empty($user->getRememberToken())) {
             $user->forceFill(['remember_token' => null])->save();
         }
 
@@ -136,7 +146,8 @@ class LoginController extends Controller
         );
     }
 
-    function logout() {
+    public function logout()
+    {
         // Forget the user on the current guard. Because the framework "logout"
         // also clears the remember cookie and cycles users.remember_token, any
         // previously issued "Remember Me" cookie is rendered useless.
@@ -148,6 +159,7 @@ class LoginController extends Controller
         request()->session()->regenerateToken();
 
         $toast[] = ['success', 'Logout success'];
+
         return redirect()->route('user.login.form')
             ->withToasts($toast)
             ->header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
@@ -155,8 +167,9 @@ class LoginController extends Controller
             ->header('Expires', '0');
     }
 
-    function authenticated(Request $request, $user) {
-        if (!$request->boolean('remember')) {
+    public function authenticated(Request $request, $user)
+    {
+        if (! $request->boolean('remember')) {
             $this->clearStaleRememberMe($user);
         }
 
@@ -169,21 +182,23 @@ class LoginController extends Controller
         if ($redirect && $this->isSafeRedirectUrl($redirect)) {
             return redirect($redirect);
         }
+
         return to_route('user.dashboard');
     }
 
     /** Allow redirect only to same host / relative path (inbox, dashboard, etc.) */
     protected function isSafeRedirectUrl(?string $url): bool
     {
-        if (!$url || !is_string($url)) {
+        if (! $url || ! is_string($url)) {
             return false;
         }
         $url = trim($url);
         if (str_starts_with($url, '/')) {
-            return !str_contains($url, '//');
+            return ! str_contains($url, '//');
         }
         $parsed = parse_url($url);
         $appUrl = parse_url(config('app.url'), PHP_URL_HOST);
+
         return isset($parsed['host']) && $parsed['host'] === $appUrl;
     }
 

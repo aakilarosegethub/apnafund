@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers\User\Auth;
 
+use App\Constants\RegistrationLimits;
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Constants\RegistrationLimits;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Str;
+use Laravel\Socialite\Facades\Socialite;
 
 class SocialLoginController extends Controller
 {
@@ -22,16 +22,18 @@ class SocialLoginController extends Controller
             // Check if Facebook credentials are configured
             $clientId = config('services.facebook.client_id');
             $clientSecret = config('services.facebook.client_secret');
-            
+
             if (empty($clientId) || empty($clientSecret) || $clientId === 'disabled') {
                 $toast[] = ['error', 'Facebook login is not configured. Please contact administrator.'];
+
                 return redirect()->route('user.login')->withToasts($toast);
             }
-            
+
             return Socialite::driver('facebook')->redirect();
-            
+
         } catch (\Exception $e) {
             $toast[] = ['error', 'Facebook login is not available. Please contact administrator.'];
+
             return redirect()->route('user.login')->withToasts($toast);
         }
     }
@@ -43,34 +45,39 @@ class SocialLoginController extends Controller
     {
         try {
             $facebookUser = Socialite::driver('facebook')->user();
-            
+
             // Validate required data
-            if (!$facebookUser->getEmail()) {
+            if (! $facebookUser->getEmail()) {
                 $toast[] = ['error', 'Facebook account email is required for registration'];
+
                 return redirect()->route('user.login')->withToasts($toast);
             }
-            
+
             [$user, $isNew] = $this->findOrCreateUser($facebookUser, 'facebook');
-            
-            if (!$user) {
+
+            if (! $user) {
                 $toast[] = ['error', 'Failed to create user account. Please check logs for details.'];
+
                 return redirect()->route('user.login')->withToasts($toast);
             }
-            
+
             Auth::login($user);
 
             // First-time social account (or one that never finished accepting):
             // route to the Terms of Use confirmation screen before the dashboard.
             if ($user->needsTermsAcceptance()) {
                 session(['requires_terms_accept' => true]);
+
                 return redirect()->route('user.terms.accept.form');
             }
-            
+
             $toast[] = ['success', 'Successfully logged in with Facebook!'];
+
             return redirect()->route('user.dashboard')->withToasts($toast);
-            
+
         } catch (\Exception $e) {
-            $toast[] = ['error', 'Facebook login failed: ' . $e->getMessage()];
+            $toast[] = ['error', 'Facebook login failed: '.$e->getMessage()];
+
             return redirect()->route('user.login')->withToasts($toast);
         }
     }
@@ -84,19 +91,21 @@ class SocialLoginController extends Controller
             // Check if Google credentials are configured
             $clientId = config('services.google.client_id');
             $clientSecret = config('services.google.client_secret');
-            
+
             if (empty($clientId) || empty($clientSecret) || $clientId === 'disabled') {
                 $toast[] = ['error', 'Google login is not configured. Please contact administrator.'];
+
                 return redirect()->route('user.login')->withToasts($toast);
             }
-            
+
             return Socialite::driver('google')
                 ->scopes(['openid', 'profile', 'email'])
                 ->with(['prompt' => 'select_account'])
                 ->redirect();
-            
+
         } catch (\Exception $e) {
             $toast[] = ['error', 'Google login is not available. Please contact administrator.'];
+
             return redirect()->route('user.login')->withToasts($toast);
         }
     }
@@ -108,34 +117,39 @@ class SocialLoginController extends Controller
     {
         try {
             $googleUser = Socialite::driver('google')->user();
-            
+
             // Validate required data
-            if (!$googleUser->getEmail()) {
+            if (! $googleUser->getEmail()) {
                 $toast[] = ['error', 'Google account email is required for registration'];
+
                 return redirect()->route('user.login')->withToasts($toast);
             }
-            
+
             [$user, $isNew] = $this->findOrCreateUser($googleUser, 'google');
-            
-            if (!$user) {
+
+            if (! $user) {
                 $toast[] = ['error', 'Failed to create user account. Please check logs for details.'];
+
                 return redirect()->route('user.login')->withToasts($toast);
             }
-            
+
             Auth::login($user);
 
             // First-time social account (or one that never finished accepting):
             // route to the Terms of Use confirmation screen before the dashboard.
             if ($user->needsTermsAcceptance()) {
                 session(['requires_terms_accept' => true]);
+
                 return redirect()->route('user.terms.accept.form');
             }
-            
+
             $toast[] = ['success', 'Successfully logged in with Google!'];
+
             return redirect()->route('user.dashboard')->withToasts($toast);
-            
+
         } catch (\Exception $e) {
-            $toast[] = ['error', 'Google login failed: ' . $e->getMessage()];
+            $toast[] = ['error', 'Google login failed: '.$e->getMessage()];
+
             return redirect()->route('user.login')->withToasts($toast);
         }
     }
@@ -151,6 +165,7 @@ class SocialLoginController extends Controller
 
             if (empty($clientId) || empty($clientSecret) || $clientId === 'disabled') {
                 $toast[] = ['error', 'LinkedIn login is not configured. Please contact administrator.'];
+
                 return redirect()->route('user.login')->withToasts($toast);
             }
 
@@ -158,6 +173,7 @@ class SocialLoginController extends Controller
 
         } catch (\Exception $e) {
             $toast[] = ['error', 'LinkedIn login is not available. Please contact administrator.'];
+
             return redirect()->route('user.login')->withToasts($toast);
         }
     }
@@ -170,15 +186,17 @@ class SocialLoginController extends Controller
         try {
             $linkedInUser = Socialite::driver('linkedin')->user();
 
-            if (!$linkedInUser->getEmail()) {
+            if (! $linkedInUser->getEmail()) {
                 $toast[] = ['error', 'LinkedIn account email is required for registration'];
+
                 return redirect()->route('user.login')->withToasts($toast);
             }
 
             [$user, $isNew] = $this->findOrCreateUser($linkedInUser, 'linkedin');
 
-            if (!$user) {
+            if (! $user) {
                 $toast[] = ['error', 'Failed to create user account. Please check logs for details.'];
+
                 return redirect()->route('user.login')->withToasts($toast);
             }
 
@@ -188,14 +206,17 @@ class SocialLoginController extends Controller
             // route to the Terms of Use confirmation screen before the dashboard.
             if ($user->needsTermsAcceptance()) {
                 session(['requires_terms_accept' => true]);
+
                 return redirect()->route('user.terms.accept.form');
             }
 
             $toast[] = ['success', 'Successfully logged in with LinkedIn!'];
+
             return redirect()->route('user.dashboard')->withToasts($toast);
 
         } catch (\Exception $e) {
-            $toast[] = ['error', 'LinkedIn login failed: ' . $e->getMessage()];
+            $toast[] = ['error', 'LinkedIn login failed: '.$e->getMessage()];
+
             return redirect()->route('user.login')->withToasts($toast);
         }
     }
@@ -210,17 +231,18 @@ class SocialLoginController extends Controller
 
             // Check if user exists with this social ID
             $user = User::where('provider_id', $socialUser->getId())
-                       ->where('provider', $provider)
-                       ->first();
+                ->where('provider', $provider)
+                ->first();
 
             if ($user) {
                 $user->update(['last_login_at' => now()]);
+
                 return [$user, false];
             }
 
             // Check if user exists with same email
             $existingUser = User::where('email', $socialUser->getEmail())->first();
-            
+
             if ($existingUser) {
                 $existingUser->update([
                     'provider' => $provider,
@@ -228,7 +250,7 @@ class SocialLoginController extends Controller
                     'avatar' => $socialUser->getAvatar(),
                     'last_login_at' => now(),
                 ]);
-                
+
                 return [$existingUser, false];
             }
 
@@ -251,9 +273,10 @@ class SocialLoginController extends Controller
             ]);
 
             return [$user, $isNew];
-            
+
         } catch (\Exception $e) {
-            \Log::error('Social login user creation failed: ' . $e->getMessage());
+            \Log::error('Social login user creation failed: '.$e->getMessage());
+
             return [null, false];
         }
     }
@@ -276,14 +299,15 @@ class SocialLoginController extends Controller
         $termsTestMode = $this->isTermsTestMode($request);
         $user = auth()->user();
 
-        if (!$termsTestMode) {
-            if (!$user) {
+        if (! $termsTestMode) {
+            if (! $user) {
                 return redirect()->route('user.login');
             }
 
             // Already accepted (or a non-social account) → nothing to confirm.
-            if (!$user->needsTermsAcceptance()) {
+            if (! $user->needsTermsAcceptance()) {
                 session()->forget('requires_terms_accept');
+
                 return redirect()->route('user.dashboard');
             }
         }
@@ -291,7 +315,7 @@ class SocialLoginController extends Controller
         $pageTitle = 'Accept Terms';
         $policyPages = getSiteData('policy_pages.element', false, null, true) ?? [];
 
-        return view($this->activeTheme . 'user.auth.terms-accept', compact('pageTitle', 'policyPages', 'termsTestMode'));
+        return view($this->activeTheme.'user.auth.terms-accept', compact('pageTitle', 'policyPages', 'termsTestMode'));
     }
 
     public function acceptTerms(Request $request)
@@ -299,8 +323,8 @@ class SocialLoginController extends Controller
         $termsTestMode = $this->isTermsTestMode($request);
         $user = auth()->user();
 
-        if (!$termsTestMode) {
-            if (!$user) {
+        if (! $termsTestMode) {
+            if (! $user) {
                 return redirect()->route('user.login');
             }
 
@@ -312,9 +336,11 @@ class SocialLoginController extends Controller
             session()->forget('requires_terms_accept');
 
             $toast[] = ['success', 'Test mode: terms accepted.'];
+
             return redirect()->route('user.dashboard')->withToasts($toast);
         } else {
             $toast[] = ['success', 'Test mode: terms page submitted (guest — no account updated).'];
+
             return redirect()->route('user.terms.accept.form', ['test' => 1])->withToasts($toast);
         }
 
@@ -323,6 +349,7 @@ class SocialLoginController extends Controller
         session()->forget('requires_terms_accept');
 
         $toast[] = ['success', 'Thank you. Your account is ready.'];
+
         return redirect()->route('user.dashboard')->withToasts($toast);
     }
 
@@ -334,24 +361,24 @@ class SocialLoginController extends Controller
         if (empty($name)) {
             $name = 'user';
         }
-        
+
         $baseUsername = Str::slug($name);
-        
+
         // If slug is empty, use default
         if (empty($baseUsername)) {
             $baseUsername = 'user';
         }
-        
+
         $username = $baseUsername;
         $counter = 1;
 
         while (User::where('username', $username)->exists()) {
-            $username = $baseUsername . $counter;
+            $username = $baseUsername.$counter;
             $counter++;
-            
+
             // Prevent infinite loop
             if ($counter > 1000) {
-                $username = $baseUsername . time();
+                $username = $baseUsername.time();
                 break;
             }
         }
@@ -367,8 +394,9 @@ class SocialLoginController extends Controller
         if (empty($fullName)) {
             return '';
         }
-        
+
         $nameParts = explode(' ', trim($fullName));
+
         return mb_substr($nameParts[0] ?? '', 0, RegistrationLimits::NAME_PART_MAX);
     }
 
@@ -380,7 +408,7 @@ class SocialLoginController extends Controller
         if (empty($fullName)) {
             return '';
         }
-        
+
         $nameParts = explode(' ', trim($fullName));
         $lastName = count($nameParts) > 1 ? implode(' ', array_slice($nameParts, 1)) : '';
 

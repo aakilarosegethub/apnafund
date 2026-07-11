@@ -35,7 +35,7 @@ class CampaignVerificationDocumentService
     {
         $filename = normalizeCampaignVerificationDocumentFilename($filename);
 
-        if (!$filename) {
+        if (! $filename) {
             abort(404);
         }
 
@@ -49,7 +49,7 @@ class CampaignVerificationDocumentService
 
     public function findCampaignByFilename(string $filename): ?Campaign
     {
-        if (!$this->isValidFilename($filename)) {
+        if (! $this->isValidFilename($filename)) {
             return null;
         }
 
@@ -57,7 +57,7 @@ class CampaignVerificationDocumentService
 
         $candidates = Campaign::query()
             ->whereNotNull('verification_documents')
-            ->where('verification_documents', 'like', '%' . addcslashes($filename, '%_\\') . '%')
+            ->where('verification_documents', 'like', '%'.addcslashes($filename, '%_\\').'%')
             ->get(['id', 'user_id', 'verification_documents']);
 
         return $candidates->first(function (Campaign $campaign) use ($filename) {
@@ -71,7 +71,7 @@ class CampaignVerificationDocumentService
 
     public function campaignHasFile(Campaign $campaign, string $filename): bool
     {
-        if (!$this->isValidFilename($filename)) {
+        if (! $this->isValidFilename($filename)) {
             return false;
         }
 
@@ -111,8 +111,8 @@ class CampaignVerificationDocumentService
     private function privateCandidatePaths(string $filename): array
     {
         return [
-            $this->storagePath() . DIRECTORY_SEPARATOR . $filename,
-            $this->previousPrivatePath() . DIRECTORY_SEPARATOR . $filename,
+            $this->storagePath().DIRECTORY_SEPARATOR.$filename,
+            $this->previousPrivatePath().DIRECTORY_SEPARATOR.$filename,
         ];
     }
 
@@ -122,7 +122,7 @@ class CampaignVerificationDocumentService
     private function allCandidatePaths(string $filename): array
     {
         return array_merge($this->privateCandidatePaths($filename), [
-            $this->legacyPublicPath() . DIRECTORY_SEPARATOR . $filename,
+            $this->legacyPublicPath().DIRECTORY_SEPARATOR.$filename,
         ]);
     }
 
@@ -148,7 +148,7 @@ class CampaignVerificationDocumentService
             $this->delete($oldFilename);
         }
 
-        if (!is_dir($this->storagePath())) {
+        if (! is_dir($this->storagePath())) {
             mkdir($this->storagePath(), 0750, true);
         }
 
@@ -157,7 +157,7 @@ class CampaignVerificationDocumentService
 
     public function delete(?string $filename): void
     {
-        if (!$filename) {
+        if (! $filename) {
             return;
         }
 
@@ -173,18 +173,18 @@ class CampaignVerificationDocumentService
     public function migrateLegacyFile(string $filename): bool
     {
         $filename = basename($filename);
-        $privateFile = $this->storagePath() . DIRECTORY_SEPARATOR . $filename;
+        $privateFile = $this->storagePath().DIRECTORY_SEPARATOR.$filename;
 
         if (is_file($privateFile)) {
             return false;
         }
 
-        if (!is_dir($this->storagePath())) {
+        if (! is_dir($this->storagePath())) {
             mkdir($this->storagePath(), 0750, true);
         }
 
         foreach ([$this->legacyPublicPath(), $this->previousPrivatePath()] as $sourceDir) {
-            $sourceFile = $sourceDir . DIRECTORY_SEPARATOR . $filename;
+            $sourceFile = $sourceDir.DIRECTORY_SEPARATOR.$filename;
 
             if (is_file($sourceFile)) {
                 return rename($sourceFile, $privateFile);
@@ -224,7 +224,7 @@ class CampaignVerificationDocumentService
 
     public function stream(Campaign $campaign, string $filename): BinaryFileResponse
     {
-        if (!$this->campaignHasFile($campaign, $filename)) {
+        if (! $this->campaignHasFile($campaign, $filename)) {
             abort(404);
         }
 
@@ -235,7 +235,7 @@ class CampaignVerificationDocumentService
     {
         $campaign = $this->findCampaignByFilename($filename);
 
-        if (!$campaign) {
+        if (! $campaign) {
             abort(404);
         }
 
@@ -251,7 +251,7 @@ class CampaignVerificationDocumentService
 
         $campaign = $this->findCampaignByFilename($filename);
 
-        if ($campaign && !$this->campaignHasFile($campaign, $filename)) {
+        if ($campaign && ! $this->campaignHasFile($campaign, $filename)) {
             abort(404);
         }
 
@@ -266,12 +266,12 @@ class CampaignVerificationDocumentService
 
         $absolutePath = $this->resolveAbsolutePath($filename);
 
-        if (!$absolutePath) {
+        if (! $absolutePath) {
             abort(404, 'Verification document file not found on server.');
         }
 
         return response()->file($absolutePath, [
-            'Content-Disposition' => 'inline; filename="' . $filename . '"',
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
             'X-Content-Type-Options' => 'nosniff',
             'Cache-Control' => 'private, no-store, no-cache, must-revalidate',
             'Pragma' => 'no-cache',

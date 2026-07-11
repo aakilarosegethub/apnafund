@@ -17,12 +17,12 @@ class LoginLockoutServiceTest extends TestCase
 
     protected function setLoginSettings(int $max = 3, int $duration = 30, bool $enabled = true, bool $email = false): void
     {
-        if (!Schema::hasColumn('settings', 'login_max_attempts')) {
+        if (! Schema::hasColumn('settings', 'login_max_attempts')) {
             $this->markTestSkipped('Login lockout settings columns not present.');
         }
 
         $setting = Setting::first();
-        if (!$setting) {
+        if (! $setting) {
             $this->markTestSkipped('No settings row in database.');
         }
         $setting->login_max_attempts = $max;

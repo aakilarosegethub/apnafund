@@ -23,7 +23,7 @@ class EnsureVerificationDocumentAuth
 
     private function ensureWebUser(Request $request, Closure $next): Response
     {
-        if (!auth('web')->check()) {
+        if (! auth('web')->check()) {
             return redirect()->guest(route('user.login'));
         }
 
@@ -32,7 +32,7 @@ class EnsureVerificationDocumentAuth
 
     private function ensureAdmin(Request $request, Closure $next): Response
     {
-        if (!auth('admin')->check()) {
+        if (! auth('admin')->check()) {
             abort(403, 'Admin authentication required.');
         }
 
@@ -41,7 +41,7 @@ class EnsureVerificationDocumentAuth
 
     private function ensureApiUser(Request $request, Closure $next): Response
     {
-        if (!$request->user('sanctum')) {
+        if (! $request->user('sanctum')) {
             abort(401, 'Authentication required.');
         }
 

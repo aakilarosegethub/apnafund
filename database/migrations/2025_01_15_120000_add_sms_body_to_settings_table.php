@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('settings') || Schema::hasColumn('settings', 'sms_body')) {
+        if (! Schema::hasTable('settings') || Schema::hasColumn('settings', 'sms_body')) {
             return;
         }
 

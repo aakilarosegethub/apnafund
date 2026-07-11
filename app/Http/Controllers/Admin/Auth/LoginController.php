@@ -13,31 +13,37 @@ class LoginController extends Controller
 
     /* Show the application's login form */
 
-    function loginForm() {
+    public function loginForm()
+    {
         $pageTitle = 'Admin Login';
+
         return view('admin.auth.login', compact('pageTitle'));
     }
 
     /* Get the guard to be used during authentication */
 
-    protected function guard() {
+    protected function guard()
+    {
         return auth()->guard('admin');
     }
 
     /* Get the login username to be used by the controller */
 
-    function username() {
+    public function username()
+    {
         return 'username';
     }
 
     /* Handle a login request to the application */
 
-    function login() {
+    public function login()
+    {
         $this->validateLogin(request());
         request()->session()->regenerateToken();
 
-        if(!verifyCaptcha()) {
+        if (! verifyCaptcha()) {
             $toast[] = ['error', 'Invalid captcha provided'];
+
             return back()->withToasts($toast);
         }
 
@@ -65,7 +71,8 @@ class LoginController extends Controller
 
     /* Log the user out of the application */
 
-    function logout() {
+    public function logout()
+    {
         // Forget the admin, drop the session data, and rotate the CSRF token so
         // the old session cannot be replayed after logout.
         $this->guard()->logout();

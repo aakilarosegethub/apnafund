@@ -8,13 +8,14 @@ use Illuminate\Validation\ValidationException;
 
 class AuthorizationController extends Controller
 {
-    function authorizeForm() {
+    public function authorizeForm()
+    {
         $user = auth()->user();
 
-        if (!$user->status) {
+        if (! $user->status) {
             $pageTitle = 'Banned';
             $type = 'ban';
-        } elseif (!$user->ec) {
+        } elseif (! $user->ec) {
             $type = 'email';
             $pageTitle = 'Confirm Email';
             $toastTemplate = 'EVER_CODE';
@@ -23,29 +24,30 @@ class AuthorizationController extends Controller
             return to_route('user.home');
         }
 
-        if (!$this->checkCodeValidity($user) && ($type != '2fa') && ($type != 'ban')) {
+        if (! $this->checkCodeValidity($user) && ($type != '2fa') && ($type != 'ban')) {
             $user->ver_code = verificationCode(6);
             $user->ver_code_send_at = now();
             $user->save();
 
             notify($user, $toastTemplate, [
-                'code' => $user->ver_code
-            ],[$type]);
+                'code' => $user->ver_code,
+            ], [$type]);
         }
 
-        return view($this->activeTheme. 'user.auth.authorization.'.$type, compact('user', 'pageTitle'));
+        return view($this->activeTheme.'user.auth.authorization.'.$type, compact('user', 'pageTitle'));
     }
 
-    function sendVerifyCode($type) {
+    public function sendVerifyCode($type)
+    {
         $user = auth()->user();
 
         if ($this->checkCodeValidity($user)) {
             $targetTime = $user->ver_code_send_at->addMinutes(2)->timestamp;
-            $delay      = $targetTime - time();
-            throw ValidationException::withMessages(['resend' => 'Please try after ' . $delay . ' seconds']);
+            $delay = $targetTime - time();
+            throw ValidationException::withMessages(['resend' => 'Please try after '.$delay.' seconds']);
         }
 
-        $user->ver_code         = verificationCode(6);
+        $user->ver_code = verificationCode(6);
         $user->ver_code_send_at = now();
         $user->save();
 
@@ -58,30 +60,32 @@ class AuthorizationController extends Controller
         }
 
         notify($user, $toastTemplate, [
-            'code' => $user->ver_code
-        ],[$type]);
+            'code' => $user->ver_code,
+        ], [$type]);
 
         $toast[] = ['success', 'Verification code send success'];
+
         return back()->withToasts($toast);
     }
 
-    function emailVerification() {
+    public function emailVerification()
+    {
         $verCode = $this->codeValidation(request());
-        $user    = auth()->user();
+        $user = auth()->user();
 
         if ($user->ver_code == $verCode) {
-            $user->ec               = ManageStatus::VERIFIED;
-            $user->ver_code         = null;
+            $user->ec = ManageStatus::VERIFIED;
+            $user->ver_code = null;
             $user->ver_code_send_at = null;
             $user->save();
 
             // Send welcome email after successful verification
             try {
-                \Log::info('Email verified successfully for user: ' . $user->email . ' - Sending welcome email');
-                
+                \Log::info('Email verified successfully for user: '.$user->email.' - Sending welcome email');
+
                 // Send welcome email using the same method as verification email (admin-configured provider)
                 notify($user, 'WELCOME_EMAIL', [
-                    'name' => $user->firstname . ' ' . $user->lastname,
+                    'name' => $user->firstname.' '.$user->lastname,
                     'username' => $user->username,
                     'email' => $user->email,
                     'mobile' => $user->mobile ?? 'Not provided',
@@ -89,11 +93,11 @@ class AuthorizationController extends Controller
                     'business_type' => $user->business_type ?? '',
                     'industry' => $user->industry ?? '',
                 ], ['email']);
-                
-                \Log::info('Welcome email sent successfully to: ' . $user->email);
-                
+
+                \Log::info('Welcome email sent successfully to: '.$user->email);
+
             } catch (\Exception $e) {
-                \Log::error('Failed to send welcome email after verification to: ' . $user->email . ' - Error: ' . $e->getMessage());
+                \Log::error('Failed to send welcome email after verification to: '.$user->email.' - Error: '.$e->getMessage());
             }
 
             // Return JSON response for API calls, redirect for form submissions
@@ -101,7 +105,7 @@ class AuthorizationController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Email verified successfully',
-                    'redirect' => route('user.home')
+                    'redirect' => route('user.home'),
                 ]);
             }
 
@@ -113,15 +117,16 @@ class AuthorizationController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Verification code didn\'t match!',
-                'errors' => ['code' => ['Verification code didn\'t match!']]
+                'errors' => ['code' => ['Verification code didn\'t match!']],
             ], 422);
         }
 
         throw ValidationException::withMessages(['code' => 'Verification code didn\'t match!']);
     }
 
-    function emailVerificationApi() {
-        if (!auth()->check()) {
+    public function emailVerificationApi()
+    {
+        if (! auth()->check()) {
             return response()->json([
                 'ResponseCode' => '401',
                 'Result' => 'false',
@@ -146,18 +151,18 @@ class AuthorizationController extends Controller
         $user = auth()->user();
 
         if ($user->ver_code == $verCode) {
-            $user->ec               = ManageStatus::VERIFIED;
-            $user->ver_code         = null;
+            $user->ec = ManageStatus::VERIFIED;
+            $user->ver_code = null;
             $user->ver_code_send_at = null;
             $user->save();
 
             // Send welcome email after successful verification
             try {
-                \Log::info('Email verified successfully for user: ' . $user->email . ' - Sending welcome email');
-                
+                \Log::info('Email verified successfully for user: '.$user->email.' - Sending welcome email');
+
                 // Send welcome email using the same method as verification email (admin-configured provider)
                 notify($user, 'WELCOME_EMAIL', [
-                    'name' => $user->firstname . ' ' . $user->lastname,
+                    'name' => $user->firstname.' '.$user->lastname,
                     'username' => $user->username,
                     'email' => $user->email,
                     'mobile' => $user->mobile ?? 'Not provided',
@@ -165,11 +170,11 @@ class AuthorizationController extends Controller
                     'business_type' => $user->business_type ?? '',
                     'industry' => $user->industry ?? '',
                 ], ['email']);
-                
-                \Log::info('Welcome email sent successfully to: ' . $user->email);
-                
+
+                \Log::info('Welcome email sent successfully to: '.$user->email);
+
             } catch (\Exception $e) {
-                \Log::error('Failed to send welcome email after verification to: ' . $user->email . ' - Error: ' . $e->getMessage());
+                \Log::error('Failed to send welcome email after verification to: '.$user->email.' - Error: '.$e->getMessage());
             }
 
             return response()->json([
@@ -177,7 +182,7 @@ class AuthorizationController extends Controller
                 'Result' => 'true',
                 'success' => true,
                 'message' => 'Email verified successfully',
-                'redirect' => route('user.home')
+                'redirect' => route('user.home'),
             ]);
         }
 
@@ -186,17 +191,18 @@ class AuthorizationController extends Controller
             'Result' => 'false',
             'success' => false,
             'message' => 'Verification code didn\'t match!',
-            'errors' => ['code' => ['Verification code didn\'t match!']]
+            'errors' => ['code' => ['Verification code didn\'t match!']],
         ], 422);
     }
 
-    function mobileVerification() {
+    public function mobileVerification()
+    {
         $verCode = $this->codeValidation(request());
-        $user    = auth()->user();
+        $user = auth()->user();
 
         if ($user->ver_code == $verCode) {
-            $user->sc               = ManageStatus::VERIFIED;
-            $user->ver_code         = null;
+            $user->sc = ManageStatus::VERIFIED;
+            $user->ver_code = null;
             $user->ver_code_send_at = null;
             $user->save();
 
@@ -206,22 +212,24 @@ class AuthorizationController extends Controller
         throw ValidationException::withMessages(['code' => 'Verification code didn\'t match!']);
     }
 
-    function g2faVerification() {
-        $verCode  = $this->codeValidation(request());
-        $user     = auth()->user();
+    public function g2faVerification()
+    {
+        $verCode = $this->codeValidation(request());
+        $user = auth()->user();
         $response = verifyG2fa($user, $verCode);
 
         if ($response) {
             $toast[] = ['success', 'Verification success'];
-        }else{
+        } else {
             $toast[] = ['error', 'Wrong verification code'];
         }
 
         return back()->withToasts($toast);
     }
 
-    protected function checkCodeValidity($user, $addMin = 2) {
-        if (!$user->ver_code_send_at){
+    protected function checkCodeValidity($user, $addMin = 2)
+    {
+        if (! $user->ver_code_send_at) {
             return false;
         }
 
@@ -232,34 +240,38 @@ class AuthorizationController extends Controller
         return true;
     }
 
-    protected function codeValidation() {
+    protected function codeValidation()
+    {
         $request = request();
-        
+
         // Handle both array format (from form) and string format (from JSON API)
         if ($request->has('code') && is_array($request->input('code'))) {
             // Form submission with array format
             $this->validate($request, [
-                'code'   => 'required|array|min:6',
+                'code' => 'required|array|min:6',
                 'code.*' => 'required|integer',
             ]);
-            return (int)(implode("", $request->input('code')));
+
+            return (int) (implode('', $request->input('code')));
         } elseif ($request->has('code') && is_string($request->input('code'))) {
             // JSON API submission with string format
             $this->validate($request, [
                 'code' => 'required|string|size:6|regex:/^[0-9]{6}$/',
             ]);
-            return (int)$request->input('code');
+
+            return (int) $request->input('code');
         } else {
             // Fallback validation
             $this->validate($request, [
                 'code' => 'required',
             ]);
-            
+
             $code = $request->input('code');
             if (is_array($code)) {
-                return (int)(implode("", $code));
+                return (int) (implode('', $code));
             }
-            return (int)$code;
+
+            return (int) $code;
         }
     }
 }

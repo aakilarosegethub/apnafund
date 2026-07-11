@@ -6,13 +6,13 @@ use App\Constants\ManageStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Campaign;
 use App\Models\Category;
-use App\Services\CurrencyService;
 use App\Services\CampaignStoryHtmlService;
+use App\Services\CurrencyService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\File;
 
@@ -37,7 +37,7 @@ class CampaignController extends Controller
                     'end_date' => optional($campaign->end_date)->format('Y-m-d'),
                     'status' => $campaign->status,
                     'image_url' => $campaign->image
-                        ? getImage(getFilePath('campaign') . '/' . $campaign->image, getFileSize('campaign'))
+                        ? getImage(getFilePath('campaign').'/'.$campaign->image, getFileSize('campaign'))
                         : null,
                     'youtube_url' => $campaign->youtube_url,
                 ];
@@ -80,7 +80,7 @@ class CampaignController extends Controller
 
         if ($request->filled('youtube_url')) {
             $youtubeUrl = $request->input('youtube_url');
-            if (!preg_match('/^(https?\:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/|v\/)|youtu\.be\/)[\w\-]+/i', $youtubeUrl)) {
+            if (! preg_match('/^(https?\:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/|v\/)|youtu\.be\/)[\w\-]+/i', $youtubeUrl)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Please enter a valid YouTube URL',
@@ -88,7 +88,7 @@ class CampaignController extends Controller
             }
         }
 
-        if (!$request->hasFile('image')) {
+        if (! $request->hasFile('image')) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
@@ -97,7 +97,7 @@ class CampaignController extends Controller
         }
 
         $imageFile = $request->file('image');
-        if (!$imageFile->isValid()) {
+        if (! $imageFile->isValid()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
@@ -106,7 +106,7 @@ class CampaignController extends Controller
         }
 
         $category = Category::active()->where('id', $request->input('category_id'))->first();
-        if (!$category) {
+        if (! $category) {
             return response()->json([
                 'success' => false,
                 'message' => 'Selected category not found or inactive',
@@ -127,7 +127,7 @@ class CampaignController extends Controller
         $slug = $slugBase;
         $counter = 1;
         while (Campaign::where('slug', $slug)->exists()) {
-            $slug = $slugBase . '-' . $counter;
+            $slug = $slugBase.'-'.$counter;
             $counter++;
         }
 
@@ -171,7 +171,7 @@ class CampaignController extends Controller
             $request->merge(['category_id' => (int) round((float) $request->input('category_id'))]);
         }
 
-        if (!$campaign->canBeEditedBy($request->user()->id)) {
+        if (! $campaign->canBeEditedBy($request->user()->id)) {
             return response()->json([
                 'success' => false,
                 'message' => 'You do not have permission to edit this campaign',
@@ -202,7 +202,7 @@ class CampaignController extends Controller
 
         if ($request->filled('youtube_url')) {
             $youtubeUrl = $request->input('youtube_url');
-            if (!preg_match('/^(https?\:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/|v\/)|youtu\.be\/)[\w\-]+/i', $youtubeUrl)) {
+            if (! preg_match('/^(https?\:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/|v\/)|youtu\.be\/)[\w\-]+/i', $youtubeUrl)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Please enter a valid YouTube URL',
@@ -211,7 +211,7 @@ class CampaignController extends Controller
         }
 
         $category = Category::active()->where('id', $request->input('category_id'))->first();
-        if (!$category) {
+        if (! $category) {
             return response()->json([
                 'success' => false,
                 'message' => 'Selected category not found or inactive',
@@ -227,7 +227,7 @@ class CampaignController extends Controller
         $slug = $slugBase;
         $counter = 1;
         while (Campaign::where('slug', $slug)->where('id', '!=', $campaign->id)->exists()) {
-            $slug = $slugBase . '-' . $counter;
+            $slug = $slugBase.'-'.$counter;
             $counter++;
         }
         $campaign->slug = $slug;
@@ -253,7 +253,7 @@ class CampaignController extends Controller
 
         if ($request->hasFile('image')) {
             $imageFile = $request->file('image');
-            if (!$imageFile->isValid()) {
+            if (! $imageFile->isValid()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation failed',

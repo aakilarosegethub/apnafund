@@ -1,1 +1,1 @@
-<?php $timeRegion = 'UTC' ?>
+<?php $timeRegion = 'UTC';

@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Constants\ManageStatus;
+use App\Models\AdminNotification;
 use App\Models\Campaign;
 use App\Models\Deposit;
 use App\Models\Gateway;
-use App\Models\AdminNotification;
 use App\Models\GatewayCurrency;
 use App\Models\Transaction;
 use App\Services\CurrencyService;
-use App\Constants\ManageStatus;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class PaymentController extends BaseApiController
 {
@@ -45,25 +45,26 @@ class PaymentController extends BaseApiController
                     );
             }]);
 
-        if (!empty($country)) {
+        if (! empty($country)) {
             $query->forCountry($country);
         }
 
         $gateways = $query->orderBy('id')->get()->map(function ($g) {
             $c = $g->currencies->first();
+
             return [
-                'id'               => $g->id,
-                'code'             => $g->code,
-                'name'             => $g->name,
-                'alias'            => $g->alias ?? $g->name,
-                'min_amount'       => $c ? (float) $c->min_amount : 0.0,
-                'max_amount'       => $c ? (float) $c->max_amount : 0.0,
-                'fixed_charge'     => $c ? (float) $c->fixed_charge : 0.0,
-                'percent_charge'   => $c ? (float) $c->percent_charge : 0.0,
+                'id' => $g->id,
+                'code' => $g->code,
+                'name' => $g->name,
+                'alias' => $g->alias ?? $g->name,
+                'min_amount' => $c ? (float) $c->min_amount : 0.0,
+                'max_amount' => $c ? (float) $c->max_amount : 0.0,
+                'fixed_charge' => $c ? (float) $c->fixed_charge : 0.0,
+                'percent_charge' => $c ? (float) $c->percent_charge : 0.0,
             ];
         });
 
-        $localCode = !empty(trim((string) $country))
+        $localCode = ! empty(trim((string) $country))
             ? strtoupper(getCurrencyCodeForCountryName(trim((string) $country)))
             : strtoupper(getLocalCurrencyCode());
 
@@ -81,14 +82,14 @@ class PaymentController extends BaseApiController
         }
 
         return response()->json([
-            'ResponseCode'           => '200',
-            'Result'                 => 'true',
-            'ResponseMsg'            => 'Gateways list.',
-            'platform_currency'      => $platformCurrency,
-            'local_currency_code'    => $localCode,
-            'local_currency_symbol'  => CurrencyService::getSymbolForCode($localCode),
-            'exchange_rate'          => $exchangeRate === null ? null : round($exchangeRate, 8),
-            'gateways'               => $gateways,
+            'ResponseCode' => '200',
+            'Result' => 'true',
+            'ResponseMsg' => 'Gateways list.',
+            'platform_currency' => $platformCurrency,
+            'local_currency_code' => $localCode,
+            'local_currency_symbol' => CurrencyService::getSymbolForCode($localCode),
+            'exchange_rate' => $exchangeRate === null ? null : round($exchangeRate, 8),
+            'gateways' => $gateways,
         ]);
     }
 
@@ -99,30 +100,32 @@ class PaymentController extends BaseApiController
     {
         // Get active payment gateways (using gateways table)
         // Status is boolean: 1 = active, 0 = inactive
-        $sel = $this->h->queryfire("select id, code, name, alias, status from gateways where status = 1 order by id asc");
-        
-        if (!$sel) {
+        $sel = $this->h->queryfire('select id, code, name, alias, status from gateways where status = 1 order by id asc');
+
+        if (! $sel) {
             return response()->json([
-                "paymentdata" => [],
-                "ResponseCode" => "200",
-                "Result" => "true",
-                "ResponseMsg" => "Payment Gateway List Founded!"
+                'paymentdata' => [],
+                'ResponseCode' => '200',
+                'Result' => 'true',
+                'ResponseMsg' => 'Payment Gateway List Founded!',
             ]);
         }
-        
-        $myarray = array();
+
+        $myarray = [];
         if ($sel->num_rows > 0) {
-        while ($row = $sel->fetch_assoc()) {
-                if (!$row) break;
-            $myarray[] = $row;
+            while ($row = $sel->fetch_assoc()) {
+                if (! $row) {
+                    break;
+                }
+                $myarray[] = $row;
             }
         }
 
         return response()->json([
-            "paymentdata" => $myarray,
-            "ResponseCode" => "200",
-            "Result" => "true",
-            "ResponseMsg" => "Payment Gateway List Founded!"
+            'paymentdata' => $myarray,
+            'ResponseCode' => '200',
+            'Result' => 'true',
+            'ResponseMsg' => 'Payment Gateway List Founded!',
         ]);
     }
 
@@ -135,7 +138,7 @@ class PaymentController extends BaseApiController
     public function webviewUrl(Request $request): JsonResponse
     {
         $data = $this->getRequestData($request);
-        // dd();  
+        // dd();
 
         // Normalize: campaign_id can be string "118", int, or decimal (298.8) – round to int
         if (isset($data['campaign_id'])) {
@@ -145,13 +148,13 @@ class PaymentController extends BaseApiController
         $gatewayCode = null;
         $gatewayId = $data['gateway_id'] ?? $data['gateway'] ?? null;
         // Support: gateway_id (int), gateway as id (numeric), or gateway as code (string)
-        if (!empty($gatewayId) && is_numeric($gatewayId)) {
+        if (! empty($gatewayId) && is_numeric($gatewayId)) {
             $gateway = Gateway::active()->find((int) $gatewayId);
-            if (!$gateway) {
+            if (! $gateway) {
                 // Try by code (e.g. "114" is Stripe's code, not id)
                 $gateway = Gateway::active()->where('code', (string) $gatewayId)->first();
             }
-            if (!$gateway) {
+            if (! $gateway) {
                 return response()->json([
                     'Result' => 'false',
                     'ResponseCode' => '400',
@@ -159,7 +162,7 @@ class PaymentController extends BaseApiController
                 ], 400);
             }
             $gatewayCode = $gateway->code;
-        } elseif (!empty($data['gateway'])) {
+        } elseif (! empty($data['gateway'])) {
             $gatewayCode = (string) $data['gateway'];
         } else {
             return response()->json([
@@ -170,10 +173,10 @@ class PaymentController extends BaseApiController
         }
 
         $validator = \Validator::make($data, [
-            'amount'       => 'required|numeric|gt:0',
-            'full_name'    => 'required|string|max:255',
-            'email'        => 'required|email|max:40',
-            'campaign_id'  => 'required|integer|min:1',
+            'amount' => 'required|numeric|gt:0',
+            'full_name' => 'required|string|max:255',
+            'email' => 'required|email|max:40',
+            'campaign_id' => 'required|integer|min:1',
         ]);
 
         if ($validator->fails()) {
@@ -185,7 +188,7 @@ class PaymentController extends BaseApiController
         }
 
         $campaign = Campaign::where('id', $data['campaign_id'])->approve()->first();
-        if (!$campaign) {
+        if (! $campaign) {
             return response()->json([
                 'Result' => 'false',
                 'ResponseCode' => '404',
@@ -229,7 +232,7 @@ class PaymentController extends BaseApiController
             $userCurrency = $defaultCurrency ? strtoupper((string) $defaultCurrency) : 'PKR';
         }
 
-        if (!$userCurrency) {
+        if (! $userCurrency) {
             return response()->json([
                 'Result' => 'false',
                 'ResponseCode' => '400',
@@ -246,26 +249,27 @@ class PaymentController extends BaseApiController
         $baseGatewayQuery = GatewayCurrency::whereHas('method', function ($q) {
             $q->active();
         })->where('method_code', $gatewayCode)
-          ->where('status', 1);
+            ->where('status', 1);
 
         $gatewayData = (clone $baseGatewayQuery)
             ->whereIn('currency', $currencyMatch)
             ->first();
 
-        if (!$gatewayData) {
+        if (! $gatewayData) {
             $gatewayData = (clone $baseGatewayQuery)
                 ->get()
                 ->first(function ($gc) use ($userCurrency) {
                     $rates = $gc->input_currency_rates ?? [];
-                    return !empty($rates) && isset($rates[$userCurrency]) && (float) ($rates[$userCurrency] ?? 0) > 0;
+
+                    return ! empty($rates) && isset($rates[$userCurrency]) && (float) ($rates[$userCurrency] ?? 0) > 0;
                 });
         }
 
-        if (!$gatewayData) {
+        if (! $gatewayData) {
             $gatewayData = (clone $baseGatewayQuery)->orderBy('id')->first();
         }
 
-        if (!$gatewayData) {
+        if (! $gatewayData) {
             return response()->json([
                 'Result' => 'false',
                 'ResponseCode' => '400',
@@ -275,7 +279,7 @@ class PaymentController extends BaseApiController
 
         // DB amount must be in platform/system currency (USD by default).
         $amountUser = (float) $data['amount'];
-        
+
         $currencyService = app(\App\Services\CurrencyService::class);
         $amount = round((float) $currencyService->convertToPlatform($amountUser, $userCurrency), 8);
         if ($amount <= 0) {
@@ -294,11 +298,11 @@ class PaymentController extends BaseApiController
             ? $amountUser
             : ($amount * (float) $gatewayData->rate);
 
-        if ((float)$gatewayData->min_amount > $amountForGatewayLimit || (float)$gatewayData->max_amount < $amountForGatewayLimit) {
+        if ((float) $gatewayData->min_amount > $amountForGatewayLimit || (float) $gatewayData->max_amount < $amountForGatewayLimit) {
             return response()->json([
                 'Result' => 'false',
                 'ResponseCode' => '400',
-                'ResponseMsg' => 'Amount must be between ' . $gatewayData->min_amount . ' and ' . $gatewayData->max_amount . ' ' . $gatewayData->currency,
+                'ResponseMsg' => 'Amount must be between '.$gatewayData->min_amount.' and '.$gatewayData->max_amount.' '.$gatewayData->currency,
             ], 400);
         }
 
@@ -308,13 +312,13 @@ class PaymentController extends BaseApiController
         // dd($payable,$gatewayData->rate);
         $finalAmount = $payable;
 
-        $deposit = new Deposit();
+        $deposit = new Deposit;
         $deposit->campaign_id = $campaign->id;
         $deposit->user_id = $data['user_id'];
         $deposit->donor_type = ManageStatus::KNOWN_DONOR;
         $deposit->full_name = $data['full_name'];
         $deposit->email = $data['email'];
-    $deposit->phone = formatPhoneForStorage($data['phone'] ?? '', $country);
+        $deposit->phone = formatPhoneForStorage($data['phone'] ?? '', $country);
         $deposit->country = $country;
         $deposit->receiver_id = $campaign->user->id;
         $deposit->reward_id = null;
@@ -336,55 +340,56 @@ class PaymentController extends BaseApiController
         if ($isManual) {
             // Manual gateway: return payment guide/instructions, NO payment_url
             $paymentGuide = [
-                'gateway_type'   => 'manual',
-                'gateway_name'   => $gateway->name ?? $gatewayData->name,
-                'guideline'      => $gateway->guideline ?? '',
-                'amount'         => (float) $deposit->final_amount,
-                'final_amount'   => (float) $deposit->final_amount,
-                'currency'       => $deposit->method_currency,
-                'charge'         => (float) $deposit->charge,
-                'platform_amount'   => (float) $deposit->amount,
+                'gateway_type' => 'manual',
+                'gateway_name' => $gateway->name ?? $gatewayData->name,
+                'guideline' => $gateway->guideline ?? '',
+                'amount' => (float) $deposit->final_amount,
+                'final_amount' => (float) $deposit->final_amount,
+                'currency' => $deposit->method_currency,
+                'charge' => (float) $deposit->charge,
+                'platform_amount' => (float) $deposit->amount,
                 'platform_currency' => strtoupper((string) getPlatformCurrency()),
-                'trx'            => $deposit->trx,
-                'form_fields'    => [],
+                'trx' => $deposit->trx,
+                'form_fields' => [],
             ];
 
             if ($gateway->form && $gateway->form->form_data) {
                 $formData = is_array($gateway->form->form_data) ? $gateway->form->form_data : (array) $gateway->form->form_data;
                 $paymentGuide['form_fields'] = array_values(array_map(function ($field) {
                     $f = is_object($field) ? (array) $field : $field;
+
                     return [
-                        'name'        => $f['name'] ?? $f['label'] ?? '',
-                        'label'       => $f['label'] ?? $f['name'] ?? '',
-                        'type'        => $f['type'] ?? 'text',
+                        'name' => $f['name'] ?? $f['label'] ?? '',
+                        'label' => $f['label'] ?? $f['name'] ?? '',
+                        'type' => $f['type'] ?? 'text',
                         'is_required' => ($f['is_required'] ?? 'optional') === 'required',
-                        'options'     => $f['options'] ?? [],
-                        'extensions'  => $f['extensions'] ?? '',
+                        'options' => $f['options'] ?? [],
+                        'extensions' => $f['extensions'] ?? '',
                     ];
                 }, $formData));
             }
 
             return response()->json([
-                'Result'        => 'true',
-                'ResponseCode'  => '200',
-                'ResponseMsg'   => 'Payment guide generated',
-                'payment_url'   => null,
-                'trx'           => $deposit->trx,
-                'final_amount'  => $deposit->final_amount,
+                'Result' => 'true',
+                'ResponseCode' => '200',
+                'ResponseMsg' => 'Payment guide generated',
+                'payment_url' => null,
+                'trx' => $deposit->trx,
+                'final_amount' => $deposit->final_amount,
                 'payment_guide' => $paymentGuide,
             ]);
         }
 
         // Automated gateway: return payment URL for webview
-        $paymentUrl = url('/user/deposit/confirm?trx=' . $deposit->trx);
+        $paymentUrl = url('/user/deposit/confirm?trx='.$deposit->trx);
 
         return response()->json([
-            'Result'       => 'true',
+            'Result' => 'true',
             'ResponseCode' => '200',
-            'ResponseMsg'  => 'Payment URL generated',
-            'payment_url'  => $paymentUrl,
+            'ResponseMsg' => 'Payment URL generated',
+            'payment_url' => $paymentUrl,
             'final_amount' => $deposit->final_amount,
-            'trx'          => $deposit->trx,
+            'trx' => $deposit->trx,
             'gateway_type' => 'automated',
         ]);
     }
@@ -396,9 +401,9 @@ class PaymentController extends BaseApiController
     public function manualProof(Request $request): JsonResponse
     {
         $request->validate([
-            'trx'           => 'required|string|max:191',
+            'trx' => 'required|string|max:191',
             'payment_proof' => 'required|file|mimes:jpeg,jpg,png,pdf,webp|max:5120',
-            'note'          => 'nullable|string|max:1000',
+            'note' => 'nullable|string|max:1000',
         ]);
 
         $deposit = Deposit::with(['gateway', 'campaign', 'user'])
@@ -406,7 +411,7 @@ class PaymentController extends BaseApiController
             ->whereIn('status', [ManageStatus::PAYMENT_INITIATE, ManageStatus::PAYMENT_PENDING])
             ->first();
 
-        if (!$deposit) {
+        if (! $deposit) {
             return response()->json([
                 'Result' => 'false',
                 'ResponseCode' => '404',
@@ -422,22 +427,22 @@ class PaymentController extends BaseApiController
             ], 400);
         }
 
-        $directory = date('Y') . '/' . date('m') . '/' . date('d');
-        $path = getFilePath('verify') . '/' . $directory;
-        $value = $directory . '/' . fileUploader($request->file('payment_proof'), $path);
+        $directory = date('Y').'/'.date('m').'/'.date('d');
+        $path = getFilePath('verify').'/'.$directory;
+        $value = $directory.'/'.fileUploader($request->file('payment_proof'), $path);
 
         $details = [
             [
-                'name'  => __('Payment proof'),
-                'type'  => 'file',
+                'name' => __('Payment proof'),
+                'type' => 'file',
                 'value' => $value,
             ],
         ];
 
         if ($request->filled('note')) {
             $details[] = [
-                'name'  => __('Note'),
-                'type'  => 'textarea',
+                'name' => __('Note'),
+                'type' => 'textarea',
                 'value' => (string) $request->note,
             ];
         }
@@ -446,9 +451,9 @@ class PaymentController extends BaseApiController
         $deposit->status = ManageStatus::PAYMENT_PENDING;
         $deposit->save();
 
-        $adminNotification = new AdminNotification();
+        $adminNotification = new AdminNotification;
         $adminNotification->user_id = $deposit->user->id ?? 0;
-        $adminNotification->title = 'Payment proof submitted — ' . ($deposit->full_name ?? $deposit->email ?? 'Guest') . ' — ' . ($deposit->campaign->name ?? 'Campaign');
+        $adminNotification->title = 'Payment proof submitted — '.($deposit->full_name ?? $deposit->email ?? 'Guest').' — '.($deposit->campaign->name ?? 'Campaign');
         $adminNotification->click_url = urlPath('admin.donations.pending');
         $adminNotification->save();
 
@@ -486,7 +491,7 @@ class PaymentController extends BaseApiController
         $items = $transactions->getCollection()->map(function (Transaction $transaction) {
             $deposit = $transaction->deposit;
             $isManual = $deposit && (int) $deposit->method_code >= 1000;
-            $needsProof = $isManual && (int) $deposit->status === ManageStatus::PAYMENT_INITIATE && !$this->hasPaymentProof($deposit);
+            $needsProof = $isManual && (int) $deposit->status === ManageStatus::PAYMENT_INITIATE && ! $this->hasPaymentProof($deposit);
 
             return [
                 'id' => $transaction->id,
@@ -547,7 +552,7 @@ class PaymentController extends BaseApiController
         $items = $donations->getCollection()->map(function (Deposit $deposit) {
             $isManualGateway = (int) $deposit->method_code >= 1000;
             $hasProof = $this->hasPaymentProof($deposit);
-            $manualProofMissing = $isManualGateway && !$hasProof;
+            $manualProofMissing = $isManualGateway && ! $hasProof;
 
             return [
                 'id' => (int) $deposit->id,
@@ -691,7 +696,7 @@ class PaymentController extends BaseApiController
             })
             ->first();
 
-        if (!$deposit) {
+        if (! $deposit) {
             return response()->json([
                 'Result' => 'false',
                 'ResponseCode' => '404',
@@ -707,9 +712,9 @@ class PaymentController extends BaseApiController
             ], 400);
         }
 
-        $directory = date('Y') . '/' . date('m') . '/' . date('d');
-        $path = getFilePath('verify') . '/' . $directory;
-        $value = $directory . '/' . fileUploader($request->file('payment_proof'), $path);
+        $directory = date('Y').'/'.date('m').'/'.date('d');
+        $path = getFilePath('verify').'/'.$directory;
+        $value = $directory.'/'.fileUploader($request->file('payment_proof'), $path);
 
         $details = [
             [
@@ -734,9 +739,9 @@ class PaymentController extends BaseApiController
         }
         $deposit->save();
 
-        $adminNotification = new AdminNotification();
+        $adminNotification = new AdminNotification;
         $adminNotification->user_id = $deposit->user->id ?? 0;
-        $adminNotification->title = 'Payment proof submitted — ' . ($deposit->full_name ?? $deposit->email ?? 'Guest') . ' — ' . ($deposit->campaign->name ?? 'Campaign');
+        $adminNotification->title = 'Payment proof submitted — '.($deposit->full_name ?? $deposit->email ?? 'Guest').' — '.($deposit->campaign->name ?? 'Campaign');
         $adminNotification->click_url = urlPath('admin.donations.pending');
         $adminNotification->save();
 
@@ -759,7 +764,7 @@ class PaymentController extends BaseApiController
             $details = (array) $details;
         }
 
-        if (!is_array($details)) {
+        if (! is_array($details)) {
             return false;
         }
 
@@ -776,4 +781,3 @@ class PaymentController extends BaseApiController
         return false;
     }
 }
-

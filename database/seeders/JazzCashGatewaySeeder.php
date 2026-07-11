@@ -2,10 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\Gateway;
 use App\Models\GatewayCurrency;
+use Illuminate\Database\Seeder;
 
 class JazzCashGatewaySeeder extends Seeder
 {
@@ -29,35 +28,35 @@ class JazzCashGatewaySeeder extends Seeder
                 'merchant_id' => [
                     'title' => 'Merchant ID',
                     'global' => true,
-                    'value' => ''
+                    'value' => '',
                 ],
                 'password' => [
                     'title' => 'Password',
                     'global' => true,
-                    'value' => ''
+                    'value' => '',
                 ],
                 'hash_key' => [
                     'title' => 'Hash Key',
                     'global' => true,
-                    'value' => ''
+                    'value' => '',
                 ],
                 'return_url' => [
                     'title' => 'Return URL',
                     'global' => true,
-                    'value' => ''
+                    'value' => '',
                 ],
                 'sandbox' => [
                     'title' => 'Sandbox Mode',
                     'global' => true,
-                    'value' => '0'
-                ]
+                    'value' => '0',
+                ],
             ]),
             'supported_currencies' => json_encode(['PKR', 'USD']),
             'extra' => null,
             'input_form' => null,
             'guideline' => 'Configure your JazzCash Mobile Wallet gateway with the provided credentials. JazzCash is Pakistan\'s leading mobile wallet service. Enable sandbox mode for testing.',
             'countries' => ['Pakistan'], // Available in Pakistan
-            'status' => 1
+            'status' => 1,
         ]);
 
         // Create gateway currency for PKR (Primary currency for JazzCash)
@@ -70,7 +69,7 @@ class JazzCashGatewaySeeder extends Seeder
                 'password' => '',
                 'hash_key' => '',
                 'return_url' => '',
-                'sandbox' => '0'
+                'sandbox' => '0',
             ]),
             'min_amount' => 50.00,
             'max_amount' => 100000.00,
@@ -78,7 +77,7 @@ class JazzCashGatewaySeeder extends Seeder
             'percent_charge' => 1.50,
             'rate' => 1.00,
             'symbol' => 'Rs',
-            'status' => 1
+            'status' => 1,
         ]);
 
         // Create gateway currency for USD
@@ -91,7 +90,7 @@ class JazzCashGatewaySeeder extends Seeder
                 'password' => '',
                 'hash_key' => '',
                 'return_url' => '',
-                'sandbox' => '0'
+                'sandbox' => '0',
             ]),
             'min_amount' => 1.00,
             'max_amount' => 1000.00,
@@ -99,8 +98,7 @@ class JazzCashGatewaySeeder extends Seeder
             'percent_charge' => 1.50,
             'rate' => 280.00,
             'symbol' => '$',
-            'status' => 1
+            'status' => 1,
         ]);
     }
 }
-

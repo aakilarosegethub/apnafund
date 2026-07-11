@@ -7,11 +7,10 @@ use App\Models\CampaignFaq;
 use App\Models\CampaignUpdate;
 use App\Models\Comment;
 use App\Services\CampaignStoryHtmlService;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * Mobile/legacy API: campaigns as “funds” (list, detail, search, category, create/update flows).
@@ -35,12 +34,12 @@ class FundController extends BaseApiController
 
         // Get user ID from authenticated user (token required)
         $uid = $this->getUserId($request);
-        
+
         if (empty($uid)) {
             return response()->json([
-                "ResponseCode" => "401",
-                "Result" => "false",
-                "ResponseMsg" => "Unauthenticated! Please provide a valid token."
+                'ResponseCode' => '401',
+                'Result' => 'false',
+                'ResponseMsg' => 'Unauthenticated! Please provide a valid token.',
             ], 401);
         }
 
@@ -50,33 +49,35 @@ class FundController extends BaseApiController
         // campaigns table: status = 2 (pending), status = 1 (approved), status = 0 (rejected/cancelled)
         // For 'Completed', we check if end_date has passed or raised_amount >= goal_amount
         if ($status == 'Pending') {
-            $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE user_id=" . (int)$uid . " AND status = 2");
-        } else if ($status == 'Cancelled') {
-            $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE user_id=" . (int)$uid . " AND status = 0");
+            $sel = $this->h->queryfire('SELECT * FROM campaigns WHERE user_id='.(int) $uid.' AND status = 2');
+        } elseif ($status == 'Cancelled') {
+            $sel = $this->h->queryfire('SELECT * FROM campaigns WHERE user_id='.(int) $uid.' AND status = 0');
         } else {
             // Completed: either status is approved and (end_date passed or raised_amount >= goal_amount)
-            $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE user_id=" . (int)$uid . " AND status = 1 AND (end_date < CURDATE() OR raised_amount >= goal_amount)");
+            $sel = $this->h->queryfire('SELECT * FROM campaigns WHERE user_id='.(int) $uid.' AND status = 1 AND (end_date < CURDATE() OR raised_amount >= goal_amount)');
         }
 
         // Check if query was successful
-        if (!$sel) {
+        if (! $sel) {
             return response()->json([
-                "ResponseCode" => "200",
-                "Result" => "true",
-                "ResponseMsg" => "fund list Successfully!!!",
-                "fundlist" => []
+                'ResponseCode' => '200',
+                'Result' => 'true',
+                'ResponseMsg' => 'fund list Successfully!!!',
+                'fundlist' => [],
             ]);
         }
 
         $c = [];
         while ($row = $sel->fetch_assoc()) {
-            if (!$row) break;
+            if (! $row) {
+                break;
+            }
 
             // Get charity info if exists (check if tbl_charity table exists)
-            $charity_name = "";
-            $charity_tinno = "";
-            $charity_img = "";
-            
+            $charity_name = '';
+            $charity_tinno = '';
+            $charity_img = '';
+
             // Use helper function to format campaign data (exclude_story for list - detail in fundById)
             $pol = $this->formatCampaignData($row, [
                 'charity_name' => $charity_name,
@@ -86,7 +87,7 @@ class FundController extends BaseApiController
                 'fund_for' => '',
                 'exclude_story' => true,
             ]);
-            
+
             // Override specific fields for fundList
             $pol['lats'] = '';
             $pol['longs'] = '';
@@ -95,18 +96,17 @@ class FundController extends BaseApiController
             $pol['fund_plan'] = '';
             $pol['medical_certificate'] = [];
             $pol['reject_comment'] = '';
-            
+
             $c[] = $pol;
         }
 
         return response()->json([
-            "ResponseCode" => "200",
-            "Result" => "true",
-            "ResponseMsg" => "fund list Successfully!!!",
-            "fundlist" => $c
+            'ResponseCode' => '200',
+            'Result' => 'true',
+            'ResponseMsg' => 'fund list Successfully!!!',
+            'fundlist' => $c,
         ]);
     }
-
 
     /**
      * Get Fund by ID or Slug
@@ -127,9 +127,9 @@ class FundController extends BaseApiController
 
         if (empty($fund_id) && empty($slug)) {
             return response()->json([
-                "ResponseCode" => "401",
-                "Result" => "false",
-                "ResponseMsg" => "Something Went Wrong! Provide fund_id or slug."
+                'ResponseCode' => '401',
+                'Result' => 'false',
+                'ResponseMsg' => 'Something Went Wrong! Provide fund_id or slug.',
             ], 401);
         }
 
@@ -138,59 +138,61 @@ class FundController extends BaseApiController
         // If status is not 'Home', require authentication
         if ($status != 'Home' && empty($uid)) {
             return response()->json([
-                "ResponseCode" => "401",
-                "Result" => "false",
-                "ResponseMsg" => "Unauthorized! Please login first."
+                'ResponseCode' => '401',
+                'Result' => 'false',
+                'ResponseMsg' => 'Unauthorized! Please login first.',
             ], 401);
         }
 
         // Build WHERE clause: by slug or by id
-        if (!empty($slug)) {
+        if (! empty($slug)) {
             $slugEscaped = $this->h->real_string($slug);
             $slugIsNumeric = ctype_digit($slugEscaped);
             if ($status == 'Home') {
                 if ($slugIsNumeric) {
-                    $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE slug='" . $slugEscaped . "' OR id=" . (int) $slugEscaped);
+                    $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE slug='".$slugEscaped."' OR id=".(int) $slugEscaped);
                 } else {
-                    $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE slug='" . $slugEscaped . "'");
+                    $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE slug='".$slugEscaped."'");
                 }
             } else {
                 if ($slugIsNumeric) {
-                    $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE user_id=" . (int)$uid . " AND (slug='" . $slugEscaped . "' OR id=" . (int) $slugEscaped . ")");
+                    $sel = $this->h->queryfire('SELECT * FROM campaigns WHERE user_id='.(int) $uid." AND (slug='".$slugEscaped."' OR id=".(int) $slugEscaped.')');
                 } else {
-                    $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE user_id=" . (int)$uid . " AND slug='" . $slugEscaped . "'");
+                    $sel = $this->h->queryfire('SELECT * FROM campaigns WHERE user_id='.(int) $uid." AND slug='".$slugEscaped."'");
                 }
             }
         } else {
             $fund_id = (int) round((float) $fund_id);
             if ($status == 'Home') {
-                $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE id=" . $fund_id . "");
+                $sel = $this->h->queryfire('SELECT * FROM campaigns WHERE id='.$fund_id.'');
             } else {
-                $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE user_id=" . (int)$uid . " AND id=" . $fund_id . "");
+                $sel = $this->h->queryfire('SELECT * FROM campaigns WHERE user_id='.(int) $uid.' AND id='.$fund_id.'');
             }
         }
 
         // Check if query was successful
-        if (!$sel) {
+        if (! $sel) {
             return response()->json([
-                "ResponseCode" => "200",
-                "Result" => "true",
-                "ResponseMsg" => "fund Data Get Successfully!!!",
-                "fund" => null,
+                'ResponseCode' => '200',
+                'Result' => 'true',
+                'ResponseMsg' => 'fund Data Get Successfully!!!',
+                'fund' => null,
             ]);
         }
 
         $c = [];
         while ($row = $sel->fetch_assoc()) {
-            if (!$row) break;
+            if (! $row) {
+                break;
+            }
 
             // Get charity info if exists (check if tbl_charity table exists)
-            $charity_name = "";
-            $charity_tinno = "";
-            $charity_img = "";
+            $charity_name = '';
+            $charity_tinno = '';
+            $charity_img = '';
 
             // Get total donaters count
-            $funded = $this->h->queryfire("SELECT COUNT(DISTINCT user_id) as total_donaters FROM deposits WHERE campaign_id=" . (int)$row['id'] . " AND status = 1");
+            $funded = $this->h->queryfire('SELECT COUNT(DISTINCT user_id) as total_donaters FROM deposits WHERE campaign_id='.(int) $row['id'].' AND status = 1');
             $donatersResult = $funded ? $funded->fetch_assoc() : null;
             $total_donaters = $donatersResult ? ($donatersResult['total_donaters'] ?? 0) : 0;
 
@@ -203,7 +205,7 @@ class FundController extends BaseApiController
                 'fund_for' => '', // Not in campaigns table
                 'status' => $row['status'] ?? 0,
                 'total_donaters' => $total_donaters,
-                'donaterlist' => $this->getDonaterList($row['id'], true)
+                'donaterlist' => $this->getDonaterList($row['id'], true),
             ]);
 
             // Override specific fields for fundById
@@ -214,7 +216,7 @@ class FundController extends BaseApiController
             $pol['fund_plan'] = '';
             $pol['medical_certificate'] = [];
             $pol['reject_comment'] = '';
-            $pol['remain_amt'] = sprintf("%.2f", $pol['remain_amt']);
+            $pol['remain_amt'] = sprintf('%.2f', $pol['remain_amt']);
             unset($pol['fund_photos']);
 
             $pol['author'] = $this->getAuthorData($row['user_id'] ?? null);
@@ -227,10 +229,10 @@ class FundController extends BaseApiController
 
         if ($c === []) {
             return response()->json([
-                "ResponseCode" => "200",
-                "Result" => "true",
-                "ResponseMsg" => "fund Data Get Successfully!!!",
-                "fund" => null,
+                'ResponseCode' => '200',
+                'Result' => 'true',
+                'ResponseMsg' => 'fund Data Get Successfully!!!',
+                'fund' => null,
             ]);
         }
 
@@ -248,10 +250,10 @@ class FundController extends BaseApiController
             : 0;
 
         return response()->json([
-            "ResponseCode" => "200",
-            "Result" => "true",
-            "ResponseMsg" => "fund Data Get Successfully!!!",
-            "fund" => $fund,
+            'ResponseCode' => '200',
+            'Result' => 'true',
+            'ResponseMsg' => 'fund Data Get Successfully!!!',
+            'fund' => $fund,
         ]);
     }
 
@@ -338,7 +340,7 @@ class FundController extends BaseApiController
                 'title' => (string) ($u->title ?? ''),
                 'update_desc' => (string) ($u->content ?? ''),
                 'slug' => (string) ($u->slug ?? ''),
-                'photo' => !empty($u->image) ? [$u->image] : [],
+                'photo' => ! empty($u->image) ? [$u->image] : [],
                 'main_img' => (string) ($u->image ?? ''),
                 'update_date' => optional($u->created_at)->toDateTimeString(),
                 'source' => 'campaign_updates',
@@ -346,7 +348,7 @@ class FundController extends BaseApiController
         }
 
         $camp = DB::table('campaigns')->where('id', $campaignId)->first();
-        if ($camp && !empty($camp->updates)) {
+        if ($camp && ! empty($camp->updates)) {
             $legacy = is_string($camp->updates) ? json_decode($camp->updates, true) : (array) $camp->updates;
             if (is_array($legacy)) {
                 foreach (array_reverse($legacy) as $u) {
@@ -410,9 +412,9 @@ class FundController extends BaseApiController
 
         if (empty($cat_id) || empty($name) || empty($goal_amount)) {
             return response()->json([
-                "ResponseCode" => "401",
-                "Result" => "false",
-                "ResponseMsg" => "category_id (or cat_id), name (or title), goal_amount (or fund_amt) required."
+                'ResponseCode' => '401',
+                'Result' => 'false',
+                'ResponseMsg' => 'category_id (or cat_id), name (or title), goal_amount (or fund_amt) required.',
             ], 401);
         }
 
@@ -435,17 +437,17 @@ class FundController extends BaseApiController
                     : "Short description must be at least {$shortDescMin} characters long.");
 
             return response()->json([
-                "ResponseCode" => "401",
-                "Result" => "false",
-                "ResponseMsg" => $responseMsg,
+                'ResponseCode' => '401',
+                'Result' => 'false',
+                'ResponseMsg' => $responseMsg,
             ], 401);
         }
 
         if ($shortDescLen > $shortDescMax) {
             return response()->json([
-                "ResponseCode" => "401",
-                "Result" => "false",
-                "ResponseMsg" => "Short description cannot exceed {$shortDescMax} characters.",
+                'ResponseCode' => '401',
+                'Result' => 'false',
+                'ResponseMsg' => "Short description cannot exceed {$shortDescMax} characters.",
             ], 401);
         }
 
@@ -455,9 +457,9 @@ class FundController extends BaseApiController
         $originalGoalAmount = (float) $goal_amount;
         if ($originalGoalAmount <= 0) {
             return response()->json([
-                "ResponseCode" => "401",
-                "Result" => "false",
-                "ResponseMsg" => "goal_amount must be greater than zero."
+                'ResponseCode' => '401',
+                'Result' => 'false',
+                'ResponseMsg' => 'goal_amount must be greater than zero.',
             ], 401);
         }
 
@@ -468,11 +470,11 @@ class FundController extends BaseApiController
         if ($countryId !== null && $countryId !== '') {
             $countryId = (int) trim((string) $countryId, " \t\n\r\0\x0B\"'");
             $countryName = resolveAllowedCountryNameFromCountryId($countryId);
-            if (!$countryName) {
+            if (! $countryName) {
                 return response()->json([
-                    "ResponseCode" => "400",
-                    "Result" => "false",
-                    "ResponseMsg" => "Invalid country_id or country is not allowed for project location."
+                    'ResponseCode' => '400',
+                    'Result' => 'false',
+                    'ResponseMsg' => 'Invalid country_id or country is not allowed for project location.',
                 ], 400);
             }
 
@@ -503,27 +505,27 @@ class FundController extends BaseApiController
             $daysDiff = (int) $interval->days;
             if ($daysDiff > $daysLimit) {
                 return response()->json([
-                    "ResponseCode" => "401",
-                    "Result" => "false",
-                    "ResponseMsg" => "Campaign duration cannot exceed {$daysLimit} days. Please adjust start and end dates.",
+                    'ResponseCode' => '401',
+                    'Result' => 'false',
+                    'ResponseMsg' => "Campaign duration cannot exceed {$daysLimit} days. Please adjust start and end dates.",
                 ], 400);
             }
         }
         $lats = strip_tags($this->h->real_string($request->input('lats', '')));
         $longs = strip_tags($this->h->real_string($request->input('longs', '')));
         $status = $request->input('status', 'Pending');
-        
+
         // Get user ID from authenticated user (token only)
         $uid = null;
         if (auth()->check()) {
             $uid = auth()->user()->id;
         }
-        
+
         if (empty($uid)) {
             return response()->json([
-                "ResponseCode" => "401",
-                "Result" => "false",
-                "ResponseMsg" => "Unauthorized! Please login first. Token required."
+                'ResponseCode' => '401',
+                'Result' => 'false',
+                'ResponseMsg' => 'Unauthorized! Please login first. Token required.',
             ], 401);
         }
 
@@ -541,12 +543,12 @@ class FundController extends BaseApiController
 
         if (empty($mainImage)) {
             return response()->json([
-                "ResponseCode" => "401",
-                "Result" => "false",
-                "ResponseMsg" => "Image required. Upload 'image' or 'main_img'."
+                'ResponseCode' => '401',
+                'Result' => 'false',
+                'ResponseMsg' => "Image required. Upload 'image' or 'main_img'.",
             ], 401);
         }
-        
+
         // Map status: 'Pending' -> 2, 'Approved' -> 1, 'Cancelled' -> 0
         $campaignStatus = 2; // default to pending
         if ($status == 'Approved') {
@@ -561,7 +563,7 @@ class FundController extends BaseApiController
         $originalSlug = $slug;
         $counter = 1;
         while (\DB::table('campaigns')->where('slug', $slug)->exists()) {
-            $slug = $originalSlug . '-' . $counter;
+            $slug = $originalSlug.'-'.$counter;
             $counter++;
         }
 
@@ -573,7 +575,7 @@ class FundController extends BaseApiController
             'description' => $description ?: 'Campaign description',
             'short_description' => $short_description,
             'image' => $mainImage,
-            'gallery' => !empty($gallery) ? json_encode($gallery) : null,
+            'gallery' => ! empty($gallery) ? json_encode($gallery) : null,
             'goal_amount' => $platformGoalAmount,
             'start_date' => $start_date,
             'end_date' => $end_date,
@@ -581,7 +583,7 @@ class FundController extends BaseApiController
             'location' => $location,
             'raised_amount' => 0,
             'created_at' => date('Y-m-d H:i:s'),
-            'updated_at' => date('Y-m-d H:i:s')
+            'updated_at' => date('Y-m-d H:i:s'),
         ];
 
         if (Schema::hasColumn('campaigns', 'goal_amount_usd')) {
@@ -603,23 +605,23 @@ class FundController extends BaseApiController
 
             if ($check) {
                 return response()->json([
-                    "ResponseCode" => "200",
-                    "Result" => "true",
-                    "ResponseMsg" => "Fund Raise Submited Wait For Approval!!",
-                    "fund_id" => $check
+                    'ResponseCode' => '200',
+                    'Result' => 'true',
+                    'ResponseMsg' => 'Fund Raise Submited Wait For Approval!!',
+                    'fund_id' => $check,
                 ]);
             }
 
             return response()->json([
-                "ResponseCode" => "401",
-                "Result" => "false",
-                "ResponseMsg" => "Fund creation failed! Please try again."
+                'ResponseCode' => '401',
+                'Result' => 'false',
+                'ResponseMsg' => 'Fund creation failed! Please try again.',
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                "ResponseCode" => "401",
-                "Result" => "false",
-                "ResponseMsg" => "Fund creation failed! Error: " . $e->getMessage()
+                'ResponseCode' => '401',
+                'Result' => 'false',
+                'ResponseMsg' => 'Fund creation failed! Error: '.$e->getMessage(),
             ]);
         }
     }
@@ -627,8 +629,8 @@ class FundController extends BaseApiController
     /**
      * Parse date input: strip quotes (e.g. from curl --form 'start_date="2026-03-01"'), trim, validate Y-m-d.
      *
-     * @param mixed $value Raw input value
-     * @param string $default Default date in Y-m-d if invalid
+     * @param  mixed  $value  Raw input value
+     * @param  string  $default  Default date in Y-m-d if invalid
      * @return string Valid Y-m-d date string
      */
     private function parseDateInput($value, string $default): string
@@ -638,7 +640,9 @@ class FundController extends BaseApiController
         }
         if (is_array($value)) {
             $value = $value[0] ?? null;
-            if (empty($value)) return $default;
+            if (empty($value)) {
+                return $default;
+            }
         }
         $cleaned = trim((string) $value, " \t\n\r\"'");
         $parsed = \DateTime::createFromFormat('Y-m-d', $cleaned);
@@ -648,8 +652,11 @@ class FundController extends BaseApiController
         $ts = strtotime($cleaned);
         if ($ts !== false) {
             $d = date('Y-m-d', $ts);
-            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $d)) return $d;
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $d)) {
+                return $d;
+            }
         }
+
         return $default;
     }
 
@@ -658,18 +665,19 @@ class FundController extends BaseApiController
      */
     private function uploadSingleImage($file, $url)
     {
-        if (!$file || !$file->isValid()) {
+        if (! $file || ! $file->isValid()) {
             return null;
         }
         $basePath = base_path('public');
-        $targetPath = $basePath . $url;
-        if (!is_dir($targetPath)) {
+        $targetPath = $basePath.$url;
+        if (! is_dir($targetPath)) {
             mkdir($targetPath, 0755, true);
         }
         $ext = $file->getClientOriginalExtension() ?: 'jpg';
-        $newName = uniqid() . date('YmdHis') . mt_rand() . '.' . $ext;
+        $newName = uniqid().date('YmdHis').mt_rand().'.'.$ext;
         $file->move($targetPath, $newName);
-        return ltrim($url, '/') . $newName;
+
+        return ltrim($url, '/').$newName;
     }
 
     /**
@@ -678,22 +686,22 @@ class FundController extends BaseApiController
     private function processFileUploads($prefix, $count, $url)
     {
         $basePath = base_path('public');
-        $targetPath = $basePath . $url;
-        
-        if (!is_dir($targetPath)) {
+        $targetPath = $basePath.$url;
+
+        if (! is_dir($targetPath)) {
             mkdir($targetPath, 0755, true);
         }
 
         $uploadedFiles = [];
 
         for ($i = 0; $i < $count; $i++) {
-            $fileKey = $prefix . $i;
+            $fileKey = $prefix.$i;
             if ($_FILES[$fileKey]['error'] === UPLOAD_ERR_OK) {
-                $newName = uniqid() . date('YmdHis') . mt_rand() . '.jpg';
-                $fileUrl = ltrim($url, '/') . $newName;
+                $newName = uniqid().date('YmdHis').mt_rand().'.jpg';
+                $fileUrl = ltrim($url, '/').$newName;
                 $uploadedFiles[] = $fileUrl;
 
-                move_uploaded_file($_FILES[$fileKey]['tmp_name'], $targetPath . $newName);
+                move_uploaded_file($_FILES[$fileKey]['tmp_name'], $targetPath.$newName);
             }
         }
 
@@ -708,48 +716,50 @@ class FundController extends BaseApiController
         $data = $this->getRequestData($request);
         if (empty($data['cat_id'])) {
             return response()->json([
-                "ResponseCode" => "401",
-                "Result" => "false",
-                "ResponseMsg" => "Something Went Wrong!"
+                'ResponseCode' => '401',
+                'Result' => 'false',
+                'ResponseMsg' => 'Something Went Wrong!',
             ], 401);
         }
 
         $cat_id = (int) round((float) $data['cat_id']);
-        $timestamp = date("Y-m-d");
+        $timestamp = date('Y-m-d');
 
         // Use campaigns table instead of tbl_fund
         // campaigns table: status = 1 (approved), status = 2 (pending), status = 0 (rejected)
         // For public API discovery: show only approved, non-expired campaigns (Kickstarter style)
         if ($cat_id != 0) {
-            $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE category_id=" . $cat_id . " AND status = 1 AND (end_date IS NULL OR end_date >= '" . $timestamp . "') ORDER BY id DESC");
+            $sel = $this->h->queryfire('SELECT * FROM campaigns WHERE category_id='.$cat_id." AND status = 1 AND (end_date IS NULL OR end_date >= '".$timestamp."') ORDER BY id DESC");
         } else {
-            $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE status = 1 AND (end_date IS NULL OR end_date >= '" . $timestamp . "') ORDER BY id DESC");
+            $sel = $this->h->queryfire("SELECT * FROM campaigns WHERE status = 1 AND (end_date IS NULL OR end_date >= '".$timestamp."') ORDER BY id DESC");
         }
 
         // Check if query was successful
-        if (!$sel) {
+        if (! $sel) {
             return response()->json([
-                "ResponseCode" => "200",
-                "Result" => "true",
-                "ResponseMsg" => "Home Data Get Successfully!!!",
-                "catwisefund" => []
+                'ResponseCode' => '200',
+                'Result' => 'true',
+                'ResponseMsg' => 'Home Data Get Successfully!!!',
+                'catwisefund' => [],
             ]);
         }
 
         $cp = [];
         while ($rows = $sel->fetch_assoc()) {
-            if (!$rows) break;
-            
+            if (! $rows) {
+                break;
+            }
+
             // Use helper function to format campaign data (exclude_story for list - detail in fundById)
             $fundData = $this->formatCampaignData($rows, ['exclude_story' => true]);
             $cp[] = $fundData;
         }
 
         return response()->json([
-            "ResponseCode" => "200",
-            "Result" => "true",
-            "ResponseMsg" => "Home Data Get Successfully!!!",
-            "catwisefund" => $cp
+            'ResponseCode' => '200',
+            'Result' => 'true',
+            'ResponseMsg' => 'Home Data Get Successfully!!!',
+            'catwisefund' => $cp,
         ]);
     }
 
@@ -762,14 +772,14 @@ class FundController extends BaseApiController
 
         if (empty($data['keyword'])) {
             return response()->json([
-                "ResponseCode" => "401",
-                "Result" => "false",
-                "ResponseMsg" => "Something Went Wrong!"
+                'ResponseCode' => '401',
+                'Result' => 'false',
+                'ResponseMsg' => 'Something Went Wrong!',
             ], 401);
         }
 
         $keyword = $this->h->real_string($data['keyword']);
-        $timestamp = date("Y-m-d");
+        $timestamp = date('Y-m-d');
 
         // Search in campaigns table
         // campaigns table: status = 1 (approved), status = 2 (pending), status = 0 (rejected)
@@ -777,28 +787,30 @@ class FundController extends BaseApiController
         $keywordEscaped = $this->h->real_string($keyword); // Already escaped by real_string
         $selpop = $this->h->queryfire("SELECT * FROM campaigns 
             WHERE status = 1 
-            AND (end_date IS NULL OR end_date >= '" . $timestamp . "')
+            AND (end_date IS NULL OR end_date >= '".$timestamp."')
             AND (
-                name LIKE '%" . $keywordEscaped . "%' 
-                OR description LIKE '%" . $keywordEscaped . "%'
-                OR location LIKE '%" . $keywordEscaped . "%'
+                name LIKE '%".$keywordEscaped."%' 
+                OR description LIKE '%".$keywordEscaped."%'
+                OR location LIKE '%".$keywordEscaped."%'
             )
             ORDER BY id DESC");
 
         // Check if query was successful
-        if (!$selpop) {
+        if (! $selpop) {
             return response()->json([
-                "ResponseCode" => "200",
-                "Result" => "true",
-                "ResponseMsg" => "Fund Data Get Successfully!!!",
-                "fundlist" => []
+                'ResponseCode' => '200',
+                'Result' => 'true',
+                'ResponseMsg' => 'Fund Data Get Successfully!!!',
+                'fundlist' => [],
             ]);
         }
 
         $listnearby = [];
         while ($pop = $selpop->fetch_assoc()) {
-            if (!$pop) break;
-            
+            if (! $pop) {
+                break;
+            }
+
             // Use helper function to format campaign data (exclude_story for list - detail in fundById)
             $fundData = $this->formatCampaignData($pop, [
                 'patient_photo' => $pop['image'] ?? '',
@@ -808,11 +820,10 @@ class FundController extends BaseApiController
         }
 
         return response()->json([
-            "ResponseCode" => "200",
-            "Result" => "true",
-            "ResponseMsg" => "Fund Data Get Successfully!!!",
-            "fundlist" => $listnearby
+            'ResponseCode' => '200',
+            'Result' => 'true',
+            'ResponseMsg' => 'Fund Data Get Successfully!!!',
+            'fundlist' => $listnearby,
         ]);
     }
 }
-

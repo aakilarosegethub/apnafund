@@ -1,7 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Facade;
-require_once('timeRegion.php');
+
+require_once 'timeRegion.php';
 
 return [
 
@@ -149,7 +150,7 @@ return [
     ],
 
     'aliases' => Facade::defaultAliases()->merge([
-        'ManageStatus' => App\Constants\ManageStatus::class
+        'ManageStatus' => App\Constants\ManageStatus::class,
     ])->toArray(),
 
     /*

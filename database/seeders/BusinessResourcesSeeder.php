@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\SiteData;
+use Illuminate\Database\Seeder;
 
 class BusinessResourcesSeeder extends Seeder
 {
@@ -21,7 +20,7 @@ class BusinessResourcesSeeder extends Seeder
         ];
 
         // Check if business resources content already exists
-        if (!SiteData::where('data_key', 'business_resources.content')->exists()) {
+        if (! SiteData::where('data_key', 'business_resources.content')->exists()) {
             SiteData::create([
                 'data_key' => 'business_resources.content',
                 'data_info' => $businessContent,
@@ -53,7 +52,7 @@ class BusinessResourcesSeeder extends Seeder
         ];
 
         foreach ($successStories as $index => $story) {
-            if (!SiteData::where('data_key', 'success_story.element')->where('data_info->title', $story['title'])->exists()) {
+            if (! SiteData::where('data_key', 'success_story.element')->where('data_info->title', $story['title'])->exists()) {
                 SiteData::create([
                     'data_key' => 'success_story.element',
                     'data_info' => $story,
