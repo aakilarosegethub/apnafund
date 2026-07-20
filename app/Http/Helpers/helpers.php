@@ -482,7 +482,7 @@ function custom_asset($path)
 {
     // When running on localhost, always use current URL so local files load correctly
     $isLocal = in_array(request()->getHost(), ['localhost', '127.0.0.1', '0.0.0.0']);
-    $assetsUrl = $isLocal ? url('/') : (env('ASSETS_URL') ?: url('/'));
+    $assetsUrl = $isLocal ? url('/') : config('app.img_url', url('/'));
 
     // Remove leading slash from path if present
     $path = ltrim($path, '/');
@@ -493,9 +493,67 @@ function custom_asset($path)
     return $assetsUrl.'/'.$path;
 }
 
+/**
+ * URL for site-builder uploads (footer logo, banners, etc.).
+ * Prefers local public file; otherwise uses IMG_URL from .env.
+ */
+function siteImageUrl(string $path, ?string $size = null): string
+{
+    if (filter_var($path, FILTER_VALIDATE_URL)) {
+        return $path;
+    }
+
+    $path = ltrim($path, '/');
+    $basename = basename($path);
+
+    if ($basename === '' || ! str_contains($basename, '.')) {
+        return $size ? route('placeholder.image', $size) : asset('assets/universal/images/default.png');
+    }
+
+    $localFile = public_path($path);
+    if (is_file($localFile)) {
+        return asset($path);
+    }
+
+    return rtrim((string) config('app.img_url', url('/')), '/').'/'.$path;
+}
+
+if (! function_exists('custom_assets')) {
+  /**
+   * Build an absolute URL for uploaded images using IMG_URL from .env.
+   */
+    function custom_assets($path = '')
+    {
+        $base = rtrim((string) config('app.img_url', url('/')), '/');
+        $path = ltrim((string) $path, '/');
+
+        return $path === '' ? $base : $base.'/'.$path;
+    }
+}
+
 function getImage($image, $size = null, $avatar = false): string
 {
     $clean = '';
+    $image = ltrim((string) $image, '/');
+    $basename = basename($image);
+    $hasFileName = $basename !== '' && $basename !== '.' && str_contains($basename, '.');
+
+    if (! $hasFileName) {
+        if ($avatar) {
+            return custom_asset('assets/universal/images/avatar.svg');
+        }
+
+        if ($size) {
+            return route('placeholder.image', $size);
+        }
+
+        return custom_asset('assets/universal/images/default.png');
+    }
+
+    // Site builder images are often served from IMG_URL/CDN — don't require a local file.
+    if (str_starts_with($image, 'assets/images/site/')) {
+        return siteImageUrl($image, is_string($size) ? $size : null).$clean;
+    }
 
     // Multiple path checks for better compatibility
     $paths = [
@@ -511,14 +569,9 @@ function getImage($image, $size = null, $avatar = false): string
         }
     }
 
-    // If file not found, try direct asset URL (for live servers)
-    $assetUrl = custom_asset($image);
-    if ($assetUrl && $assetUrl !== custom_asset('assets/universal/images/default.png')) {
-        return $assetUrl.$clean;
-    }
-
+    // Missing upload: use avatar/placeholder instead of a broken file URL.
     if ($avatar) {
-        return custom_asset('assets/universal/images/avatar.png');
+        return custom_asset('assets/universal/images/avatar.svg');
     }
 
     if ($size) {

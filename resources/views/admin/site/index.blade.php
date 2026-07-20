@@ -24,16 +24,13 @@
                                             <label for="image{{ $loop->index }}" class="upload__img-preview image-preview">
                                                 @php
                                                     $currentImage = @$content->data_info[$imgKey] ?? '';
-                                                    $imageUrl = '';
-                                                    if ($currentImage) {
-                                                        // Check if it's a URL
-                                                        if (filter_var($currentImage, FILTER_VALIDATE_URL)) {
-                                                            $imageUrl = $currentImage;
-                                                        } else {
-                                                            $imageUrl = getImage('assets/images/site/' . $key .'/'. $currentImage, @$section->content->images->$imgKey->size);
-                                                        }
+                                                    $imageSize = @$section->content->images->$imgKey->size;
+                                                    if ($currentImage && filter_var($currentImage, FILTER_VALIDATE_URL)) {
+                                                        $imageUrl = $currentImage;
+                                                    } elseif ($currentImage) {
+                                                        $imageUrl = siteImageUrl('assets/images/site/' . $key . '/' . $currentImage, $imageSize);
                                                     } else {
-                                                        $imageUrl = getImage('assets/images/site/' . $key .'/'. $currentImage, @$section->content->images->$imgKey->size);
+                                                        $imageUrl = siteImageUrl('', $imageSize);
                                                     }
                                                 @endphp
                                                 <img src="{{ $imageUrl }}" alt="{{ @$content->data_info[$imgKey.'_alt'] ?? 'image' }}">
@@ -306,15 +303,13 @@
                                     <div class="table-card-with-image__img">
                                         @php
                                             $elementImage = @$data->data_info[$firstKey] ?? '';
-                                            $elementImageUrl = '';
-                                            if ($elementImage) {
-                                                if (filter_var($elementImage, FILTER_VALIDATE_URL)) {
-                                                    $elementImageUrl = $elementImage;
-                                                } else {
-                                                    $elementImageUrl = getImage('assets/images/site/' . $key .'/'. $elementImage, @$section->element->images->$firstKey->size);
-                                                }
+                                            $elementImageSize = @$section->element->images->$firstKey->size;
+                                            if ($elementImage && filter_var($elementImage, FILTER_VALIDATE_URL)) {
+                                                $elementImageUrl = $elementImage;
+                                            } elseif ($elementImage) {
+                                                $elementImageUrl = siteImageUrl('assets/images/site/' . $key . '/' . $elementImage, $elementImageSize);
                                             } else {
-                                                $elementImageUrl = getImage('assets/images/site/' . $key .'/'. $elementImage, @$section->element->images->$firstKey->size);
+                                                $elementImageUrl = siteImageUrl('', $elementImageSize);
                                             }
                                         @endphp
                                         <img src="{{ $elementImageUrl }}" alt="{{ @$data->data_info[$firstKey.'_alt'] ?? 'Image' }}">
@@ -362,7 +357,10 @@
 
                                         if(@$section->element->images){
                                             foreach($section->element->images as $imgKey => $imgs){
-                                                $images[] = getImage('assets/images/site/' . $key .'/'. @$data->data_info->$imgKey,@$section->element->images->$imgKey->size);
+                                                $imgVal = @$data->data_info->$imgKey;
+                                                $images[] = $imgVal && filter_var($imgVal, FILTER_VALIDATE_URL)
+                                                    ? $imgVal
+                                                    : siteImageUrl('assets/images/site/' . $key . '/' . $imgVal, @$section->element->images->$imgKey->size);
                                             }
                                         }
                                     @endphp

@@ -19,11 +19,26 @@
                     @php
                         $footerLogo = @$footerContent->data_info['footer_logo'] ?? null;
                         if ($footerLogo) {
-                            $logoUrl = filter_var($footerLogo, FILTER_VALIDATE_URL) ? $footerLogo : getImage('assets/images/site/footer/' . $footerLogo, '180x40');
+                            $logoUrl = filter_var($footerLogo, FILTER_VALIDATE_URL)
+                                ? $footerLogo
+                                : siteImageUrl('assets/images/site/footer/' . $footerLogo);
                         } else {
                             $logoPath = getFilePath('logoFavicon') . '/logo_light.png';
                             $logoUrl = getImage($logoPath, getFileSize('logoFavicon'));
                         }
+
+                        $iosAppUrl = trim((string) (@$footerContent->data_info['ios_app_url'] ?? 'https://apps.apple.com/app/apnacrowdfunding/id6773281524'));
+                        $androidAppUrl = trim((string) (@$footerContent->data_info['android_app_url'] ?? 'https://play.google.com/store/apps/details?id=com.david.apnacrowdfunding&hl=en'));
+
+                        $iosBadge = @$footerContent->data_info['ios_app_badge'] ?? null;
+                        $iosBadgeUrl = $iosBadge
+                            ? (filter_var($iosBadge, FILTER_VALIDATE_URL) ? $iosBadge : siteImageUrl('assets/images/site/footer/' . $iosBadge))
+                            : 'https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg';
+
+                        $androidBadge = @$footerContent->data_info['android_app_badge'] ?? null;
+                        $androidBadgeUrl = $androidBadge
+                            ? (filter_var($androidBadge, FILTER_VALIDATE_URL) ? $androidBadge : siteImageUrl('assets/images/site/footer/' . $androidBadge))
+                            : 'https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg';
                     @endphp
                     @if(empty($allowedCountriesForCurrency))
                         <div class="ks-selector ks-selector--readonly">
@@ -134,8 +149,16 @@
             </div>
 
             <div class="app-badges">
-                <a href="https://apps.apple.com/app/apnacrowdfunding/id6773281524"><img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="App Store"></a>
-                <a href="https://play.google.com/store/apps/details?id=com.david.apnacrowdfunding&hl=en"><img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Play Store"></a>
+                @if($iosAppUrl !== '')
+                    <a href="{{ $iosAppUrl }}" target="_blank" rel="noopener noreferrer">
+                        <img src="{{ $iosBadgeUrl }}" alt="App Store">
+                    </a>
+                @endif
+                @if($androidAppUrl !== '')
+                    <a href="{{ $androidAppUrl }}" target="_blank" rel="noopener noreferrer">
+                        <img src="{{ $androidBadgeUrl }}" alt="Play Store">
+                    </a>
+                @endif
             </div>
         </div>
 

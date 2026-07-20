@@ -195,8 +195,8 @@ class SiteController extends Controller
                     $validationRule[$inputField] = 'nullable';
                 }
             }
-            // For footer section, footer_text is optional
-            elseif ($key == 'footer' && $type == 'content' && $inputField == 'footer_text') {
+            // For footer section, optional text fields
+            elseif ($key == 'footer' && $type == 'content' && in_array($inputField, ['footer_text', 'copyright_text', 'ios_app_url', 'android_app_url'], true)) {
                 $validationRule[$inputField] = 'nullable';
             }
             // For contact_us section, latitude and longitude are optional
@@ -235,9 +235,8 @@ class SiteController extends Controller
                 continue;
             }
 
-            // For footer section, allow empty footer_text to be saved
-            if ($key == 'footer' && $type == 'content' && $keyName == 'footer_text') {
-                // Allow empty string for footer_text
+            // For footer section, allow empty optional text fields
+            if ($key == 'footer' && $type == 'content' && in_array($keyName, ['footer_text', 'copyright_text', 'ios_app_url', 'android_app_url'], true)) {
                 $inputContentValue[$keyName] = $input === null ? '' : htmlspecialchars_decode($purifier->purify($input));
 
                 continue;

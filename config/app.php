@@ -72,6 +72,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Image / Upload Base URL
+    |--------------------------------------------------------------------------
+    |
+    | Used for user uploads and profile images when files are served from a
+    | dedicated domain or CDN. Falls back to ASSETS_URL then APP_URL.
+    |
+    */
+
+    'img_url' => env('IMG_URL', env('ASSETS_URL', env('APP_URL', 'http://localhost'))),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

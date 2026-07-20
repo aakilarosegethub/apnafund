@@ -37,16 +37,13 @@
                                         <label for="image{{ $loop->index }}" class="upload__img-preview image-preview">
                                             @php
                                                 $currentImage = @$data->data_info[$imgKey] ?? '';
-                                                $imageUrl = '';
-                                                if ($currentImage) {
-                                                    // Check if it's a URL
-                                                    if (filter_var($currentImage, FILTER_VALIDATE_URL)) {
-                                                        $imageUrl = $currentImage;
-                                                    } else {
-                                                        $imageUrl = getImage('assets/images/site/' . $key .'/'. $currentImage, @$section->element->images->$imgKey->size);
-                                                    }
+                                                $imageSize = @$section->element->images->$imgKey->size;
+                                                if ($currentImage && filter_var($currentImage, FILTER_VALIDATE_URL)) {
+                                                    $imageUrl = $currentImage;
+                                                } elseif ($currentImage) {
+                                                    $imageUrl = siteImageUrl('assets/images/site/' . $key . '/' . $currentImage, $imageSize);
                                                 } else {
-                                                    $imageUrl = getImage('assets/images/site/' . $key .'/'. $currentImage, @$section->element->images->$imgKey->size);
+                                                    $imageUrl = siteImageUrl('', $imageSize);
                                                 }
                                             @endphp
                                             <img src="{{ $imageUrl }}" alt="{{ @$data->data_info[$imgKey.'_alt'] ?? 'image' }}">
